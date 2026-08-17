@@ -1,12 +1,14 @@
 import type {
   BattleLogEntry,
   BattleReport,
+  EquipItem,
   Hero,
   Resources,
   UnitCount,
   UnitDef,
 } from './types';
 import { commandLimit, critChance, troopBonuses } from './heroes';
+import { equipTotals, rollItem } from './equipment';
 
 /**
  * 스택 단위 전투 시뮬레이션 (HoMM3 계열 구조).
@@ -106,6 +108,8 @@ export interface BattleInput {
   unitDefs: Map<string, UnitDef>;
   /** 아군 유닛의 연구 레벨 (없으면 1). 적은 항상 1레벨 */
   unitLevels?: Record<string, number>;
+  /** 장비 드롭 판정용 사냥터 난이도 0~1 (없으면 드롭 없음) */
+  dropDifficulty?: number;
   now: number;
 }
 
@@ -186,6 +190,29 @@ export function simulateBattle(input: BattleInput): BattleReport {
     return sum + tier * XP_PER_TIER * l.count;
   }, 0);
 
+  // 장비 드롭: 승리 시에만. 보물탐색 목걸이(寻宝项链)가 확률을 배로 올린다(4399 실측 효과)
+  const drops: EquipItem[] = [];
+  if (victory && input.dropDifficulty !== undefined) {
+    const eff = equipTotals(hero).effects;
+    const dropMult = eff.dropRate ?? 1;
+    const chance = Math.min(0.95, (0.35 + input.dropDifficulty * 0.4) * dropMult);
+    if (Math.random() < chance) {
+      drops.push(rollItem(hero.level, input.dropDifficulty, Math.random));
+    }
+  }
+
+  // 약탈 목걸이(掠夺项链)의 약탈 비율 증가 — 4399 실측 효과
+  let loot = victory ? { ...input.loot } : {};
+  const plunder = equipTotals(hero).effects.plunder ?? 0;
+  if (victory && plunder > 0) {
+    loot = Object.fromEntries(
+      Object.entries(loot).map(([k, v]) => [k, Math.round((v as number) * (1 + plunder / 100))]),
+    );
+  }
+
+  // 경험 반지(经验戒指)의 획득 경험치 증가 — 4399 실측 효과
+  const xpBonus = equipTotals(hero).effects.xpGain ?? 0;
+
   return {
     id: `${input.campId}-${now}`,
     at: now,
@@ -198,8 +225,9 @@ export function simulateBattle(input: BattleInput): BattleReport {
     attackerLosses: losses('attacker'),
     defenderLosses,
     survivors,
-    loot: victory ? input.loot : {},
-    xpGained,
+    loot,
+    xpGained: Math.round(xpGained * (1 + xpBonus / 100)),
+    drops,
   };
 }
 

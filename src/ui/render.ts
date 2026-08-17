@@ -1,6 +1,8 @@
 import type {
   BuildingDef,
   CampDef,
+  EquipItem,
+  EquipSlot,
   GameState,
   HeroStats,
   NodeDef,
@@ -29,6 +31,7 @@ import {
   statTotal,
   TAVERN_ID,
 } from '../core/heroes';
+import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
 import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
 
 export type Tab = 'city' | 'barracks' | 'tavern' | 'world' | 'codex';
@@ -53,6 +56,12 @@ export interface RenderCallbacks {
   onAbandon(nodeId: string): void;
   /** 병종 연구 시작 */
   onResearch(unitId: string): void;
+  /** 창고 장비 착용 */
+  onEquip(itemId: string): void;
+  /** 착용 장비 해제 */
+  onUnequip(heroId: string, slot: EquipSlot): void;
+  /** 창고 장비 버리기 */
+  onDiscard(itemId: string): void;
   /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
   onInstantFinish(): void;
 }
@@ -174,6 +183,15 @@ const STYLE = `
   .logline.defender { color: #d8b5b5; border-left-color: #a0281c; }
   .logline b { color: #e0b568; }
   .logline span { color: #6b625b; margin-right: 4px; }
+
+  /* 장비 슬롯 */
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .slot { background: #1b1614; border: 1px solid #3a322c; border-radius: 8px;
+    padding: 8px 10px; font-size: 12px; position: relative; }
+  .slot span { display: block; font-weight: 700; }
+  .slot small { display: block; color: #8a7d73; font-size: 11px; line-height: 1.45; }
+  .slot.empty span { color: #6b625b; font-weight: 400; }
+  .slot button { margin-top: 6px; min-height: 28px; font-size: 11px; }
 
   /* 도감 표 */
   .statwrap { overflow-x: auto; margin-top: 6px; }
@@ -391,24 +409,79 @@ function barracksTab(
     <h2>병종 연구 (연구소 Lv.${academyLevel})</h2>${research}`;
 }
 
+function itemLine(it: EquipItem): string {
+  const parts: string[] = [];
+  if (it.patk) parts.push(`물공 +${it.patk}`);
+  if (it.matk) parts.push(`마공 +${it.matk}`);
+  if (it.pdef) parts.push(`물방 +${it.pdef}`);
+  if (it.mdef) parts.push(`마방 +${it.mdef}`);
+  if (it.effect && it.effectValue) {
+    parts.push(`${it.effectKo} +${it.effectValue}${it.effectUnit === 'multiplier' ? '배' : '%'}`);
+  }
+  return parts.join(' · ');
+}
+
+function rarityColor(r: string): string {
+  return RARITIES.find((x) => x.id === r)?.color ?? '#9a9a9a';
+}
+
+function heroEquipBlock(hero: GameState['heroes'][number]): string {
+  const t = equipTotals(hero);
+  const worn = SLOTS.map((s) => {
+    const it = hero.equipment?.[s.id];
+    if (!it) {
+      return `<div class="slot empty"><span>${s.ko}</span><small>비어 있음</small></div>`;
+    }
+    return `<div class="slot">
+      <span style="color:${rarityColor(it.rarity)}">${it.nameKo}</span>
+      <small>${s.ko} · ${itemLine(it)}</small>
+      <button class="small" data-unequip="${hero.id}:${s.id}">해제</button>
+    </div>`;
+  }).join('');
+
+  const setLine = t.completedSets.length
+    ? `<small>세트 완성: ${t.completedSets.join(', ')} (세트 보너스 적용)</small>`
+    : '';
+  const totalLine = `<small>장비 합계 물공 +${t.patk} · 마공 +${t.matk} · 물방 +${t.pdef} · 마방 +${t.mdef}</small>`;
+
+  return `<div class="card" style="display:block;">
+    <div><b>${hero.name}</b> Lv.${hero.level}
+      <small>${statLine(hero.stats)}</small>
+      <small>지휘 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
+      ${totalLine}${setLine}
+    </div>
+    <div class="slots">${worn}</div>
+  </div>`;
+}
+
 function tavernTab(state: GameState, now: number): string {
   const heroes = state.heroes.length
-    ? state.heroes
-        .map(
-          (h) => `<div class="card">
-            <div><b>${h.name}</b> Lv.${h.level}
-              <small>${statLine(h.stats)}</small>
-              <small>지휘 ${commandLimit(h)}명 · 치명타 ${(critChance(h) * 100).toFixed(1)}%</small>
-            </div>
-          </div>`,
-        )
-        .join('')
+    ? state.heroes.map((h) => heroEquipBlock(h)).join('')
     : '<div class="card"><small>고용한 영웅이 없다.</small></div>';
+
+  // ── 창고 ──
+  const inventory = state.inventory.length
+    ? state.inventory
+        .map((it) => {
+          const target = state.heroes.find((h) => h.level >= it.heroLevel);
+          return `<div class="card">
+            <div><b style="color:${rarityColor(it.rarity)}">${it.nameKo}</b>
+              <small>${SLOT_LABELS[it.slot]}${it.setNameKo ? ` · ${it.setNameKo}` : ''} · 요구 Lv.${it.heroLevel}</small>
+              <small>${itemLine(it)}</small></div>
+            <div class="actions">
+              <button data-equip="${it.id}" ${target ? '' : 'disabled'}>착용</button>
+              <button class="small" data-discard="${it.id}">버림</button>
+            </div>
+          </div>`;
+        })
+        .join('')
+    : '<div class="card"><small>창고가 비어 있다. 사냥터에서 승리하면 장비를 얻는다.</small></div>';
 
   const level = state.buildings.find((b) => b.defId === TAVERN_ID)?.level ?? 0;
   if (level < 1) {
     return `<h2>영웅</h2>${heroes}<h2>주점</h2>
-      <div class="card"><small>도시에서 주점을 지으면 영웅을 고용할 수 있다.</small></div>`;
+      <div class="card"><small>도시에서 주점을 지으면 영웅을 고용할 수 있다.</small></div>
+      <h2>창고 (${state.inventory.length})</h2>${inventory}`;
   }
 
   const nextRestock = Math.max(
@@ -437,7 +510,8 @@ function tavernTab(state: GameState, now: number): string {
           즉시 갱신 (${MANUAL_REFRESH_GOLD})</button>
       </div>
     </div>
-    ${candidates}`;
+    ${candidates}
+    <h2>창고 (${state.inventory.length})</h2>${inventory}`;
 }
 
 function unitCountText(list: UnitCount[], unitDefs: Map<string, UnitDef>): string {
@@ -714,8 +788,14 @@ export function render(
     state.reports.map((r) => r.id),
     selectedHeroId,
     selectedSiteId,
-    state.heroes.map((h) => `${h.id}:${h.level}`),
+    state.heroes.map(
+      (h) =>
+        `${h.id}:${h.level}:${Object.values(h.equipment ?? {})
+          .map((i) => i?.id)
+          .join('|')}`,
+    ),
     state.heldNodes.map((h) => h.nodeId),
+    state.inventory.map((i) => i.id),
   ]);
 
   if (key !== lastStructureKey) {
@@ -777,6 +857,16 @@ export function render(
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-research]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onResearch(btn.dataset.research!));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-equip]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onEquip(btn.dataset.equip!));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-unequip]').forEach((btn) => {
+      const [heroId, slot] = btn.dataset.unequip!.split(':');
+      btn.addEventListener('click', () => cb.onUnequip(heroId, slot as EquipSlot));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-discard]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onDiscard(btn.dataset.discard!));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-abandon]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onAbandon(btn.dataset.abandon!));

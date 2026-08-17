@@ -1,6 +1,7 @@
 import formulas from '../../data/heroes/formulas.json';
 import namePool from '../../data/heroes/names.json';
 import type { GameState, Hero, HeroCandidate, HeroStats } from './types';
+import { equipMultipliers, equipTotals } from './equipment';
 
 export const TAVERN_ID = 'tavern';
 
@@ -22,18 +23,29 @@ export function hirePrice(stats: HeroStats): number {
   return statTotal(stats) * formulas.hirePricePerStatPoint.value;
 }
 
-/** 지휘 가능 병력 수 (공식 미확보 — estimate) */
+/**
+ * 지휘 가능 병력 수 (기본 공식은 estimate).
+ * 통솔 목걸이(统驭项链)의 "지휘 병력 상한 +3/6/9%"는 4399 실측 효과.
+ */
 export function commandLimit(hero: Hero): number {
   const { base, perLevel } = formulas.commandLimit;
-  return base + perLevel * (hero.level - 1);
+  const raw = base + perLevel * (hero.level - 1);
+  const bonus = equipTotals(hero).effects.commandLimit ?? 0;
+  return Math.floor(raw * (1 + bonus / 100));
 }
 
-/** 치명타 확률 (민첩 기준 0.2%/pt — baike) */
+/**
+ * 치명타 확률. 민첩 0.2%/pt는 바이두백과 실측이고,
+ * 힘 반지·마법 반지의 치명타율 +3/6/9%는 4399 실측 효과.
+ */
 export function critChance(hero: Hero): number {
-  return hero.stats.agility * formulas.critChancePerPoint.value;
+  const base = hero.stats.agility * formulas.critChancePerPoint.value;
+  const eff = equipTotals(hero).effects;
+  const fromGear = ((eff.physCrit ?? 0) + (eff.magicCrit ?? 0)) / 100;
+  return base + fromGear;
 }
 
-/** 영웅 스탯이 지휘 병종에 주는 보정 배율 (계수는 estimate) */
+/** 영웅 스탯 + 착용 장비가 지휘 병종에 주는 보정 배율 (계수는 estimate) */
 export function troopBonuses(hero: Hero): {
   hp: number;
   patk: number;
@@ -44,12 +56,13 @@ export function troopBonuses(hero: Hero): {
 } {
   const b = formulas.bonusPerPoint;
   const s = hero.stats;
+  const eq = equipMultipliers(hero);
   return {
     hp: 1 + s.endurance * b.hpPerEndurance,
-    patk: 1 + s.strength * b.patkPerStrength,
-    pdef: 1 + s.agility * b.pdefPerAgility,
-    matk: 1 + s.intellect * b.matkPerIntellect,
-    mdef: 1 + s.spirit * b.mdefPerSpirit,
+    patk: (1 + s.strength * b.patkPerStrength) * eq.patk,
+    pdef: (1 + s.agility * b.pdefPerAgility) * eq.pdef,
+    matk: (1 + s.intellect * b.matkPerIntellect) * eq.matk,
+    mdef: (1 + s.spirit * b.mdefPerSpirit) * eq.mdef,
     speed: 1 + s.agility * b.speedPerAgility,
   };
 }

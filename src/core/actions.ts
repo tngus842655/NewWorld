@@ -1,6 +1,15 @@
-import type { BuildingDef, CampDef, GameState, NodeDef, Resources, UnitDef } from './types';
+import type {
+  BuildingDef,
+  CampDef,
+  EquipSlot,
+  GameState,
+  NodeDef,
+  Resources,
+  UnitDef,
+} from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle } from './combat';
+import { equipTotals } from './equipment';
 
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
@@ -205,6 +214,9 @@ export function dispatchMarch(
     if (state.army[unitId] <= 0) delete state.army[unitId];
   }
 
+  // 난이도 0~1: 왕복 시간이 길수록 어려운 곳으로 본다 (드롭 등급 보정용)
+  const dropDifficulty = Math.min(1, target.marchSeconds / 1500);
+
   const report = simulateBattle({
     hero,
     attackerArmy: army,
@@ -214,17 +226,60 @@ export function dispatchMarch(
     loot: kind === 'hunt' ? (target as CampDef).loot : {},
     unitDefs,
     unitLevels: state.unitLevels,
+    dropDifficulty,
     now,
   });
+
+  // 신행 목걸이(神行项链)의 행군 속도 증가 — 4399 실측 효과
+  const speedBonus = equipTotals(hero).effects.marchSpeed ?? 0;
+  const seconds = target.marchSeconds / (1 + speedBonus / 100);
 
   state.march = {
     kind,
     campId: target.id,
     campName: target.name,
     heroId,
-    returnsAt: now + target.marchSeconds * 1000,
+    returnsAt: now + seconds * 1000,
     report,
   };
+  return { ok: true };
+}
+
+/** 창고의 장비를 영웅에게 착용시킨다. 그 부위에 있던 장비는 창고로 돌아간다. */
+export function equipItem(state: GameState, heroId: string, itemId: string): ActionResult {
+  const hero = state.heroes.find((h) => h.id === heroId);
+  if (!hero) return { ok: false, reason: '영웅을 찾을 수 없습니다.' };
+
+  const idx = state.inventory.findIndex((i) => i.id === itemId);
+  if (idx < 0) return { ok: false, reason: '창고에 없는 장비입니다.' };
+
+  const item = state.inventory[idx];
+  if (item.heroLevel > hero.level) {
+    return { ok: false, reason: `영웅 레벨 ${item.heroLevel} 이상이어야 착용할 수 있습니다.` };
+  }
+
+  hero.equipment ??= {};
+  const previous = hero.equipment[item.slot];
+  hero.equipment[item.slot] = item;
+  state.inventory.splice(idx, 1);
+  if (previous) state.inventory.push(previous);
+  return { ok: true };
+}
+
+/** 착용 장비를 벗어 창고로 보낸다 */
+export function unequipItem(state: GameState, heroId: string, slot: EquipSlot): ActionResult {
+  const hero = state.heroes.find((h) => h.id === heroId);
+  if (!hero?.equipment?.[slot]) return { ok: false, reason: '착용한 장비가 없습니다.' };
+  state.inventory.push(hero.equipment[slot]!);
+  delete hero.equipment[slot];
+  return { ok: true };
+}
+
+/** 창고 장비를 버린다 */
+export function discardItem(state: GameState, itemId: string): ActionResult {
+  const idx = state.inventory.findIndex((i) => i.id === itemId);
+  if (idx < 0) return { ok: false, reason: '창고에 없는 장비입니다.' };
+  state.inventory.splice(idx, 1);
   return { ok: true };
 }
 

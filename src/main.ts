@@ -4,18 +4,21 @@ import elfUnits from '../data/units/elf.json';
 import undeadUnits from '../data/units/undead.json';
 import devilUnits from '../data/units/devil.json';
 import neutralUnits from '../data/units/neutral.json';
-import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
+import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef } from './core/types';
 import campData from '../data/combat/camps.json';
 import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
 import {
   abandonNode,
+  discardItem,
   dispatchMarch,
+  equipItem,
   hireHero,
   refreshTavern,
   startResearch,
   startTraining,
   startUpgrade,
+  unequipItem,
 } from './core/actions';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
@@ -60,6 +63,7 @@ function newGame(now: number): GameState {
     march: null,
     reports: [],
     heldNodes: [],
+    inventory: [],
   };
 }
 
@@ -75,6 +79,8 @@ function migrate(state: GameState): GameState {
   state.heldNodes ??= [];
   state.unitLevels ??= {};
   state.researchQueue ??= null;
+  state.inventory ??= [];
+  for (const h of state.heroes) h.equipment ??= {};
   // M4 이전 출정 데이터에는 kind가 없다
   if (state.march) state.march.kind ??= 'hunt';
   // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
@@ -179,6 +185,28 @@ async function main(): Promise<void> {
       rerender(now);
     },
     onSelectSite() {
+      rerender(Date.now());
+    },
+    onEquip(itemId: string) {
+      // 착용 가능한 영웅 중 첫 번째에게 (여러 명이면 레벨 요건을 만족하는 영웅)
+      const item = state.inventory.find((i) => i.id === itemId);
+      const hero = state.heroes.find((h) => h.level >= (item?.heroLevel ?? 1));
+      if (!item || !hero) return;
+      const result = equipItem(state, hero.id, itemId);
+      setMessage(result.ok ? `${hero.name}에게 ${item.nameKo} 착용` : result.reason);
+      dirty = true;
+      rerender(Date.now());
+    },
+    onUnequip(heroId: string, slot: EquipSlot) {
+      const result = unequipItem(state, heroId, slot);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(Date.now());
+    },
+    onDiscard(itemId: string) {
+      const result = discardItem(state, itemId);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
       rerender(Date.now());
     },
     onAbandon(nodeId: string) {

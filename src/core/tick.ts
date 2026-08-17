@@ -85,6 +85,8 @@ function finishMarch(state: GameState): void {
   const hero = state.heroes.find((h) => h.id === march.heroId);
   if (hero) grantXp(hero, report.xpGained);
 
+  for (const item of report.drops ?? []) state.inventory.push(item);
+
   state.reports.unshift(report);
   state.reports.length = Math.min(state.reports.length, MAX_REPORTS);
   state.march = null;

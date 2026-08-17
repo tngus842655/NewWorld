@@ -121,12 +121,50 @@ export const HERO_STAT_LABELS: Record<keyof HeroStats, string> = {
   charisma: '매력',
 };
 
+export type EquipSlot =
+  | 'weapon'
+  | 'shield'
+  | 'head'
+  | 'chest'
+  | 'legs'
+  | 'hands'
+  | 'feet'
+  | 'ring'
+  | 'necklace';
+
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'artifact';
+
+/** 실제로 보유한 장비 한 점 */
+export interface EquipItem {
+  id: string;
+  slot: EquipSlot;
+  nameKo: string;
+  nameCn?: string;
+  rarity: Rarity;
+  /** 착용 요구 영웅 레벨 */
+  heroLevel: number;
+  patk?: number;
+  matk?: number;
+  pdef?: number;
+  mdef?: number;
+  /** 액세서리 특수효과 */
+  effect?: string;
+  effectKo?: string;
+  effectValue?: number;
+  effectUnit?: 'percent' | 'multiplier';
+  /** 세트 부위면 세트 id */
+  setId?: string;
+  setNameKo?: string;
+}
+
 export interface Hero {
   id: string;
   name: string;
   level: number;
   xp: number;
   stats: HeroStats;
+  /** 착용 장비 (부위 → 장비). 없으면 빈 부위 */
+  equipment?: Partial<Record<EquipSlot, EquipItem>>;
 }
 
 export interface HeroCandidate {
@@ -204,6 +242,8 @@ export interface BattleReport {
   survivors: UnitCount[];
   loot: Partial<Resources>;
   xpGained: number;
+  /** 전투에서 얻은 장비 */
+  drops?: EquipItem[];
 }
 
 export interface MarchJob {
@@ -247,4 +287,6 @@ export interface GameState {
   reports: BattleReport[];
   /** 점령해 보유 중인 자원지 */
   heldNodes: NodeHolding[];
+  /** 창고에 있는 미착용 장비 */
+  inventory: EquipItem[];
 }
