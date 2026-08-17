@@ -32,7 +32,7 @@ import {
   TAVERN_ID,
 } from '../core/heroes';
 import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
-import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
+import { buildingAt, CITY_SIZE, drawCity } from './cityview';
 
 /**
  * 원작 메뉴 구성(도시 / 영웅 / 맵 / 길드 / 시장 / 랭킹 / 정보)을 따른다.
@@ -932,7 +932,7 @@ export function render(
       const rect = canvas.getBoundingClientRect();
       const x = ((e.clientX - rect.left) * canvas.width) / rect.width;
       const y = ((e.clientY - rect.top) * canvas.height) / rect.height;
-      selectedBuilding = buildingAt(Math.floor(x / TILE), Math.floor(y / TILE));
+      selectedBuilding = buildingAt(x, y);
       cb.onSelectBuilding(selectedBuilding);
     });
 
