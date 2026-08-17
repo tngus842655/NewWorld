@@ -93,6 +93,12 @@ export interface TrainJob {
   finishesAt: number; // epoch ms
 }
 
+export interface ResearchJob {
+  unitId: string;
+  targetLevel: number;
+  finishesAt: number; // epoch ms
+}
+
 // ── 영웅 ──────────────────────────────────────────────────────
 // 6대 기초속성은 원작 실측(바이두백과): 내력=생명, 힘=물공, 민첩=물방·속도,
 // 지력=마공, 정신=마방, 매력=정찰. 치명타 +0.2%/pt.
@@ -223,6 +229,10 @@ export interface GameState {
   buildings: CityBuilding[];
   /** 보유 병력: 유닛 id → 수량 */
   army: Record<string, number>;
+  /** 유닛별 연구 레벨 (1~20). 없으면 1. 전투 시 이 레벨의 스탯을 쓴다 */
+  unitLevels: Record<string, number>;
+  /** 연구 큐도 한 번에 하나 */
+  researchQueue: ResearchJob | null;
   /** 고용한 영웅들 */
   heroes: Hero[];
   /** 주점 상태 */

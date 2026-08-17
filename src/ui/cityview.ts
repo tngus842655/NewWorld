@@ -21,6 +21,8 @@ const PLOT_POS: Record<string, [number, number]> = {
   barracks: [6, 4],
   farm: [2, 5],
   tavern: [4, 5],
+  // [6,6]은 팔각 성벽의 우하단 모서리에 걸치므로 안쪽 중앙에 배치
+  academy: [3, 4],
 };
 
 /** 플레이스홀더 아이콘/지붕색 */
@@ -32,6 +34,7 @@ const LOOK: Record<string, { icon: string; roof: string }> = {
   market: { icon: '🏪', roof: '#3f7d4e' },
   barracks: { icon: '⚔️', roof: '#a0281c' },
   tavern: { icon: '🍺', roof: '#b06c2f' },
+  academy: { icon: '📜', roof: '#4a6ea6' },
 };
 
 const spriteCache = new Map<string, HTMLImageElement>();

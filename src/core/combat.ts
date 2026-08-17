@@ -59,8 +59,9 @@ function makeStack(
   side: 'attacker' | 'defender',
   bonus: ReturnType<typeof troopBonuses> | null,
   crit: number,
+  unitLevel: number,
 ): Stack {
-  const s = def.stats.find((x) => x.level === 1) ?? def.stats[0];
+  const s = def.stats.find((x) => x.level === unitLevel) ?? def.stats[0];
   const b = bonus ?? { hp: 1, patk: 1, pdef: 1, matk: 1, mdef: 1, speed: 1 };
   const unitHp = Math.max(1, s.hp * b.hp);
   return {
@@ -103,22 +104,26 @@ export interface BattleInput {
   campName: string;
   loot: Partial<Resources>;
   unitDefs: Map<string, UnitDef>;
+  /** 아군 유닛의 연구 레벨 (없으면 1). 적은 항상 1레벨 */
+  unitLevels?: Record<string, number>;
   now: number;
 }
 
 export function simulateBattle(input: BattleInput): BattleReport {
-  const { hero, attackerArmy, defenderArmy, unitDefs, now } = input;
+  const { hero, attackerArmy, defenderArmy, unitDefs, unitLevels, now } = input;
   const bonus = troopBonuses(hero);
   const crit = critChance(hero);
 
   const stacks: Stack[] = [];
   for (const { unitId, count } of attackerArmy) {
     const def = unitDefs.get(unitId);
-    if (def && count > 0) stacks.push(makeStack(def, count, 'attacker', bonus, crit));
+    if (def && count > 0) {
+      stacks.push(makeStack(def, count, 'attacker', bonus, crit, unitLevels?.[unitId] ?? 1));
+    }
   }
   for (const { unitId, count } of defenderArmy) {
     const def = unitDefs.get(unitId);
-    if (def && count > 0) stacks.push(makeStack(def, count, 'defender', null, 0));
+    if (def && count > 0) stacks.push(makeStack(def, count, 'defender', null, 0, 1));
   }
 
   const log: BattleLogEntry[] = [];

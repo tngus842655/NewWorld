@@ -13,6 +13,7 @@ import {
   dispatchMarch,
   hireHero,
   refreshTavern,
+  startResearch,
   startTraining,
   startUpgrade,
 } from './core/actions';
@@ -50,6 +51,8 @@ function newGame(now: number): GameState {
     resources: { wood: 200, stone: 200, food: 200, crystal: 50, gold: 150 },
     buildings: [...buildingDefs.keys()].map((defId) => ({ defId, level: 0 })),
     army: {},
+    unitLevels: {},
+    researchQueue: null,
     heroes: [],
     tavern: { candidates: [], refreshedAt: 0 },
     upgradeQueue: null,
@@ -70,6 +73,8 @@ function migrate(state: GameState): GameState {
   state.march ??= null;
   state.reports ??= [];
   state.heldNodes ??= [];
+  state.unitLevels ??= {};
+  state.researchQueue ??= null;
   // M4 이전 출정 데이터에는 kind가 없다
   if (state.march) state.march.kind ??= 'hunt';
   // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
@@ -118,6 +123,16 @@ async function main(): Promise<void> {
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       const result = startTraining(state, def, count, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
+    onResearch(unitId: string) {
+      const def = unitDefs.get(unitId);
+      if (!def) return;
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = startResearch(state, def, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);
@@ -179,6 +194,7 @@ async function main(): Promise<void> {
       const now = Date.now();
       if (state.upgradeQueue) state.upgradeQueue.finishesAt = now;
       if (state.trainQueue) state.trainQueue.finishesAt = now;
+      if (state.researchQueue) state.researchQueue.finishesAt = now;
       if (state.march) state.march.returnsAt = now;
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       dirty = true;
@@ -193,12 +209,14 @@ async function main(): Promise<void> {
     const had = {
       build: !!state.upgradeQueue,
       train: !!state.trainQueue,
+      research: !!state.researchQueue,
       march: !!state.march,
     };
     state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
     if (
       (had.build && !state.upgradeQueue) ||
       (had.train && !state.trainQueue) ||
+      (had.research && !state.researchQueue) ||
       (had.march && !state.march)
     ) {
       dirty = true; // 큐 완료됨

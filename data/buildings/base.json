@@ -74,6 +74,24 @@
       ]
     },
     {
+      "id": "academy",
+      "name": "연구소",
+      "description": "병종을 연구해 능력치를 올린다. 연구 가능 레벨은 연구소 레벨의 2배까지.",
+      "provenance": "estimate",
+      "levels": [
+        { "upgradeCost": { "wood": 200, "stone": 150, "gold": 250 }, "upgradeSeconds": 60 },
+        { "upgradeCost": { "wood": 450, "stone": 350, "gold": 600 }, "upgradeSeconds": 180 },
+        { "upgradeCost": { "wood": 950, "stone": 750, "gold": 1300, "crystal": 100 }, "upgradeSeconds": 480 },
+        { "upgradeCost": { "wood": 2000, "stone": 1600, "gold": 2800, "crystal": 250 }, "upgradeSeconds": 1200 },
+        { "upgradeCost": { "wood": 4200, "stone": 3400, "gold": 6000, "crystal": 600 }, "upgradeSeconds": 2700 },
+        { "upgradeCost": { "wood": 8800, "stone": 7200, "gold": 12500, "crystal": 1400 }, "upgradeSeconds": 5400 },
+        { "upgradeCost": { "wood": 18000, "stone": 15000, "gold": 26000, "crystal": 3000 }, "upgradeSeconds": 10800 },
+        { "upgradeCost": { "wood": 37000, "stone": 31000, "gold": 54000, "crystal": 6500 }, "upgradeSeconds": 21600 },
+        { "upgradeCost": { "wood": 76000, "stone": 64000, "gold": 110000, "crystal": 14000 }, "upgradeSeconds": 43200 },
+        { "upgradeCost": { "wood": 155000, "stone": 130000, "gold": 225000, "crystal": 30000 }, "upgradeSeconds": 86400 }
+      ]
+    },
+    {
       "id": "tavern",
       "name": "주점",
       "description": "영웅을 고용한다. 주점 레벨만큼 영웅을 보유할 수 있다.",

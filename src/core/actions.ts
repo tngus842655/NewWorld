@@ -4,6 +4,65 @@ import { selectArmyForMarch, simulateBattle } from './combat';
 
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
+/** 병종 연구를 담당하는 건물 id */
+export const ACADEMY_ID = 'academy';
+/** 유닛 연구 최대 레벨 — 4399 스탯표가 20레벨까지 있다 */
+export const MAX_UNIT_LEVEL = 20;
+
+/** 연구소 1레벨당 유닛 2레벨까지 허용 (추정 규칙) */
+export function maxResearchableLevel(academyLevel: number): number {
+  return Math.min(MAX_UNIT_LEVEL, academyLevel * 2);
+}
+
+/** 목표 레벨로 올리는 데 드는 연구 비용 — 훈련 비용을 기준으로 체증 (추정) */
+export function researchCost(def: UnitDef, targetLevel: number): Partial<Resources> {
+  const scale = Math.pow(1.55, targetLevel - 1) * 12 * def.tier;
+  const cost: Partial<Resources> = {};
+  for (const [k, v] of Object.entries(def.cost) as [keyof Resources, number][]) {
+    if (v > 0) cost[k] = Math.round(v * scale);
+  }
+  // 훈련에 자원이 거의 안 드는 유닛도 연구에는 목재·석재가 든다
+  cost.wood = Math.round((cost.wood ?? 0) + 60 * scale);
+  cost.stone = Math.round((cost.stone ?? 0) + 40 * scale);
+  return cost;
+}
+
+export function researchSeconds(def: UnitDef, targetLevel: number): number {
+  return Math.round(90 * def.tier * Math.pow(1.4, targetLevel - 1));
+}
+
+/** 병종 연구를 큐에 넣는다. 상태를 직접 변경한다(호출 전 advance 필수). */
+export function startResearch(
+  state: GameState,
+  def: UnitDef,
+  now: number,
+): ActionResult {
+  if (state.researchQueue) return { ok: false, reason: '연구 큐가 이미 사용 중입니다.' };
+
+  const academyLevel = state.buildings.find((b) => b.defId === ACADEMY_ID)?.level ?? 0;
+  if (academyLevel < 1) return { ok: false, reason: '연구소를 먼저 지어야 합니다.' };
+
+  const current = state.unitLevels[def.id] ?? 1;
+  const targetLevel = current + 1;
+  if (targetLevel > MAX_UNIT_LEVEL) return { ok: false, reason: '이미 최대 연구 레벨입니다.' };
+  if (targetLevel > maxResearchableLevel(academyLevel)) {
+    return {
+      ok: false,
+      reason: `연구소 Lv.${Math.ceil(targetLevel / 2)} 필요 (현재 Lv.${academyLevel})`,
+    };
+  }
+
+  const cost = researchCost(def, targetLevel);
+  if (!canAfford(state.resources, cost)) return { ok: false, reason: '자원이 부족합니다.' };
+
+  pay(state.resources, cost);
+  state.researchQueue = {
+    unitId: def.id,
+    targetLevel,
+    finishesAt: now + researchSeconds(def, targetLevel) * 1000,
+  };
+  return { ok: true };
+}
 
 export type ActionResult = { ok: true } | { ok: false; reason: string };
 
@@ -154,6 +213,7 @@ export function dispatchMarch(
     campName: target.name,
     loot: kind === 'hunt' ? (target as CampDef).loot : {},
     unitDefs,
+    unitLevels: state.unitLevels,
     now,
   });
 

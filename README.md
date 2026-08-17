@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-브라우저에서 http://localhost:5173 접속. 저장은 기본 localStorage — Supabase를 쓰려면 `.env.example`을 `.env.local`로 복사하고 값을 채운다.
+브라우저에서 http://localhost:5174  접속. 저장은 기본 localStorage — Supabase를 쓰려면 `.env.example`을 `.env.local`로 복사하고 값을 채운다.
 
 ## 구조
 

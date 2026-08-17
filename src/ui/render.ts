@@ -10,7 +10,15 @@ import type {
   UnitDef,
 } from '../core/types';
 import { HERO_STAT_LABELS, RACE_LABELS, RESOURCE_LABELS } from '../core/types';
-import { BARRACKS_ID, canAfford } from '../core/actions';
+import {
+  ACADEMY_ID,
+  BARRACKS_ID,
+  canAfford,
+  MAX_UNIT_LEVEL,
+  maxResearchableLevel,
+  researchCost,
+  researchSeconds,
+} from '../core/actions';
 import { selectArmyForMarch } from '../core/combat';
 import { drawWorld, siteAt, WORLD_SIZE, WTILE, type WorldSite } from './worldmap';
 import {
@@ -43,6 +51,8 @@ export interface RenderCallbacks {
   onSelectSite(siteId: string | null): void;
   /** 점령한 자원지 포기 */
   onAbandon(nodeId: string): void;
+  /** 병종 연구 시작 */
+  onResearch(unitId: string): void;
   /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
   onInstantFinish(): void;
 }
@@ -83,7 +93,8 @@ const STYLE = `
   .topbar { flex: 0 0 auto; background: #241e1b; border-bottom: 1px solid #3a322c;
     padding: calc(env(safe-area-inset-top) + 8px) 10px 8px; }
   .resources { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .resources div { text-align: center; font-size: 11px; color: #b5a99f; line-height: 1.35; }
+  .resources div { text-align: center; font-size: 11px; color: #b5a99f; line-height: 1.35;
+    min-width: 0; overflow: hidden; }
   .resources b { display: block; color: #e0b568; font-size: 14px; font-variant-numeric: tabular-nums; }
   .queue { margin-top: 6px; font-size: 12px; color: #7db4e0; display: flex;
     align-items: center; gap: 8px; justify-content: space-between; }
@@ -117,8 +128,9 @@ const STYLE = `
 
   canvas { width: 100%; display: block; border-radius: 12px; touch-action: manipulation; }
 
-  /* 하단 탭 */
-  .tabs { flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, 1fr);
+  /* 하단 탭 — 탭 개수가 늘어도 자동으로 한 줄에 나눠 담는다 */
+  .tabs { flex: 0 0 auto; display: grid;
+    grid-auto-flow: column; grid-auto-columns: 1fr;
     background: #241e1b; border-top: 1px solid #3a322c;
     padding-bottom: env(safe-area-inset-bottom); }
   .tabs button { background: none; color: #8a7d73; border-radius: 0; min-height: 56px;
@@ -194,10 +206,34 @@ function ensureStyle(): void {
   document.head.appendChild(style);
 }
 
+/**
+ * 큰 수를 k/M/B 약어로 줄인다. 자원이 억 단위까지 가면 상단 바가 넘치므로
+ * 유효숫자 3자리 정도만 보여주고, 정확한 값은 title 속성으로 남긴다.
+ */
+export function formatNumber(n: number): string {
+  const v = Math.floor(n);
+  if (v < 1000) return String(v);
+  const units: [number, string][] = [
+    [1e12, 'T'],
+    [1e9, 'B'],
+    [1e6, 'M'],
+    [1e3, 'k'],
+  ];
+  for (const [limit, suffix] of units) {
+    if (v < limit) continue;
+    const scaled = v / limit;
+    const dec = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+    let s = scaled.toFixed(dec);
+    if (s.includes('.')) s = s.replace(/\.?0+$/, ''); // 1.00 → 1, 12.30 → 12.3
+    return s + suffix;
+  }
+  return String(v);
+}
+
 function costText(cost: Partial<Record<ResourceKind, number>>): string {
   return Object.entries(cost)
     .filter(([, v]) => (v ?? 0) > 0)
-    .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
+    .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${formatNumber(v ?? 0)}`)
     .join(' · ');
 }
 
@@ -272,18 +308,25 @@ function barracksTab(
   const entries = Object.entries(state.army).filter(([, n]) => n > 0);
   const army = entries.length
     ? `<div class="army">${entries
-        .map(([id, n]) => `<span>${unitDefs.get(id)?.nameKo ?? id} <b>${n}</b></span>`)
+        .map(([id, n]) => {
+          const lv = state.unitLevels[id] ?? 1;
+          return `<span>${unitDefs.get(id)?.nameKo ?? id} <b>${formatNumber(n)}</b>
+            ${lv > 1 ? `<span class="tier">Lv.${lv}</span>` : ''}</span>`;
+        })
         .join('')}</div>`
     : '<div class="card"><small>아직 병력이 없다.</small></div>';
 
   const level = state.buildings.find((b) => b.defId === BARRACKS_ID)?.level ?? 0;
+  const academyLevel = state.buildings.find((b) => b.defId === ACADEMY_ID)?.level ?? 0;
+  const raceUnits = [...unitDefs.values()]
+    .filter((u) => u.raceId === state.raceId)
+    .sort((a, b) => a.tier - b.tier);
+
   let training: string;
   if (level < 1) {
     training = '<div class="card"><small>도시에서 병영을 지으면 유닛을 훈련할 수 있다.</small></div>';
   } else {
-    training = [...unitDefs.values()]
-      .filter((u) => u.raceId === state.raceId)
-      .sort((a, b) => a.tier - b.tier)
+    training = raceUnits
       .map((u) => {
         const locked = u.tier > level;
         const cost5 = Object.fromEntries(Object.entries(u.cost).map(([k, v]) => [k, (v ?? 0) * 5]));
@@ -301,7 +344,51 @@ function barracksTab(
       })
       .join('');
   }
-  return `<h2>보유 병력</h2>${army}<h2>훈련 (병영 Lv.${level})</h2>${training}`;
+
+  // ── 병종 연구 ──
+  let research: string;
+  if (academyLevel < 1) {
+    research = '<div class="card"><small>도시에서 연구소를 지으면 병종 능력치를 올릴 수 있다.</small></div>';
+  } else {
+    const cap = maxResearchableLevel(academyLevel);
+    research = raceUnits
+      .map((u) => {
+        const cur = state.unitLevels[u.id] ?? 1;
+        const next = cur + 1;
+        const s1 = u.stats.find((s) => s.level === cur);
+        const s2 = u.stats.find((s) => s.level === next);
+        const statNow = s1 ? `생명 ${s1.hp} · 공격 ${Math.max(s1.patk, s1.matk)} · 방어 ${s1.pdef}` : '';
+
+        if (cur >= MAX_UNIT_LEVEL) {
+          return `<div class="card">
+            <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
+              <small>${statNow}</small><small>최대 연구 완료</small></div>
+          </div>`;
+        }
+        const overCap = next > cap;
+        const cost = researchCost(u, next);
+        const secs = researchSeconds(u, next);
+        const gain = s2
+          ? `→ 생명 ${s2.hp} · 공격 ${Math.max(s2.patk, s2.matk)} · 방어 ${s2.pdef}`
+          : '';
+        const info = overCap
+          ? `🔒 연구소 Lv.${Math.ceil(next / 2)} 필요`
+          : `${statNow}<br>${gain}<br>${costText(cost)} · ${Math.round(secs / 60)}분`;
+        return `<div class="card">
+          <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
+            <small>${info}</small></div>
+          <div class="actions">
+            <button data-research="${u.id}"
+              ${costAttrs(cost, overCap || state.researchQueue !== null)}>Lv.${next}</button>
+          </div>
+        </div>`;
+      })
+      .join('');
+  }
+
+  return `<h2>보유 병력</h2>${army}
+    <h2>훈련 (병영 Lv.${level})</h2>${training}
+    <h2>병종 연구 (연구소 Lv.${academyLevel})</h2>${research}`;
 }
 
 function tavernTab(state: GameState, now: number): string {
@@ -387,7 +474,7 @@ function worldTab(
 
     if (camp) {
       const lootText = Object.entries(camp.loot)
-        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
+        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${formatNumber(v)}`)
         .join(' · ');
       rewardLine = `보상: ${lootText}`;
       action = `<button data-dispatch="${camp.id}" data-kind="hunt"
@@ -477,7 +564,7 @@ function reportsSection(
       const mins = Math.max(0, Math.round((now - r.at) / 60000));
       const when = mins < 1 ? '방금' : mins < 60 ? `${mins}분 전` : `${Math.round(mins / 60)}시간 전`;
       const lootText = Object.entries(r.loot)
-        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
+        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${formatNumber(v)}`)
         .join(' · ');
       const logLines = r.log
         .map(
@@ -567,7 +654,7 @@ export function render(
   }
 
   const resources = (Object.keys(RESOURCE_LABELS) as ResourceKind[])
-    .map((k) => `<div>${RESOURCE_LABELS[k]}<b data-res="${k}"></b></div>`)
+    .map((k) => `<div data-res-cell="${k}">${RESOURCE_LABELS[k]}<b data-res="${k}"></b></div>`)
     .join('');
 
   const instant = import.meta.env.DEV ? '<button class="small" data-instant>⚡</button>' : '';
@@ -583,6 +670,12 @@ export function render(
     queues.push(`<div class="queue"><span>⚔️ ${def?.nameKo ?? '?'} ×${state.trainQueue.count}</span>
       <span class="bar"><i id="q-train-bar"></i></span>
       <span id="q-train-remain"></span>${instant}</div>`);
+  }
+  if (state.researchQueue) {
+    const def = unitDefs.get(state.researchQueue.unitId);
+    queues.push(`<div class="queue"><span>📜 ${def?.nameKo ?? '?'} Lv.${state.researchQueue.targetLevel}</span>
+      <span class="bar"><i id="q-research-bar"></i></span>
+      <span id="q-research-remain"></span>${instant}</div>`);
   }
   if (state.march) {
     queues.push(`<div class="queue"><span>🗡️ ${state.march.campName} 출정</span>
@@ -615,6 +708,8 @@ export function render(
     state.tavern.candidates.map((c) => `${c.name}:${c.price}`),
     state.upgradeQueue && `${state.upgradeQueue.defId}:${state.upgradeQueue.targetLevel}`,
     state.trainQueue && `${state.trainQueue.unitId}:${state.trainQueue.count}`,
+    state.researchQueue && `${state.researchQueue.unitId}:${state.researchQueue.targetLevel}`,
+    Object.entries(state.unitLevels),
     state.march?.campId ?? '',
     state.reports.map((r) => r.id),
     selectedHeroId,
@@ -680,6 +775,9 @@ export function render(
     root.querySelectorAll<HTMLButtonElement>('button[data-hero]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onSelectHero(btn.dataset.hero!));
     });
+    root.querySelectorAll<HTMLButtonElement>('button[data-research]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onResearch(btn.dataset.research!));
+    });
     root.querySelectorAll<HTMLButtonElement>('button[data-abandon]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onAbandon(btn.dataset.abandon!));
     });
@@ -715,7 +813,10 @@ function updateDynamic(
   now: number,
 ): void {
   root.querySelectorAll<HTMLElement>('b[data-res]').forEach((el) => {
-    el.textContent = Math.floor(state.resources[el.dataset.res as ResourceKind]).toLocaleString();
+    const value = state.resources[el.dataset.res as ResourceKind];
+    el.textContent = formatNumber(value);
+    // 정확한 값은 길게 눌렀을 때(데스크톱은 마우스 오버) 확인
+    el.parentElement?.setAttribute('title', Math.floor(value).toLocaleString());
   });
 
   const setQueue = (prefix: string, finishesAt: number, totalSeconds: number) => {
@@ -736,6 +837,14 @@ function updateDynamic(
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     setQueue('train', state.trainQueue.finishesAt, (def?.trainSeconds ?? 0) * state.trainQueue.count);
+  }
+  if (state.researchQueue) {
+    const def = unitDefs.get(state.researchQueue.unitId);
+    setQueue(
+      'research',
+      state.researchQueue.finishesAt,
+      def ? researchSeconds(def, state.researchQueue.targetLevel) : 0,
+    );
   }
   if (state.march) {
     const camp = camps.find((c) => c.id === state.march!.campId);

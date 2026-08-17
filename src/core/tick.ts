@@ -23,13 +23,16 @@ export function advance(
 
   const next: GameState = structuredClone(state);
 
-  type Ev = { at: number; kind: 'build' | 'train' | 'march' };
+  type Ev = { at: number; kind: 'build' | 'train' | 'march' | 'research' };
   const events: Ev[] = [];
   if (next.upgradeQueue && next.upgradeQueue.finishesAt <= now) {
     events.push({ at: next.upgradeQueue.finishesAt, kind: 'build' });
   }
   if (next.trainQueue && next.trainQueue.finishesAt <= now) {
     events.push({ at: next.trainQueue.finishesAt, kind: 'train' });
+  }
+  if (next.researchQueue && next.researchQueue.finishesAt <= now) {
+    events.push({ at: next.researchQueue.finishesAt, kind: 'research' });
   }
   if (next.march && next.march.returnsAt <= now) {
     events.push({ at: next.march.returnsAt, kind: 'march' });
@@ -47,6 +50,10 @@ export function advance(
       const { unitId, count } = next.trainQueue;
       next.army[unitId] = (next.army[unitId] ?? 0) + count;
       next.trainQueue = null;
+    } else if (ev.kind === 'research' && next.researchQueue) {
+      const { unitId, targetLevel } = next.researchQueue;
+      next.unitLevels[unitId] = targetLevel;
+      next.researchQueue = null;
     } else if (ev.kind === 'march' && next.march) {
       finishMarch(next);
     }
