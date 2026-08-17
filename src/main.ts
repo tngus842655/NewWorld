@@ -41,7 +41,7 @@ import {
   tradeYield,
   unequipItem,
 } from './core/actions';
-import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
+import { buildSlots, DEFAULT_SLOTS, inventoryCap, repairLayout, storageCap } from './core/city';
 import { commandLimit, maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { previewBattle, simulateBattle } from './core/combat';
 import { equipTotals } from './core/equipment';
@@ -353,7 +353,7 @@ async function main(): Promise<void> {
     onBuyGear(gearId: string) {
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
-      const result = buyGear(state, gearId, now);
+      const result = buyGear(state, gearId, buildingDefs, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);
@@ -469,6 +469,8 @@ async function main(): Promise<void> {
       simulateBattle,
       previewBattle,
       storageCap,
+      inventoryCap,
+      buyGear,
       equipTotals,
       tradeFee,
       tradeYield,

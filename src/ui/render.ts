@@ -74,6 +74,7 @@ import {
   buildingAtCell,
   buildingEffect,
   buildSlots,
+  inventoryCap,
   storageCap,
   isHeroMarching,
   marchSlots,
@@ -1004,8 +1005,12 @@ function heroTab(state: GameState, buildingDefs: Map<string, BuildingDef>): stri
         .join('')
     : '<div class="card"><small>창고가 비어 있다. 교전지에서 승리하면 장비를 얻는다.</small></div>';
 
+  const cap = inventoryCap(state, buildingDefs);
+  const full = state.inventory.length >= cap;
   return `<h2>지휘관</h2>${heroes}
-    <h2>창고 (${state.inventory.length})</h2>${inventory}`;
+    <h2>창고 (${state.inventory.length}/${cap})</h2>
+    ${full ? '<div class="card"><small class="locked">창고가 가득 찼다 — 전리품 장비를 실어 오지 못한다. 유물 보관고를 올리거나 정리하자.</small></div>' : ''}
+    ${inventory}`;
 }
 
 /**
@@ -1259,6 +1264,7 @@ function reportsSection(
               : ''
           }
           ${plunderText ? `<small class="locked">💸 약탈당함: ${plunderText}</small>` : ''}
+          ${r.lostDrops ? `<small class="locked">📦 창고가 꽉 차 장비 ${r.lostDrops}점을 두고 왔다</small>` : ''}
           ${
             r.recovered?.length
               ? `<small>🚑 부상 복귀: ${unitCountText(r.recovered, unitDefs)}</small>`
@@ -1539,6 +1545,7 @@ export function render(
     ),
     state.heldNodes.map((h) => h.nodeId),
     state.inventory.map((i) => `${i.id}:${i.plus ?? 0}`),
+    inventoryCap(state, buildingDefs),
   ]);
 
   if (key !== lastStructureKey) {

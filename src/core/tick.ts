@@ -9,7 +9,7 @@ import type {
   UpgradeJob,
 } from './types';
 import { grantXp } from './heroes';
-import { productionBoosts, storageCap } from './city';
+import { inventoryCap, productionBoosts, storageCap } from './city';
 import {
   MAX_RAIDS_PER_CATCH_UP,
   RAID_INTERVAL_SECONDS,
@@ -81,7 +81,7 @@ export function advance(
       next.unitLevels[unitId] = targetLevel;
       next.researchQueue = null;
     } else if (ev.kind === 'march' && ev.march) {
-      finishMarch(next, ev.march);
+      finishMarch(next, ev.march, buildingDefs);
     } else if (ev.kind === 'raid') {
       const report = resolveRaid(next, unitDefs, buildingDefs, ev.at);
       next.reports.unshift(report);
@@ -122,7 +122,11 @@ function scheduleRaids(state: GameState, now: number): number[] {
 }
 
 /** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 점령 처리 + 리포트 보관 */
-function finishMarch(state: GameState, march: MarchJob): void {
+function finishMarch(
+  state: GameState,
+  march: MarchJob,
+  buildingDefs: Map<string, BuildingDef>,
+): void {
   const { report } = march;
 
   // 생환자 + 의무동이 살려 낸 부상병이 함께 복귀한다
@@ -140,7 +144,14 @@ function finishMarch(state: GameState, march: MarchJob): void {
   const hero = state.heroes.find((h) => h.id === march.heroId);
   if (hero) grantXp(hero, report.xpGained);
 
-  for (const item of report.drops ?? []) state.inventory.push(item);
+  // 창고가 꽉 차면 전리품 장비를 실어 오지 못한다
+  const cap = inventoryCap(state, buildingDefs);
+  let lost = 0;
+  for (const item of report.drops ?? []) {
+    if (state.inventory.length >= cap) lost++;
+    else state.inventory.push(item);
+  }
+  if (lost > 0) report.lostDrops = lost;
 
   state.reports.unshift(report);
   state.reports.length = Math.min(state.reports.length, MAX_REPORTS);

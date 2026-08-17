@@ -8,6 +8,7 @@ import type {
 } from './types';
 import {
   BASE_MARCH_SLOTS,
+  BASE_INVENTORY_SLOTS,
   BASE_STORAGE,
   DEFAULT_BUILD_SLOTS,
   MAX_BUILD_SLOTS,
@@ -204,6 +205,11 @@ export function isHeroMarching(state: GameState, heroId: string): boolean {
  */
 export function storageCap(state: GameState, buildingDefs: Map<string, BuildingDef>): number {
   return BASE_STORAGE + buildingEffect(state, buildingDefs, 'storageCapacity');
+}
+
+/** 창고에 넣을 수 있는 장비 칸 수 */
+export function inventoryCap(state: GameState, buildingDefs: Map<string, BuildingDef>): number {
+  return BASE_INVENTORY_SLOTS + buildingEffect(state, buildingDefs, 'inventorySlots');
 }
 
 // ── 가공 건물 보정 ────────────────────────────────────────────

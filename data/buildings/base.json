@@ -2228,15 +2228,20 @@
     {
       "id": "relic-vault",
       "name": "유물 보관고",
-      "description": "전장에서 수습한 유물을 보관하고 감정한다.",
+      "description": "전장에서 수습한 유물과 장비를 보관한다. 레벨당 창고 칸이 10개씩 늘어난다.",
       "category": "지휘",
+      "effects": [
+        {
+          "kind": "inventorySlots",
+          "perLevel": 10
+        }
+      ],
       "requires": [
         {
           "buildingId": "academy",
           "level": 5
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

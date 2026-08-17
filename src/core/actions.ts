@@ -17,6 +17,7 @@ import {
   buildingEffect,
   buildSlots,
   hasFreeBuildSlot,
+  inventoryCap,
   isBuilding,
   isFreeCell,
   isGridBuilding,
@@ -498,6 +499,7 @@ export const BEAST_PEN_ID = 'beast-pen';
 export function buyGear(
   state: GameState,
   gearId: string,
+  buildingDefs: Map<string, BuildingDef>,
   now: number,
 ): ActionResult {
   const found = gearById(gearId);
@@ -513,6 +515,10 @@ export function buyGear(
   }
   if (!canAfford(state.resources, found.entry.cost)) {
     return { ok: false, reason: '자원이 부족합니다.' };
+  }
+
+  if (state.inventory.length >= inventoryCap(state, buildingDefs)) {
+    return { ok: false, reason: '창고가 가득 찼습니다.' };
   }
 
   pay(state.resources, found.entry.cost);

@@ -87,7 +87,9 @@ export type BuildingEffectKind =
   /** 장비 강화 상한 +N — 장비 공방 */
   | 'maxEnhance'
   /** 자원 교환 수수료 −%p — 암시장 */
-  | 'tradeFeeReduction';
+  | 'tradeFeeReduction'
+  /** 창고 칸 +N — 유물 보관고 */
+  | 'inventorySlots';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -115,7 +117,11 @@ export const BUILDING_EFFECT_INFO: Record<
   plunderResistPercent: { label: '약탈 피해 감소', unit: 'percent' },
   maxEnhance: { label: '장비 강화 상한', unit: 'count' },
   tradeFeeReduction: { label: '교환 수수료 감소', unit: 'percent' },
+  inventorySlots: { label: '창고 칸', unit: 'count' },
 };
+
+/** 유물 보관고 없이도 쓰는 기본 창고 칸 수 */
+export const BASE_INVENTORY_SLOTS = 20;
 
 /** 암시장 기본 교환 수수료(%)와 아무리 낮춰도 남는 하한 */
 export const BASE_TRADE_FEE = 30;
@@ -396,6 +402,8 @@ export interface BattleReport {
   hidden?: UnitCount[];
   /** raid: 방어 실패로 약탈당한 자원 */
   plundered?: Partial<Resources>;
+  /** 창고가 꽉 차 버려진 전리품 장비 수 */
+  lostDrops?: number;
   /** 자원지 점령전에서 승리해 점령했는가 */
   captured?: boolean;
   rounds: number;
