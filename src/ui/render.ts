@@ -652,7 +652,7 @@ function reportsSection(
       return `<details class="report">
         <summary>
           <span class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</span>
-          ${r.campName}${r.captured ? ' 🚩점령' : ''} · ${when}
+          ${r.campName}${r.captured ? ' 🚩점령' : ''}${r.drops?.length ? ' 🎁' : ''} · ${when}
         </summary>
         <div class="report-body">
           <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
@@ -660,6 +660,17 @@ function reportsSection(
           <small>아군 손실: ${unitCountText(r.attackerLosses, unitDefs)}</small>
           <small>생환: ${unitCountText(r.survivors, unitDefs)}</small>
           ${lootText ? `<small>전리품: ${lootText}</small>` : ''}
+          ${
+            r.drops?.length
+              ? `<small>획득 장비: ${r.drops
+                  .map(
+                    (d) =>
+                      `<b style="color:${rarityColor(d.rarity)}">${d.nameKo}</b>` +
+                      ` <span class="tier">${SLOT_LABELS[d.slot]}</span>`,
+                  )
+                  .join(', ')}</small>`
+              : ''
+          }
           <small>경험치 +${r.xpGained}</small>
           <div class="log">${logLines}</div>
         </div>
