@@ -1,0 +1,1543 @@
+{
+  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
+  "raceId": "elf",
+  "raceNameKo": "엘프",
+  "units": [
+    {
+      "id": "elf-t1",
+      "raceId": "elf",
+      "nameKo": "켄타우로스",
+      "nameCn": "半人马",
+      "tier": 1,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 10,
+        "food": 0,
+        "gold": 28
+      },
+      "speed": 6,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 600,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 2,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 3,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 4,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 5,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 6,
+          "hp": 8,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 7,
+          "hp": 9,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 8,
+          "hp": 9,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 9,
+          "hp": 9,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 10,
+          "hp": 9,
+          "patk": 5,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 11,
+          "hp": 9,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 12,
+          "hp": 9,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 13,
+          "hp": 10,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 14,
+          "hp": 10,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 15,
+          "hp": 10,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 16,
+          "hp": 10,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 17,
+          "hp": 10,
+          "patk": 6,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 18,
+          "hp": 11,
+          "patk": 7,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 19,
+          "hp": 11,
+          "patk": 7,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 20,
+          "hp": 11,
+          "patk": 7,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H152352H2.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-329.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t2",
+      "raceId": "elf",
+      "nameKo": "드워프",
+      "nameCn": "石怪",
+      "tier": 2,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 40,
+        "food": 0,
+        "gold": 48
+      },
+      "speed": 3,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 800,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 20,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 10
+        },
+        {
+          "level": 2,
+          "hp": 20,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 10
+        },
+        {
+          "level": 3,
+          "hp": 20,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 10
+        },
+        {
+          "level": 4,
+          "hp": 21,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 10
+        },
+        {
+          "level": 5,
+          "hp": 21,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 10
+        },
+        {
+          "level": 6,
+          "hp": 22,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 11
+        },
+        {
+          "level": 7,
+          "hp": 22,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 11
+        },
+        {
+          "level": 8,
+          "hp": 22,
+          "patk": 0,
+          "matk": 6,
+          "pdef": 4,
+          "mdef": 11
+        },
+        {
+          "level": 9,
+          "hp": 23,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 4,
+          "mdef": 11
+        },
+        {
+          "level": 10,
+          "hp": 23,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 4,
+          "mdef": 11
+        },
+        {
+          "level": 11,
+          "hp": 24,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 4,
+          "mdef": 12
+        },
+        {
+          "level": 12,
+          "hp": 24,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 4,
+          "mdef": 12
+        },
+        {
+          "level": 13,
+          "hp": 25,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 5,
+          "mdef": 12
+        },
+        {
+          "level": 14,
+          "hp": 25,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 5,
+          "mdef": 12
+        },
+        {
+          "level": 15,
+          "hp": 26,
+          "patk": 0,
+          "matk": 7,
+          "pdef": 5,
+          "mdef": 13
+        },
+        {
+          "level": 16,
+          "hp": 26,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 5,
+          "mdef": 13
+        },
+        {
+          "level": 17,
+          "hp": 27,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 5,
+          "mdef": 13
+        },
+        {
+          "level": 18,
+          "hp": 28,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 5,
+          "mdef": 14
+        },
+        {
+          "level": 19,
+          "hp": 28,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 5,
+          "mdef": 14
+        },
+        {
+          "level": 20,
+          "hp": 29,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 5,
+          "mdef": 14
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H1515RA3.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-328.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t3",
+      "raceId": "elf",
+      "nameKo": "엘프궁수",
+      "nameCn": "精灵射手",
+      "tier": 3,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 30,
+        "food": 0,
+        "gold": 80
+      },
+      "speed": 6,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 1000,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 15,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 2,
+          "hp": 15,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 3,
+          "hp": 15,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 4,
+          "hp": 15,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 5,
+          "hp": 16,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 6,
+          "hp": 16,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 7,
+          "hp": 16,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 8,
+          "hp": 17,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 9,
+          "hp": 17,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 10,
+          "hp": 17,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 11,
+          "hp": 18,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 12,
+          "hp": 18,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 13,
+          "hp": 19,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 14,
+          "hp": 19,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 15,
+          "hp": 19,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 16,
+          "hp": 20,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 17,
+          "hp": 20,
+          "patk": 15,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 18,
+          "hp": 21,
+          "patk": 15,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 19,
+          "hp": 21,
+          "patk": 15,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        },
+        {
+          "level": 20,
+          "hp": 21,
+          "patk": 16,
+          "matk": 0,
+          "pdef": 5,
+          "mdef": 5
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H151233336.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-327.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t4",
+      "raceId": "elf",
+      "nameKo": "페가수스",
+      "nameCn": "飞马",
+      "tier": 4,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 40,
+        "food": 0,
+        "gold": 100
+      },
+      "speed": 8,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 1200,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 30,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 2,
+          "hp": 30,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 3,
+          "hp": 31,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 4,
+          "hp": 31,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 5,
+          "hp": 32,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 6,
+          "hp": 33,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 8,
+          "mdef": 8
+        },
+        {
+          "level": 7,
+          "hp": 33,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 8,
+          "hp": 34,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 9,
+          "hp": 35,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 10,
+          "hp": 35,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 11,
+          "hp": 36,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 12,
+          "hp": 37,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 9
+        },
+        {
+          "level": 13,
+          "hp": 38,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 14,
+          "hp": 38,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 15,
+          "hp": 39,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 16,
+          "hp": 40,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 17,
+          "hp": 41,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 18,
+          "hp": 42,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 19,
+          "hp": 42,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 20,
+          "hp": 43,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H150432F4.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-326.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t5",
+      "raceId": "elf",
+      "nameKo": "드라이어드",
+      "nameCn": "树妖",
+      "tier": 5,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 50,
+        "food": 0,
+        "gold": 140
+      },
+      "speed": 3,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 1400,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 55,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 15,
+          "mdef": 9
+        },
+        {
+          "level": 2,
+          "hp": 56,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 15,
+          "mdef": 9
+        },
+        {
+          "level": 3,
+          "hp": 57,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 15,
+          "mdef": 9
+        },
+        {
+          "level": 4,
+          "hp": 58,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 15,
+          "mdef": 9
+        },
+        {
+          "level": 5,
+          "hp": 59,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 16,
+          "mdef": 9
+        },
+        {
+          "level": 6,
+          "hp": 60,
+          "patk": 9,
+          "matk": 0,
+          "pdef": 16,
+          "mdef": 9
+        },
+        {
+          "level": 7,
+          "hp": 61,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 16,
+          "mdef": 10
+        },
+        {
+          "level": 8,
+          "hp": 63,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 17,
+          "mdef": 10
+        },
+        {
+          "level": 9,
+          "hp": 64,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 17,
+          "mdef": 10
+        },
+        {
+          "level": 10,
+          "hp": 65,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 17,
+          "mdef": 10
+        },
+        {
+          "level": 11,
+          "hp": 67,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 18,
+          "mdef": 10
+        },
+        {
+          "level": 12,
+          "hp": 68,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 18,
+          "mdef": 11
+        },
+        {
+          "level": 13,
+          "hp": 69,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 19,
+          "mdef": 11
+        },
+        {
+          "level": 14,
+          "hp": 71,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 19,
+          "mdef": 11
+        },
+        {
+          "level": 15,
+          "hp": 72,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 19,
+          "mdef": 11
+        },
+        {
+          "level": 16,
+          "hp": 74,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 20,
+          "mdef": 12
+        },
+        {
+          "level": 17,
+          "hp": 75,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 20,
+          "mdef": 12
+        },
+        {
+          "level": 18,
+          "hp": 77,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 12
+        },
+        {
+          "level": 19,
+          "hp": 78,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 12
+        },
+        {
+          "level": 20,
+          "hp": 80,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 13
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H14951Q35.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-325.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t6",
+      "raceId": "elf",
+      "nameKo": "유니콘",
+      "nameCn": "独角兽",
+      "tier": 6,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 120,
+        "food": 0,
+        "gold": 340
+      },
+      "speed": 7,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 1600,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 90,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 2,
+          "hp": 91,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 3,
+          "hp": 93,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 4,
+          "hp": 95,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 5,
+          "hp": 97,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 12,
+          "mdef": 14
+        },
+        {
+          "level": 6,
+          "hp": 99,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 7,
+          "hp": 101,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 8,
+          "hp": 103,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 9,
+          "hp": 105,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 14,
+          "mdef": 15
+        },
+        {
+          "level": 10,
+          "hp": 107,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 14,
+          "mdef": 15
+        },
+        {
+          "level": 11,
+          "hp": 109,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 14,
+          "mdef": 15
+        },
+        {
+          "level": 12,
+          "hp": 111,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 14,
+          "mdef": 16
+        },
+        {
+          "level": 13,
+          "hp": 114,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 15,
+          "mdef": 16
+        },
+        {
+          "level": 14,
+          "hp": 116,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 15,
+          "mdef": 16
+        },
+        {
+          "level": 15,
+          "hp": 118,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 15,
+          "mdef": 17
+        },
+        {
+          "level": 16,
+          "hp": 121,
+          "patk": 0,
+          "matk": 24,
+          "pdef": 16,
+          "mdef": 17
+        },
+        {
+          "level": 17,
+          "hp": 123,
+          "patk": 0,
+          "matk": 24,
+          "pdef": 16,
+          "mdef": 17
+        },
+        {
+          "level": 18,
+          "hp": 126,
+          "patk": 0,
+          "matk": 25,
+          "pdef": 16,
+          "mdef": 18
+        },
+        {
+          "level": 19,
+          "hp": 128,
+          "patk": 0,
+          "matk": 25,
+          "pdef": 17,
+          "mdef": 18
+        },
+        {
+          "level": 20,
+          "hp": 131,
+          "patk": 0,
+          "matk": 26,
+          "pdef": 17,
+          "mdef": 18
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H14Z45K7.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-324.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t7",
+      "raceId": "elf",
+      "nameKo": "그린",
+      "nameCn": "绿龙",
+      "tier": 7,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 140,
+        "food": 0,
+        "gold": 960
+      },
+      "speed": 10,
+      "foodUpkeepPerHour": 3,
+      "trainSeconds": 1800,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 180,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 18,
+          "mdef": 18
+        },
+        {
+          "level": 2,
+          "hp": 183,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 18,
+          "mdef": 18
+        },
+        {
+          "level": 3,
+          "hp": 187,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 18,
+          "mdef": 18
+        },
+        {
+          "level": 4,
+          "hp": 191,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 19,
+          "mdef": 19
+        },
+        {
+          "level": 5,
+          "hp": 194,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 19,
+          "mdef": 19
+        },
+        {
+          "level": 6,
+          "hp": 198,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 19,
+          "mdef": 19
+        },
+        {
+          "level": 7,
+          "hp": 202,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 20,
+          "mdef": 20
+        },
+        {
+          "level": 8,
+          "hp": 206,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 20,
+          "mdef": 20
+        },
+        {
+          "level": 9,
+          "hp": 210,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 10,
+          "hp": 215,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 11,
+          "hp": 219,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 12,
+          "hp": 223,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 13,
+          "hp": 228,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 14,
+          "hp": 232,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 15,
+          "hp": 237,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 16,
+          "hp": 242,
+          "patk": 0,
+          "matk": 24,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 17,
+          "hp": 247,
+          "patk": 0,
+          "matk": 24,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 18,
+          "hp": 252,
+          "patk": 0,
+          "matk": 25,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 19,
+          "hp": 257,
+          "patk": 0,
+          "matk": 25,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 20,
+          "hp": 262,
+          "patk": 0,
+          "matk": 26,
+          "pdef": 26,
+          "mdef": 26
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H14QU306.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-323.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "elf-t8",
+      "raceId": "elf",
+      "nameKo": "투석차(엘프)",
+      "nameCn": "精灵投石车",
+      "tier": 8,
+      "cost": {
+        "wood": 120,
+        "stone": 100,
+        "crystal": 100,
+        "food": 0,
+        "gold": 400
+      },
+      "speed": 5,
+      "foodUpkeepPerHour": 6,
+      "trainSeconds": 1600,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 200,
+          "patk": 30,
+          "matk": 30,
+          "pdef": 20,
+          "mdef": 20
+        },
+        {
+          "level": 2,
+          "hp": 204,
+          "patk": 31,
+          "matk": 30,
+          "pdef": 20,
+          "mdef": 20
+        },
+        {
+          "level": 3,
+          "hp": 208,
+          "patk": 31,
+          "matk": 31,
+          "pdef": 20,
+          "mdef": 20
+        },
+        {
+          "level": 4,
+          "hp": 212,
+          "patk": 32,
+          "matk": 31,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 5,
+          "hp": 216,
+          "patk": 33,
+          "matk": 32,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 6,
+          "hp": 220,
+          "patk": 33,
+          "matk": 33,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 7,
+          "hp": 225,
+          "patk": 34,
+          "matk": 33,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 8,
+          "hp": 229,
+          "patk": 35,
+          "matk": 34,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 9,
+          "hp": 234,
+          "patk": 35,
+          "matk": 35,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 10,
+          "hp": 239,
+          "patk": 36,
+          "matk": 35,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 11,
+          "hp": 243,
+          "patk": 37,
+          "matk": 36,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 12,
+          "hp": 248,
+          "patk": 38,
+          "matk": 37,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 13,
+          "hp": 253,
+          "patk": 38,
+          "matk": 38,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 14,
+          "hp": 258,
+          "patk": 39,
+          "matk": 38,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 15,
+          "hp": 263,
+          "patk": 39,
+          "matk": 39,
+          "pdef": 26,
+          "mdef": 26
+        },
+        {
+          "level": 16,
+          "hp": 269,
+          "patk": 40,
+          "matk": 40,
+          "pdef": 26,
+          "mdef": 26
+        },
+        {
+          "level": 17,
+          "hp": 274,
+          "patk": 41,
+          "matk": 41,
+          "pdef": 27,
+          "mdef": 27
+        },
+        {
+          "level": 18,
+          "hp": 280,
+          "patk": 41,
+          "matk": 42,
+          "pdef": 28,
+          "mdef": 28
+        },
+        {
+          "level": 19,
+          "hp": 285,
+          "patk": 42,
+          "matk": 42,
+          "pdef": 28,
+          "mdef": 28
+        },
+        {
+          "level": 20,
+          "hp": 291,
+          "patk": 43,
+          "matk": 43,
+          "pdef": 29,
+          "mdef": 29
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H14A545M.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-322.html",
+      "provenance": "4399"
+    }
+  ]
+}

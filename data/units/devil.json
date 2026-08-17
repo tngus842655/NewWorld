@@ -1,0 +1,1351 @@
+{
+  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
+  "raceId": "devil",
+  "raceNameKo": "악마",
+  "units": [
+    {
+      "id": "devil-t1",
+      "raceId": "devil",
+      "nameKo": "임프",
+      "nameCn": "小怪物",
+      "tier": 1,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 10,
+        "food": 0,
+        "gold": 20
+      },
+      "speed": 5,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 200,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 2,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 3,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 4,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 5,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 6,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 7,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 8,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 9,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 10,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 11,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 12,
+          "hp": 4,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 13,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 14,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 15,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 16,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 17,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 18,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 19,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 20,
+          "hp": 5,
+          "patk": 2,
+          "matk": 0,
+          "pdef": 4,
+          "mdef": 4
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H20524Q91.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-344.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t2",
+      "raceId": "devil",
+      "nameKo": "곡스",
+      "nameCn": "歌勒",
+      "tier": 2,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 40,
+        "food": 0,
+        "gold": 52
+      },
+      "speed": 4,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 400,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 13,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 2,
+          "hp": 13,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 3,
+          "hp": 13,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 4,
+          "hp": 13,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 5,
+          "hp": 14,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 6,
+          "hp": 14,
+          "patk": 0,
+          "matk": 8,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 7,
+          "hp": 14,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 8,
+          "hp": 14,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 9,
+          "hp": 15,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 10,
+          "hp": 15,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 11,
+          "hp": 15,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 12,
+          "hp": 16,
+          "patk": 0,
+          "matk": 9,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 13,
+          "hp": 16,
+          "patk": 0,
+          "matk": 10,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 14,
+          "hp": 16,
+          "patk": 0,
+          "matk": 10,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 15,
+          "hp": 17,
+          "patk": 0,
+          "matk": 10,
+          "pdef": 3,
+          "mdef": 3
+        },
+        {
+          "level": 16,
+          "hp": 17,
+          "patk": 0,
+          "matk": 10,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 17,
+          "hp": 17,
+          "patk": 0,
+          "matk": 10,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 18,
+          "hp": 18,
+          "patk": 0,
+          "matk": 11,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 19,
+          "hp": 18,
+          "patk": 0,
+          "matk": 11,
+          "pdef": 4,
+          "mdef": 4
+        },
+        {
+          "level": 20,
+          "hp": 18,
+          "patk": 0,
+          "matk": 11,
+          "pdef": 4,
+          "mdef": 4
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H20445W42.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-343.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t3",
+      "raceId": "devil",
+      "nameKo": "헬하운드",
+      "nameCn": "地狱犬",
+      "tier": 3,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 30,
+        "food": 0,
+        "gold": 80
+      },
+      "speed": 7,
+      "foodUpkeepPerHour": 1,
+      "trainSeconds": 600,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 25,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 2,
+          "hp": 25,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 3,
+          "hp": 26,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 4,
+          "hp": 26,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 5,
+          "hp": 27,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 6,
+          "hp": 27,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 9,
+          "mdef": 3
+        },
+        {
+          "level": 7,
+          "hp": 28,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 3
+        },
+        {
+          "level": 8,
+          "hp": 28,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 3
+        },
+        {
+          "level": 9,
+          "hp": 29,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 3
+        },
+        {
+          "level": 10,
+          "hp": 29,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 3
+        },
+        {
+          "level": 11,
+          "hp": 30,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 3
+        },
+        {
+          "level": 12,
+          "hp": 31,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 3
+        },
+        {
+          "level": 13,
+          "hp": 31,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 3
+        },
+        {
+          "level": 14,
+          "hp": 32,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 3
+        },
+        {
+          "level": 15,
+          "hp": 32,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 3
+        },
+        {
+          "level": 16,
+          "hp": 33,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 4
+        },
+        {
+          "level": 17,
+          "hp": 34,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 4
+        },
+        {
+          "level": 18,
+          "hp": 35,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 4
+        },
+        {
+          "level": 19,
+          "hp": 35,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 4
+        },
+        {
+          "level": 20,
+          "hp": 36,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 13,
+          "mdef": 4
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H2040RX3.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-342.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t4",
+      "raceId": "devil",
+      "nameKo": "악마",
+      "nameCn": "恶鬼",
+      "tier": 4,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 40,
+        "food": 0,
+        "gold": 100
+      },
+      "speed": 5,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 800,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 35,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 2,
+          "hp": 35,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 3,
+          "hp": 36,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 4,
+          "hp": 37,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 5,
+          "hp": 37,
+          "patk": 10,
+          "matk": 0,
+          "pdef": 10,
+          "mdef": 10
+        },
+        {
+          "level": 6,
+          "hp": 38,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 7,
+          "hp": 39,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 8,
+          "hp": 40,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 9,
+          "hp": 41,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 10,
+          "hp": 41,
+          "patk": 11,
+          "matk": 0,
+          "pdef": 11,
+          "mdef": 11
+        },
+        {
+          "level": 11,
+          "hp": 42,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 12
+        },
+        {
+          "level": 12,
+          "hp": 43,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 12
+        },
+        {
+          "level": 13,
+          "hp": 44,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 12
+        },
+        {
+          "level": 14,
+          "hp": 45,
+          "patk": 12,
+          "matk": 0,
+          "pdef": 12,
+          "mdef": 12
+        },
+        {
+          "level": 15,
+          "hp": 46,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 13,
+          "mdef": 13
+        },
+        {
+          "level": 16,
+          "hp": 47,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 13,
+          "mdef": 13
+        },
+        {
+          "level": 17,
+          "hp": 48,
+          "patk": 13,
+          "matk": 0,
+          "pdef": 13,
+          "mdef": 13
+        },
+        {
+          "level": 18,
+          "hp": 49,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 14,
+          "mdef": 14
+        },
+        {
+          "level": 19,
+          "hp": 49,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 14,
+          "mdef": 14
+        },
+        {
+          "level": 20,
+          "hp": 50,
+          "patk": 14,
+          "matk": 0,
+          "pdef": 14,
+          "mdef": 14
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H203225455.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-341.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t5",
+      "raceId": "devil",
+      "nameKo": "사신",
+      "nameCn": "邪神",
+      "tier": 5,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 100,
+        "food": 0,
+        "gold": 200
+      },
+      "speed": 6,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 1000,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 45,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 11,
+          "mdef": 12
+        },
+        {
+          "level": 2,
+          "hp": 45,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 11,
+          "mdef": 12
+        },
+        {
+          "level": 3,
+          "hp": 46,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 11,
+          "mdef": 12
+        },
+        {
+          "level": 4,
+          "hp": 47,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 11,
+          "mdef": 12
+        },
+        {
+          "level": 5,
+          "hp": 48,
+          "patk": 0,
+          "matk": 17,
+          "pdef": 11,
+          "mdef": 12
+        },
+        {
+          "level": 6,
+          "hp": 49,
+          "patk": 0,
+          "matk": 17,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 7,
+          "hp": 50,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 8,
+          "hp": 51,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 13
+        },
+        {
+          "level": 9,
+          "hp": 52,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 12,
+          "mdef": 14
+        },
+        {
+          "level": 10,
+          "hp": 53,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 11,
+          "hp": 54,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 12,
+          "hp": 55,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 13,
+          "mdef": 14
+        },
+        {
+          "level": 13,
+          "hp": 57,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 13,
+          "mdef": 15
+        },
+        {
+          "level": 14,
+          "hp": 58,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 14,
+          "mdef": 15
+        },
+        {
+          "level": 15,
+          "hp": 59,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 14,
+          "mdef": 15
+        },
+        {
+          "level": 16,
+          "hp": 60,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 14,
+          "mdef": 16
+        },
+        {
+          "level": 17,
+          "hp": 61,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 15,
+          "mdef": 16
+        },
+        {
+          "level": 18,
+          "hp": 63,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 15,
+          "mdef": 16
+        },
+        {
+          "level": 19,
+          "hp": 64,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 15,
+          "mdef": 17
+        },
+        {
+          "level": 20,
+          "hp": 65,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 16,
+          "mdef": 17
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H20252XB.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-340.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t6",
+      "raceId": "devil",
+      "nameKo": "악의화신",
+      "nameCn": "火怪",
+      "tier": 6,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 120,
+        "food": 0,
+        "gold": 360
+      },
+      "speed": 9,
+      "foodUpkeepPerHour": 2,
+      "trainSeconds": 1200,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 90,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 9,
+          "mdef": 15
+        },
+        {
+          "level": 2,
+          "hp": 91,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 9,
+          "mdef": 15
+        },
+        {
+          "level": 3,
+          "hp": 93,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 9,
+          "mdef": 15
+        },
+        {
+          "level": 4,
+          "hp": 95,
+          "patk": 0,
+          "matk": 16,
+          "pdef": 9,
+          "mdef": 15
+        },
+        {
+          "level": 5,
+          "hp": 97,
+          "patk": 0,
+          "matk": 17,
+          "pdef": 9,
+          "mdef": 16
+        },
+        {
+          "level": 6,
+          "hp": 99,
+          "patk": 0,
+          "matk": 17,
+          "pdef": 9,
+          "mdef": 16
+        },
+        {
+          "level": 7,
+          "hp": 101,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 10,
+          "mdef": 16
+        },
+        {
+          "level": 8,
+          "hp": 103,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 10,
+          "mdef": 17
+        },
+        {
+          "level": 9,
+          "hp": 105,
+          "patk": 0,
+          "matk": 18,
+          "pdef": 10,
+          "mdef": 17
+        },
+        {
+          "level": 10,
+          "hp": 107,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 10,
+          "mdef": 17
+        },
+        {
+          "level": 11,
+          "hp": 109,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 10,
+          "mdef": 18
+        },
+        {
+          "level": 12,
+          "hp": 111,
+          "patk": 0,
+          "matk": 19,
+          "pdef": 11,
+          "mdef": 18
+        },
+        {
+          "level": 13,
+          "hp": 114,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 11,
+          "mdef": 19
+        },
+        {
+          "level": 14,
+          "hp": 116,
+          "patk": 0,
+          "matk": 20,
+          "pdef": 11,
+          "mdef": 19
+        },
+        {
+          "level": 15,
+          "hp": 118,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 11,
+          "mdef": 19
+        },
+        {
+          "level": 16,
+          "hp": 121,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 12,
+          "mdef": 20
+        },
+        {
+          "level": 17,
+          "hp": 123,
+          "patk": 0,
+          "matk": 21,
+          "pdef": 12,
+          "mdef": 20
+        },
+        {
+          "level": 18,
+          "hp": 126,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 12,
+          "mdef": 21
+        },
+        {
+          "level": 19,
+          "hp": 128,
+          "patk": 0,
+          "matk": 22,
+          "pdef": 12,
+          "mdef": 21
+        },
+        {
+          "level": 20,
+          "hp": 131,
+          "patk": 0,
+          "matk": 23,
+          "pdef": 13,
+          "mdef": 21
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H20220F49.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-339.html",
+      "provenance": "4399"
+    },
+    {
+      "id": "devil-t7",
+      "raceId": "devil",
+      "nameKo": "사탄",
+      "nameCn": "恶魔",
+      "tier": 7,
+      "cost": {
+        "wood": 0,
+        "stone": 0,
+        "crystal": 140,
+        "food": 0,
+        "gold": 1080
+      },
+      "speed": 11,
+      "foodUpkeepPerHour": 3,
+      "trainSeconds": 1400,
+      "statColumns": [
+        "생명",
+        "물리공격",
+        "마법공격",
+        "물리방어",
+        "마법방어"
+      ],
+      "stats": [
+        {
+          "level": 1,
+          "hp": 160,
+          "patk": 19,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 2,
+          "hp": 163,
+          "patk": 19,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 3,
+          "hp": 166,
+          "patk": 19,
+          "matk": 0,
+          "pdef": 21,
+          "mdef": 21
+        },
+        {
+          "level": 4,
+          "hp": 169,
+          "patk": 20,
+          "matk": 0,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 5,
+          "hp": 173,
+          "patk": 20,
+          "matk": 0,
+          "pdef": 22,
+          "mdef": 22
+        },
+        {
+          "level": 6,
+          "hp": 176,
+          "patk": 20,
+          "matk": 0,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 7,
+          "hp": 180,
+          "patk": 21,
+          "matk": 0,
+          "pdef": 23,
+          "mdef": 23
+        },
+        {
+          "level": 8,
+          "hp": 183,
+          "patk": 21,
+          "matk": 0,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 9,
+          "hp": 187,
+          "patk": 22,
+          "matk": 0,
+          "pdef": 24,
+          "mdef": 24
+        },
+        {
+          "level": 10,
+          "hp": 191,
+          "patk": 22,
+          "matk": 0,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 11,
+          "hp": 195,
+          "patk": 23,
+          "matk": 0,
+          "pdef": 25,
+          "mdef": 25
+        },
+        {
+          "level": 12,
+          "hp": 198,
+          "patk": 23,
+          "matk": 0,
+          "pdef": 26,
+          "mdef": 26
+        },
+        {
+          "level": 13,
+          "hp": 202,
+          "patk": 24,
+          "matk": 0,
+          "pdef": 26,
+          "mdef": 26
+        },
+        {
+          "level": 14,
+          "hp": 206,
+          "patk": 24,
+          "matk": 0,
+          "pdef": 27,
+          "mdef": 27
+        },
+        {
+          "level": 15,
+          "hp": 211,
+          "patk": 25,
+          "matk": 0,
+          "pdef": 27,
+          "mdef": 27
+        },
+        {
+          "level": 16,
+          "hp": 215,
+          "patk": 25,
+          "matk": 0,
+          "pdef": 28,
+          "mdef": 28
+        },
+        {
+          "level": 17,
+          "hp": 219,
+          "patk": 26,
+          "matk": 0,
+          "pdef": 28,
+          "mdef": 28
+        },
+        {
+          "level": 18,
+          "hp": 224,
+          "patk": 26,
+          "matk": 0,
+          "pdef": 29,
+          "mdef": 29
+        },
+        {
+          "level": 19,
+          "hp": 228,
+          "patk": 27,
+          "matk": 0,
+          "pdef": 29,
+          "mdef": 29
+        },
+        {
+          "level": 20,
+          "hp": 233,
+          "patk": 27,
+          "matk": 0,
+          "pdef": 30,
+          "mdef": 30
+        }
+      ],
+      "descriptionCn": "",
+      "imageUrls": [
+        "http://img.my4399.com/uploads/userup/0809/0H201451958.gif"
+      ],
+      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-338.html",
+      "provenance": "4399"
+    }
+  ]
+}
