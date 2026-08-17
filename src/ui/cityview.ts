@@ -9,9 +9,9 @@ import type { BuildingDef, GameState } from '../core/types';
  * public/assets/buildings/{id}.png 를 넣으면 그 이미지로 대체된다.
  */
 
-// 원작 도시 스크린샷(480x427) 비율 기준
+// 원작 도시 스크린샷(480x440) 비율 기준
 export const CITY_W = 480;
-export const CITY_H = 427;
+export const CITY_H = 440;
 /** 직접 그리는 폴백용 정사각 영역 */
 const S = 427;
 const OFF_X = (CITY_W - S) / 2;
@@ -22,7 +22,14 @@ const OFF_X = (CITY_W - S) / 2;
  * 없으면 아래의 직접 그린 마을로 폴백한다.
  */
 const cityImg = new Image();
-cityImg.src = '/assets/city/human.png';
+// 확장자는 png/jpg 아무거나 — 실제 형식은 브라우저가 내용으로 판단한다
+const CITY_IMG_CANDIDATES = ['/assets/city/human.png', '/assets/city/human.jpg'];
+let cityImgTry = 0;
+cityImg.onerror = () => {
+  cityImgTry++;
+  if (cityImgTry < CITY_IMG_CANDIDATES.length) cityImg.src = CITY_IMG_CANDIDATES[cityImgTry];
+};
+cityImg.src = CITY_IMG_CANDIDATES[0];
 function cityImageReady(): boolean {
   return cityImg.complete && cityImg.naturalWidth > 0;
 }
@@ -32,14 +39,14 @@ function cityImageReady(): boolean {
  * 원작 화면의 실제 건물 위치에 눈대중으로 맞춘 값 — 보면서 조정한다.
  */
 export const HOTSPOTS: Record<string, { x: number; y: number; w: number; h: number }> = {
-  sawmill: { x: 178, y: 88, w: 72, h: 58 },       // 상단 목조 골조 건물
-  barracks: { x: 330, y: 96, w: 78, h: 62 },      // 우상단 콜로세움
-  quarry: { x: 264, y: 156, w: 58, h: 48 },       // 중앙 석조 성채
-  'crystal-mine': { x: 56, y: 160, w: 58, h: 50 },// 좌측 파란 수정 분수
-  farm: { x: 106, y: 232, w: 58, h: 48 },         // 좌하단 노란 지붕 농가
-  market: { x: 240, y: 212, w: 62, h: 52 },       // 중앙 파란 지붕 저택
-  academy: { x: 310, y: 246, w: 54, h: 58 },      // 우측 수정 첨탑
-  tavern: { x: 57, y: 250, w: 52, h: 48 },        // 좌하단 분홍 천막
+  sawmill: { x: 240, y: 78, w: 58, h: 54 },        // 상단 목조 골조 건물
+  barracks: { x: 320, y: 80, w: 66, h: 56 },       // 우상단 원형 투기장
+  'crystal-mine': { x: 62, y: 167, w: 58, h: 50 }, // 좌측 파란 수정 분수
+  farm: { x: 110, y: 167, w: 58, h: 52 },          // 좌측 노란 지붕 농가
+  quarry: { x: 285, y: 165, w: 56, h: 52 },        // 중앙 석조 성채
+  tavern: { x: 243, y: 205, w: 58, h: 50 },        // 중앙 파란 지붕 건물
+  academy: { x: 325, y: 237, w: 44, h: 62 },       // 우측 수정 첨탑
+  market: { x: 66, y: 252, w: 60, h: 56 },         // 좌하단 분홍 천막
 };
 
 /** 건물 배치 (중심 좌표). 타일에 묶지 않고 원작처럼 촘촘히 배치한다 */
