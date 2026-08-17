@@ -22,7 +22,9 @@ import {
 import {
   ACADEMY_ID,
   ADVANCED_BARRACKS_ID,
+  BEAST_PEN_ID,
   BLACK_MARKET_ID,
+  GARAGE_ID,
   BARRACKS_ID,
   canAfford,
   cityBonus,
@@ -52,6 +54,7 @@ import {
   canEnhance,
   enhanceCost,
   enhancedStat,
+  gearCatalog,
   equipTotals,
   RARITIES,
   SLOT_LABELS,
@@ -123,6 +126,8 @@ export interface RenderCallbacks {
   onEnhance(itemId: string): void;
   /** 암시장 자원 교환 */
   onTrade(from: ResourceKind, to: ResourceKind, amount: number): void;
+  /** 탈것·펫 구매 */
+  onBuyGear(gearId: string): void;
   /** 전투 기록 삭제 */
   onDeleteReport(reportId: string): void;
   /** 전투 기록 전체 삭제 */
@@ -495,6 +500,8 @@ function cityTab(
     body = trainPanel(state, unitDefs, buildingDefs, def.id, sel.level);
   } else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
   else if (def.id === BLACK_MARKET_ID) body = marketPanel(state, buildingDefs, sel.level);
+  else if (def.id === GARAGE_ID) body = gearShopPanel(state, 'mount', sel.level);
+  else if (def.id === BEAST_PEN_ID) body = gearShopPanel(state, 'pet', sel.level);
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
 
   return `${canvas}${defense}${header}${body}`;
@@ -626,6 +633,64 @@ function marketPanel(
       <small>보유 ${RESOURCE_LABELS[tradeFrom]} ${formatNumber(have)}</small>
       <div class="chips" style="margin-top:6px;">${buttons || '<small>내줄 자원이 없다.</small>'}</div>
     </div>`;
+}
+
+/**
+ * 탈것 정비고 · 생체 사육장 패널 — 목록에서 사서 창고에 넣는다.
+ * 건물 레벨이 오를수록 상위 품목이 열린다.
+ */
+function gearShopPanel(
+  state: GameState,
+  slot: 'mount' | 'pet',
+  level: number,
+): string {
+  const what = slot === 'mount' ? '탈것' : '펫';
+  if (level < 1) {
+    return `<div class="card"><small>건물을 지으면 ${what}을(를) 살 수 있다.</small></div>`;
+  }
+  const owned = new Set(
+    [
+      ...state.inventory,
+      ...state.heroes.flatMap((h) => Object.values(h.equipment ?? {})),
+    ]
+      .filter(Boolean)
+      .map((i) => i!.nameKo),
+  );
+
+  const rows = gearCatalog(slot)
+    .map((g) => {
+      const locked = level < g.minLevel;
+      const has = owned.has(g.nameKo);
+      const stats = [
+        g.patk ? `물공 +${g.patk}` : '',
+        g.matk ? `마공 +${g.matk}` : '',
+        g.pdef ? `물방 +${g.pdef}` : '',
+        g.mdef ? `마방 +${g.mdef}` : '',
+        g.effect && g.effectValue
+          ? `${g.effectKo} +${g.effectValue}${g.effectUnit === 'multiplier' ? '배' : '%'}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      const info = locked
+        ? `<small class="locked">🔒 Lv.${g.minLevel} 필요 (현재 Lv.${level})</small>`
+        : `<small>${costText(g.cost)}</small>`;
+      return `<div class="card${locked ? ' dim' : ''}">
+        <div><b style="color:${rarityColor(g.rarity)}">${g.nameKo}</b>
+          ${has ? '<span class="tier">보유 중</span>' : ''}
+          <small>${stats}</small>${info}
+        </div>
+        <div class="actions">
+          <button data-buy-gear="${g.id}" ${costAttrs(g.cost, locked)}>구매</button>
+        </div>
+      </div>`;
+    })
+    .join('');
+
+  return `<h2>${what} 구매</h2>
+    <div class="card"><small class="faint">산 ${what}은(는) 창고로 들어간다.
+      지휘관 탭에서 착용해야 효과가 붙는다.</small></div>
+    ${rows}`;
 }
 
 /** 건설 슬롯 사용 현황 — 버튼이 왜 꺼져 있는지 알 수 있게 */
@@ -1567,6 +1632,9 @@ export function render(
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-trade]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onTrade(tradeFrom, tradeTo, Number(btn.dataset.trade)));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-buy-gear]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onBuyGear(btn.dataset.buyGear!));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-enhance]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onEnhance(btn.dataset.enhance!));

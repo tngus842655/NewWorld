@@ -75,6 +75,14 @@
     {
       "id": "necklace",
       "ko": "목걸이"
+    },
+    {
+      "id": "mount",
+      "ko": "탈것"
+    },
+    {
+      "id": "pet",
+      "ko": "펫"
     }
   ],
   "weapons": [

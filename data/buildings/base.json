@@ -1640,7 +1640,7 @@
     {
       "id": "garage",
       "name": "탈것 정비고",
-      "description": "지휘관이 탈 기동 장비를 구매·정비한다. 원작에서 주점 5레벨에 열리던 마구간.",
+      "description": "지휘관이 탈 기동 장비를 산다. 레벨이 오를수록 상위 탈것이 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1648,7 +1648,6 @@
           "level": 5
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1701,7 +1700,7 @@
     {
       "id": "beast-pen",
       "name": "생체 사육장",
-      "description": "전투 보조 생체 병기를 부화시켜 기른다.",
+      "description": "전투 보조 생체 개체를 기른다. 레벨이 오를수록 상위 개체가 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1709,7 +1708,6 @@
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

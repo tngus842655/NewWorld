@@ -11,7 +11,7 @@ import type {
 import { BASE_TRADE_FEE, MIN_TRADE_FEE } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle, type CityBonus } from './combat';
-import { canEnhance, enhanceCost, equipTotals } from './equipment';
+import { canEnhance, enhanceCost, equipTotals, gearById, makeGear } from './equipment';
 import {
   buildingAtCell,
   buildingEffect,
@@ -483,6 +483,40 @@ export function exchangeResources(
 
   state.resources[from] -= amount;
   state.resources[to] += got;
+  return { ok: true };
+}
+
+/** 탈것 정비고 */
+export const GARAGE_ID = 'garage';
+/** 생체 사육장 */
+export const BEAST_PEN_ID = 'beast-pen';
+
+/**
+ * 탈것·펫을 사서 창고에 넣는다.
+ * 건물 레벨이 목록의 minLevel 이상이어야 살 수 있다.
+ */
+export function buyGear(
+  state: GameState,
+  gearId: string,
+  now: number,
+): ActionResult {
+  const found = gearById(gearId);
+  if (!found) return { ok: false, reason: '없는 품목입니다.' };
+
+  const buildingId = found.slot === 'mount' ? GARAGE_ID : BEAST_PEN_ID;
+  const level = state.buildings.find((b) => b.defId === buildingId)?.level ?? 0;
+  if (level < 1) {
+    return { ok: false, reason: found.slot === 'mount' ? '탈것 정비고를 먼저 지어야 합니다.' : '생체 사육장을 먼저 지어야 합니다.' };
+  }
+  if (level < found.entry.minLevel) {
+    return { ok: false, reason: `Lv.${found.entry.minLevel} 필요 (현재 Lv.${level})` };
+  }
+  if (!canAfford(state.resources, found.entry.cost)) {
+    return { ok: false, reason: '자원이 부족합니다.' };
+  }
+
+  pay(state.resources, found.entry.cost);
+  state.inventory.push(makeGear(found.entry, found.slot, `${gearId}-${now}`));
   return { ok: true };
 }
 

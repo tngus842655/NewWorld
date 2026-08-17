@@ -1,0 +1,102 @@
+{
+  "$comment": "탈것(mount)·펫(pet) 목록. 원작 七龙纪에 마구간(马厩)·수렵장(兽栏)이 있었던 것은 확인했지만 실제 탈것·펫 수치는 자료가 없어 전부 estimate. 탈것은 기동·통솔 쪽, 펫은 화력·방어 쪽으로 성격을 갈랐다. minLevel = 그 건물의 최소 레벨.",
+  "provenance": "estimate",
+  "mounts": [
+    {
+      "id": "mount-scout",
+      "nameKo": "정찰 바이크",
+      "minLevel": 1,
+      "rarity": "common",
+      "pdef": 8,
+      "mdef": 4,
+      "effect": "marchSpeed",
+      "effectKo": "행군 속도 증가",
+      "effectValue": 6,
+      "cost": { "stone": 400, "gold": 600 }
+    },
+    {
+      "id": "mount-strider",
+      "nameKo": "보행 장갑기",
+      "minLevel": 2,
+      "rarity": "uncommon",
+      "pdef": 22,
+      "mdef": 12,
+      "effect": "marchSpeed",
+      "effectKo": "행군 속도 증가",
+      "effectValue": 12,
+      "cost": { "stone": 1200, "gold": 1800, "crystal": 200 }
+    },
+    {
+      "id": "mount-hover",
+      "nameKo": "호버 전차",
+      "minLevel": 3,
+      "rarity": "rare",
+      "pdef": 45,
+      "mdef": 25,
+      "effect": "commandLimit",
+      "effectKo": "지휘 병력 상한 증가",
+      "effectValue": 5,
+      "cost": { "stone": 3200, "gold": 5000, "crystal": 700 }
+    },
+    {
+      "id": "mount-command",
+      "nameKo": "지휘 셔틀",
+      "minLevel": 5,
+      "rarity": "epic",
+      "pdef": 80,
+      "mdef": 55,
+      "effect": "commandLimit",
+      "effectKo": "지휘 병력 상한 증가",
+      "effectValue": 12,
+      "cost": { "stone": 9000, "gold": 15000, "crystal": 2200 }
+    }
+  ],
+  "pets": [
+    {
+      "id": "pet-drone",
+      "nameKo": "정비 드론",
+      "minLevel": 1,
+      "rarity": "common",
+      "patk": 10,
+      "matk": 4,
+      "cost": { "food": 500, "gold": 500 }
+    },
+    {
+      "id": "pet-hunter",
+      "nameKo": "사냥 생체병기",
+      "minLevel": 2,
+      "rarity": "uncommon",
+      "patk": 28,
+      "matk": 10,
+      "effect": "physCrit",
+      "effectKo": "물리 치명타율 증가",
+      "effectValue": 3,
+      "cost": { "food": 1600, "gold": 1600, "crystal": 200 }
+    },
+    {
+      "id": "pet-warden",
+      "nameKo": "수호 생체병기",
+      "minLevel": 3,
+      "rarity": "rare",
+      "patk": 40,
+      "matk": 34,
+      "effect": "plunder",
+      "effectKo": "약탈량 증가",
+      "effectValue": 10,
+      "cost": { "food": 4200, "gold": 4200, "crystal": 600 }
+    },
+    {
+      "id": "pet-apex",
+      "nameKo": "정점 개체",
+      "minLevel": 5,
+      "rarity": "epic",
+      "patk": 95,
+      "matk": 80,
+      "effect": "dropRate",
+      "effectKo": "장비 드롭률 배수",
+      "effectValue": 2,
+      "effectUnit": "multiplier",
+      "cost": { "food": 12000, "gold": 18000, "crystal": 2600 }
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import equipData from '../../data/equipment/base.json';
+import gearData from '../../data/equipment/gear.json';
 import type { EquipItem, EquipSlot, Hero, Rarity, Resources } from './types';
 
 /**
@@ -182,6 +183,60 @@ export function rollItem(heroLevel: number, difficulty: number, rng: () => numbe
     effectKo: acc.effectKo,
     effectValue: acc.tiers[tierIdx],
     effectUnit: acc.unit,
+  };
+}
+
+// ── 탈것 · 펫 ─────────────────────────────────────────────────
+
+/** 탈것 정비고·생체 사육장에서 사는 장비 한 종 */
+export interface GearEntry {
+  id: string;
+  nameKo: string;
+  /** 이 건물 레벨부터 살 수 있다 */
+  minLevel: number;
+  rarity: Rarity;
+  patk?: number;
+  matk?: number;
+  pdef?: number;
+  mdef?: number;
+  effect?: string;
+  effectKo?: string;
+  effectValue?: number;
+  effectUnit?: 'percent' | 'multiplier';
+  cost: Partial<Resources>;
+}
+
+export const MOUNTS = gearData.mounts as GearEntry[];
+export const PETS = gearData.pets as GearEntry[];
+
+export function gearCatalog(slot: 'mount' | 'pet'): GearEntry[] {
+  return slot === 'mount' ? MOUNTS : PETS;
+}
+
+export function gearById(id: string): { entry: GearEntry; slot: 'mount' | 'pet' } | undefined {
+  const mount = MOUNTS.find((m) => m.id === id);
+  if (mount) return { entry: mount, slot: 'mount' };
+  const pet = PETS.find((p) => p.id === id);
+  if (pet) return { entry: pet, slot: 'pet' };
+  return undefined;
+}
+
+/** 목록의 한 종을 실제 보유 장비로 찍어 낸다 */
+export function makeGear(entry: GearEntry, slot: 'mount' | 'pet', uid: string): EquipItem {
+  return {
+    id: uid,
+    slot,
+    nameKo: entry.nameKo,
+    rarity: entry.rarity,
+    heroLevel: 1,
+    patk: entry.patk,
+    matk: entry.matk,
+    pdef: entry.pdef,
+    mdef: entry.mdef,
+    effect: entry.effect,
+    effectKo: entry.effectKo,
+    effectValue: entry.effectValue,
+    effectUnit: entry.effectUnit ?? 'percent',
   };
 }
 

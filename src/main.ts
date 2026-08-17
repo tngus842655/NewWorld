@@ -20,6 +20,7 @@ import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
 import {
   abandonNode,
+  buyGear,
   clearReports,
   constructBuilding,
   deleteReport,
@@ -41,7 +42,7 @@ import {
   unequipItem,
 } from './core/actions';
 import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
-import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
+import { commandLimit, maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { previewBattle, simulateBattle } from './core/combat';
 import { equipTotals } from './core/equipment';
 import { createStorage, StaleStateError } from './db/storage';
@@ -349,6 +350,14 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(now);
     },
+    onBuyGear(gearId: string) {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = buyGear(state, gearId, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
     onDiscard(itemId: string) {
       const result = discardItem(state, itemId);
       setMessage(result.ok ? '' : result.reason);
@@ -463,6 +472,8 @@ async function main(): Promise<void> {
       equipTotals,
       tradeFee,
       tradeYield,
+      equipItem,
+      commandLimit,
       advance,
       startUpgrade,
       dispatchMarch,

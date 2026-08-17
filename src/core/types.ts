@@ -276,7 +276,11 @@ export type EquipSlot =
   | 'hands'
   | 'feet'
   | 'ring'
-  | 'necklace';
+  | 'necklace'
+  /** 탈것 정비고에서 사는 기동 장비 */
+  | 'mount'
+  /** 생체 사육장에서 기르는 전투 보조 개체 */
+  | 'pet';
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'artifact';
 
