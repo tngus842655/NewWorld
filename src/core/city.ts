@@ -1,5 +1,5 @@
-import type { BuildingDef, CityBuilding, GameState, ResourceKind } from './types';
-import { RESOURCE_LABELS } from './types';
+import type { BuildingDef, CityBuilding, GameState, ResourceKind, UpgradeJob } from './types';
+import { MAX_BUILD_SLOTS, RESOURCE_LABELS } from './types';
 
 /**
  * 기지 부지(6×6 격자)의 배치 규칙.
@@ -106,6 +106,35 @@ export function requirementText(
     .join(' · ');
 }
 
+// ── 건설 큐 ───────────────────────────────────────────────────
+//
+// 건설은 슬롯 단위로 병렬로 돈다. 슬롯이 1칸이든 3칸이든 아래 함수들만 보면
+// 되도록, 큐를 직접 들여다보는 코드는 이 파일 밖에 두지 않는다.
+
+/** 지금 열려 있는 건설 슬롯 수 */
+export function buildSlots(state: GameState): number {
+  return Math.min(MAX_BUILD_SLOTS, Math.max(1, Math.floor(state.buildSlots ?? 1)));
+}
+
+/** 이 건물이 지금 지어지는 중이면 그 작업 */
+export function buildJob(state: GameState, defId: string): UpgradeJob | undefined {
+  return state.upgradeQueue.find((j) => j.defId === defId);
+}
+
+export function isBuilding(state: GameState, defId: string): boolean {
+  return buildJob(state, defId) !== undefined;
+}
+
+/** 비어 있는 건설 슬롯 수 */
+export function freeBuildSlots(state: GameState): number {
+  return Math.max(0, buildSlots(state) - state.upgradeQueue.length);
+}
+
+/** 새 건설을 넣을 자리가 있는가 */
+export function hasFreeBuildSlot(state: GameState): boolean {
+  return freeBuildSlots(state) > 0;
+}
+
 // ── 가공 건물 보정 ────────────────────────────────────────────
 
 /**
@@ -166,7 +195,7 @@ export function repairLayout(state: GameState, buildingDefs: Map<string, Buildin
 
   for (const b of state.buildings) {
     const onGrid = isGridBuilding(buildingDefs.get(b.defId));
-    const building = onGrid && (state.upgradeQueue?.defId === b.defId || b.level >= 1);
+    const building = onGrid && (isBuilding(state, b.defId) || b.level >= 1);
     if (!building) {
       delete b.col;
       delete b.row;

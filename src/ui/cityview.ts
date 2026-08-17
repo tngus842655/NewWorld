@@ -1,5 +1,13 @@
 import type { GameState } from '../core/types';
-import { buildingAtCell, GRID_COLS, GRID_ROWS, placedBuildings, type Cell } from '../core/city';
+import {
+  buildingAtCell,
+  buildJob,
+  GRID_COLS,
+  GRID_ROWS,
+  isBuilding,
+  placedBuildings,
+  type Cell,
+} from '../core/city';
 
 /**
  * 기지 화면 — 정면 시점 + 바둑판 부지.
@@ -690,7 +698,7 @@ export function drawCity(
     const { c, r, defId, level } = item;
     const cx = cellX(c) + CW / 2;
     const cy = cellY(r) + CH * 0.82;
-    const building = state.upgradeQueue?.defId === defId;
+    const job = buildJob(state, defId);
 
     if (level < 1) {
       // 건설 중 — 아직 형태가 없는 공사장
@@ -718,8 +726,8 @@ export function drawCity(
     }
 
     // 건설 중 남은 시간
-    if (building && state.upgradeQueue) {
-      const remain = Math.max(0, Math.ceil((state.upgradeQueue.finishesAt - now) / 1000));
+    if (job) {
+      const remain = Math.max(0, Math.ceil((job.finishesAt - now) / 1000));
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 10px sans-serif';
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
@@ -741,7 +749,7 @@ export function drawCity(
   }
 
   // ── 성벽 앞쪽(아래) + 성문. 가장 가까운 벽이라 건물보다 나중에 그린다 ──
-  drawWallFront(ctx, wallLevel, gateLevel, state.upgradeQueue?.defId === GATE_ID, selectedId);
+  drawWallFront(ctx, wallLevel, gateLevel, isBuilding(state, GATE_ID), selectedId);
 
   // ── 드래그 미리보기 — 손끝을 따라다니는 반투명 건물 ──
   if (ghost) {

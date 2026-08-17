@@ -12,6 +12,9 @@ import { selectArmyForMarch, simulateBattle } from './combat';
 import { equipTotals } from './equipment';
 import {
   buildingAtCell,
+  buildSlots,
+  hasFreeBuildSlot,
+  isBuilding,
   isFreeCell,
   isGridBuilding,
   isPlaced,
@@ -103,7 +106,12 @@ export function startUpgrade(
   buildingDefs: Map<string, BuildingDef>,
   now: number,
 ): ActionResult {
-  if (state.upgradeQueue) return { ok: false, reason: '건설 큐가 이미 사용 중입니다.' };
+  const slots = buildSlots(state);
+  if (!hasFreeBuildSlot(state)) {
+    return { ok: false, reason: `건설 슬롯이 모두 사용 중입니다 (${slots}/${slots}).` };
+  }
+  // 같은 건물을 두 슬롯에서 동시에 올릴 수는 없다
+  if (isBuilding(state, def.id)) return { ok: false, reason: '이미 짓고 있는 건물입니다.' };
 
   const building = state.buildings.find((b) => b.defId === def.id);
   if (!building) return { ok: false, reason: '도시에 없는 건물입니다.' };
@@ -127,11 +135,11 @@ export function startUpgrade(
   }
 
   pay(state.resources, levelDef.upgradeCost);
-  state.upgradeQueue = {
+  state.upgradeQueue.push({
     defId: def.id,
     targetLevel,
     finishesAt: now + levelDef.upgradeSeconds * 1000,
-  };
+  });
   return { ok: true };
 }
 

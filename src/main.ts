@@ -4,7 +4,8 @@ import clusterUnits from '../data/units/cluster.json';
 import swarmUnits from '../data/units/swarm.json';
 import invaderUnits from '../data/units/invader.json';
 import wildUnits from '../data/units/wild.json';
-import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef } from './core/types';
+import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef, UpgradeJob } from './core/types';
+import { MAX_BUILD_SLOTS } from './core/types';
 import campData from '../data/combat/camps.json';
 import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
@@ -49,7 +50,7 @@ const unitDefs = new Map<string, UnitDef>(
     .map((u) => [u.id, u]),
 );
 
-const STATE_VERSION = 4;
+const STATE_VERSION = 5;
 
 /** 판타지 → SF 컨셉 전환 시 옛 식별자를 새 것으로 옮긴다 */
 const RACE_MIGRATION: Record<string, RaceId> = {
@@ -92,7 +93,8 @@ function newGame(now: number): GameState {
     researchQueue: null,
     heroes: [],
     tavern: { candidates: [], refreshedAt: 0 },
-    upgradeQueue: null,
+    upgradeQueue: [],
+    buildSlots: 1,
     trainQueue: null,
     march: null,
     reports: [],
@@ -147,16 +149,28 @@ function migrate(state: GameState): GameState {
   // 이미 지은 건물은 예전 화면과 같은 자리에 그대로 두고,
   // 짓지 않은 건물은 좌표 없이 둬서 건설 목록으로 돌린다.
   if ((state.stateVersion ?? 1) < 4) {
+    // 이 시점의 저장분은 아직 큐가 1칸짜리 객체다 (배열 전환은 v5)
+    const queued = (state.upgradeQueue as unknown as UpgradeJob | null)?.defId;
     for (const b of state.buildings) {
       const slot = DEFAULT_SLOTS[b.defId];
       if (!slot) continue;
-      if (b.level >= 1 || state.upgradeQueue?.defId === b.defId) {
+      if (b.level >= 1 || queued === b.defId) {
         b.col = slot.c;
         b.row = slot.r;
       }
     }
     state.stateVersion = 4;
   }
+  // v5: 건설 큐가 1칸 고정에서 슬롯 배열로 바뀌었다
+  if ((state.stateVersion ?? 1) < 5) {
+    const old = state.upgradeQueue as unknown as UpgradeJob | UpgradeJob[] | null;
+    state.upgradeQueue = old === null ? [] : Array.isArray(old) ? old : [old];
+    state.stateVersion = 5;
+  }
+  state.upgradeQueue ??= [];
+  state.buildSlots = Math.min(MAX_BUILD_SLOTS, Math.max(1, Math.floor(state.buildSlots ?? 1)));
+  // 슬롯이 줄어든 저장분: 넘치는 작업은 잘라 낸다 (자원은 이미 냈으므로 앞쪽을 남긴다)
+  state.upgradeQueue.length = Math.min(state.upgradeQueue.length, state.buildSlots);
   // 성벽·성문은 부지를 쓰지 않는다 — 방벽 시절 좌표가 남아 있으면 여기서 떨어진다
   repairLayout(state, buildingDefs);
   return state;
@@ -316,7 +330,7 @@ async function main(): Promise<void> {
     onInstantFinish() {
       // 테스트 전용: 큐 완료 시각을 현재로 당기고 advance로 정산
       const now = Date.now();
-      if (state.upgradeQueue) state.upgradeQueue.finishesAt = now;
+      for (const job of state.upgradeQueue) job.finishesAt = now;
       if (state.trainQueue) state.trainQueue.finishesAt = now;
       if (state.researchQueue) state.researchQueue.finishesAt = now;
       if (state.march) state.march.returnsAt = now;
@@ -357,14 +371,14 @@ async function main(): Promise<void> {
   setInterval(() => {
     const now = Date.now();
     const had = {
-      build: !!state.upgradeQueue,
+      build: state.upgradeQueue.length,
       train: !!state.trainQueue,
       research: !!state.researchQueue,
       march: !!state.march,
     };
     state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
     if (
-      (had.build && !state.upgradeQueue) ||
+      had.build > state.upgradeQueue.length ||
       (had.train && !state.trainQueue) ||
       (had.research && !state.researchQueue) ||
       (had.march && !state.march)
@@ -393,6 +407,8 @@ async function main(): Promise<void> {
       unitDefs,
       buildingDefs,
       simulateBattle,
+      advance,
+      startUpgrade,
       save: () => persist(),
       rerender: () => rerender(Date.now()),
     };

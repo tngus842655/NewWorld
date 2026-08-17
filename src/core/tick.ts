@@ -1,4 +1,12 @@
-import type { BuildingDef, GameState, NodeDef, ResourceKind, Resources, UnitDef } from './types';
+import type {
+  BuildingDef,
+  GameState,
+  NodeDef,
+  ResourceKind,
+  Resources,
+  UnitDef,
+  UpgradeJob,
+} from './types';
 import { grantXp } from './heroes';
 import { productionBoosts } from './city';
 
@@ -24,10 +32,12 @@ export function advance(
 
   const next: GameState = structuredClone(state);
 
-  type Ev = { at: number; kind: 'build' | 'train' | 'march' | 'research' };
+  type Ev = { at: number; kind: 'build' | 'train' | 'march' | 'research'; job?: UpgradeJob };
   const events: Ev[] = [];
-  if (next.upgradeQueue && next.upgradeQueue.finishesAt <= now) {
-    events.push({ at: next.upgradeQueue.finishesAt, kind: 'build' });
+  // 건설은 슬롯마다 따로 끝난다 — 끝난 순서대로 하나씩 반영해야
+  // "완료 시점 이후부터 새 생산량" 계산이 어긋나지 않는다
+  for (const job of next.upgradeQueue) {
+    if (job.finishesAt <= now) events.push({ at: job.finishesAt, kind: 'build', job });
   }
   if (next.trainQueue && next.trainQueue.finishesAt <= now) {
     events.push({ at: next.trainQueue.finishesAt, kind: 'train' });
@@ -43,10 +53,10 @@ export function advance(
   let from = next.updatedAt;
   for (const ev of events) {
     settle(next, buildingDefs, unitDefs, nodeDefs, from, ev.at);
-    if (ev.kind === 'build' && next.upgradeQueue) {
-      const b = next.buildings.find((x) => x.defId === next.upgradeQueue!.defId);
-      if (b) b.level = next.upgradeQueue.targetLevel;
-      next.upgradeQueue = null;
+    if (ev.kind === 'build' && ev.job) {
+      const b = next.buildings.find((x) => x.defId === ev.job!.defId);
+      if (b) b.level = Math.max(b.level, ev.job.targetLevel);
+      next.upgradeQueue = next.upgradeQueue.filter((j) => j !== ev.job);
     } else if (ev.kind === 'train' && next.trainQueue) {
       const { unitId, count } = next.trainQueue;
       next.army[unitId] = (next.army[unitId] ?? 0) + count;

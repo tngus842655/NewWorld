@@ -45,6 +45,9 @@ import {
 } from './cityview';
 import {
   buildingAtCell,
+  buildSlots,
+  hasFreeBuildSlot,
+  isBuilding,
   isGridBuilding,
   requirementText,
   unmetRequirements,
@@ -393,8 +396,9 @@ function cityTab(
   const next = def.levels[sel.level];
   const unmet = sel.level === 0 ? unmetRequirements(state, def) : [];
   let action = '<small>최대 레벨</small>';
+  const constructing = isBuilding(state, def.id);
   if (next) {
-    const blocked = state.upgradeQueue !== null || unmet.length > 0;
+    const blocked = constructing || !hasFreeBuildSlot(state) || unmet.length > 0;
     const verb = sel.level === 0 ? '건설' : `Lv.${sel.level + 1}`;
     action = `<button data-upgrade="${def.id}" ${costAttrs(next.upgradeCost, blocked)}>${verb}</button>`;
   }
@@ -411,7 +415,6 @@ function cityTab(
   const lockLine = unmet.length
     ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
     : '';
-  const constructing = state.upgradeQueue?.defId === def.id;
   const levelText =
     sel.level >= 1
       ? `Lv.${sel.level}`
@@ -471,7 +474,16 @@ function buildPanel(
 
   return `<h2>건설 — ${cellLabel(cell)}
       <span class="tier">가능 ${ready} / 남은 건물 ${candidates.length}</span></h2>
-    ${sections}`;
+    ${buildSlotLine(state)}${sections}`;
+}
+
+/** 건설 슬롯 사용 현황 — 버튼이 왜 꺼져 있는지 알 수 있게 */
+function buildSlotLine(state: GameState): string {
+  const slots = buildSlots(state);
+  const used = state.upgradeQueue.length;
+  if (!used) return '';
+  const tail = used >= slots ? ' · 하나가 끝나야 새로 지을 수 있다' : '';
+  return `<div class="card"><small class="locked">건설 슬롯 ${used}/${slots} 사용 중${tail}</small></div>`;
 }
 
 /** 건설 목록 한 줄 */
@@ -483,7 +495,7 @@ function buildRow(
 ): string {
   const lv1 = def.levels[0];
   const locked = unmet.length > 0;
-  const blocked = locked || state.upgradeQueue !== null;
+  const blocked = locked || !hasFreeBuildSlot(state);
   const effect = def.produces
     ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${lv1.productionPerHour ?? 0}/시간</small>`
     : def.boosts
@@ -1067,12 +1079,15 @@ export function render(
 
   const instant = import.meta.env.DEV ? '<button class="small" data-instant>⚡</button>' : '';
   const queues: string[] = [];
-  if (state.upgradeQueue) {
-    const def = buildingDefs.get(state.upgradeQueue.defId);
-    queues.push(`<div class="queue"><span>🔨 ${def?.name ?? '?'} Lv.${state.upgradeQueue.targetLevel}</span>
-      <span class="bar"><i id="q-build-bar"></i></span>
-      <span id="q-build-remain"></span>${instant}</div>`);
-  }
+  // 건설은 슬롯마다 한 줄. 슬롯이 여러 칸이면 몇 번째인지도 같이 보여준다
+  const slots = buildSlots(state);
+  state.upgradeQueue.forEach((job, i) => {
+    const def = buildingDefs.get(job.defId);
+    const slotTag = slots > 1 ? `<span class="tier">${i + 1}/${slots}</span> ` : '';
+    queues.push(`<div class="queue">${slotTag}<span>🔨 ${def?.name ?? '?'} Lv.${job.targetLevel}</span>
+      <span class="bar"><i id="q-build-${i}-bar"></i></span>
+      <span id="q-build-${i}-remain"></span>${instant}</div>`);
+  });
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     queues.push(`<div class="queue"><span>⚔️ ${def?.nameKo ?? '?'} ×${state.trainQueue.count}</span>
@@ -1114,7 +1129,8 @@ export function render(
     Object.entries(state.army).filter(([, n]) => n > 0),
     state.heroes.map((h) => h.id),
     state.tavern.candidates.map((c) => `${c.name}:${c.price}`),
-    state.upgradeQueue && `${state.upgradeQueue.defId}:${state.upgradeQueue.targetLevel}`,
+    state.upgradeQueue.map((j) => `${j.defId}:${j.targetLevel}`),
+    buildSlots(state),
     state.trainQueue && `${state.trainQueue.unitId}:${state.trainQueue.count}`,
     state.researchQueue && `${state.researchQueue.unitId}:${state.researchQueue.targetLevel}`,
     Object.entries(state.unitLevels),
@@ -1285,11 +1301,11 @@ function updateDynamic(
       bar.style.width = `${done}%`;
     }
   };
-  if (state.upgradeQueue) {
-    const def = buildingDefs.get(state.upgradeQueue.defId);
-    const secs = def?.levels[state.upgradeQueue.targetLevel - 1]?.upgradeSeconds ?? 0;
-    setQueue('build', state.upgradeQueue.finishesAt, secs);
-  }
+  state.upgradeQueue.forEach((job, i) => {
+    const def = buildingDefs.get(job.defId);
+    const secs = def?.levels[job.targetLevel - 1]?.upgradeSeconds ?? 0;
+    setQueue(`build-${i}`, job.finishesAt, secs);
+  });
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     setQueue('train', state.trainQueue.finishesAt, (def?.trainSeconds ?? 0) * state.trainQueue.count);

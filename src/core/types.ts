@@ -127,6 +127,12 @@ export interface UpgradeJob {
   finishesAt: number; // epoch ms
 }
 
+/**
+ * 동시에 돌릴 수 있는 건설 슬롯의 상한.
+ * 슬롯이 늘어나도 화면·정산이 그대로 버티도록 큐는 처음부터 배열이다.
+ */
+export const MAX_BUILD_SLOTS = 3;
+
 export interface TrainJob {
   unitId: string;
   count: number;
@@ -319,8 +325,16 @@ export interface GameState {
   heroes: Hero[];
   /** 주점 상태 */
   tavern: TavernState;
-  /** 원작처럼 건설 큐는 한 번에 하나 */
-  upgradeQueue: UpgradeJob | null;
+  /**
+   * 진행 중인 건설 — 슬롯마다 하나씩 병렬로 돈다(각자 finishesAt를 가진다).
+   * 지금 열려 있는 슬롯 수는 buildSlots가 정한다.
+   */
+  upgradeQueue: UpgradeJob[];
+  /**
+   * 열려 있는 건설 슬롯 수 (1 ~ MAX_BUILD_SLOTS). 없으면 1.
+   * 앞으로 건물 효과·과금·이벤트로 늘릴 자리라서 상태로 들고 있다.
+   */
+  buildSlots?: number;
   /** 훈련 큐도 한 번에 하나 */
   trainQueue: TrainJob | null;
   /** 출정 중인 부대 (한 번에 하나) */
