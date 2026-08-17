@@ -1,5 +1,5 @@
 import type { BuildingDef, CityBuilding, GameState, ResourceKind, UpgradeJob } from './types';
-import { MAX_BUILD_SLOTS, RESOURCE_LABELS } from './types';
+import { DEFAULT_BUILD_SLOTS, MAX_BUILD_SLOTS, RESOURCE_LABELS } from './types';
 
 /**
  * 기지 부지(6×6 격자)의 배치 규칙.
@@ -113,7 +113,10 @@ export function requirementText(
 
 /** 지금 열려 있는 건설 슬롯 수 */
 export function buildSlots(state: GameState): number {
-  return Math.min(MAX_BUILD_SLOTS, Math.max(1, Math.floor(state.buildSlots ?? 1)));
+  return Math.min(
+    MAX_BUILD_SLOTS,
+    Math.max(1, Math.floor(state.buildSlots ?? DEFAULT_BUILD_SLOTS)),
+  );
 }
 
 /** 이 건물이 지금 지어지는 중이면 그 작업 */

@@ -482,7 +482,7 @@ function buildSlotLine(state: GameState): string {
   const slots = buildSlots(state);
   const used = state.upgradeQueue.length;
   if (!used) return '';
-  const tail = used >= slots ? ' · 하나가 끝나야 새로 지을 수 있다' : '';
+  const tail = used >= slots ? ' · 하나가 끝나야 새로 지을 수 있다' : ' · 동시에 진행된다';
   return `<div class="card"><small class="locked">건설 슬롯 ${used}/${slots} 사용 중${tail}</small></div>`;
 }
 
@@ -1079,15 +1079,22 @@ export function render(
 
   const instant = import.meta.env.DEV ? '<button class="small" data-instant>⚡</button>' : '';
   const queues: string[] = [];
-  // 건설은 슬롯마다 한 줄. 슬롯이 여러 칸이면 몇 번째인지도 같이 보여준다
-  const slots = buildSlots(state);
-  state.upgradeQueue.forEach((job, i) => {
+  // 건설은 슬롯마다 한 줄씩 동시에 돈다. 열 칸이 다 차면 상단을 다 잡아먹으므로
+  // 곧 끝나는 것부터 세 줄만 펼치고 나머지는 한 줄로 접는다.
+  const TOP_QUEUE_ROWS = 3;
+  const running = state.upgradeQueue
+    .map((job, i) => ({ job, i }))
+    .sort((a, b) => a.job.finishesAt - b.job.finishesAt);
+  running.slice(0, TOP_QUEUE_ROWS).forEach(({ job, i }) => {
     const def = buildingDefs.get(job.defId);
-    const slotTag = slots > 1 ? `<span class="tier">${i + 1}/${slots}</span> ` : '';
-    queues.push(`<div class="queue">${slotTag}<span>🔨 ${def?.name ?? '?'} Lv.${job.targetLevel}</span>
+    queues.push(`<div class="queue"><span>🔨 ${def?.name ?? '?'} Lv.${job.targetLevel}</span>
       <span class="bar"><i id="q-build-${i}-bar"></i></span>
       <span id="q-build-${i}-remain"></span>${instant}</div>`);
   });
+  if (running.length > TOP_QUEUE_ROWS) {
+    queues.push(`<div class="queue"><span>🔨 외 ${running.length - TOP_QUEUE_ROWS}건 동시 건설 중
+      <span class="tier">${running.length}/${buildSlots(state)}</span></span></div>`);
+  }
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     queues.push(`<div class="queue"><span>⚔️ ${def?.nameKo ?? '?'} ×${state.trainQueue.count}</span>

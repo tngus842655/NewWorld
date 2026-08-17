@@ -128,10 +128,12 @@ export interface UpgradeJob {
 }
 
 /**
- * 동시에 돌릴 수 있는 건설 슬롯의 상한.
- * 슬롯이 늘어나도 화면·정산이 그대로 버티도록 큐는 처음부터 배열이다.
+ * 동시에 돌릴 수 있는 건설 슬롯. 슬롯마다 완료 시각이 따로 돌아
+ * 10개를 걸어 두면 10개가 나란히 지어진다.
  */
-export const MAX_BUILD_SLOTS = 3;
+export const DEFAULT_BUILD_SLOTS = 10;
+/** 화면·정산이 감당하는 슬롯 상한 */
+export const MAX_BUILD_SLOTS = 20;
 
 export interface TrainJob {
   unitId: string;

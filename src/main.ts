@@ -5,7 +5,7 @@ import swarmUnits from '../data/units/swarm.json';
 import invaderUnits from '../data/units/invader.json';
 import wildUnits from '../data/units/wild.json';
 import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef, UpgradeJob } from './core/types';
-import { MAX_BUILD_SLOTS } from './core/types';
+import { DEFAULT_BUILD_SLOTS, MAX_BUILD_SLOTS } from './core/types';
 import campData from '../data/combat/camps.json';
 import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
@@ -26,7 +26,7 @@ import {
   startUpgrade,
   unequipItem,
 } from './core/actions';
-import { DEFAULT_SLOTS, repairLayout } from './core/city';
+import { buildSlots, DEFAULT_SLOTS, repairLayout } from './core/city';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
 import { createStorage, StaleStateError } from './db/storage';
@@ -50,7 +50,7 @@ const unitDefs = new Map<string, UnitDef>(
     .map((u) => [u.id, u]),
 );
 
-const STATE_VERSION = 5;
+const STATE_VERSION = 6;
 
 /** 판타지 → SF 컨셉 전환 시 옛 식별자를 새 것으로 옮긴다 */
 const RACE_MIGRATION: Record<string, RaceId> = {
@@ -94,7 +94,7 @@ function newGame(now: number): GameState {
     heroes: [],
     tavern: { candidates: [], refreshedAt: 0 },
     upgradeQueue: [],
-    buildSlots: 1,
+    buildSlots: DEFAULT_BUILD_SLOTS,
     trainQueue: null,
     march: null,
     reports: [],
@@ -167,10 +167,17 @@ function migrate(state: GameState): GameState {
     state.upgradeQueue = old === null ? [] : Array.isArray(old) ? old : [old];
     state.stateVersion = 5;
   }
+  // v6: 동시 건설 기본값이 1 → 10. v5가 저장해 둔 1을 지워 기본값을 따르게 한다
+  if ((state.stateVersion ?? 1) < 6) {
+    delete state.buildSlots;
+    state.stateVersion = 6;
+  }
   state.upgradeQueue ??= [];
-  state.buildSlots = Math.min(MAX_BUILD_SLOTS, Math.max(1, Math.floor(state.buildSlots ?? 1)));
+  if (state.buildSlots !== undefined) {
+    state.buildSlots = Math.min(MAX_BUILD_SLOTS, Math.max(1, Math.floor(state.buildSlots)));
+  }
   // 슬롯이 줄어든 저장분: 넘치는 작업은 잘라 낸다 (자원은 이미 냈으므로 앞쪽을 남긴다)
-  state.upgradeQueue.length = Math.min(state.upgradeQueue.length, state.buildSlots);
+  state.upgradeQueue.length = Math.min(state.upgradeQueue.length, buildSlots(state));
   // 성벽·성문은 부지를 쓰지 않는다 — 방벽 시절 좌표가 남아 있으면 여기서 떨어진다
   repairLayout(state, buildingDefs);
   return state;
