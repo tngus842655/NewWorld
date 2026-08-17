@@ -10,9 +10,12 @@ import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
 import {
   abandonNode,
+  clearReports,
+  deleteReport,
   discardItem,
   dispatchMarch,
   equipItem,
+  markReportRead,
   hireHero,
   refreshTavern,
   startResearch,
@@ -206,6 +209,21 @@ async function main(): Promise<void> {
     onDiscard(itemId: string) {
       const result = discardItem(state, itemId);
       setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(Date.now());
+    },
+    onDeleteReport(reportId: string) {
+      deleteReport(state, reportId);
+      dirty = true;
+      rerender(Date.now());
+    },
+    onClearReports() {
+      clearReports(state);
+      dirty = true;
+      rerender(Date.now());
+    },
+    onOpenReport(reportId: string) {
+      markReportRead(state, reportId);
       dirty = true;
       rerender(Date.now());
     },

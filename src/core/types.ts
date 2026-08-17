@@ -244,6 +244,8 @@ export interface BattleReport {
   xpGained: number;
   /** 전투에서 얻은 장비 */
   drops?: EquipItem[];
+  /** 편지함에서 열어본 기록인지 */
+  read?: boolean;
 }
 
 export interface MarchJob {

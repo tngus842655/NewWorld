@@ -275,6 +275,28 @@ export function unequipItem(state: GameState, heroId: string, slot: EquipSlot): 
   return { ok: true };
 }
 
+/** 전투 기록 한 건 삭제 */
+export function deleteReport(state: GameState, reportId: string): ActionResult {
+  const idx = state.reports.findIndex((r) => r.id === reportId);
+  if (idx < 0) return { ok: false, reason: '없는 기록입니다.' };
+  state.reports.splice(idx, 1);
+  return { ok: true };
+}
+
+/** 전투 기록 전체 삭제 */
+export function clearReports(state: GameState): ActionResult {
+  state.reports = [];
+  return { ok: true };
+}
+
+/** 전투 기록을 읽음으로 표시 */
+export function markReportRead(state: GameState, reportId: string): ActionResult {
+  const report = state.reports.find((r) => r.id === reportId);
+  if (!report) return { ok: false, reason: '없는 기록입니다.' };
+  report.read = true;
+  return { ok: true };
+}
+
 /** 창고 장비를 버린다 */
 export function discardItem(state: GameState, itemId: string): ActionResult {
   const idx = state.inventory.findIndex((i) => i.id === itemId);

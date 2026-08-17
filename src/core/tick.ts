@@ -1,8 +1,8 @@
 import type { BuildingDef, GameState, NodeDef, Resources, UnitDef } from './types';
 import { grantXp } from './heroes';
 
-/** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다 */
-const MAX_REPORTS = 10;
+/** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다. 직접 삭제도 가능. */
+const MAX_REPORTS = 30;
 
 /**
  * 경과 시간만큼 상태를 전진시키는 순수 함수.

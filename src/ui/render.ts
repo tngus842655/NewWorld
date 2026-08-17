@@ -62,6 +62,12 @@ export interface RenderCallbacks {
   onUnequip(heroId: string, slot: EquipSlot): void;
   /** 창고 장비 버리기 */
   onDiscard(itemId: string): void;
+  /** 전투 기록 삭제 */
+  onDeleteReport(reportId: string): void;
+  /** 전투 기록 전체 삭제 */
+  onClearReports(): void;
+  /** 전투 기록 열람 (읽음 처리) */
+  onOpenReport(reportId: string): void;
   /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
   onInstantFinish(): void;
 }
@@ -72,6 +78,8 @@ let activeTab: Tab = 'city';
 let message = '';
 let selectedHeroId: string | null = null;
 let selectedSiteId: string | null = null;
+/** 펼쳐 둔 전투 기록 — DOM을 다시 그려도 열린 채로 유지한다 */
+const openReports = new Set<string>();
 /** 마지막으로 그린 DOM의 구조 지문 — 바뀔 때만 다시 그린다 */
 let lastStructureKey = '';
 
@@ -162,17 +170,28 @@ const STYLE = `
     min-height: 38px; font-size: 13px; }
   .chip.on { border-color: #a0281c; color: #e0b568; }
 
-  /* 전투 리포트 */
-  .report { background: #241e1b; border: 1px solid #3a322c; border-radius: 10px;
-    margin-bottom: 8px; overflow: hidden; }
-  .report summary { padding: 13px 14px; cursor: pointer; font-size: 14px;
+  /* 전투 기록 — 편지함 */
+  .mail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mail-head h2 { margin: 16px 0 8px; }
+  .mail-head h2 em { font-style: normal; background: #a0281c; color: #fff;
+    border-radius: 99px; padding: 1px 7px; font-size: 11px; vertical-align: middle; }
+  .mail { background: #241e1b; border: 1px solid #3a322c; border-radius: 10px; overflow: hidden; }
+  .mailrow + .mailrow { border-top: 1px solid #3a322c; }
+  .mailrow summary { padding: 11px 12px; cursor: pointer; font-size: 13px;
     list-style: none; display: flex; align-items: center; gap: 8px; }
-  .report summary::-webkit-details-marker { display: none; }
-  .report summary::after { content: '▾'; margin-left: auto; color: #8a7d73; }
-  .report[open] summary::after { content: '▴'; }
-  .report summary .win { color: #7fd39a; font-weight: 700; }
-  .report summary .lose { color: #e08a7e; font-weight: 700; }
-  .report-body { padding: 0 14px 12px; border-top: 1px solid #3a322c; }
+  .mailrow summary::-webkit-details-marker { display: none; }
+  .mailrow .dot { width: 7px; height: 7px; border-radius: 50%; background: transparent; flex: 0 0 auto; }
+  .mailrow.unread .dot { background: #e0b568; }
+  .mailrow.unread .mtitle { font-weight: 700; }
+  .mtitle { flex: 1 1 auto; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; color: #ece5df; }
+  .mtitle .win { color: #7fd39a; }
+  .mtitle .lose { color: #e08a7e; }
+  .mtime { flex: 0 0 auto; color: #8a7d73; font-size: 11px; }
+  .mailrow .del { flex: 0 0 auto; background: none; color: #6b625b;
+    min-height: 28px; padding: 0 6px; font-size: 14px; }
+  .mailrow .del:hover, .mailrow .del:focus-visible { color: #e08a7e; }
+  .report-body { padding: 2px 14px 12px; border-top: 1px solid #3a322c; background: #1f1917; }
   .report-body small { display: block; color: #b5a99f; font-size: 12px;
     line-height: 1.6; margin-top: 6px; }
   .log { margin-top: 10px; max-height: 220px; overflow-y: auto;
@@ -632,8 +651,12 @@ function reportsSection(
   unitDefs: Map<string, UnitDef>,
   now: number,
 ): string {
-  if (!state.reports.length) return '';
-  const cards = state.reports
+  if (!state.reports.length) {
+    return `<h2>전투 기록</h2>
+      <div class="card"><small>아직 전투 기록이 없다.</small></div>`;
+  }
+  const unread = state.reports.filter((r) => !r.read).length;
+  const rows = state.reports
     .map((r) => {
       const mins = Math.max(0, Math.round((now - r.at) / 60000));
       const when = mins < 1 ? '방금' : mins < 60 ? `${mins}분 전` : `${Math.round(mins / 60)}시간 전`;
@@ -649,10 +672,16 @@ function reportsSection(
             </div>`,
         )
         .join('');
-      return `<details class="report">
+      return `<details class="mailrow ${r.read ? '' : 'unread'}" data-report="${r.id}"
+        ${openReports.has(r.id) ? 'open' : ''}>
         <summary>
-          <span class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</span>
-          ${r.campName}${r.captured ? ' 🚩점령' : ''}${r.drops?.length ? ' 🎁' : ''} · ${when}
+          <i class="dot"></i>
+          <span class="mtitle">
+            <b class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</b>
+            ${r.campName}${r.captured ? ' 🚩' : ''}${r.drops?.length ? ' 🎁' : ''}
+          </span>
+          <span class="mtime">${when}</span>
+          <button class="del" data-del-report="${r.id}" aria-label="삭제">✕</button>
         </summary>
         <div class="report-body">
           <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
@@ -677,7 +706,12 @@ function reportsSection(
       </details>`;
     })
     .join('');
-  return `<h2>전투 기록</h2>${cards}`;
+
+  return `<div class="mail-head">
+      <h2>전투 기록 ${unread ? `<em>${unread}</em>` : ''}</h2>
+      <button class="small" data-clear-reports>전체 삭제</button>
+    </div>
+    <div class="mail">${rows}</div>`;
 }
 
 function codexTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
@@ -796,7 +830,7 @@ export function render(
     state.researchQueue && `${state.researchQueue.unitId}:${state.researchQueue.targetLevel}`,
     Object.entries(state.unitLevels),
     state.march?.campId ?? '',
-    state.reports.map((r) => r.id),
+    state.reports.map((r) => `${r.id}:${r.read ? 1 : 0}`),
     selectedHeroId,
     selectedSiteId,
     state.heroes.map(
@@ -878,6 +912,28 @@ export function render(
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-discard]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onDiscard(btn.dataset.discard!));
+    });
+    // 삭제 버튼은 summary 안에 있으므로 펼침 토글을 막아야 한다
+    root.querySelectorAll<HTMLButtonElement>('button[data-del-report]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cb.onDeleteReport(btn.dataset.delReport!);
+      });
+    });
+    root
+      .querySelector<HTMLButtonElement>('button[data-clear-reports]')
+      ?.addEventListener('click', () => cb.onClearReports());
+    root.querySelectorAll<HTMLDetailsElement>('details[data-report]').forEach((el) => {
+      el.addEventListener('toggle', () => {
+        const id = el.dataset.report!;
+        if (el.open) {
+          openReports.add(id);
+          cb.onOpenReport(id);
+        } else {
+          openReports.delete(id);
+        }
+      });
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-abandon]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onAbandon(btn.dataset.abandon!));
