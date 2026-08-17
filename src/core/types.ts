@@ -136,6 +136,8 @@ export interface TavernState {
 }
 
 export interface GameState {
+  /** 저장 데이터 버전 — migrate()의 일회성 마이그레이션 기준 */
+  stateVersion?: number;
   /** 마지막으로 틱이 반영된 시각 (epoch ms) — 오프라인 진행 계산의 기준 */
   updatedAt: number;
   /** 선택 종족 — null이면 종족 선택 화면 */

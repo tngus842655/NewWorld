@@ -19,8 +19,11 @@ const unitDefs = new Map<string, UnitDef>(
     .map((u) => [u.id, u]),
 );
 
+const STATE_VERSION = 2;
+
 function newGame(now: number): GameState {
   return {
+    stateVersion: STATE_VERSION,
     updatedAt: now,
     raceId: null,
     // 시작 자원은 추정치. 수정 50은 1계 유닛(수정 10/기) 초반 훈련용
@@ -41,6 +44,11 @@ function migrate(state: GameState): GameState {
   state.heroes ??= [];
   state.tavern ??= { candidates: [], refreshedAt: 0 };
   state.trainQueue ??= null;
+  // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
+  if ((state.stateVersion ?? 1) < 2) {
+    state.resources.crystal = Math.max(state.resources.crystal, 50);
+    state.stateVersion = 2;
+  }
   // 이후 추가된 건물(병영 등)을 기존 도시에 등록
   for (const defId of buildingDefs.keys()) {
     if (!state.buildings.some((b) => b.defId === defId)) {
