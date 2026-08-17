@@ -1,4 +1,5 @@
 import type {
+  BuildingCategory,
   BuildingDef,
   CampDef,
   EquipItem,
@@ -44,6 +45,7 @@ import {
 } from './cityview';
 import {
   buildingAtCell,
+  isGridBuilding,
   requirementText,
   unmetRequirements,
   unplacedBuildings,
@@ -186,6 +188,10 @@ const STYLE = `
 
   .card small.faint { color: #7d7168; }
   .card small.locked { color: #e0b568; }
+  .card.dim { opacity: 0.62; }
+  h2.sub { font-size: 12px; color: #8a7d73; margin: 14px 0 6px;
+    text-transform: none; letter-spacing: 0.04em; }
+  h2 .tier { font-weight: 400; }
 
   /* 하단 탭 — 탭 개수가 늘어도 자동으로 한 줄에 나눠 담는다 */
   .tabs { flex: 0 0 auto; display: grid;
@@ -268,6 +274,9 @@ const RACE_FLAVOR: Record<RaceId, string> = {
   cluster: '고등 문명의 정예 병기. 개체는 비싸지만 하나하나가 압도적이다.',
   swarm: '값싼 개체를 대량으로 쏟아내는 유기 생명체. 수로 전선을 무너뜨린다.',
 };
+
+/** 건설 목록에서 묶어 보여줄 순서 */
+const CATEGORY_ORDER: BuildingCategory[] = ['자원', '군사', '방어', '지휘', '특수'];
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'city', icon: '🛰️', label: '기지' },
@@ -382,9 +391,10 @@ function cityTab(
 
   // ── 건물 공통: 건설/확장 ──
   const next = def.levels[sel.level];
+  const unmet = sel.level === 0 ? unmetRequirements(state, def) : [];
   let action = '<small>최대 레벨</small>';
   if (next) {
-    const blocked = state.upgradeQueue !== null;
+    const blocked = state.upgradeQueue !== null || unmet.length > 0;
     const verb = sel.level === 0 ? '건설' : `Lv.${sel.level + 1}`;
     action = `<button data-upgrade="${def.id}" ${costAttrs(next.upgradeCost, blocked)}>${verb}</button>`;
   }
@@ -392,16 +402,28 @@ function cityTab(
     def.produces && sel.level >= 1
       ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${def.levels[sel.level - 1]?.productionPerHour ?? 0}/시간</small>`
       : '';
+  const boost = def.boosts
+    ? `<small>${boostText(def)}${sel.level >= 1 ? ` (현재 +${def.boosts.percentPerLevel * sel.level}%)` : ''}</small>`
+    : '';
   const costLine = next
     ? `<small>${costText(next.upgradeCost)} · ${next.upgradeSeconds}초</small>`
     : '';
+  const lockLine = unmet.length
+    ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
+    : '';
+  const constructing = state.upgradeQueue?.defId === def.id;
   const levelText =
-    sel.level === 0 ? '<span class="tier">건설 중</span>' : `Lv.${sel.level}`;
+    sel.level >= 1
+      ? `Lv.${sel.level}`
+      : `<span class="tier">${constructing ? '건설 중' : '미건설'}</span>`;
+  const moveHint = isGridBuilding(def)
+    ? '<small class="faint">끌어서 자리를 옮길 수 있다.</small>'
+    : '<small class="faint">자리가 정해진 구조물이라 옮길 수 없다.</small>';
 
   const header = `<div class="card">
-    <div><b>${def.name}</b> ${levelText}
-      <small>${def.description}</small>${produce}${costLine}
-      <small class="faint">끌어서 자리를 옮길 수 있다.</small>
+    <div><b>${def.name}</b> ${levelText}${def.planned ? ' <span class="tier">효과 미구현</span>' : ''}
+      <small>${def.description}</small>${produce}${boost}${costLine}${lockLine}
+      ${moveHint}
     </div>
     <div class="actions">${action}</div>
   </div>`;
@@ -425,42 +447,65 @@ function buildPanel(
   buildingDefs: Map<string, BuildingDef>,
   cell: Cell,
 ): string {
-  const candidates = unplacedBuildings(state)
+  const candidates = unplacedBuildings(state, buildingDefs)
     .map((b) => buildingDefs.get(b.defId))
     .filter((d): d is BuildingDef => d !== undefined)
-    .map((def) => ({ def, unmet: unmetRequirements(state, def) }))
-    // 지을 수 있는 것부터, 그다음 잠긴 것
-    .sort((a, b) => a.unmet.length - b.unmet.length);
+    .map((def) => ({ def, unmet: unmetRequirements(state, def) }));
 
   if (!candidates.length) {
     return `<h2>건설 — ${cellLabel(cell)}</h2>
-      <div class="card"><small>지을 수 있는 건물을 모두 지었다.
+      <div class="card"><small>부지 36칸에 들어갈 건물을 모두 지었다.
         건물을 이 자리로 끌어와 배치를 정리할 수 있다.</small></div>`;
   }
 
-  const rows = candidates
-    .map(({ def, unmet }) => {
-      const lv1 = def.levels[0];
-      const locked = unmet.length > 0;
-      const blocked = locked || state.upgradeQueue !== null;
-      const produce = def.produces
-        ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${lv1.productionPerHour ?? 0}/시간</small>`
-        : '';
-      const info = locked
-        ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
-        : `<small>${costText(lv1.upgradeCost)} · ${lv1.upgradeSeconds}초</small>`;
-      return `<div class="card">
-        <div><b>${def.name}</b>
-          <small>${def.description}</small>${produce}${info}
-        </div>
-        <div class="actions">
-          <button data-place="${def.id}" ${costAttrs(lv1.upgradeCost, blocked)}>건설</button>
-        </div>
-      </div>`;
-    })
-    .join('');
+  const ready = candidates.filter((c) => !c.unmet.length).length;
+  const sections = CATEGORY_ORDER.map((category) => {
+    const group = candidates
+      .filter((c) => c.def.category === category)
+      // 지을 수 있는 것부터, 그다음 잠긴 것
+      .sort((a, b) => a.unmet.length - b.unmet.length);
+    if (!group.length) return '';
+    return `<h2 class="sub">${category} <span class="tier">${group.length}</span></h2>
+      ${group.map(({ def, unmet }) => buildRow(state, buildingDefs, def, unmet)).join('')}`;
+  }).join('');
 
-  return `<h2>건설 — ${cellLabel(cell)}</h2>${rows}`;
+  return `<h2>건설 — ${cellLabel(cell)}
+      <span class="tier">가능 ${ready} / 남은 건물 ${candidates.length}</span></h2>
+    ${sections}`;
+}
+
+/** 건설 목록 한 줄 */
+function buildRow(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  def: BuildingDef,
+  unmet: ReturnType<typeof unmetRequirements>,
+): string {
+  const lv1 = def.levels[0];
+  const locked = unmet.length > 0;
+  const blocked = locked || state.upgradeQueue !== null;
+  const effect = def.produces
+    ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${lv1.productionPerHour ?? 0}/시간</small>`
+    : def.boosts
+      ? `<small>${boostText(def)}</small>`
+      : '';
+  const info = locked
+    ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
+    : `<small>${costText(lv1.upgradeCost)} · ${lv1.upgradeSeconds}초</small>`;
+  return `<div class="card${locked ? ' dim' : ''}">
+    <div><b>${def.name}</b>${def.planned ? ' <span class="tier">효과 미구현</span>' : ''}
+      <small>${def.description}</small>${effect}${info}
+    </div>
+    <div class="actions">
+      <button data-place="${def.id}" ${costAttrs(lv1.upgradeCost, blocked)}>건설</button>
+    </div>
+  </div>`;
+}
+
+function boostText(def: BuildingDef): string {
+  const b = def.boosts!;
+  const what = b.resource === 'all' ? '모든 자원' : RESOURCE_LABELS[b.resource];
+  return `${what} 산출 +${b.percentPerLevel}%/레벨`;
 }
 
 /** 병영 패널: 보유 병력 + 훈련 */
@@ -914,7 +959,11 @@ function infoTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
  * 넘겨야 끌기로 보기 때문에 손가락이 조금 흔들려도 탭은 탭으로 남는다.
  * 캔버스에 touch-action:none 을 줘서 끌기 도중 화면이 딸려 스크롤되지 않는다.
  */
-function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
+function wireCityCanvas(
+  canvas: HTMLCanvasElement,
+  buildingDefs: Map<string, BuildingDef>,
+  cb: RenderCallbacks,
+): void {
   const DRAG_THRESHOLD = 10;
   let origin: { x: number; y: number; defId: string | null } | null = null;
   let dragging = false;
@@ -924,10 +973,13 @@ function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
     dragging = false;
     setDragGhost(null);
   };
+  /** 성벽·성문은 자리가 정해져 있어 끌 수 없다 */
+  const draggable = (id: string | null) =>
+    id !== null && isGridBuilding(buildingDefs.get(id)) ? id : null;
 
   canvas.addEventListener('pointerdown', (e) => {
     const p = toCanvasPoint(canvas, e.clientX, e.clientY);
-    origin = { x: p.x, y: p.y, defId: buildingAt(p.x, p.y) };
+    origin = { x: p.x, y: p.y, defId: draggable(buildingAt(p.x, p.y)) };
     dragging = false;
     if (origin.defId) canvas.setPointerCapture(e.pointerId);
   });
@@ -1109,7 +1161,7 @@ export function render(
     scrollToPanel = false;
 
     const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
-    if (canvas) wireCityCanvas(canvas, cb);
+    if (canvas) wireCityCanvas(canvas, buildingDefs, cb);
 
     root.querySelectorAll<HTMLButtonElement>('button[data-tab]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onSelectTab(btn.dataset.tab as Tab));

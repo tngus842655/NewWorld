@@ -1,4 +1,5 @@
-import type { BuildingDef, CityBuilding, GameState } from './types';
+import type { BuildingDef, CityBuilding, GameState, ResourceKind } from './types';
+import { RESOURCE_LABELS } from './types';
 
 /**
  * 기지 부지(6×6 격자)의 배치 규칙.
@@ -7,10 +8,20 @@ import type { BuildingDef, CityBuilding, GameState } from './types';
  * 이제 배치는 저장 상태(CityBuilding.col/row)에 들어가고, 화면은 그걸 그리기만 한다.
  * 좌표가 없는 건물 = 아직 부지에 올리지 않은 건물 → 빈 칸을 눌렀을 때 나오는
  * 건설 목록에 뜬다.
+ *
+ * 성벽(placement:'wall')과 성문(placement:'gate')은 부지를 쓰지 않는다.
+ * 자리가 정해져 있어 옮길 수도, 건설 목록에 뜰 수도 없다.
  */
 
 export const GRID_COLS = 6;
 export const GRID_ROWS = 6;
+/** 성 내부 부지 칸 수 = 지을 수 있는 grid 건물 수 */
+export const GRID_CELLS = GRID_COLS * GRID_ROWS;
+
+/** 부지를 차지하는 건물인가 (성벽·성문은 아니다) */
+export function isGridBuilding(def: BuildingDef | undefined): boolean {
+  return (def?.placement ?? 'grid') === 'grid';
+}
 
 export interface Cell {
   c: number;
@@ -30,9 +41,12 @@ export function placedBuildings(state: GameState): (CityBuilding & { col: number
   return state.buildings.filter(isPlaced);
 }
 
-/** 아직 부지에 올리지 않은 건물 = 건설 목록에 뜰 후보 */
-export function unplacedBuildings(state: GameState): CityBuilding[] {
-  return state.buildings.filter((b) => !isPlaced(b));
+/** 아직 부지에 올리지 않은 건물 = 건설 목록에 뜰 후보 (성벽·성문 제외) */
+export function unplacedBuildings(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): CityBuilding[] {
+  return state.buildings.filter((b) => !isPlaced(b) && isGridBuilding(buildingDefs.get(b.defId)));
 }
 
 export function buildingAtCell(state: GameState, c: number, r: number): CityBuilding | null {
@@ -92,6 +106,34 @@ export function requirementText(
     .join(' · ');
 }
 
+// ── 가공 건물 보정 ────────────────────────────────────────────
+
+/**
+ * 가공 건물이 올려 주는 자원별 산출 보정(%).
+ * 원작의 木材加工厂(레벨당 목재 +5%) 구조를 그대로 옮긴 것으로, 자원 건물과
+ * 점령 자원지 산출 모두에 곱해진다.
+ */
+export function productionBoosts(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): Partial<Record<ResourceKind, number>> {
+  const out: Partial<Record<ResourceKind, number>> = {};
+  for (const b of state.buildings) {
+    if (b.level <= 0) continue;
+    const boost = buildingDefs.get(b.defId)?.boosts;
+    if (!boost) continue;
+    const pct = boost.percentPerLevel * b.level;
+    if (boost.resource === 'all') {
+      for (const k of Object.keys(RESOURCE_LABELS) as ResourceKind[]) {
+        out[k] = (out[k] ?? 0) + pct;
+      }
+    } else {
+      out[boost.resource] = (out[boost.resource] ?? 0) + pct;
+    }
+  }
+  return out;
+}
+
 // ── 저장 데이터 보정 ──────────────────────────────────────────
 
 /** 옛 저장 데이터(좌표 없음)를 옮길 때 쓰던 고정 배치 */
@@ -113,15 +155,18 @@ export const DEFAULT_SLOTS: Record<string, Cell> = {
  * 배치 불변식을 강제한다. 저장 데이터가 손상됐거나 격자 규격이 바뀌어도
  * 건물이 사라지거나 겹쳐 보이지 않게 한다.
  *
- * - 건설된(또는 건설 중인) 건물은 반드시 유효한 칸 하나를 차지한다
+ * - 건설된(또는 건설 중인) grid 건물은 반드시 유효한 칸 하나를 차지한다
  * - 짓지 않은 건물은 좌표를 갖지 않는다 (→ 건설 목록으로 돌아간다)
+ * - 성벽·성문은 부지를 쓰지 않으므로 좌표를 떼어 낸다
+ *   (방벽이 성벽으로 승격되기 전 저장분이 여기 걸린다)
  */
-export function repairLayout(state: GameState): void {
+export function repairLayout(state: GameState, buildingDefs: Map<string, BuildingDef>): void {
   const taken = new Set<string>();
   const homeless: CityBuilding[] = [];
 
   for (const b of state.buildings) {
-    const building = state.upgradeQueue?.defId === b.defId || b.level >= 1;
+    const onGrid = isGridBuilding(buildingDefs.get(b.defId));
+    const building = onGrid && (state.upgradeQueue?.defId === b.defId || b.level >= 1);
     if (!building) {
       delete b.col;
       delete b.row;

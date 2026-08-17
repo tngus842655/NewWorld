@@ -1,5 +1,6 @@
-import type { BuildingDef, GameState, NodeDef, Resources, UnitDef } from './types';
+import type { BuildingDef, GameState, NodeDef, ResourceKind, Resources, UnitDef } from './types';
 import { grantXp } from './heroes';
+import { productionBoosts } from './city';
 
 /** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다. 직접 삭제도 가능. */
 const MAX_REPORTS = 30;
@@ -104,13 +105,17 @@ function settle(
   const hours = (to - from) / 3_600_000;
   if (hours <= 0) return;
 
+  // 가공 건물(정제소·발전소 등)이 올려 주는 산출 보정 — 자원 건물과 자원지 모두에 곱한다
+  const boosts = productionBoosts(state, buildingDefs);
+  const rate = (kind: ResourceKind) => 1 + (boosts[kind] ?? 0) / 100;
+
   for (const b of state.buildings) {
     if (b.level <= 0) continue;
     const def = buildingDefs.get(b.defId);
     if (!def?.produces) continue;
     const lvl = def.levels[b.level - 1];
     if (!lvl?.productionPerHour) continue;
-    state.resources[def.produces] += lvl.productionPerHour * hours;
+    state.resources[def.produces] += lvl.productionPerHour * hours * rate(def.produces);
   }
 
   // 점령한 자원지 생산 — 점령 시각 이후 구간만 반영
@@ -119,7 +124,7 @@ function settle(
     if (!def) continue;
     const effFrom = Math.max(from, h.capturedAt);
     const effHours = (to - effFrom) / 3_600_000;
-    if (effHours > 0) state.resources[def.produces] += def.perHour * effHours;
+    if (effHours > 0) state.resources[def.produces] += def.perHour * effHours * rate(def.produces);
   }
 
   // 병력 식량 소모 (원작 每小时消耗粮食). 지금은 0 밑으로 내려가지 않게만 처리 —

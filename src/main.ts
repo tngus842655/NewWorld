@@ -157,7 +157,8 @@ function migrate(state: GameState): GameState {
     }
     state.stateVersion = 4;
   }
-  repairLayout(state);
+  // 성벽·성문은 부지를 쓰지 않는다 — 방벽 시절 좌표가 남아 있으면 여기서 떨어진다
+  repairLayout(state, buildingDefs);
   return state;
 }
 

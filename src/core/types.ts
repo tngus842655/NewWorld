@@ -34,16 +34,41 @@ export interface BuildingRequirement {
   level: number;
 }
 
+/**
+ * 건물이 앉는 자리.
+ *   grid — 성 내부 6×6 부지 (기본값). 드래그로 옮길 수 있다
+ *   wall — 기지를 두르는 외벽 그 자체. 부지를 쓰지 않고 자리도 고정
+ *   gate — 남쪽 성벽 한가운데 출입구. 마찬가지로 고정
+ */
+export type BuildingPlacement = 'grid' | 'wall' | 'gate';
+
+/** 다른 건물의 생산에 곱해지는 가공 건물 (원작 木材加工厂: 레벨당 +5%) */
+export interface ProductionBoost {
+  /** 'all'이면 자원 5종 전부 */
+  resource: ResourceKind | 'all';
+  percentPerLevel: number;
+}
+
+export type BuildingCategory = '자원' | '군사' | '방어' | '지휘' | '특수';
+
 export interface BuildingDef {
   id: string;
   name: string;
   description: string;
+  /** 건설 목록에서 묶어 보여줄 분류 */
+  category: BuildingCategory;
   /** 생산 건물이면 어떤 자원을 만드는지 */
   produces?: ResourceKind;
+  /** 가공 건물이면 어떤 자원 산출을 얼마나 올리는지 */
+  boosts?: ProductionBoost;
+  /** 생략하면 'grid' */
+  placement?: BuildingPlacement;
   /** index 0 = 1레벨 */
   levels: BuildingLevel[];
   /** 건설(0→1레벨) 선행 조건. 없으면 처음부터 지을 수 있다 */
   requires?: BuildingRequirement[];
+  /** 지을 수는 있지만 효과가 아직 코드에 없는 건물 */
+  planned?: boolean;
   provenance: Provenance;
 }
 

@@ -13,6 +13,7 @@ import { equipTotals } from './equipment';
 import {
   buildingAtCell,
   isFreeCell,
+  isGridBuilding,
   isPlaced,
   inGrid,
   requirementText,
@@ -111,9 +112,12 @@ export function startUpgrade(
   const levelDef = def.levels[targetLevel - 1];
   if (!levelDef) return { ok: false, reason: '이미 최대 레벨입니다.' };
 
-  // 0→1레벨은 '건설'이라 부지와 선행 조건이 필요하다
+  // 0→1레벨은 '건설'이라 부지와 선행 조건이 필요하다.
+  // 성벽·성문은 자리가 정해져 있어 부지를 고르지 않는다.
   if (building.level === 0) {
-    if (!isPlaced(building)) return { ok: false, reason: '먼저 빈 부지를 골라야 합니다.' };
+    if (isGridBuilding(def) && !isPlaced(building)) {
+      return { ok: false, reason: '먼저 빈 부지를 골라야 합니다.' };
+    }
     const unmet = unmetRequirements(state, def);
     if (unmet.length) return { ok: false, reason: requirementText(unmet, buildingDefs) };
   }
@@ -164,6 +168,7 @@ export function constructBuilding(
  */
 export function moveBuilding(state: GameState, defId: string, c: number, r: number): ActionResult {
   const building = state.buildings.find((b) => b.defId === defId);
+  // 성벽·성문은 애초에 좌표가 없어 여기서 걸러진다
   if (!building || !isPlaced(building)) return { ok: false, reason: '옮길 수 없는 건물입니다.' };
   if (!inGrid(c, r)) return { ok: false, reason: '부지 밖으로는 옮길 수 없습니다.' };
   if (building.col === c && building.row === r) return { ok: true };
