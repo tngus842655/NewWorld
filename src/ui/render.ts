@@ -34,7 +34,11 @@ import {
 import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
 import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
 
-export type Tab = 'city' | 'barracks' | 'tavern' | 'world' | 'codex';
+/**
+ * 원작 메뉴 구성(도시 / 영웅 / 맵 / 길드 / 시장 / 랭킹 / 정보)을 따른다.
+ * 길드·시장·랭킹은 아직 시스템이 없어 넣지 않았다.
+ */
+export type Tab = 'city' | 'hero' | 'map' | 'info';
 
 export interface RenderCallbacks {
   onUpgrade(defId: string): void;
@@ -235,10 +239,9 @@ const RACE_FLAVOR: Record<RaceId, string> = {
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'city', icon: '🏰', label: '도시' },
-  { id: 'barracks', icon: '⚔️', label: '병영' },
-  { id: 'tavern', icon: '🍺', label: '주점' },
-  { id: 'world', icon: '🗺️', label: '지도' },
-  { id: 'codex', icon: '📖', label: '도감' },
+  { id: 'hero', icon: '🛡️', label: '영웅' },
+  { id: 'map', icon: '🗺️', label: '맵' },
+  { id: 'info', icon: '📖', label: '정보' },
 ];
 
 function ensureStyle(): void {
@@ -324,40 +327,59 @@ function renderRaceSelect(root: HTMLElement, cb: RenderCallbacks): void {
 
 // ── 탭별 본문 ────────────────────────────────────────────────
 
-function cityTab(state: GameState, buildingDefs: Map<string, BuildingDef>): string {
-  let panel = '<div class="card"><small>도시의 건물이나 빈 터를 눌러 관리하세요.</small></div>';
+/**
+ * 도시 화면. 원작처럼 건물을 눌러 그 건물의 기능을 연다:
+ * 병영 → 병력·훈련, 연구소 → 병종 연구, 주점 → 영웅 고용.
+ */
+function cityTab(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  unitDefs: Map<string, UnitDef>,
+  now: number,
+): string {
+  const canvas = `<canvas id="cityview" width="${CITY_SIZE}" height="${CITY_SIZE}"></canvas>`;
+
   const sel = selectedBuilding ? state.buildings.find((b) => b.defId === selectedBuilding) : null;
   const def = sel ? buildingDefs.get(sel.defId) : null;
-  if (sel && def) {
-    const next = def.levels[sel.level];
-    let action = '<small>최대 레벨</small>';
-    if (next) {
-      const blocked = state.upgradeQueue !== null;
-      const verb = sel.level === 0 ? '건설' : `Lv.${sel.level + 1}`;
-      action = `<button data-upgrade="${def.id}" ${costAttrs(next.upgradeCost, blocked)}>${verb}</button>`;
-    }
-    const produce =
-      def.produces && sel.level >= 1
-        ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${def.levels[sel.level - 1]?.productionPerHour ?? 0}/시간</small>`
-        : '';
-    const costLine = next
-      ? `<small>${costText(next.upgradeCost)} · ${next.upgradeSeconds}초</small>`
-      : '';
-    panel = `<div class="card">
-      <div><b>${def.name}</b> ${sel.level === 0 ? '<span class="tier">공터</span>' : `Lv.${sel.level}`}
-        <small>${def.description}</small>${produce}${costLine}
-      </div>
-      <div class="actions">${action}</div>
-    </div>`;
+  if (!sel || !def) {
+    return `${canvas}
+      <div class="card"><small>도시의 건물이나 빈 터를 눌러 관리하세요.</small></div>`;
   }
-  return `<canvas id="cityview" width="${CITY_SIZE}" height="${CITY_SIZE}"></canvas>
-    <h2>건물 관리</h2>${panel}`;
+
+  // ── 건물 공통: 건설/확장 ──
+  const next = def.levels[sel.level];
+  let action = '<small>최대 레벨</small>';
+  if (next) {
+    const blocked = state.upgradeQueue !== null;
+    const verb = sel.level === 0 ? '건설' : `Lv.${sel.level + 1}`;
+    action = `<button data-upgrade="${def.id}" ${costAttrs(next.upgradeCost, blocked)}>${verb}</button>`;
+  }
+  const produce =
+    def.produces && sel.level >= 1
+      ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${def.levels[sel.level - 1]?.productionPerHour ?? 0}/시간</small>`
+      : '';
+  const costLine = next
+    ? `<small>${costText(next.upgradeCost)} · ${next.upgradeSeconds}초</small>`
+    : '';
+
+  const header = `<div class="card">
+    <div><b>${def.name}</b> ${sel.level === 0 ? '<span class="tier">공터</span>' : `Lv.${sel.level}`}
+      <small>${def.description}</small>${produce}${costLine}
+    </div>
+    <div class="actions">${action}</div>
+  </div>`;
+
+  // ── 건물별 기능 ──
+  let body = '';
+  if (def.id === BARRACKS_ID) body = barracksPanel(state, unitDefs, sel.level);
+  else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
+  else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
+
+  return `${canvas}${header}${body}`;
 }
 
-function barracksTab(
-  state: GameState,
-  unitDefs: Map<string, UnitDef>,
-): string {
+/** 병영 패널: 보유 병력 + 훈련 */
+function barracksPanel(state: GameState, unitDefs: Map<string, UnitDef>, level: number): string {
   const entries = Object.entries(state.army).filter(([, n]) => n > 0);
   const army = entries.length
     ? `<div class="army">${entries
@@ -369,15 +391,13 @@ function barracksTab(
         .join('')}</div>`
     : '<div class="card"><small>아직 병력이 없다.</small></div>';
 
-  const level = state.buildings.find((b) => b.defId === BARRACKS_ID)?.level ?? 0;
-  const academyLevel = state.buildings.find((b) => b.defId === ACADEMY_ID)?.level ?? 0;
   const raceUnits = [...unitDefs.values()]
     .filter((u) => u.raceId === state.raceId)
     .sort((a, b) => a.tier - b.tier);
 
   let training: string;
   if (level < 1) {
-    training = '<div class="card"><small>도시에서 병영을 지으면 유닛을 훈련할 수 있다.</small></div>';
+    training = '<div class="card"><small>병영을 지으면 유닛을 훈련할 수 있다.</small></div>';
   } else {
     training = raceUnits
       .map((u) => {
@@ -400,10 +420,22 @@ function barracksTab(
       .join('');
   }
 
-  // ── 병종 연구 ──
+  return `<h2>보유 병력</h2>${army}<h2>훈련</h2>${training}`;
+}
+
+/** 연구소 패널: 병종 연구 */
+function academyPanel(
+  state: GameState,
+  unitDefs: Map<string, UnitDef>,
+  academyLevel: number,
+): string {
+  const raceUnits = [...unitDefs.values()]
+    .filter((u) => u.raceId === state.raceId)
+    .sort((a, b) => a.tier - b.tier);
+
   let research: string;
   if (academyLevel < 1) {
-    research = '<div class="card"><small>도시에서 연구소를 지으면 병종 능력치를 올릴 수 있다.</small></div>';
+    research = '<div class="card"><small>연구소를 지으면 병종 능력치를 올릴 수 있다.</small></div>';
   } else {
     const cap = maxResearchableLevel(academyLevel);
     research = raceUnits
@@ -445,9 +477,7 @@ function barracksTab(
       .join('');
   }
 
-  return `<h2>보유 병력</h2>${army}
-    <h2>훈련 (병영 Lv.${level})</h2>${training}
-    <h2>병종 연구 (연구소 Lv.${academyLevel})</h2>${research}`;
+  return `<h2>병종 연구</h2>${research}`;
 }
 
 function itemLine(it: EquipItem): string {
@@ -495,10 +525,45 @@ function heroEquipBlock(hero: GameState['heroes'][number]): string {
   </div>`;
 }
 
-function tavernTab(state: GameState, now: number): string {
+/** 주점 패널: 영웅 고용 후보 */
+function tavernPanel(state: GameState, level: number, now: number): string {
+  if (level < 1) {
+    return '<div class="card"><small>주점을 지으면 영웅을 고용할 수 있다.</small></div>';
+  }
+
+  const nextRestock = Math.max(
+    0,
+    Math.ceil((state.tavern.refreshedAt + FREE_RESTOCK_SECONDS * 1000 - now) / 1000),
+  );
+  const canHire = state.heroes.length < level;
+  const candidates = state.tavern.candidates
+    .map(
+      (c, i) => `<div class="card">
+        <div><b>${c.name}</b> <span class="tier">속성합 ${statTotal(c.stats)}</span>
+          <small>${statLine(c.stats)}</small></div>
+        <div class="actions">
+          <button data-hire="${i}" ${costAttrs({ gold: c.price }, !canHire)}>금화 ${c.price}</button>
+        </div>
+      </div>`,
+    )
+    .join('');
+
+  return `<h2>영웅 고용 (${state.heroes.length}/${level})</h2>
+    <div class="card">
+      <div><small>무료 갱신까지 <span id="tavern-countdown">${nextRestock}</span>초</small></div>
+      <div class="actions">
+        <button class="small" data-refresh-tavern ${costAttrs({ gold: MANUAL_REFRESH_GOLD }, false)}>
+          즉시 갱신 (${MANUAL_REFRESH_GOLD})</button>
+      </div>
+    </div>
+    ${candidates}`;
+}
+
+/** 영웅 탭: 보유 영웅 + 장비 + 창고 */
+function heroTab(state: GameState): string {
   const heroes = state.heroes.length
     ? state.heroes.map((h) => heroEquipBlock(h)).join('')
-    : '<div class="card"><small>고용한 영웅이 없다.</small></div>';
+    : `<div class="card"><small>고용한 영웅이 없다. 도시의 주점에서 고용할 수 있다.</small></div>`;
 
   // ── 창고 ──
   const inventory = state.inventory.length
@@ -518,40 +583,7 @@ function tavernTab(state: GameState, now: number): string {
         .join('')
     : '<div class="card"><small>창고가 비어 있다. 사냥터에서 승리하면 장비를 얻는다.</small></div>';
 
-  const level = state.buildings.find((b) => b.defId === TAVERN_ID)?.level ?? 0;
-  if (level < 1) {
-    return `<h2>영웅</h2>${heroes}<h2>주점</h2>
-      <div class="card"><small>도시에서 주점을 지으면 영웅을 고용할 수 있다.</small></div>
-      <h2>창고 (${state.inventory.length})</h2>${inventory}`;
-  }
-
-  const nextRestock = Math.max(
-    0,
-    Math.ceil((state.tavern.refreshedAt + FREE_RESTOCK_SECONDS * 1000 - now) / 1000),
-  );
-  const canHire = state.heroes.length < level;
-  const candidates = state.tavern.candidates
-    .map((c, i) => {
-      return `<div class="card">
-        <div><b>${c.name}</b> <span class="tier">속성합 ${statTotal(c.stats)}</span>
-          <small>${statLine(c.stats)}</small></div>
-        <div class="actions">
-          <button data-hire="${i}" ${costAttrs({ gold: c.price }, !canHire)}>금화 ${c.price}</button>
-        </div>
-      </div>`;
-    })
-    .join('');
-
-  return `<h2>영웅 (${state.heroes.length}/${level})</h2>${heroes}
-    <h2>주점 후보</h2>
-    <div class="card">
-      <div><small>무료 갱신까지 <span id="tavern-countdown">${nextRestock}</span>초</small></div>
-      <div class="actions">
-        <button class="small" data-refresh-tavern ${costAttrs({ gold: MANUAL_REFRESH_GOLD }, false)}>
-          즉시 갱신 (${MANUAL_REFRESH_GOLD})</button>
-      </div>
-    </div>
-    ${candidates}
+  return `<h2>영웅</h2>${heroes}
     <h2>창고 (${state.inventory.length})</h2>${inventory}`;
 }
 
@@ -736,13 +768,14 @@ function reportsSection(
     <div class="mail">${rows}</div>`;
 }
 
-function codexTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
+/** 정보 탭: 병종 자료 + 프로젝트 출처 */
+function infoTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
   const groups: { title: string; race: string }[] = [
     { title: `${RACE_LABELS[state.raceId!]} 병종`, race: state.raceId! },
     { title: '중립 몬스터', race: 'neutral' },
     { title: '악마', race: 'devil' },
   ];
-  return groups
+  const codex = groups
     .map(({ title, race }) => {
       const units = [...unitDefs.values()]
         .filter((u) => u.raceId === race)
@@ -773,6 +806,18 @@ function codexTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
         </div>`;
     })
     .join('');
+
+  return `${codex}
+    <h2>이 게임에 대해</h2>
+    <div class="card" style="display:block;">
+      <small>2008~2013년 서비스된 웹게임 <b>칠용전설</b>(중국 원작 七龙纪)을 남아 있는
+        자료를 근거로 재현한 개인 프로젝트입니다.</small>
+      <small>유닛 스탯·장비 수치·영웅 공식은 원작 공식 가이드(4399)와 바이두백과에서
+        수집한 실측값이고, 자료가 없는 부분(건설 비용·전투 판정식·드롭 확률 등)은
+        추정치로 표시해 두었습니다.</small>
+      <small>원작 메뉴는 도시·영웅·맵·길드·시장·랭킹·정보 구성이었습니다.
+        길드·시장·랭킹은 아직 구현하지 않았습니다.</small>
+    </div>`;
 }
 
 // ── 메인 렌더 ────────────────────────────────────────────────
@@ -826,11 +871,10 @@ export function render(
   }
 
   let body: string;
-  if (activeTab === 'city') body = cityTab(state, buildingDefs);
-  else if (activeTab === 'barracks') body = barracksTab(state, unitDefs);
-  else if (activeTab === 'tavern') body = tavernTab(state, now);
-  else if (activeTab === 'world') body = worldTab(state, camps, nodes, unitDefs, maxHeld, now);
-  else body = codexTab(state, unitDefs);
+  if (activeTab === 'city') body = cityTab(state, buildingDefs, unitDefs, now);
+  else if (activeTab === 'hero') body = heroTab(state);
+  else if (activeTab === 'map') body = worldTab(state, camps, nodes, unitDefs, maxHeld, now);
+  else body = infoTab(state, unitDefs);
 
   const tabs = TABS.map(
     (t) => `<button data-tab="${t.id}" aria-current="${t.id === activeTab}">
