@@ -1,13 +1,13 @@
 {
-  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
-  "raceId": "human",
-  "raceNameKo": "휴먼",
+  "$comment": "연합 병종. 능력치·비용·훈련시간은 4399 七龙纪 공식 가이드 실측값을 그대로 물려받았고(derivedFrom 참조), 이름과 세계관만 자체 창작으로 교체했다. 검증된 밸런스 곡선을 유지하기 위함.",
+  "raceId": "coalition",
+  "raceNameKo": "연합",
+  "raceDesc": "균형 잡힌 인류 연합군",
   "units": [
     {
-      "id": "human-t1",
-      "raceId": "human",
-      "nameKo": "창병",
-      "nameCn": "长枪兵",
+      "id": "coalition-t1",
+      "raceId": "coalition",
+      "nameKo": "보병",
       "tier": 1,
       "cost": {
         "wood": 0,
@@ -20,11 +20,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -188,18 +188,18 @@
           "mdef": 7
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H140129A2.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-321.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "창병",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-321.html"
+      }
     },
     {
-      "id": "human-t2",
-      "raceId": "human",
-      "nameKo": "궁수",
-      "nameCn": "弓箭手",
+      "id": "coalition-t2",
+      "raceId": "coalition",
+      "nameKo": "저격병",
       "tier": 2,
       "cost": {
         "wood": 0,
@@ -212,11 +212,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 1000,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -380,18 +380,18 @@
           "mdef": 4
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H13Z060b.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-320.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "궁수",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-320.html"
+      }
     },
     {
-      "id": "human-t3",
-      "raceId": "human",
-      "nameKo": "그리핀",
-      "nameCn": "狮鹫",
+      "id": "coalition-t3",
+      "raceId": "coalition",
+      "nameKo": "정찰비행체",
       "tier": 3,
       "cost": {
         "wood": 0,
@@ -404,11 +404,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 1200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -572,18 +572,18 @@
           "mdef": 16
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H13KL012.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-319.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "그리핀",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-319.html"
+      }
     },
     {
-      "id": "human-t4",
-      "raceId": "human",
-      "nameKo": "검사",
-      "nameCn": "剑士",
+      "id": "coalition-t4",
+      "raceId": "coalition",
+      "nameKo": "돌격병",
       "tier": 4,
       "cost": {
         "wood": 0,
@@ -596,11 +596,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -764,18 +764,18 @@
           "mdef": 14
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1363255T.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-318.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "검사",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-318.html"
+      }
     },
     {
-      "id": "human-t5",
-      "raceId": "human",
-      "nameKo": "사제",
-      "nameCn": "牧师",
+      "id": "coalition-t5",
+      "raceId": "coalition",
+      "nameKo": "지원드론",
       "tier": 5,
       "cost": {
         "wood": 0,
@@ -788,11 +788,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -956,18 +956,18 @@
           "mdef": 8
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1331B296.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-317.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "사제",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-317.html"
+      }
     },
     {
-      "id": "human-t6",
-      "raceId": "human",
-      "nameKo": "기사단",
-      "nameCn": "骑士",
+      "id": "coalition-t6",
+      "raceId": "coalition",
+      "nameKo": "강습기갑",
       "tier": 6,
       "cost": {
         "wood": 0,
@@ -980,11 +980,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1148,18 +1148,18 @@
           "mdef": 17
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1320Vb6.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-316.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "기사단",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-316.html"
+      }
     },
     {
-      "id": "human-t7",
-      "raceId": "human",
-      "nameKo": "천사",
-      "nameCn": "天使",
+      "id": "coalition-t7",
+      "raceId": "coalition",
+      "nameKo": "전략폭격기",
       "tier": 7,
       "cost": {
         "wood": 0,
@@ -1172,11 +1172,11 @@
       "foodUpkeepPerHour": 3,
       "trainSeconds": 2000,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1340,18 +1340,18 @@
           "mdef": 29
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1302263P.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-315.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "천사",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-315.html"
+      }
     },
     {
-      "id": "human-t8",
-      "raceId": "human",
-      "nameKo": "투석차(휴먼)",
-      "nameCn": "人类投石车",
+      "id": "coalition-t8",
+      "raceId": "coalition",
+      "nameKo": "공성전차",
       "tier": 8,
       "cost": {
         "wood": 120,
@@ -1364,11 +1364,11 @@
       "foodUpkeepPerHour": 6,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1532,12 +1532,13 @@
           "mdef": 29
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1292c332.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-314.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "human",
+        "nameKo": "투석차(휴먼)",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/rl/200809/07-314.html"
+      }
     }
   ]
 }

@@ -8,12 +8,13 @@ export type ResourceKind = 'wood' | 'stone' | 'food' | 'crystal' | 'gold';
 
 export type Resources = Record<ResourceKind, number>;
 
+// 내부 키는 유지하고 표기만 SF 세계관에 맞춘다 (기존 저장 데이터 호환)
 export const RESOURCE_LABELS: Record<ResourceKind, string> = {
-  wood: '목재',
-  stone: '석재',
-  food: '식량',
-  crystal: '수정',
-  gold: '금화',
+  wood: '광물',
+  stone: '합금',
+  food: '보급품',
+  crystal: '가스',
+  gold: '크레딧',
 };
 
 export type Provenance = '4399' | 'baike' | 'estimate';
@@ -38,12 +39,12 @@ export interface BuildingDef {
   provenance: Provenance;
 }
 
-export type RaceId = 'human' | 'elf' | 'undead';
+export type RaceId = 'coalition' | 'cluster' | 'swarm';
 
 export const RACE_LABELS: Record<RaceId, string> = {
-  human: '휴먼',
-  elf: '엘프',
-  undead: '언데드',
+  coalition: '연합',
+  cluster: '성단',
+  swarm: '군체',
 };
 
 export interface UnitStatRow {
@@ -113,12 +114,12 @@ export interface HeroStats {
 }
 
 export const HERO_STAT_LABELS: Record<keyof HeroStats, string> = {
-  endurance: '내력',
-  strength: '힘',
-  agility: '민첩',
-  intellect: '지력',
-  spirit: '정신',
-  charisma: '매력',
+  endurance: '내구',
+  strength: '화력',
+  agility: '기동',
+  intellect: '전술',
+  spirit: '제어',
+  charisma: '통솔',
 };
 
 export type EquipSlot =

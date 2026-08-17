@@ -1,76 +1,286 @@
 {
-  "$comment": "자원 5종(목재·석재·식량·수정·금화)은 일본판 GAME Watch 리뷰(2009)로 확인된 원작 사양. 생산량·비용·시간 수치는 아직 자료가 없어 전부 estimate — 4399/웨이백 자료 확보 시 교체할 것.",
+  "$comment": "자원 5종(광물·합금·보급품·가스·크레딧)과 건물 구성. 생산량·비용·시간 수치는 자료가 없어 전부 estimate.",
   "buildings": [
     {
       "id": "sawmill",
-      "name": "제재소",
-      "description": "목재를 생산한다.",
+      "name": "채굴장",
+      "description": "광물을 채굴한다.",
       "produces": "wood",
       "provenance": "estimate",
       "levels": [
-        { "productionPerHour": 60, "upgradeCost": { "gold": 50 }, "upgradeSeconds": 10 },
-        { "productionPerHour": 90, "upgradeCost": { "wood": 80, "gold": 100 }, "upgradeSeconds": 30 },
-        { "productionPerHour": 135, "upgradeCost": { "wood": 180, "stone": 60, "gold": 200 }, "upgradeSeconds": 90 },
-        { "productionPerHour": 200, "upgradeCost": { "wood": 400, "stone": 150, "gold": 400 }, "upgradeSeconds": 240 },
-        { "productionPerHour": 300, "upgradeCost": { "wood": 900, "stone": 350, "gold": 800 }, "upgradeSeconds": 600 }
+        {
+          "productionPerHour": 60,
+          "upgradeCost": {
+            "gold": 50
+          },
+          "upgradeSeconds": 10
+        },
+        {
+          "productionPerHour": 90,
+          "upgradeCost": {
+            "wood": 80,
+            "gold": 100
+          },
+          "upgradeSeconds": 30
+        },
+        {
+          "productionPerHour": 135,
+          "upgradeCost": {
+            "wood": 180,
+            "stone": 60,
+            "gold": 200
+          },
+          "upgradeSeconds": 90
+        },
+        {
+          "productionPerHour": 200,
+          "upgradeCost": {
+            "wood": 400,
+            "stone": 150,
+            "gold": 400
+          },
+          "upgradeSeconds": 240
+        },
+        {
+          "productionPerHour": 300,
+          "upgradeCost": {
+            "wood": 900,
+            "stone": 350,
+            "gold": 800
+          },
+          "upgradeSeconds": 600
+        }
       ]
     },
     {
       "id": "quarry",
-      "name": "채석장",
-      "description": "석재를 생산한다.",
+      "name": "제련소",
+      "description": "합금을 생산한다.",
       "produces": "stone",
       "provenance": "estimate",
       "levels": [
-        { "productionPerHour": 50, "upgradeCost": { "gold": 50 }, "upgradeSeconds": 10 },
-        { "productionPerHour": 75, "upgradeCost": { "wood": 100, "gold": 100 }, "upgradeSeconds": 30 },
-        { "productionPerHour": 115, "upgradeCost": { "wood": 220, "stone": 40, "gold": 200 }, "upgradeSeconds": 90 },
-        { "productionPerHour": 170, "upgradeCost": { "wood": 480, "stone": 120, "gold": 400 }, "upgradeSeconds": 240 },
-        { "productionPerHour": 255, "upgradeCost": { "wood": 1000, "stone": 300, "gold": 800 }, "upgradeSeconds": 600 }
+        {
+          "productionPerHour": 50,
+          "upgradeCost": {
+            "gold": 50
+          },
+          "upgradeSeconds": 10
+        },
+        {
+          "productionPerHour": 75,
+          "upgradeCost": {
+            "wood": 100,
+            "gold": 100
+          },
+          "upgradeSeconds": 30
+        },
+        {
+          "productionPerHour": 115,
+          "upgradeCost": {
+            "wood": 220,
+            "stone": 40,
+            "gold": 200
+          },
+          "upgradeSeconds": 90
+        },
+        {
+          "productionPerHour": 170,
+          "upgradeCost": {
+            "wood": 480,
+            "stone": 120,
+            "gold": 400
+          },
+          "upgradeSeconds": 240
+        },
+        {
+          "productionPerHour": 255,
+          "upgradeCost": {
+            "wood": 1000,
+            "stone": 300,
+            "gold": 800
+          },
+          "upgradeSeconds": 600
+        }
       ]
     },
     {
       "id": "farm",
-      "name": "농장",
-      "description": "식량을 생산한다. 병력 유지의 기반.",
+      "name": "보급창",
+      "description": "보급품을 생산한다. 병력 유지의 기반.",
       "produces": "food",
       "provenance": "estimate",
       "levels": [
-        { "productionPerHour": 70, "upgradeCost": { "gold": 40 }, "upgradeSeconds": 10 },
-        { "productionPerHour": 105, "upgradeCost": { "wood": 70, "gold": 80 }, "upgradeSeconds": 30 },
-        { "productionPerHour": 160, "upgradeCost": { "wood": 160, "stone": 50, "gold": 160 }, "upgradeSeconds": 90 },
-        { "productionPerHour": 240, "upgradeCost": { "wood": 350, "stone": 130, "gold": 320 }, "upgradeSeconds": 240 },
-        { "productionPerHour": 360, "upgradeCost": { "wood": 800, "stone": 300, "gold": 650 }, "upgradeSeconds": 600 }
+        {
+          "productionPerHour": 70,
+          "upgradeCost": {
+            "gold": 40
+          },
+          "upgradeSeconds": 10
+        },
+        {
+          "productionPerHour": 105,
+          "upgradeCost": {
+            "wood": 70,
+            "gold": 80
+          },
+          "upgradeSeconds": 30
+        },
+        {
+          "productionPerHour": 160,
+          "upgradeCost": {
+            "wood": 160,
+            "stone": 50,
+            "gold": 160
+          },
+          "upgradeSeconds": 90
+        },
+        {
+          "productionPerHour": 240,
+          "upgradeCost": {
+            "wood": 350,
+            "stone": 130,
+            "gold": 320
+          },
+          "upgradeSeconds": 240
+        },
+        {
+          "productionPerHour": 360,
+          "upgradeCost": {
+            "wood": 800,
+            "stone": 300,
+            "gold": 650
+          },
+          "upgradeSeconds": 600
+        }
       ]
     },
     {
       "id": "crystal-mine",
-      "name": "수정 광산",
-      "description": "수정을 생산한다. 마법 계열 유닛·영웅에 필요.",
+      "name": "가스 추출기",
+      "description": "가스를 추출한다. 고급 병기와 지휘관에 필요.",
       "produces": "crystal",
       "provenance": "estimate",
       "levels": [
-        { "productionPerHour": 20, "upgradeCost": { "wood": 60, "gold": 80 }, "upgradeSeconds": 20 },
-        { "productionPerHour": 30, "upgradeCost": { "wood": 140, "stone": 80, "gold": 160 }, "upgradeSeconds": 60 },
-        { "productionPerHour": 45, "upgradeCost": { "wood": 300, "stone": 180, "gold": 320 }, "upgradeSeconds": 180 },
-        { "productionPerHour": 68, "upgradeCost": { "wood": 650, "stone": 400, "gold": 640 }, "upgradeSeconds": 420 },
-        { "productionPerHour": 100, "upgradeCost": { "wood": 1400, "stone": 900, "gold": 1300 }, "upgradeSeconds": 900 }
+        {
+          "productionPerHour": 20,
+          "upgradeCost": {
+            "wood": 60,
+            "gold": 80
+          },
+          "upgradeSeconds": 20
+        },
+        {
+          "productionPerHour": 30,
+          "upgradeCost": {
+            "wood": 140,
+            "stone": 80,
+            "gold": 160
+          },
+          "upgradeSeconds": 60
+        },
+        {
+          "productionPerHour": 45,
+          "upgradeCost": {
+            "wood": 300,
+            "stone": 180,
+            "gold": 320
+          },
+          "upgradeSeconds": 180
+        },
+        {
+          "productionPerHour": 68,
+          "upgradeCost": {
+            "wood": 650,
+            "stone": 400,
+            "gold": 640
+          },
+          "upgradeSeconds": 420
+        },
+        {
+          "productionPerHour": 100,
+          "upgradeCost": {
+            "wood": 1400,
+            "stone": 900,
+            "gold": 1300
+          },
+          "upgradeSeconds": 900
+        }
       ]
     },
     {
       "id": "barracks",
       "name": "병영",
-      "description": "유닛을 훈련한다. 병영 레벨 이하 병계(티어)의 유닛을 훈련할 수 있다.",
+      "description": "병력을 생산한다. 병영 레벨 이하 등급의 병종을 생산할 수 있다.",
       "provenance": "estimate",
       "levels": [
-        { "upgradeCost": { "wood": 100, "stone": 80, "gold": 100 }, "upgradeSeconds": 30 },
-        { "upgradeCost": { "wood": 220, "stone": 180, "gold": 220 }, "upgradeSeconds": 90 },
-        { "upgradeCost": { "wood": 480, "stone": 400, "gold": 480 }, "upgradeSeconds": 240 },
-        { "upgradeCost": { "wood": 1000, "stone": 850, "gold": 1000 }, "upgradeSeconds": 600 },
-        { "upgradeCost": { "wood": 2100, "stone": 1800, "gold": 2100, "crystal": 200 }, "upgradeSeconds": 1500 },
-        { "upgradeCost": { "wood": 4400, "stone": 3800, "gold": 4400, "crystal": 500 }, "upgradeSeconds": 3600 },
-        { "upgradeCost": { "wood": 9000, "stone": 7800, "gold": 9000, "crystal": 1200 }, "upgradeSeconds": 8400 },
-        { "upgradeCost": { "wood": 18500, "stone": 16000, "gold": 18500, "crystal": 2800 }, "upgradeSeconds": 18000 }
+        {
+          "upgradeCost": {
+            "wood": 100,
+            "stone": 80,
+            "gold": 100
+          },
+          "upgradeSeconds": 30
+        },
+        {
+          "upgradeCost": {
+            "wood": 220,
+            "stone": 180,
+            "gold": 220
+          },
+          "upgradeSeconds": 90
+        },
+        {
+          "upgradeCost": {
+            "wood": 480,
+            "stone": 400,
+            "gold": 480
+          },
+          "upgradeSeconds": 240
+        },
+        {
+          "upgradeCost": {
+            "wood": 1000,
+            "stone": 850,
+            "gold": 1000
+          },
+          "upgradeSeconds": 600
+        },
+        {
+          "upgradeCost": {
+            "wood": 2100,
+            "stone": 1800,
+            "gold": 2100,
+            "crystal": 200
+          },
+          "upgradeSeconds": 1500
+        },
+        {
+          "upgradeCost": {
+            "wood": 4400,
+            "stone": 3800,
+            "gold": 4400,
+            "crystal": 500
+          },
+          "upgradeSeconds": 3600
+        },
+        {
+          "upgradeCost": {
+            "wood": 9000,
+            "stone": 7800,
+            "gold": 9000,
+            "crystal": 1200
+          },
+          "upgradeSeconds": 8400
+        },
+        {
+          "upgradeCost": {
+            "wood": 18500,
+            "stone": 16000,
+            "gold": 18500,
+            "crystal": 2800
+          },
+          "upgradeSeconds": 18000
+        }
       ]
     },
     {
@@ -79,43 +289,194 @@
       "description": "병종을 연구해 능력치를 올린다. 연구 가능 레벨은 연구소 레벨의 2배까지.",
       "provenance": "estimate",
       "levels": [
-        { "upgradeCost": { "wood": 200, "stone": 150, "gold": 250 }, "upgradeSeconds": 60 },
-        { "upgradeCost": { "wood": 450, "stone": 350, "gold": 600 }, "upgradeSeconds": 180 },
-        { "upgradeCost": { "wood": 950, "stone": 750, "gold": 1300, "crystal": 100 }, "upgradeSeconds": 480 },
-        { "upgradeCost": { "wood": 2000, "stone": 1600, "gold": 2800, "crystal": 250 }, "upgradeSeconds": 1200 },
-        { "upgradeCost": { "wood": 4200, "stone": 3400, "gold": 6000, "crystal": 600 }, "upgradeSeconds": 2700 },
-        { "upgradeCost": { "wood": 8800, "stone": 7200, "gold": 12500, "crystal": 1400 }, "upgradeSeconds": 5400 },
-        { "upgradeCost": { "wood": 18000, "stone": 15000, "gold": 26000, "crystal": 3000 }, "upgradeSeconds": 10800 },
-        { "upgradeCost": { "wood": 37000, "stone": 31000, "gold": 54000, "crystal": 6500 }, "upgradeSeconds": 21600 },
-        { "upgradeCost": { "wood": 76000, "stone": 64000, "gold": 110000, "crystal": 14000 }, "upgradeSeconds": 43200 },
-        { "upgradeCost": { "wood": 155000, "stone": 130000, "gold": 225000, "crystal": 30000 }, "upgradeSeconds": 86400 }
+        {
+          "upgradeCost": {
+            "wood": 200,
+            "stone": 150,
+            "gold": 250
+          },
+          "upgradeSeconds": 60
+        },
+        {
+          "upgradeCost": {
+            "wood": 450,
+            "stone": 350,
+            "gold": 600
+          },
+          "upgradeSeconds": 180
+        },
+        {
+          "upgradeCost": {
+            "wood": 950,
+            "stone": 750,
+            "gold": 1300,
+            "crystal": 100
+          },
+          "upgradeSeconds": 480
+        },
+        {
+          "upgradeCost": {
+            "wood": 2000,
+            "stone": 1600,
+            "gold": 2800,
+            "crystal": 250
+          },
+          "upgradeSeconds": 1200
+        },
+        {
+          "upgradeCost": {
+            "wood": 4200,
+            "stone": 3400,
+            "gold": 6000,
+            "crystal": 600
+          },
+          "upgradeSeconds": 2700
+        },
+        {
+          "upgradeCost": {
+            "wood": 8800,
+            "stone": 7200,
+            "gold": 12500,
+            "crystal": 1400
+          },
+          "upgradeSeconds": 5400
+        },
+        {
+          "upgradeCost": {
+            "wood": 18000,
+            "stone": 15000,
+            "gold": 26000,
+            "crystal": 3000
+          },
+          "upgradeSeconds": 10800
+        },
+        {
+          "upgradeCost": {
+            "wood": 37000,
+            "stone": 31000,
+            "gold": 54000,
+            "crystal": 6500
+          },
+          "upgradeSeconds": 21600
+        },
+        {
+          "upgradeCost": {
+            "wood": 76000,
+            "stone": 64000,
+            "gold": 110000,
+            "crystal": 14000
+          },
+          "upgradeSeconds": 43200
+        },
+        {
+          "upgradeCost": {
+            "wood": 155000,
+            "stone": 130000,
+            "gold": 225000,
+            "crystal": 30000
+          },
+          "upgradeSeconds": 86400
+        }
       ]
     },
     {
       "id": "tavern",
-      "name": "주점",
-      "description": "영웅을 고용한다. 주점 레벨만큼 영웅을 보유할 수 있다.",
+      "name": "용병 사무소",
+      "description": "지휘관을 영입한다. 사무소 레벨만큼 지휘관을 보유할 수 있다.",
       "provenance": "estimate",
       "levels": [
-        { "upgradeCost": { "wood": 150, "stone": 100, "gold": 200 }, "upgradeSeconds": 45 },
-        { "upgradeCost": { "wood": 350, "stone": 250, "gold": 500 }, "upgradeSeconds": 150 },
-        { "upgradeCost": { "wood": 800, "stone": 600, "gold": 1200, "crystal": 100 }, "upgradeSeconds": 420 },
-        { "upgradeCost": { "wood": 1800, "stone": 1400, "gold": 2800, "crystal": 300 }, "upgradeSeconds": 1200 },
-        { "upgradeCost": { "wood": 4000, "stone": 3200, "gold": 6500, "crystal": 800 }, "upgradeSeconds": 3000 }
+        {
+          "upgradeCost": {
+            "wood": 150,
+            "stone": 100,
+            "gold": 200
+          },
+          "upgradeSeconds": 45
+        },
+        {
+          "upgradeCost": {
+            "wood": 350,
+            "stone": 250,
+            "gold": 500
+          },
+          "upgradeSeconds": 150
+        },
+        {
+          "upgradeCost": {
+            "wood": 800,
+            "stone": 600,
+            "gold": 1200,
+            "crystal": 100
+          },
+          "upgradeSeconds": 420
+        },
+        {
+          "upgradeCost": {
+            "wood": 1800,
+            "stone": 1400,
+            "gold": 2800,
+            "crystal": 300
+          },
+          "upgradeSeconds": 1200
+        },
+        {
+          "upgradeCost": {
+            "wood": 4000,
+            "stone": 3200,
+            "gold": 6500,
+            "crystal": 800
+          },
+          "upgradeSeconds": 3000
+        }
       ]
     },
     {
       "id": "market",
-      "name": "시장",
-      "description": "금화를 생산한다.",
+      "name": "거래소",
+      "description": "크레딧을 벌어들인다.",
       "produces": "gold",
       "provenance": "estimate",
       "levels": [
-        { "productionPerHour": 40, "upgradeCost": { "wood": 50, "stone": 30 }, "upgradeSeconds": 15 },
-        { "productionPerHour": 60, "upgradeCost": { "wood": 120, "stone": 70 }, "upgradeSeconds": 45 },
-        { "productionPerHour": 90, "upgradeCost": { "wood": 260, "stone": 160 }, "upgradeSeconds": 120 },
-        { "productionPerHour": 135, "upgradeCost": { "wood": 560, "stone": 340 }, "upgradeSeconds": 300 },
-        { "productionPerHour": 200, "upgradeCost": { "wood": 1200, "stone": 700 }, "upgradeSeconds": 700 }
+        {
+          "productionPerHour": 40,
+          "upgradeCost": {
+            "wood": 50,
+            "stone": 30
+          },
+          "upgradeSeconds": 15
+        },
+        {
+          "productionPerHour": 60,
+          "upgradeCost": {
+            "wood": 120,
+            "stone": 70
+          },
+          "upgradeSeconds": 45
+        },
+        {
+          "productionPerHour": 90,
+          "upgradeCost": {
+            "wood": 260,
+            "stone": 160
+          },
+          "upgradeSeconds": 120
+        },
+        {
+          "productionPerHour": 135,
+          "upgradeCost": {
+            "wood": 560,
+            "stone": 340
+          },
+          "upgradeSeconds": 300
+        },
+        {
+          "productionPerHour": 200,
+          "upgradeCost": {
+            "wood": 1200,
+            "stone": 700
+          },
+          "upgradeSeconds": 700
+        }
       ]
     }
   ]

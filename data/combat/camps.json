@@ -1,14 +1,14 @@
 {
-  "$comment": "야외 사냥터. 원작에도 야외 몬스터 사냥/자원지 개념이 있었으나(GG게임·디지털타임스 기사) 구체적 구성·보상 수치는 자료가 없어 전부 estimate. 몬스터는 4399 실측 스탯을 그대로 쓰되 편성·보상만 추정한 것.",
+  "$comment": "야외 교전지. 편성·보상 수치는 estimate이며, 적 병종 능력치는 4399 실측값을 물려받은 야생종·침략군 데이터를 사용한다.",
   "camps": [
     {
       "id": "wolf-den",
-      "name": "늑대 소굴",
-      "description": "영지 외곽을 어슬렁거리는 놀 무리.",
+      "name": "들개 서식지",
+      "description": "기지 외곽을 배회하는 들개 무리.",
       "marchSeconds": 60,
       "monsters": [
         {
-          "unitId": "neutral-t1",
+          "unitId": "wild-t1",
           "count": 10
         }
       ],
@@ -24,12 +24,12 @@
     },
     {
       "id": "lizard-nest",
-      "name": "도마뱀 서식지",
-      "description": "습지에 자리 잡은 리자드맨 부족.",
+      "name": "비늘수 군락",
+      "description": "습지에 자리 잡은 비늘수 무리.",
       "marchSeconds": 150,
       "monsters": [
         {
-          "unitId": "neutral-t2",
+          "unitId": "wild-t2",
           "count": 12
         }
       ],
@@ -46,12 +46,12 @@
     },
     {
       "id": "serpent-swarm",
-      "name": "용파리 군체",
-      "description": "빠르게 날아드는 서펜트 플라이 떼. 마법 공격에 주의.",
+      "name": "날벌레 군체",
+      "description": "빠르게 날아드는 날벌레 떼. 에너지 공격에 주의.",
       "marchSeconds": 240,
       "monsters": [
         {
-          "unitId": "neutral-t3",
+          "unitId": "wild-t3",
           "count": 10
         }
       ],
@@ -69,12 +69,12 @@
     },
     {
       "id": "basilisk-lair",
-      "name": "바실리스크 둥지",
-      "description": "돌투성이 협곡에 사는 대형 파충류.",
+      "name": "암반수 둥지",
+      "description": "바위 협곡에 사는 대형 토착 생물.",
       "marchSeconds": 400,
       "monsters": [
         {
-          "unitId": "neutral-t4",
+          "unitId": "wild-t4",
           "count": 10
         }
       ],
@@ -91,12 +91,12 @@
     },
     {
       "id": "minotaur-canyon",
-      "name": "미노타우로스 협곡",
-      "description": "단단한 방어를 자랑하는 괴수 무리.",
+      "name": "뿔수 협곡",
+      "description": "두꺼운 장갑을 자랑하는 대형 생물 무리.",
       "marchSeconds": 600,
       "monsters": [
         {
-          "unitId": "neutral-t5",
+          "unitId": "wild-t5",
           "count": 10
         }
       ],
@@ -114,12 +114,12 @@
     },
     {
       "id": "wyvern-peak",
-      "name": "와이번 봉우리",
-      "description": "높은 마법 방어를 지닌 비룡의 둥지.",
+      "name": "비행수 봉우리",
+      "description": "높은 보호막을 지닌 비행 생물의 둥지.",
       "marchSeconds": 900,
       "monsters": [
         {
-          "unitId": "neutral-t6",
+          "unitId": "wild-t6",
           "count": 10
         }
       ],
@@ -136,12 +136,12 @@
     },
     {
       "id": "hydra-marsh",
-      "name": "히드라 늪",
-      "description": "중립 몬스터 중 최강. 어설픈 부대로는 전멸한다.",
+      "name": "다두수 늪",
+      "description": "토착 생물 중 최강. 어설픈 부대로는 전멸한다.",
       "marchSeconds": 1200,
       "monsters": [
         {
-          "unitId": "neutral-t7",
+          "unitId": "wild-t7",
           "count": 8
         }
       ],
@@ -158,20 +158,20 @@
     },
     {
       "id": "demon-outpost",
-      "name": "악마 전초기지",
-      "description": "대륙에 발을 들인 악마 군세의 전진 거점.",
+      "name": "침략군 전초기지",
+      "description": "행성에 발을 들인 외계 세력의 전진 거점.",
       "marchSeconds": 1500,
       "monsters": [
         {
-          "unitId": "devil-t1",
+          "unitId": "invader-t1",
           "count": 25
         },
         {
-          "unitId": "devil-t3",
+          "unitId": "invader-t3",
           "count": 10
         },
         {
-          "unitId": "devil-t4",
+          "unitId": "invader-t4",
           "count": 6
         }
       ],

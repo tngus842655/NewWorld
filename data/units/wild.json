@@ -1,13 +1,13 @@
 {
-  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
-  "raceId": "neutral",
-  "raceNameKo": "중립",
+  "$comment": "야생종 병종. 능력치·비용·훈련시간은 4399 七龙纪 공식 가이드 실측값을 그대로 물려받았고(derivedFrom 참조), 이름과 세계관만 자체 창작으로 교체했다. 검증된 밸런스 곡선을 유지하기 위함.",
+  "raceId": "wild",
+  "raceNameKo": "야생종",
+  "raceDesc": "행성 토착 생물",
   "units": [
     {
-      "id": "neutral-t1",
-      "raceId": "neutral",
-      "nameKo": "놀",
-      "nameCn": "狼人",
+      "id": "wild-t1",
+      "raceId": "wild",
+      "nameKo": "들개",
       "tier": 1,
       "cost": {
         "wood": 0,
@@ -20,11 +20,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -188,18 +188,18 @@
           "mdef": 7
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H21012Qa.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-351.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "놀",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-351.html"
+      }
     },
     {
-      "id": "neutral-t2",
-      "raceId": "neutral",
-      "nameKo": "리자드맨",
-      "nameCn": "蜥蜴人",
+      "id": "wild-t2",
+      "raceId": "wild",
+      "nameKo": "비늘수",
       "tier": 2,
       "cost": {
         "wood": 0,
@@ -212,11 +212,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -380,18 +380,18 @@
           "mdef": 8
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H209364I8.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-350.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "리자드맨",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-350.html"
+      }
     },
     {
-      "id": "neutral-t3",
-      "raceId": "neutral",
-      "nameKo": "서펜트 플라이",
-      "nameCn": "龙蝇",
+      "id": "wild-t3",
+      "raceId": "wild",
+      "nameKo": "날벌레",
       "tier": 3,
       "cost": {
         "wood": 0,
@@ -404,11 +404,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -572,18 +572,18 @@
           "mdef": 10
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20U93312.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-349.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "서펜트 플라이",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-349.html"
+      }
     },
     {
-      "id": "neutral-t4",
-      "raceId": "neutral",
-      "nameKo": "바실리스크",
-      "nameCn": "巨蜥",
+      "id": "wild-t4",
+      "raceId": "wild",
+      "nameKo": "암반수",
       "tier": 4,
       "cost": {
         "wood": 0,
@@ -596,11 +596,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -764,18 +764,18 @@
           "mdef": 13
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20Rb0N.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-348.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "바실리스크",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-348.html"
+      }
     },
     {
-      "id": "neutral-t5",
-      "raceId": "neutral",
-      "nameKo": "미노타우로스",
-      "nameCn": "野牛",
+      "id": "wild-t5",
+      "raceId": "wild",
+      "nameKo": "뿔수",
       "tier": 5,
       "cost": {
         "wood": 0,
@@ -788,11 +788,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -956,18 +956,18 @@
           "mdef": 16
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20Jc528.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-347.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "미노타우로스",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-347.html"
+      }
     },
     {
-      "id": "neutral-t6",
-      "raceId": "neutral",
-      "nameKo": "와이번",
-      "nameCn": "飞龙",
+      "id": "wild-t6",
+      "raceId": "wild",
+      "nameKo": "비행수",
       "tier": 6,
       "cost": {
         "wood": 0,
@@ -980,11 +980,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1148,18 +1148,18 @@
           "mdef": 24
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20AOF5.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-346.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "와이번",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-346.html"
+      }
     },
     {
-      "id": "neutral-t7",
-      "raceId": "neutral",
-      "nameKo": "히드라",
-      "nameCn": "九头怪",
+      "id": "wild-t7",
+      "raceId": "wild",
+      "nameKo": "다두수",
       "tier": 7,
       "cost": {
         "wood": 0,
@@ -1172,11 +1172,11 @@
       "foodUpkeepPerHour": 3,
       "trainSeconds": 1800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1340,12 +1340,13 @@
           "mdef": 26
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H2062b962.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-345.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "neutral",
+        "nameKo": "히드라",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/zl/200809/07-345.html"
+      }
     }
   ]
 }

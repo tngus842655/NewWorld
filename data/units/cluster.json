@@ -1,13 +1,13 @@
 {
-  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
-  "raceId": "elf",
-  "raceNameKo": "엘프",
+  "$comment": "성단 병종. 능력치·비용·훈련시간은 4399 七龙纪 공식 가이드 실측값을 그대로 물려받았고(derivedFrom 참조), 이름과 세계관만 자체 창작으로 교체했다. 검증된 밸런스 곡선을 유지하기 위함.",
+  "raceId": "cluster",
+  "raceNameKo": "성단",
+  "raceDesc": "고가의 정예 병기를 운용하는 고등 문명",
   "units": [
     {
-      "id": "elf-t1",
-      "raceId": "elf",
-      "nameKo": "켄타우로스",
-      "nameCn": "半人马",
+      "id": "cluster-t1",
+      "raceId": "cluster",
+      "nameKo": "정예병",
       "tier": 1,
       "cost": {
         "wood": 0,
@@ -20,11 +20,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -188,18 +188,18 @@
           "mdef": 4
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H152352H2.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-329.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "켄타우로스",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-329.html"
+      }
     },
     {
-      "id": "elf-t2",
-      "raceId": "elf",
-      "nameKo": "드워프",
-      "nameCn": "石怪",
+      "id": "cluster-t2",
+      "raceId": "cluster",
+      "nameKo": "중장병",
       "tier": 2,
       "cost": {
         "wood": 0,
@@ -212,11 +212,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -380,18 +380,18 @@
           "mdef": 14
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1515RA3.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-328.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "드워프",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-328.html"
+      }
     },
     {
-      "id": "elf-t3",
-      "raceId": "elf",
-      "nameKo": "엘프궁수",
-      "nameCn": "精灵射手",
+      "id": "cluster-t3",
+      "raceId": "cluster",
+      "nameKo": "광선병",
       "tier": 3,
       "cost": {
         "wood": 0,
@@ -404,11 +404,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 1000,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -572,18 +572,18 @@
           "mdef": 5
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H151233336.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-327.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "엘프궁수",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-327.html"
+      }
     },
     {
-      "id": "elf-t4",
-      "raceId": "elf",
-      "nameKo": "페가수스",
-      "nameCn": "飞马",
+      "id": "cluster-t4",
+      "raceId": "cluster",
+      "nameKo": "비행정",
       "tier": 4,
       "cost": {
         "wood": 0,
@@ -596,11 +596,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -764,18 +764,18 @@
           "mdef": 11
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H150432F4.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-326.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "페가수스",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-326.html"
+      }
     },
     {
-      "id": "elf-t5",
-      "raceId": "elf",
-      "nameKo": "드라이어드",
-      "nameCn": "树妖",
+      "id": "cluster-t5",
+      "raceId": "cluster",
+      "nameKo": "파장술사",
       "tier": 5,
       "cost": {
         "wood": 0,
@@ -788,11 +788,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -956,18 +956,18 @@
           "mdef": 13
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H14951Q35.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-325.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "드라이어드",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-325.html"
+      }
     },
     {
-      "id": "elf-t6",
-      "raceId": "elf",
-      "nameKo": "유니콘",
-      "nameCn": "独角兽",
+      "id": "cluster-t6",
+      "raceId": "cluster",
+      "nameKo": "수호기",
       "tier": 6,
       "cost": {
         "wood": 0,
@@ -980,11 +980,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1148,18 +1148,18 @@
           "mdef": 18
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H14Z45K7.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-324.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "유니콘",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-324.html"
+      }
     },
     {
-      "id": "elf-t7",
-      "raceId": "elf",
-      "nameKo": "그린",
-      "nameCn": "绿龙",
+      "id": "cluster-t7",
+      "raceId": "cluster",
+      "nameKo": "전투함",
       "tier": 7,
       "cost": {
         "wood": 0,
@@ -1172,11 +1172,11 @@
       "foodUpkeepPerHour": 3,
       "trainSeconds": 1800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1340,18 +1340,18 @@
           "mdef": 26
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H14QU306.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-323.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "그린",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-323.html"
+      }
     },
     {
-      "id": "elf-t8",
-      "raceId": "elf",
-      "nameKo": "투석차(엘프)",
-      "nameCn": "精灵投石车",
+      "id": "cluster-t8",
+      "raceId": "cluster",
+      "nameKo": "파괴포",
       "tier": 8,
       "cost": {
         "wood": 120,
@@ -1364,11 +1364,11 @@
       "foodUpkeepPerHour": 6,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1532,12 +1532,13 @@
           "mdef": 29
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H14A545M.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-322.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "elf",
+        "nameKo": "투석차(엘프)",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/jl/200809/07-322.html"
+      }
     }
   ]
 }

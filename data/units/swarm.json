@@ -1,13 +1,13 @@
 {
-  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
-  "raceId": "undead",
-  "raceNameKo": "언데드",
+  "$comment": "군체 병종. 능력치·비용·훈련시간은 4399 七龙纪 공식 가이드 실측값을 그대로 물려받았고(derivedFrom 참조), 이름과 세계관만 자체 창작으로 교체했다. 검증된 밸런스 곡선을 유지하기 위함.",
+  "raceId": "swarm",
+  "raceNameKo": "군체",
+  "raceDesc": "값싼 개체를 대량으로 쏟아내는 유기 생명체",
   "units": [
     {
-      "id": "undead-t1",
-      "raceId": "undead",
-      "nameKo": "해골병",
-      "nameCn": "骷髅兵",
+      "id": "swarm-t1",
+      "raceId": "swarm",
+      "nameKo": "갈퀴충",
       "tier": 1,
       "cost": {
         "wood": 0,
@@ -20,11 +20,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -188,18 +188,18 @@
           "mdef": 5
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H200155310.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-337.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "해골병",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-337.html"
+      }
     },
     {
-      "id": "undead-t2",
-      "raceId": "undead",
-      "nameKo": "좀비",
-      "nameCn": "僵尸",
+      "id": "swarm-t2",
+      "raceId": "swarm",
+      "nameKo": "육질충",
       "tier": 2,
       "cost": {
         "wood": 0,
@@ -212,11 +212,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -380,18 +380,18 @@
           "mdef": 7
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H15931Z18.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-336.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "좀비",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-336.html"
+      }
     },
     {
-      "id": "undead-t3",
-      "raceId": "undead",
-      "nameKo": "고스트",
-      "nameCn": "鬼魂",
+      "id": "swarm-t3",
+      "raceId": "swarm",
+      "nameKo": "포자충",
       "tier": 3,
       "cost": {
         "wood": 0,
@@ -404,11 +404,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -572,18 +572,18 @@
           "mdef": 14
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H15T44336.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-335.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "고스트",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-335.html"
+      }
     },
     {
-      "id": "undead-t4",
-      "raceId": "undead",
-      "nameKo": "뱀파이어",
-      "nameCn": "吸血鬼",
+      "id": "swarm-t4",
+      "raceId": "swarm",
+      "nameKo": "흡혈충",
       "tier": 4,
       "cost": {
         "wood": 0,
@@ -596,11 +596,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1000,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -764,18 +764,18 @@
           "mdef": 13
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H15I32C2.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-334.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "뱀파이어",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-334.html"
+      }
     },
     {
-      "id": "undead-t5",
-      "raceId": "undead",
-      "nameKo": "리치",
-      "nameCn": "巫师",
+      "id": "swarm-t5",
+      "raceId": "swarm",
+      "nameKo": "술사충",
       "tier": 5,
       "cost": {
         "wood": 0,
@@ -788,11 +788,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -956,18 +956,18 @@
           "mdef": 13
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H15F0J03.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-333.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "리치",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-333.html"
+      }
     },
     {
-      "id": "undead-t6",
-      "raceId": "undead",
-      "nameKo": "블랙나이트",
-      "nameCn": "黑骑士",
+      "id": "swarm-t6",
+      "raceId": "swarm",
+      "nameKo": "갑각충",
       "tier": 6,
       "cost": {
         "wood": 0,
@@ -980,11 +980,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1148,18 +1148,18 @@
           "mdef": 20
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H1555B153.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-332.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "블랙나이트",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-332.html"
+      }
     },
     {
-      "id": "undead-t7",
-      "raceId": "undead",
-      "nameKo": "해골 드래곤",
-      "nameCn": "骨龙",
+      "id": "swarm-t7",
+      "raceId": "swarm",
+      "nameKo": "비룡충",
       "tier": 7,
       "cost": {
         "wood": 0,
@@ -1172,11 +1172,11 @@
       "foodUpkeepPerHour": 3,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1340,18 +1340,18 @@
           "mdef": 21
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H154402305.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-331.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "해골 드래곤",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-331.html"
+      }
     },
     {
-      "id": "undead-t8",
-      "raceId": "undead",
-      "nameKo": "투석차(언데드)",
-      "nameCn": "亡灵投石车",
+      "id": "swarm-t8",
+      "raceId": "swarm",
+      "nameKo": "파열충",
       "tier": 8,
       "cost": {
         "wood": 120,
@@ -1364,11 +1364,11 @@
       "foodUpkeepPerHour": 6,
       "trainSeconds": 1600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1532,12 +1532,13 @@
           "mdef": 29
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H15351Q40.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-330.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "undead",
+        "nameKo": "투석차(언데드)",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/wl/200809/07-330.html"
+      }
     }
   ]
 }

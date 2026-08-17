@@ -50,9 +50,9 @@ export interface RenderCallbacks {
   onSelectBuilding(defId: string | null): void;
   /** 하단 탭 전환 */
   onSelectTab(tab: Tab): void;
-  /** 사냥터/자원지 출정 */
+  /** 교전지/자원지 출정 */
   onDispatch(targetId: string, kind: 'hunt' | 'capture', heroId: string): void;
-  /** 출정 보낼 영웅 선택 */
+  /** 출정 보낼 지휘관 선택 */
   onSelectHero(heroId: string): void;
   /** 월드맵 장소 선택 — 리렌더 트리거용 */
   onSelectSite(siteId: string | null): void;
@@ -174,7 +174,7 @@ const STYLE = `
   .race-card b { font-size: 17px; display: block; margin-bottom: 6px; color: #e0b568; }
   .race-card small { color: #b5a99f; font-size: 13px; line-height: 1.5; }
 
-  /* 영웅 선택 칩 */
+  /* 지휘관 선택 칩 */
   .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
   .chip { background: #241e1b; border: 1px solid #3a322c; color: #b5a99f;
     min-height: 38px; font-size: 13px; }
@@ -232,14 +232,14 @@ const STYLE = `
 `;
 
 const RACE_FLAVOR: Record<RaceId, string> = {
-  human: '빛을 숭배하는 종족. 법과 질서보다 인간적인 도덕성을 중시한다.',
-  elf: '자연을 숭배하는 종족. 숲을 사랑하며 자연과의 공존을 우선한다.',
-  undead: '죽음을 숭배하는 종족. 죽음은 평온함이며, 질서 없음이 아름다움이다.',
+  coalition: '균형 잡힌 인류 연합군. 보병과 기갑, 항공 전력을 두루 운용한다.',
+  cluster: '고등 문명의 정예 병기. 개체는 비싸지만 하나하나가 압도적이다.',
+  swarm: '값싼 개체를 대량으로 쏟아내는 유기 생명체. 수로 전선을 무너뜨린다.',
 };
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'city', icon: '🏰', label: '도시' },
-  { id: 'hero', icon: '🛡️', label: '영웅' },
+  { id: 'city', icon: '🛰️', label: '기지' },
+  { id: 'hero', icon: '🎖️', label: '지휘관' },
   { id: 'map', icon: '🗺️', label: '맵' },
   { id: 'info', icon: '📖', label: '정보' },
 ];
@@ -329,7 +329,7 @@ function renderRaceSelect(root: HTMLElement, cb: RenderCallbacks): void {
 
 /**
  * 도시 화면. 원작처럼 건물을 눌러 그 건물의 기능을 연다:
- * 병영 → 병력·훈련, 연구소 → 병종 연구, 주점 → 영웅 고용.
+ * 병영 → 병력·생산, 연구소 → 병종 연구, 용병 사무소 → 지휘관 영입.
  */
 function cityTab(
   state: GameState,
@@ -343,7 +343,7 @@ function cityTab(
   const def = sel ? buildingDefs.get(sel.defId) : null;
   if (!sel || !def) {
     return `${canvas}
-      <div class="card"><small>도시의 건물이나 빈 터를 눌러 관리하세요.</small></div>`;
+      <div class="card"><small>기지의 건물이나 빈 터를 눌러 관리하세요.</small></div>`;
   }
 
   // ── 건물 공통: 건설/확장 ──
@@ -420,7 +420,7 @@ function barracksPanel(state: GameState, unitDefs: Map<string, UnitDef>, level: 
       .join('');
   }
 
-  return `<h2>보유 병력</h2>${army}<h2>훈련</h2>${training}`;
+  return `<h2>보유 병력</h2>${army}<h2>병력 생산</h2>${training}`;
 }
 
 /** 연구소 패널: 병종 연구 */
@@ -525,10 +525,10 @@ function heroEquipBlock(hero: GameState['heroes'][number]): string {
   </div>`;
 }
 
-/** 주점 패널: 영웅 고용 후보 */
+/** 용병 사무소 패널: 지휘관 영입 후보 */
 function tavernPanel(state: GameState, level: number, now: number): string {
   if (level < 1) {
-    return '<div class="card"><small>주점을 지으면 영웅을 고용할 수 있다.</small></div>';
+    return '<div class="card"><small>용병 사무소를 지으면 지휘관을 영입할 수 있다.</small></div>';
   }
 
   const nextRestock = Math.max(
@@ -548,7 +548,7 @@ function tavernPanel(state: GameState, level: number, now: number): string {
     )
     .join('');
 
-  return `<h2>영웅 고용 (${state.heroes.length}/${level})</h2>
+  return `<h2>지휘관 영입 (${state.heroes.length}/${level})</h2>
     <div class="card">
       <div><small>무료 갱신까지 <span id="tavern-countdown">${nextRestock}</span>초</small></div>
       <div class="actions">
@@ -559,11 +559,11 @@ function tavernPanel(state: GameState, level: number, now: number): string {
     ${candidates}`;
 }
 
-/** 영웅 탭: 보유 영웅 + 장비 + 창고 */
+/** 지휘관 탭: 보유 지휘관 + 장비 + 창고 */
 function heroTab(state: GameState): string {
   const heroes = state.heroes.length
     ? state.heroes.map((h) => heroEquipBlock(h)).join('')
-    : `<div class="card"><small>고용한 영웅이 없다. 도시의 주점에서 고용할 수 있다.</small></div>`;
+    : `<div class="card"><small>영입한 지휘관이 없다. 기지의 용병 사무소에서 영입할 수 있다.</small></div>`;
 
   // ── 창고 ──
   const inventory = state.inventory.length
@@ -581,9 +581,9 @@ function heroTab(state: GameState): string {
           </div>`;
         })
         .join('')
-    : '<div class="card"><small>창고가 비어 있다. 사냥터에서 승리하면 장비를 얻는다.</small></div>';
+    : '<div class="card"><small>창고가 비어 있다. 교전지에서 승리하면 장비를 얻는다.</small></div>';
 
-  return `<h2>영웅</h2>${heroes}
+  return `<h2>지휘관</h2>${heroes}
     <h2>창고 (${state.inventory.length})</h2>${inventory}`;
 }
 
@@ -606,7 +606,7 @@ function worldTab(
 
   // ── 선택한 장소 패널 ──
   let sitePanel = `<div class="card"><small>지도의 장소를 눌러 정보를 확인하세요.
-    💀 사냥터는 전리품을, 자원 아이콘은 점령 시 시간당 생산을 준다.</small></div>`;
+    💀 교전지는 전리품을, 자원 아이콘은 점령 시 시간당 생산을 준다.</small></div>`;
   const camp = camps.find((c) => c.id === selectedSiteId);
   const node = nodes.find((n) => n.id === selectedSiteId);
   const target = camp ?? node;
@@ -656,7 +656,7 @@ function worldTab(
       </div>
     </div>`;
   } else if (!hero) {
-    armyPanel = '<div class="card"><small>주점에서 영웅을 고용해야 부대를 이끌 수 있다.</small></div>';
+    armyPanel = '<div class="card"><small>용병 사무소에서 지휘관을 영입해야 부대를 이끌 수 있다.</small></div>';
   } else {
     const heroPicker =
       state.heroes.length > 1

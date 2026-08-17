@@ -1,9 +1,9 @@
 import buildingData from '../data/buildings/base.json';
-import humanUnits from '../data/units/human.json';
-import elfUnits from '../data/units/elf.json';
-import undeadUnits from '../data/units/undead.json';
-import devilUnits from '../data/units/devil.json';
-import neutralUnits from '../data/units/neutral.json';
+import coalitionUnits from '../data/units/coalition.json';
+import clusterUnits from '../data/units/cluster.json';
+import swarmUnits from '../data/units/swarm.json';
+import invaderUnits from '../data/units/invader.json';
+import wildUnits from '../data/units/wild.json';
 import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef } from './core/types';
 import campData from '../data/combat/camps.json';
 import nodeData from '../data/world/nodes.json';
@@ -39,15 +39,43 @@ const buildingDefs = new Map<string, BuildingDef>(
   (buildingData.buildings as BuildingDef[]).map((d) => [d.id, d]),
 );
 
-// 악마·중립은 훈련 대상이 아니지만 도감·전투(M3)에 필요해 함께 싣는다.
-// 훈련 목록은 raceId로 걸러지므로 섞이지 않는다.
+// 침략군·야생종은 생산 대상이 아니지만 도감·전투에 필요해 함께 싣는다.
+// 생산 목록은 raceId로 걸러지므로 섞이지 않는다.
 const unitDefs = new Map<string, UnitDef>(
-  [humanUnits, elfUnits, undeadUnits, devilUnits, neutralUnits]
+  [coalitionUnits, clusterUnits, swarmUnits, invaderUnits, wildUnits]
     .flatMap((r) => r.units as unknown as UnitDef[])
     .map((u) => [u.id, u]),
 );
 
-const STATE_VERSION = 2;
+const STATE_VERSION = 3;
+
+/** 판타지 → SF 컨셉 전환 시 옛 식별자를 새 것으로 옮긴다 */
+const RACE_MIGRATION: Record<string, RaceId> = {
+  human: 'coalition',
+  elf: 'cluster',
+  undead: 'swarm',
+};
+const UNIT_PREFIX_MIGRATION: Record<string, string> = {
+  human: 'coalition',
+  elf: 'cluster',
+  undead: 'swarm',
+  neutral: 'wild',
+  devil: 'invader',
+};
+
+function migrateUnitId(id: string): string {
+  const idx = id.lastIndexOf('-t');
+  if (idx < 0) return id;
+  const race = id.slice(0, idx);
+  const next = UNIT_PREFIX_MIGRATION[race];
+  return next ? `${next}${id.slice(idx)}` : id;
+}
+
+function migrateUnitMap(map: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(map)) out[migrateUnitId(k)] = v;
+  return out;
+}
 
 function newGame(now: number): GameState {
   return {
@@ -87,10 +115,25 @@ function migrate(state: GameState): GameState {
   for (const h of state.heroes) h.equipment ??= {};
   // M4 이전 출정 데이터에는 kind가 없다
   if (state.march) state.march.kind ??= 'hunt';
-  // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
+  // v2: 시작 자원에 가스 50이 추가되기 전에 만들어진 저장분 보정
   if ((state.stateVersion ?? 1) < 2) {
     state.resources.crystal = Math.max(state.resources.crystal, 50);
     state.stateVersion = 2;
+  }
+  // v3: 판타지 → SF 컨셉 전환. 종족·유닛 식별자를 새 체계로 옮긴다
+  if ((state.stateVersion ?? 1) < 3) {
+    if (state.raceId && RACE_MIGRATION[state.raceId]) {
+      state.raceId = RACE_MIGRATION[state.raceId];
+    }
+    state.army = migrateUnitMap(state.army);
+    state.unitLevels = migrateUnitMap(state.unitLevels);
+    if (state.trainQueue) state.trainQueue.unitId = migrateUnitId(state.trainQueue.unitId);
+    if (state.researchQueue) {
+      state.researchQueue.unitId = migrateUnitId(state.researchQueue.unitId);
+    }
+    // 진행 중이던 출정은 옛 유닛 정보를 담고 있어 취소한다
+    state.march = null;
+    state.stateVersion = 3;
   }
   // 이후 추가된 건물(병영 등)을 기존 도시에 등록
   for (const defId of buildingDefs.keys()) {

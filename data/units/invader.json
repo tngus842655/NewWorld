@@ -1,13 +1,13 @@
 {
-  "$comment": "七龙纪 4399 공식 가이드에서 수집 (2026-08-17). 한국어 명칭은 한국 서비스 공식 종족소개 기준.",
-  "raceId": "devil",
-  "raceNameKo": "악마",
+  "$comment": "침략군 병종. 능력치·비용·훈련시간은 4399 七龙纪 공식 가이드 실측값을 그대로 물려받았고(derivedFrom 참조), 이름과 세계관만 자체 창작으로 교체했다. 검증된 밸런스 곡선을 유지하기 위함.",
+  "raceId": "invader",
+  "raceNameKo": "침략군",
+  "raceDesc": "외계에서 침투한 적성 세력",
   "units": [
     {
-      "id": "devil-t1",
-      "raceId": "devil",
-      "nameKo": "임프",
-      "nameCn": "小怪物",
+      "id": "invader-t1",
+      "raceId": "invader",
+      "nameKo": "병체",
       "tier": 1,
       "cost": {
         "wood": 0,
@@ -20,11 +20,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -188,18 +188,18 @@
           "mdef": 4
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20524Q91.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-344.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "임프",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-344.html"
+      }
     },
     {
-      "id": "devil-t2",
-      "raceId": "devil",
-      "nameKo": "곡스",
-      "nameCn": "歌勒",
+      "id": "invader-t2",
+      "raceId": "invader",
+      "nameKo": "방사체",
       "tier": 2,
       "cost": {
         "wood": 0,
@@ -212,11 +212,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -380,18 +380,18 @@
           "mdef": 4
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20445W42.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-343.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "곡스",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-343.html"
+      }
     },
     {
-      "id": "devil-t3",
-      "raceId": "devil",
-      "nameKo": "헬하운드",
-      "nameCn": "地狱犬",
+      "id": "invader-t3",
+      "raceId": "invader",
+      "nameKo": "추격체",
       "tier": 3,
       "cost": {
         "wood": 0,
@@ -404,11 +404,11 @@
       "foodUpkeepPerHour": 1,
       "trainSeconds": 600,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -572,18 +572,18 @@
           "mdef": 4
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H2040RX3.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-342.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "헬하운드",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-342.html"
+      }
     },
     {
-      "id": "devil-t4",
-      "raceId": "devil",
-      "nameKo": "악마",
-      "nameCn": "恶鬼",
+      "id": "invader-t4",
+      "raceId": "invader",
+      "nameKo": "전투체",
       "tier": 4,
       "cost": {
         "wood": 0,
@@ -596,11 +596,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 800,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -764,18 +764,18 @@
           "mdef": 14
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H203225455.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-341.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "악마",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-341.html"
+      }
     },
     {
-      "id": "devil-t5",
-      "raceId": "devil",
-      "nameKo": "사신",
-      "nameCn": "邪神",
+      "id": "invader-t5",
+      "raceId": "invader",
+      "nameKo": "파동체",
       "tier": 5,
       "cost": {
         "wood": 0,
@@ -788,11 +788,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1000,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -956,18 +956,18 @@
           "mdef": 17
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20252XB.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-340.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "사신",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-340.html"
+      }
     },
     {
-      "id": "devil-t6",
-      "raceId": "devil",
-      "nameKo": "악의화신",
-      "nameCn": "火怪",
+      "id": "invader-t6",
+      "raceId": "invader",
+      "nameKo": "화염체",
       "tier": 6,
       "cost": {
         "wood": 0,
@@ -980,11 +980,11 @@
       "foodUpkeepPerHour": 2,
       "trainSeconds": 1200,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1148,18 +1148,18 @@
           "mdef": 21
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H20220F49.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-339.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "악의화신",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-339.html"
+      }
     },
     {
-      "id": "devil-t7",
-      "raceId": "devil",
-      "nameKo": "사탄",
-      "nameCn": "恶魔",
+      "id": "invader-t7",
+      "raceId": "invader",
+      "nameKo": "지배체",
       "tier": 7,
       "cost": {
         "wood": 0,
@@ -1172,11 +1172,11 @@
       "foodUpkeepPerHour": 3,
       "trainSeconds": 1400,
       "statColumns": [
-        "생명",
-        "물리공격",
-        "마법공격",
-        "물리방어",
-        "마법방어"
+        "체력",
+        "실탄공격",
+        "에너지공격",
+        "장갑",
+        "보호막"
       ],
       "stats": [
         {
@@ -1340,12 +1340,13 @@
           "mdef": 30
         }
       ],
-      "descriptionCn": "",
-      "imageUrls": [
-        "http://img.my4399.com/uploads/userup/0809/0H201451958.gif"
-      ],
-      "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-338.html",
-      "provenance": "4399"
+      "imageUrls": [],
+      "provenance": "4399",
+      "derivedFrom": {
+        "race": "devil",
+        "nameKo": "사탄",
+        "sourceUrl": "http://web.4399.com/qlj/bingzhongfenlei/em/200809/07-338.html"
+      }
     }
   ]
 }

@@ -23,7 +23,7 @@ const OFF_X = (CITY_W - S) / 2;
  */
 const cityImg = new Image();
 // 확장자는 png/jpg 아무거나 — 실제 형식은 브라우저가 내용으로 판단한다
-const CITY_IMG_CANDIDATES = ['/assets/city/human.png', '/assets/city/human.jpg'];
+const CITY_IMG_CANDIDATES = ['/assets/city/base.png', '/assets/city/base.jpg'];
 let cityImgTry = 0;
 cityImg.onerror = () => {
   cityImgTry++;
