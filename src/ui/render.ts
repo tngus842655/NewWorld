@@ -53,6 +53,7 @@ import {
   buildingAtCell,
   buildingEffect,
   buildSlots,
+  storageCap,
   isHeroMarching,
   marchSlots,
   hasFreeBuildSlot,
@@ -157,6 +158,9 @@ const STYLE = `
   .resources div { text-align: center; font-size: 11px; color: #b5a99f; line-height: 1.35;
     min-width: 0; overflow: hidden; }
   .resources b { display: block; color: #e0b568; font-size: 14px; font-variant-numeric: tabular-nums; }
+  /* 보관 한도에 닿아 생산이 멈춘 자원 */
+  .resources b.full { color: #e08a7e; }
+  .resources b.full::after { content: ' ▲'; font-size: 9px; vertical-align: 2px; }
   .queue { margin-top: 6px; font-size: 12px; color: #7db4e0; display: flex;
     align-items: center; gap: 8px; justify-content: space-between; }
   .queue .bar { flex: 1; height: 4px; background: #3a322c; border-radius: 2px; overflow: hidden; }
@@ -1401,11 +1405,18 @@ function updateDynamic(
   nodes: NodeDef[],
   now: number,
 ): void {
+  // 보관 한도에 닿으면 생산이 멈추므로 눈에 띄게 표시한다
+  const cap = storageCap(state, buildingDefs);
   root.querySelectorAll<HTMLElement>('b[data-res]').forEach((el) => {
     const value = state.resources[el.dataset.res as ResourceKind];
     el.textContent = formatNumber(value);
-    // 정확한 값은 길게 눌렀을 때(데스크톱은 마우스 오버) 확인
-    el.parentElement?.setAttribute('title', Math.floor(value).toLocaleString());
+    const full = value >= cap;
+    el.classList.toggle('full', full);
+    el.parentElement?.setAttribute(
+      'title',
+      // 정확한 값은 길게 눌렀을 때(데스크톱은 마우스 오버) 확인
+      `${Math.floor(value).toLocaleString()} / 한도 ${cap.toLocaleString()}${full ? ' — 가득 차 생산이 멈춤' : ''}`,
+    );
   });
 
   const setQueue = (prefix: string, finishesAt: number, totalSeconds: number) => {

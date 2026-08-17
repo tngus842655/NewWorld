@@ -34,7 +34,7 @@ import {
   startUpgrade,
   unequipItem,
 } from './core/actions';
-import { buildSlots, DEFAULT_SLOTS, repairLayout } from './core/city';
+import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { previewBattle, simulateBattle } from './core/combat';
 import { createStorage, StaleStateError } from './db/storage';
@@ -438,6 +438,7 @@ async function main(): Promise<void> {
       buildingDefs,
       simulateBattle,
       previewBattle,
+      storageCap,
       advance,
       startUpgrade,
       dispatchMarch,

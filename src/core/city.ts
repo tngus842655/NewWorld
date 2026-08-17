@@ -8,6 +8,7 @@ import type {
 } from './types';
 import {
   BASE_MARCH_SLOTS,
+  BASE_STORAGE,
   DEFAULT_BUILD_SLOTS,
   MAX_BUILD_SLOTS,
   MAX_MARCH_SLOTS,
@@ -193,6 +194,16 @@ export function freeMarchSlots(
 /** 이 지휘관이 이미 나가 있는가 — 한 지휘관은 한 부대만 이끈다 */
 export function isHeroMarching(state: GameState, heroId: string): boolean {
   return state.march.some((m) => m.heroId === heroId);
+}
+
+// ── 보관 한도 ─────────────────────────────────────────────────
+
+/**
+ * 자원 하나를 쌓아 둘 수 있는 한도.
+ * 생산이 여기서 멈출 뿐, 이미 가진 자원이나 전리품이 깎이지는 않는다.
+ */
+export function storageCap(state: GameState, buildingDefs: Map<string, BuildingDef>): number {
+  return BASE_STORAGE + buildingEffect(state, buildingDefs, 'storageCapacity');
 }
 
 // ── 가공 건물 보정 ────────────────────────────────────────────

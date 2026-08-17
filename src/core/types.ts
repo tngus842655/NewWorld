@@ -70,7 +70,9 @@ export type BuildingEffectKind =
   /** 행군 시간 −% */
   | 'marchSpeedPercent'
   /** 정찰 등급 +N — 출정 전에 적 전력을 얼마나 자세히 보는지 */
-  | 'scoutLevel';
+  | 'scoutLevel'
+  /** 자원 보관 한도 +N (자원 종류마다) */
+  | 'storageCapacity';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -90,7 +92,14 @@ export const BUILDING_EFFECT_INFO: Record<
   marchSlots: { label: '동시 출정 부대', unit: 'count' },
   marchSpeedPercent: { label: '행군 시간 단축', unit: 'percent' },
   scoutLevel: { label: '정찰 등급', unit: 'count' },
+  storageCapacity: { label: '자원별 보관 한도', unit: 'count' },
 };
+
+/**
+ * 창고 없이도 쌓아 둘 수 있는 기본 보관 한도 (자원 종류마다).
+ * 한도는 **생산에만** 걸린다 — 전리품이나 이미 가진 자원이 깎이는 일은 없다.
+ */
+export const BASE_STORAGE = 50_000;
 
 export interface BuildingDef {
   id: string;

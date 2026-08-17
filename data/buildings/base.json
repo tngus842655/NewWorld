@@ -1044,15 +1044,20 @@
     {
       "id": "warehouse",
       "name": "물류 창고",
-      "description": "자원 보관 한도를 늘리고 약탈 피해를 줄인다.",
+      "description": "자원 보관 한도를 레벨당 50,000씩 늘린다. 한도가 차면 생산이 멈춘다.",
       "category": "자원",
+      "effects": [
+        {
+          "kind": "storageCapacity",
+          "perLevel": 50000
+        }
+      ],
       "requires": [
         {
           "buildingId": "market",
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
