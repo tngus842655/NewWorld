@@ -139,9 +139,15 @@ const STYLE = `
 
   .army { display: flex; gap: 8px; flex-wrap: wrap; }
   .army span { background: #241e1b; border: 1px solid #3a322c; border-radius: 8px;
-    padding: 8px 12px; font-size: 13px; }
+    padding: 6px 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
   .army b { color: #7fd39a; font-variant-numeric: tabular-nums; }
   .tier { color: #8a7d73; font-size: 11px; }
+
+  /* 원작 유닛 초상화 */
+  .uicon { object-fit: contain; background: #1b1614; border-radius: 6px;
+    border: 1px solid #3a322c; flex: 0 0 auto; vertical-align: middle; }
+  .unitrow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .unitrow > div { min-width: 0; }
 
   canvas { width: 100%; display: block; border-radius: 12px; touch-action: manipulation; }
 
@@ -282,6 +288,16 @@ function costAttrs(cost: Partial<Record<ResourceKind, number>>, blocked: boolean
   return `data-cost='${JSON.stringify(cost)}' data-blocked="${blocked ? 1 : 0}"`;
 }
 
+/**
+ * 원작 유닛 초상화. scripts/fetch-unit-images.mjs로 받아둔 파일을 쓰고,
+ * 없으면(저장소에는 포함하지 않으므로) 조용히 숨긴다.
+ */
+function unitIcon(unitId: string, size = 34): string {
+  return `<img class="uicon" style="width:${size}px;height:${size}px"
+    src="/assets/units/${unitId}.gif" alt="" loading="lazy"
+    onerror="this.style.display='none'">`;
+}
+
 function statLine(s: HeroStats): string {
   return (Object.keys(HERO_STAT_LABELS) as (keyof HeroStats)[])
     .map((k) => `${HERO_STAT_LABELS[k]} ${s[k]}`)
@@ -347,7 +363,7 @@ function barracksTab(
     ? `<div class="army">${entries
         .map(([id, n]) => {
           const lv = state.unitLevels[id] ?? 1;
-          return `<span>${unitDefs.get(id)?.nameKo ?? id} <b>${formatNumber(n)}</b>
+          return `<span>${unitIcon(id, 26)}${unitDefs.get(id)?.nameKo ?? id} <b>${formatNumber(n)}</b>
             ${lv > 1 ? `<span class="tier">Lv.${lv}</span>` : ''}</span>`;
         })
         .join('')}</div>`
@@ -372,7 +388,9 @@ function barracksTab(
           ? `🔒 병영 Lv.${u.tier} 필요`
           : `${costText(u.cost)}<br>${u.trainSeconds ?? '?'}초/기 · 식량 ${u.foodUpkeepPerHour ?? 0}/시간`;
         return `<div class="card">
-          <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b><small>${info}</small></div>
+          <div class="unitrow">${unitIcon(u.id)}
+            <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b><small>${info}</small></div>
+          </div>
           <div class="actions">
             <button data-train="${u.id}" data-count="1" ${costAttrs(u.cost, blocked)}>×1</button>
             <button data-train="${u.id}" data-count="5" ${costAttrs(cost5, blocked)}>×5</button>
@@ -398,8 +416,10 @@ function barracksTab(
 
         if (cur >= MAX_UNIT_LEVEL) {
           return `<div class="card">
-            <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
-              <small>${statNow}</small><small>최대 연구 완료</small></div>
+            <div class="unitrow">${unitIcon(u.id)}
+              <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
+                <small>${statNow}</small><small>최대 연구 완료</small></div>
+            </div>
           </div>`;
         }
         const overCap = next > cap;
@@ -412,8 +432,10 @@ function barracksTab(
           ? `🔒 연구소 Lv.${Math.ceil(next / 2)} 필요`
           : `${statNow}<br>${gain}<br>${costText(cost)} · ${Math.round(secs / 60)}분`;
         return `<div class="card">
-          <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
-            <small>${info}</small></div>
+          <div class="unitrow">${unitIcon(u.id)}
+            <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b> Lv.${cur}
+              <small>${info}</small></div>
+          </div>
           <div class="actions">
             <button data-research="${u.id}"
               ${costAttrs(cost, overCap || state.researchQueue !== null)}>Lv.${next}</button>
@@ -732,7 +754,8 @@ function codexTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
           const s1 = at(1);
           const s20 = at(20);
           return `<tr>
-            <td>${u.tier}계 ${u.nameKo}</td>
+            <td><span class="unitrow">${unitIcon(u.id, 28)}
+              <div>${u.tier}계 ${u.nameKo}</div></span></td>
             <td>${s1?.hp ?? '-'} → ${s20?.hp ?? '-'}</td>
             <td>${s1?.patk ?? '-'} → ${s20?.patk ?? '-'}</td>
             <td>${s1?.pdef ?? '-'} → ${s20?.pdef ?? '-'}</td>
