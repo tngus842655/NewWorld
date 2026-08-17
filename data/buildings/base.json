@@ -478,6 +478,163 @@
           "upgradeSeconds": 700
         }
       ]
+    },
+    {
+      "id": "rampart",
+      "name": "방벽",
+      "description": "기지 외곽을 강화한다. 방어 전투에서 아군 피해를 줄인다. (효과는 PvP 도입 시 적용)",
+      "provenance": "estimate",
+      "levels": [
+        {
+          "upgradeCost": {
+            "wood": 150,
+            "stone": 200,
+            "gold": 120
+          },
+          "upgradeSeconds": 40
+        },
+        {
+          "upgradeCost": {
+            "wood": 340,
+            "stone": 450,
+            "gold": 280
+          },
+          "upgradeSeconds": 140
+        },
+        {
+          "upgradeCost": {
+            "wood": 760,
+            "stone": 1000,
+            "gold": 640,
+            "crystal": 60
+          },
+          "upgradeSeconds": 400
+        },
+        {
+          "upgradeCost": {
+            "wood": 1650,
+            "stone": 2200,
+            "gold": 1400,
+            "crystal": 160
+          },
+          "upgradeSeconds": 1000
+        },
+        {
+          "upgradeCost": {
+            "wood": 3600,
+            "stone": 4800,
+            "gold": 3100,
+            "crystal": 400
+          },
+          "upgradeSeconds": 2400
+        }
+      ]
+    },
+    {
+      "id": "turret",
+      "name": "포탑",
+      "description": "자동 방어 화기. 기지를 노리는 적에게 반격한다. (효과는 PvP 도입 시 적용)",
+      "provenance": "estimate",
+      "levels": [
+        {
+          "upgradeCost": {
+            "wood": 120,
+            "stone": 180,
+            "gold": 200,
+            "crystal": 20
+          },
+          "upgradeSeconds": 50
+        },
+        {
+          "upgradeCost": {
+            "wood": 280,
+            "stone": 400,
+            "gold": 460,
+            "crystal": 60
+          },
+          "upgradeSeconds": 160
+        },
+        {
+          "upgradeCost": {
+            "wood": 620,
+            "stone": 880,
+            "gold": 1050,
+            "crystal": 150
+          },
+          "upgradeSeconds": 440
+        },
+        {
+          "upgradeCost": {
+            "wood": 1350,
+            "stone": 1900,
+            "gold": 2300,
+            "crystal": 360
+          },
+          "upgradeSeconds": 1100
+        },
+        {
+          "upgradeCost": {
+            "wood": 2900,
+            "stone": 4100,
+            "gold": 5000,
+            "crystal": 850
+          },
+          "upgradeSeconds": 2600
+        }
+      ]
+    },
+    {
+      "id": "radar",
+      "name": "레이더",
+      "description": "접근하는 적 부대를 미리 탐지한다. (효과는 PvP 도입 시 적용)",
+      "provenance": "estimate",
+      "levels": [
+        {
+          "upgradeCost": {
+            "wood": 100,
+            "stone": 120,
+            "gold": 260,
+            "crystal": 40
+          },
+          "upgradeSeconds": 60
+        },
+        {
+          "upgradeCost": {
+            "wood": 240,
+            "stone": 290,
+            "gold": 600,
+            "crystal": 110
+          },
+          "upgradeSeconds": 180
+        },
+        {
+          "upgradeCost": {
+            "wood": 540,
+            "stone": 650,
+            "gold": 1350,
+            "crystal": 260
+          },
+          "upgradeSeconds": 480
+        },
+        {
+          "upgradeCost": {
+            "wood": 1180,
+            "stone": 1420,
+            "gold": 2950,
+            "crystal": 600
+          },
+          "upgradeSeconds": 1200
+        },
+        {
+          "upgradeCost": {
+            "wood": 2550,
+            "stone": 3050,
+            "gold": 6400,
+            "crystal": 1400
+          },
+          "upgradeSeconds": 2800
+        }
+      ]
     }
   ]
 }
