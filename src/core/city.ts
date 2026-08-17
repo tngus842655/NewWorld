@@ -1,4 +1,11 @@
-import type { BuildingDef, CityBuilding, GameState, ResourceKind, UpgradeJob } from './types';
+import type {
+  BuildingDef,
+  BuildingEffectKind,
+  CityBuilding,
+  GameState,
+  ResourceKind,
+  UpgradeJob,
+} from './types';
 import { DEFAULT_BUILD_SLOTS, MAX_BUILD_SLOTS, RESOURCE_LABELS } from './types';
 
 /**
@@ -136,6 +143,27 @@ export function freeBuildSlots(state: GameState): number {
 /** 새 건설을 넣을 자리가 있는가 */
 export function hasFreeBuildSlot(state: GameState): boolean {
   return freeBuildSlots(state) > 0;
+}
+
+// ── 건물 효과 ─────────────────────────────────────────────────
+
+/**
+ * 지어진 건물들이 주는 효과의 합계 (레벨 × perLevel).
+ * 효과 수치는 데이터가 들고 있고, 여기서 종류별로 더해 주기만 한다.
+ */
+export function buildingEffect(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  kind: BuildingEffectKind,
+): number {
+  let total = 0;
+  for (const b of state.buildings) {
+    if (b.level <= 0) continue;
+    for (const e of buildingDefs.get(b.defId)?.effects ?? []) {
+      if (e.kind === kind) total += e.perLevel * b.level;
+    }
+  }
+  return total;
 }
 
 // ── 가공 건물 보정 ────────────────────────────────────────────

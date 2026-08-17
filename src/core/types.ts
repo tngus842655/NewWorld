@@ -51,6 +51,32 @@ export interface ProductionBoost {
 
 export type BuildingCategory = '자원' | '군사' | '방어' | '지휘' | '특수';
 
+/**
+ * 건물이 주는 효과의 종류. 수치는 데이터(base.json)가 들고,
+ * 코드는 종류마다 '어디에 먹이는지'만 안다.
+ * 새 효과를 붙이는 순서는 docs/BUILDING_EFFECTS.md 참고.
+ */
+export type BuildingEffectKind =
+  /** 출정 부대의 물리방어 +% */
+  | 'armyPdefPercent'
+  /** 출정 부대의 마법방어 +% */
+  | 'armyMdefPercent'
+  /** 전투에서 얻는 지휘관 경험치 +% */
+  | 'heroXpPercent';
+
+export interface BuildingEffect {
+  kind: BuildingEffectKind;
+  /** 레벨당 수치 — 합계는 레벨 × perLevel */
+  perLevel: number;
+}
+
+/** 화면 표기용 — 효과를 추가하면 여기에도 한 줄 넣는다 */
+export const BUILDING_EFFECT_LABELS: Record<BuildingEffectKind, string> = {
+  armyPdefPercent: '출정 부대 물리방어',
+  armyMdefPercent: '출정 부대 마법방어',
+  heroXpPercent: '전투 획득 경험치',
+};
+
 export interface BuildingDef {
   id: string;
   name: string;
@@ -61,6 +87,8 @@ export interface BuildingDef {
   produces?: ResourceKind;
   /** 가공 건물이면 어떤 자원 산출을 얼마나 올리는지 */
   boosts?: ProductionBoost;
+  /** 그 밖의 효과 (전투 보정 등) */
+  effects?: BuildingEffect[];
   /** 생략하면 'grid' */
   placement?: BuildingPlacement;
   /** index 0 = 1레벨 */

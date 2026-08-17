@@ -1357,13 +1357,18 @@
       "name": "병기고",
       "description": "보급 장구를 개량해 주둔 병력의 방어력을 올린다.",
       "category": "군사",
+      "effects": [
+        {
+          "kind": "armyPdefPercent",
+          "perLevel": 4
+        }
+      ],
       "requires": [
         {
           "buildingId": "barracks",
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1786,6 +1791,12 @@
       "name": "방어막 충전소",
       "description": "주둔 병력의 에너지 방어막을 채워 마법 피해를 줄인다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "armyMdefPercent",
+          "perLevel": 4
+        }
+      ],
       "requires": [
         {
           "buildingId": "academy",
@@ -1796,7 +1807,6 @@
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1977,13 +1987,18 @@
       "name": "지휘관 훈련장",
       "description": "지휘관에게 경험치를 먹이고 속성을 단련시킨다.",
       "category": "지휘",
+      "effects": [
+        {
+          "kind": "heroXpPercent",
+          "perLevel": 6
+        }
+      ],
       "requires": [
         {
           "buildingId": "tavern",
           "level": 3
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

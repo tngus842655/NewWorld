@@ -281,7 +281,16 @@ async function main(): Promise<void> {
       if (!target) return;
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
-      const result = dispatchMarch(state, target, kind, heroId, unitDefs, MAX_HELD_NODES, now);
+      const result = dispatchMarch(
+        state,
+        target,
+        kind,
+        heroId,
+        unitDefs,
+        buildingDefs,
+        MAX_HELD_NODES,
+        now,
+      );
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);

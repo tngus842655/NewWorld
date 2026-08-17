@@ -8,10 +8,11 @@ import type {
   UnitDef,
 } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
-import { selectArmyForMarch, simulateBattle } from './combat';
+import { selectArmyForMarch, simulateBattle, type CityBonus } from './combat';
 import { equipTotals } from './equipment';
 import {
   buildingAtCell,
+  buildingEffect,
   buildSlots,
   hasFreeBuildSlot,
   isBuilding,
@@ -254,6 +255,18 @@ export function hireHero(state: GameState, candidateIndex: number): ActionResult
   return { ok: true };
 }
 
+/** 기지 건물이 출정 부대에 얹어 주는 보정을 모은다 */
+export function cityBonus(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): CityBonus {
+  return {
+    pdefPercent: buildingEffect(state, buildingDefs, 'armyPdefPercent'),
+    mdefPercent: buildingEffect(state, buildingDefs, 'armyMdefPercent'),
+    xpPercent: buildingEffect(state, buildingDefs, 'heroXpPercent'),
+  };
+}
+
 /**
  * 사냥터/자원지로 부대를 출정시킨다.
  * 전투 결과는 출정 시점에 미리 계산해 두고(advance를 순수하게 유지),
@@ -265,6 +278,7 @@ export function dispatchMarch(
   kind: 'hunt' | 'capture',
   heroId: string,
   unitDefs: Map<string, UnitDef>,
+  buildingDefs: Map<string, BuildingDef>,
   maxHeld: number,
   now: number,
 ): ActionResult {
@@ -303,6 +317,7 @@ export function dispatchMarch(
     loot: kind === 'hunt' ? (target as CampDef).loot : {},
     unitDefs,
     unitLevels: state.unitLevels,
+    cityBonus: cityBonus(state, buildingDefs),
     dropDifficulty,
     now,
   });

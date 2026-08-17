@@ -12,11 +12,17 @@ import type {
   UnitCount,
   UnitDef,
 } from '../core/types';
-import { HERO_STAT_LABELS, RACE_LABELS, RESOURCE_LABELS } from '../core/types';
+import {
+  BUILDING_EFFECT_LABELS,
+  HERO_STAT_LABELS,
+  RACE_LABELS,
+  RESOURCE_LABELS,
+} from '../core/types';
 import {
   ACADEMY_ID,
   BARRACKS_ID,
   canAfford,
+  cityBonus,
   MAX_UNIT_LEVEL,
   maxResearchableLevel,
   researchCost,
@@ -408,7 +414,7 @@ function cityTab(
       : '';
   const boost = def.boosts
     ? `<small>${boostText(def)}${sel.level >= 1 ? ` (현재 +${def.boosts.percentPerLevel * sel.level}%)` : ''}</small>`
-    : '';
+    : effectText(def, sel.level);
   const costLine = next
     ? `<small>${costText(next.upgradeCost)} · ${next.upgradeSeconds}초</small>`
     : '';
@@ -500,7 +506,7 @@ function buildRow(
     ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${lv1.productionPerHour ?? 0}/시간</small>`
     : def.boosts
       ? `<small>${boostText(def)}</small>`
-      : '';
+      : effectText(def);
   const info = locked
     ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
     : `<small>${costText(lv1.upgradeCost)} · ${lv1.upgradeSeconds}초</small>`;
@@ -518,6 +524,19 @@ function boostText(def: BuildingDef): string {
   const b = def.boosts!;
   const what = b.resource === 'all' ? '모든 자원' : RESOURCE_LABELS[b.resource];
   return `${what} 산출 +${b.percentPerLevel}%/레벨`;
+}
+
+/**
+ * 건물 효과 한 줄. level을 주면 지금 실제로 얼마나 붙어 있는지 함께 보여준다.
+ * 효과 종류가 늘어도 데이터의 kind/perLevel만 보고 알아서 표기된다.
+ */
+function effectText(def: BuildingDef, level = 0): string {
+  return (def.effects ?? [])
+    .map((e) => {
+      const now = level >= 1 ? ` (현재 +${e.perLevel * level}%)` : '';
+      return `<small>${BUILDING_EFFECT_LABELS[e.kind]} +${e.perLevel}%/레벨${now}</small>`;
+    })
+    .join('');
 }
 
 /** 병영 패널: 보유 병력 + 훈련 */
@@ -739,6 +758,7 @@ function worldTab(
   camps: CampDef[],
   nodes: NodeDef[],
   unitDefs: Map<string, UnitDef>,
+  buildingDefs: Map<string, BuildingDef>,
   maxHeld: number,
   now: number,
 ): string {
@@ -809,11 +829,22 @@ function worldTab(
             )
             .join('')}</div>`
         : '';
+    // 기지 건물이 부대에 얹어 주는 보정 — 병기고·방어막 충전소·훈련장
+    const city = cityBonus(state, buildingDefs);
+    const bonusParts: string[] = [];
+    if (city.pdefPercent) bonusParts.push(`물리방어 +${city.pdefPercent}%`);
+    if (city.mdefPercent) bonusParts.push(`마법방어 +${city.mdefPercent}%`);
+    if (city.xpPercent) bonusParts.push(`경험치 +${city.xpPercent}%`);
+    const bonusLine = bonusParts.length
+      ? `<small>기지 보정: ${bonusParts.join(' · ')}</small>`
+      : '';
+
     armyPanel = `${heroPicker}
       <div class="card">
         <div><b>${hero.name}</b> Lv.${hero.level}
           <small>지휘 한도 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
           <small>출정 병력: ${unitCountText(marchArmy, unitDefs)}</small>
+          ${bonusLine}
         </div>
       </div>`;
   }
@@ -1116,7 +1147,9 @@ export function render(
   let body: string;
   if (activeTab === 'city') body = cityTab(state, buildingDefs, unitDefs, now);
   else if (activeTab === 'hero') body = heroTab(state);
-  else if (activeTab === 'map') body = worldTab(state, camps, nodes, unitDefs, maxHeld, now);
+  else if (activeTab === 'map') {
+    body = worldTab(state, camps, nodes, unitDefs, buildingDefs, maxHeld, now);
+  }
   else body = infoTab(state, unitDefs);
 
   const tabs = TABS.map(

@@ -98,6 +98,18 @@ function pickTarget(stacks: Stack[], side: 'attacker' | 'defender'): Stack | nul
   return best;
 }
 
+/** 기지 건물이 출정 부대에 얹어 주는 보정 (병기고·방어막 충전소·훈련장 등) */
+export interface CityBonus {
+  /** 물리방어 +% */
+  pdefPercent: number;
+  /** 마법방어 +% */
+  mdefPercent: number;
+  /** 획득 경험치 +% */
+  xpPercent: number;
+}
+
+export const NO_CITY_BONUS: CityBonus = { pdefPercent: 0, mdefPercent: 0, xpPercent: 0 };
+
 export interface BattleInput {
   hero: Hero;
   attackerArmy: UnitCount[];
@@ -108,6 +120,8 @@ export interface BattleInput {
   unitDefs: Map<string, UnitDef>;
   /** 아군 유닛의 연구 레벨 (없으면 1). 적은 항상 1레벨 */
   unitLevels?: Record<string, number>;
+  /** 기지 건물 보정 (없으면 보정 없음) */
+  cityBonus?: CityBonus;
   /** 장비 드롭 판정용 사냥터 난이도 0~1 (없으면 드롭 없음) */
   dropDifficulty?: number;
   now: number;
@@ -115,7 +129,14 @@ export interface BattleInput {
 
 export function simulateBattle(input: BattleInput): BattleReport {
   const { hero, attackerArmy, defenderArmy, unitDefs, unitLevels, now } = input;
-  const bonus = troopBonuses(hero);
+  const city = input.cityBonus ?? NO_CITY_BONUS;
+  // 기지 보정은 지휘관 보정 위에 곱해진다 (병기고 = 물방, 방어막 충전소 = 마방)
+  const heroBonus = troopBonuses(hero);
+  const bonus = {
+    ...heroBonus,
+    pdef: heroBonus.pdef * (1 + city.pdefPercent / 100),
+    mdef: heroBonus.mdef * (1 + city.mdefPercent / 100),
+  };
   const crit = critChance(hero);
 
   const stacks: Stack[] = [];
@@ -210,8 +231,9 @@ export function simulateBattle(input: BattleInput): BattleReport {
     );
   }
 
-  // 경험 반지(经验戒指)의 획득 경험치 증가 — 4399 실측 효과
-  const xpBonus = equipTotals(hero).effects.xpGain ?? 0;
+  // 경험 반지(经验戒指)의 획득 경험치 증가 — 4399 실측 효과.
+  // 지휘관 훈련장(기지)의 보정도 여기서 함께 얹는다.
+  const xpBonus = (equipTotals(hero).effects.xpGain ?? 0) + city.xpPercent;
 
   return {
     id: `${input.campId}-${now}`,
