@@ -470,6 +470,10 @@ export interface GameState {
   march: MarchJob[];
   /** 최근 전투 리포트 (최신순, 최대 10건) */
   reports: BattleReport[];
+  /** 투기장 순위와 다음 도전 가능 시각 */
+  arena?: { rank: number; nextAt: number };
+  /** 연맹 보급을 마지막으로 받은 시각 */
+  guild?: { claimedAt: number };
   /**
    * 다음 침공이 닥치는 시각 (epoch ms). 없으면 첫 접속 때 정해진다.
    * 오프라인 중에도 이 시각이 지나면 advance()가 방어전을 정산한다.

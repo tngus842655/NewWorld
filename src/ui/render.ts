@@ -41,6 +41,16 @@ import {
 } from '../core/actions';
 import { previewBattle, selectArmyForMarch } from '../core/combat';
 import { nextWave, raidsPaused } from '../core/raid';
+import {
+  ARENA_ID,
+  arenaMaxRank,
+  arenaReward,
+  duelPower,
+  GUILD_CLAIM_SECONDS,
+  GUILD_HALL_ID,
+  guildStipend,
+  opponentPower,
+} from '../core/facilities';
 import { drawWorld, siteAt, WORLD_SIZE, WTILE, type WorldSite } from './worldmap';
 import {
   commandLimit,
@@ -129,6 +139,10 @@ export interface RenderCallbacks {
   onTrade(from: ResourceKind, to: ResourceKind, amount: number): void;
   /** 탈것·펫 구매 */
   onBuyGear(gearId: string): void;
+  /** 투기장 도전 */
+  onArena(heroId: string): void;
+  /** 연맹 보급 수령 */
+  onGuildClaim(): void;
   /** 전투 기록 삭제 */
   onDeleteReport(reportId: string): void;
   /** 전투 기록 전체 삭제 */
@@ -501,6 +515,8 @@ function cityTab(
     body = trainPanel(state, unitDefs, buildingDefs, def.id, sel.level);
   } else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
   else if (def.id === BLACK_MARKET_ID) body = marketPanel(state, buildingDefs, sel.level);
+  else if (def.id === ARENA_ID) body = arenaPanel(state, sel.level, now);
+  else if (def.id === GUILD_HALL_ID) body = guildPanel(state, sel.level, now);
   else if (def.id === GARAGE_ID) body = gearShopPanel(state, 'mount', sel.level);
   else if (def.id === BEAST_PEN_ID) body = gearShopPanel(state, 'pet', sel.level);
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
@@ -692,6 +708,72 @@ function gearShopPanel(
     <div class="card"><small class="faint">산 ${what}은(는) 창고로 들어간다.
       지휘관 탭에서 착용해야 효과가 붙는다.</small></div>
     ${rows}`;
+}
+
+/** 투기장 패널 — NPC 지휘관과 1:1 랭크전 */
+function arenaPanel(state: GameState, level: number, now: number): string {
+  if (level < 1) {
+    return '<div class="card"><small>투기장을 지으면 지휘관 랭크전에 나갈 수 있다.</small></div>';
+  }
+  const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
+  if (!hero) {
+    return '<div class="card"><small>용병 사무소에서 지휘관을 먼저 영입해야 한다.</small></div>';
+  }
+  const arena = state.arena ?? { rank: 0, nextAt: 0 };
+  const max = arenaMaxRank(level);
+  const capped = arena.rank >= max;
+  const wait = Math.max(0, Math.ceil((arena.nextAt - now) / 1000));
+  const next = arena.rank + 1;
+  const mine = duelPower(hero);
+  const theirs = opponentPower(Math.min(next, max));
+  const chance = Math.round(Math.min(0.95, Math.max(0.05, mine / (mine + theirs))) * 100);
+  const reward = arenaReward(Math.min(next, max), level);
+
+  const picker =
+    state.heroes.length > 1
+      ? `<div class="chips">${state.heroes
+          .map(
+            (h) =>
+              `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}">${h.name} Lv.${h.level}</button>`,
+          )
+          .join('')}</div>`
+      : '';
+
+  return `<h2>지휘관 랭크전</h2>${picker}
+    <div class="card">
+      <div><b>${arena.rank}위</b> <span class="tier">상한 ${max}위</span>
+        <small>${hero.name}의 대전 전력 ${formatNumber(mine)}</small>
+        ${capped
+          ? '<small class="locked">투기장을 올려야 더 높은 순위에 도전할 수 있다</small>'
+          : `<small>다음 상대(${next}위) 전력 ${formatNumber(theirs)} · 승산 ${chance}%</small>
+             <small>승리 보상: 크레딧 ${formatNumber(reward.gold)} · 경험치 ${reward.xp}</small>`}
+        ${wait > 0 ? `<small class="faint">다음 도전까지 ${formatDuration(wait)}</small>` : ''}
+      </div>
+      <div class="actions">
+        <button data-arena="${hero.id}" ${capped || wait > 0 ? 'disabled' : ''}>도전</button>
+      </div>
+    </div>
+    <div class="card"><small class="faint">병력은 걸지 않는다 — 져도 잃는 것은 시간뿐이다.</small></div>`;
+}
+
+/** 연맹 지부 패널 — 주기마다 받는 보급 */
+function guildPanel(state: GameState, level: number, now: number): string {
+  if (level < 1) {
+    return '<div class="card"><small>연맹 지부를 지으면 연맹 보급을 받을 수 있다.</small></div>';
+  }
+  const claimedAt = state.guild?.claimedAt ?? 0;
+  const wait = Math.max(0, Math.ceil((claimedAt + GUILD_CLAIM_SECONDS * 1000 - now) / 1000));
+  const stipend = guildStipend(level);
+  return `<h2>연맹 보급</h2>
+    <div class="card">
+      <div><b>${Math.round(GUILD_CLAIM_SECONDS / 3600)}시간마다 지급</b>
+        <small>${costText(stipend)}</small>
+        ${wait > 0 ? `<small class="faint">다음 보급까지 ${formatDuration(wait)}</small>` : '<small>지금 받을 수 있다</small>'}
+      </div>
+      <div class="actions"><button data-guild ${wait > 0 ? 'disabled' : ''}>수령</button></div>
+    </div>
+    <div class="card"><small class="faint">진짜 연맹(다른 플레이어와의 협력)은 서버가 붙어야 한다.
+      지금은 보급만 받는다.</small></div>`;
 }
 
 /** 건설 슬롯 사용 현황 — 버튼이 왜 꺼져 있는지 알 수 있게 */
@@ -1535,6 +1617,8 @@ export function render(
     marchSlots(state, buildingDefs),
     state.reports.map((r) => `${r.id}:${r.read ? 1 : 0}`),
     raidsPaused(state),
+    `${state.arena?.rank ?? 0}:${state.arena?.nextAt ?? 0}`,
+    state.guild?.claimedAt ?? 0,
     selectedHeroId,
     selectedSiteId,
     state.heroes.map(
@@ -1640,6 +1724,11 @@ export function render(
     root.querySelectorAll<HTMLButtonElement>('button[data-trade]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onTrade(tradeFrom, tradeTo, Number(btn.dataset.trade)));
     });
+    root.querySelectorAll<HTMLButtonElement>('button[data-arena]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onArena(btn.dataset.arena!));
+    });
+    root.querySelector<HTMLButtonElement>('button[data-guild]')
+      ?.addEventListener('click', () => cb.onGuildClaim());
     root.querySelectorAll<HTMLButtonElement>('button[data-buy-gear]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onBuyGear(btn.dataset.buyGear!));
     });

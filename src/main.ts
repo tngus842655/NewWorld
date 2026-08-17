@@ -43,6 +43,7 @@ import {
 } from './core/actions';
 import { buildSlots, DEFAULT_SLOTS, inventoryCap, repairLayout, storageCap } from './core/city';
 import { commandLimit, maybeRestockTavern, TAVERN_ID } from './core/heroes';
+import { challengeArena, claimGuildStipend } from './core/facilities';
 import { previewBattle, simulateBattle } from './core/combat';
 import { equipTotals } from './core/equipment';
 import { createStorage, StaleStateError } from './db/storage';
@@ -350,6 +351,24 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(now);
     },
+    onArena(heroId: string) {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = challengeArena(state, heroId, now);
+      setMessage(
+        !result.ok ? result.reason : result.won ? '랭크전 승리 — 순위가 올랐다.' : '랭크전 패배.',
+      );
+      dirty = true;
+      rerender(now);
+    },
+    onGuildClaim() {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = claimGuildStipend(state, buildingDefs, now);
+      setMessage(result.ok ? '연맹 보급을 받았다.' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
     onBuyGear(gearId: string) {
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
@@ -471,6 +490,8 @@ async function main(): Promise<void> {
       storageCap,
       inventoryCap,
       buyGear,
+      challengeArena,
+      claimGuildStipend,
       equipTotals,
       tradeFee,
       tradeYield,

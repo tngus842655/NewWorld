@@ -2097,7 +2097,7 @@
     {
       "id": "arena",
       "name": "투기장",
-      "description": "지휘관끼리 겨뤄 순위와 보상을 얻는다.",
+      "description": "NPC 지휘관과 1:1 랭크전을 벌인다. 레벨당 순위 상한이 5위씩 올라간다.",
       "category": "지휘",
       "requires": [
         {
@@ -2109,7 +2109,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -2294,7 +2293,7 @@
     {
       "id": "guild-hall",
       "name": "연맹 지부",
-      "description": "연맹에 가입하고 연맹 지원을 주고받는다.",
+      "description": "연맹에 소속돼 6시간마다 보급을 받는다. 레벨이 오를수록 보급량이 늘어난다.",
       "category": "지휘",
       "requires": [
         {
@@ -2306,7 +2305,6 @@
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
