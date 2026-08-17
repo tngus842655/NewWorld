@@ -9,7 +9,38 @@ import type { BuildingDef, GameState } from '../core/types';
  * public/assets/buildings/{id}.png 를 넣으면 그 이미지로 대체된다.
  */
 
-export const CITY_SIZE = 432;
+// 원작 도시 스크린샷(480x427) 비율 기준
+export const CITY_W = 480;
+export const CITY_H = 427;
+/** 직접 그리는 폴백용 정사각 영역 */
+const S = 427;
+const OFF_X = (CITY_W - S) / 2;
+
+/**
+ * 원작 도시 스크린샷을 배경으로 쓴다 (개인용 — git 제외 디렉터리).
+ * reference 스크린샷을 public/assets/city/human.png 로 저장하면 자동 적용되고,
+ * 없으면 아래의 직접 그린 마을로 폴백한다.
+ */
+const cityImg = new Image();
+cityImg.src = '/assets/city/human.png';
+function cityImageReady(): boolean {
+  return cityImg.complete && cityImg.naturalWidth > 0;
+}
+
+/**
+ * 스크린샷 위 건물 클릭 영역 (이미지 픽셀 좌표, 중심 기준).
+ * 원작 화면의 실제 건물 위치에 눈대중으로 맞춘 값 — 보면서 조정한다.
+ */
+export const HOTSPOTS: Record<string, { x: number; y: number; w: number; h: number }> = {
+  sawmill: { x: 178, y: 88, w: 72, h: 58 },       // 상단 목조 골조 건물
+  barracks: { x: 330, y: 96, w: 78, h: 62 },      // 우상단 콜로세움
+  quarry: { x: 264, y: 156, w: 58, h: 48 },       // 중앙 석조 성채
+  'crystal-mine': { x: 56, y: 160, w: 58, h: 50 },// 좌측 파란 수정 분수
+  farm: { x: 106, y: 232, w: 58, h: 48 },         // 좌하단 노란 지붕 농가
+  market: { x: 240, y: 212, w: 62, h: 52 },       // 중앙 파란 지붕 저택
+  academy: { x: 310, y: 246, w: 54, h: 58 },      // 우측 수정 첨탑
+  tavern: { x: 57, y: 250, w: 52, h: 48 },        // 좌하단 분홍 천막
+};
 
 /** 건물 배치 (중심 좌표). 타일에 묶지 않고 원작처럼 촘촘히 배치한다 */
 interface Plot {
@@ -87,7 +118,6 @@ function hash(x: number, y: number): number {
 const WALL_M = 34;
 const WALL_C = 96;
 function octagon(): [number, number][] {
-  const S = CITY_SIZE;
   const m = WALL_M;
   const c = WALL_C;
   return [
@@ -105,15 +135,20 @@ function octagon(): [number, number][] {
 export function buildingAt(px: number, py: number): string | null {
   // 터치 오차를 감안해 약간 넉넉하게 판정
   const pad = 6;
-  for (const p of PLOTS) {
-    if (
-      px >= p.x - p.w / 2 - pad &&
-      px <= p.x + p.w / 2 + pad &&
-      py >= p.y - p.h / 2 - pad &&
-      py <= p.y + p.h / 2 + pad
-    ) {
-      return p.id;
+  const inRect = (x: number, y: number, r: { x: number; y: number; w: number; h: number }) =>
+    x >= r.x - r.w / 2 - pad &&
+    x <= r.x + r.w / 2 + pad &&
+    y >= r.y - r.h / 2 - pad &&
+    y <= r.y + r.h / 2 + pad;
+
+  if (cityImageReady()) {
+    for (const [id, r] of Object.entries(HOTSPOTS)) {
+      if (inRect(px, py, r)) return id;
     }
+    return null;
+  }
+  for (const p of PLOTS) {
+    if (inRect(px - OFF_X, py, p)) return p.id;
   }
   return null;
 }
@@ -405,8 +440,16 @@ export function drawCity(
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  const S = CITY_SIZE;
+
+  // 원작 스크린샷이 있으면 그것을 배경으로 쓰고, 그 위에 상태 표시만 얹는다
+  if (cityImageReady()) {
+    drawCityFromImage(ctx, state, defs, selectedId, now);
+    return;
+  }
+
   const poly = octagon();
+  ctx.save();
+  ctx.translate(OFF_X, 0);
 
   // ── 성 밖: 잔디 ──
   for (let y = 0; y < S; y += 16) {
@@ -562,6 +605,77 @@ export function drawCity(
         plot.w + 8,
         plot.h + 16,
       );
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * 원작 스크린샷을 배경으로 한 도시 화면.
+ * 배경은 건드리지 않고 건물 위에 레벨·건설중·선택 표시만 겹쳐 그린다.
+ */
+function drawCityFromImage(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  defs: Map<string, BuildingDef>,
+  selectedId: string | null,
+  now: number,
+): void {
+  ctx.clearRect(0, 0, CITY_W, CITY_H);
+  ctx.drawImage(cityImg, 0, 0, CITY_W, CITY_H);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (const [id, r] of Object.entries(HOTSPOTS)) {
+    const b = state.buildings.find((x) => x.defId === id);
+    const def = defs.get(id);
+    const level = b?.level ?? 0;
+
+    if (level < 1) {
+      // 미건설: 해당 자리를 어둡게 덮고 이름표를 띄운다
+      ctx.fillStyle = 'rgba(10,8,6,0.62)';
+      ctx.fillRect(r.x - r.w / 2, r.y - r.h / 2, r.w, r.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(def?.name ?? id, r.x, r.y - 6);
+      ctx.fillStyle = 'rgba(255,212,121,0.9)';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('건설 가능', r.x, r.y + 8);
+    } else {
+      // 레벨 배지
+      const bx = r.x + r.w / 2 - 8;
+      const by = r.y + r.h / 2 - 8;
+      ctx.fillStyle = 'rgba(20,16,14,0.82)';
+      ctx.beginPath();
+      ctx.arc(bx, by, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,212,121,0.55)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#ffd479';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(String(level), bx, by + 1);
+    }
+
+    if (state.upgradeQueue?.defId === id) {
+      const remain = Math.max(0, Math.ceil((state.upgradeQueue.finishesAt - now) / 1000));
+      ctx.font = '15px serif';
+      ctx.fillText('🔨', r.x, r.y - r.h / 2 - 10);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(`${remain}s`, r.x, r.y - r.h / 2 + 2);
+      ctx.fillText(`${remain}s`, r.x, r.y - r.h / 2 + 2);
+    }
+
+    if (selectedId === id) {
+      ctx.strokeStyle = '#ffd479';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(r.x - r.w / 2, r.y - r.h / 2, r.w, r.h);
       ctx.setLineDash([]);
     }
   }

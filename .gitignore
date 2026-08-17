@@ -9,3 +9,7 @@ reference/
 # 원작에서 받아온 유닛 이미지 — 저작물이라 저장소에 넣지 않는다.
 # 필요하면 각자 `node scripts/fetch-unit-images.mjs`로 내려받는다.
 public/assets/units/
+
+# 원작 도시 스크린샷 (public/assets/city/human.png 등) — 저작물이라 제외.
+# 넣어두면 도시 화면 배경으로 쓰이고, 없으면 직접 그린 마을로 폴백한다.
+public/assets/city/

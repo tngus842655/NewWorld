@@ -27,6 +27,7 @@ import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
 import { createStorage, StaleStateError } from './db/storage';
 import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
+import { HOTSPOTS } from './ui/cityview';
 import type { CampDef, NodeDef } from './core/types';
 
 const camps = campData.camps as unknown as CampDef[];
@@ -312,6 +313,8 @@ async function main(): Promise<void> {
       camps,
       nodes,
       nodeDefs,
+      // 도시 스크린샷 위 건물 클릭 영역 — 콘솔에서 좌표를 맞춰볼 수 있다
+      hotspots: HOTSPOTS,
       unitDefs,
       buildingDefs,
       simulateBattle,

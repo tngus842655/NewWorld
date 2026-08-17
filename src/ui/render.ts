@@ -32,7 +32,7 @@ import {
   TAVERN_ID,
 } from '../core/heroes';
 import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
-import { buildingAt, CITY_SIZE, drawCity } from './cityview';
+import { buildingAt, CITY_H, CITY_W, drawCity } from './cityview';
 
 /**
  * 원작 메뉴 구성(도시 / 영웅 / 맵 / 길드 / 시장 / 랭킹 / 정보)을 따른다.
@@ -337,7 +337,7 @@ function cityTab(
   unitDefs: Map<string, UnitDef>,
   now: number,
 ): string {
-  const canvas = `<canvas id="cityview" width="${CITY_SIZE}" height="${CITY_SIZE}"></canvas>`;
+  const canvas = `<canvas id="cityview" width="${CITY_W}" height="${CITY_H}"></canvas>`;
 
   const sel = selectedBuilding ? state.buildings.find((b) => b.defId === selectedBuilding) : null;
   const def = sel ? buildingDefs.get(sel.defId) : null;
