@@ -84,6 +84,8 @@ let selectedHeroId: string | null = null;
 let selectedSiteId: string | null = null;
 /** 펼쳐 둔 전투 기록 — DOM을 다시 그려도 열린 채로 유지한다 */
 const openReports = new Set<string>();
+/** 기지 화면 애니메이션 루프 (조명 점멸·에너지 장막) */
+let cityAnimId = 0;
 /** 마지막으로 그린 DOM의 구조 지문 — 바뀔 때만 다시 그린다 */
 let lastStructureKey = '';
 
@@ -1096,7 +1098,18 @@ function updateDynamic(
   });
 
   const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
-  if (canvas) drawCity(canvas, state, buildingDefs, selectedBuilding, now);
+  if (canvas) {
+    drawCity(canvas, state, buildingDefs, selectedBuilding, now);
+    // 조명이 부드럽게 살아 움직이도록 프레임 단위로 다시 그린다.
+    // 캔버스가 사라지면(탭 이동) 스스로 멈춘다.
+    cancelAnimationFrame(cityAnimId);
+    const loop = () => {
+      if (!canvas.isConnected) return;
+      drawCity(canvas, state, buildingDefs, selectedBuilding, Date.now());
+      cityAnimId = requestAnimationFrame(loop);
+    };
+    cityAnimId = requestAnimationFrame(loop);
+  }
 
   const worldCanvas = root.querySelector<HTMLCanvasElement>('#worldmap');
   if (worldCanvas) drawWorld(worldCanvas, state, camps, nodes, selectedSiteId, now);
