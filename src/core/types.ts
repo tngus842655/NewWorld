@@ -93,6 +93,48 @@ export interface TrainJob {
   finishesAt: number; // epoch ms
 }
 
+// ── 영웅 ──────────────────────────────────────────────────────
+// 6대 기초속성은 원작 실측(바이두백과): 내력=생명, 힘=물공, 민첩=물방·속도,
+// 지력=마공, 정신=마방, 매력=정찰. 치명타 +0.2%/pt.
+
+export interface HeroStats {
+  endurance: number; // 내력
+  strength: number; // 힘
+  agility: number; // 민첩
+  intellect: number; // 지력
+  spirit: number; // 정신
+  charisma: number; // 매력
+}
+
+export const HERO_STAT_LABELS: Record<keyof HeroStats, string> = {
+  endurance: '내력',
+  strength: '힘',
+  agility: '민첩',
+  intellect: '지력',
+  spirit: '정신',
+  charisma: '매력',
+};
+
+export interface Hero {
+  id: string;
+  name: string;
+  level: number;
+  xp: number;
+  stats: HeroStats;
+}
+
+export interface HeroCandidate {
+  name: string;
+  stats: HeroStats;
+  price: number; // 골드
+}
+
+export interface TavernState {
+  candidates: HeroCandidate[];
+  /** 마지막 후보 갱신 시각 (epoch ms) */
+  refreshedAt: number;
+}
+
 export interface GameState {
   /** 마지막으로 틱이 반영된 시각 (epoch ms) — 오프라인 진행 계산의 기준 */
   updatedAt: number;
@@ -102,6 +144,10 @@ export interface GameState {
   buildings: CityBuilding[];
   /** 보유 병력: 유닛 id → 수량 */
   army: Record<string, number>;
+  /** 고용한 영웅들 */
+  heroes: Hero[];
+  /** 주점 상태 */
+  tavern: TavernState;
   /** 원작처럼 건설 큐는 한 번에 하나 */
   upgradeQueue: UpgradeJob | null;
   /** 훈련 큐도 한 번에 하나 */

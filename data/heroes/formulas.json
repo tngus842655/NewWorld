@@ -1,0 +1,32 @@
+{
+  "$comment": "영웅 공식. 스탯→병종 보정 매핑과 치명타 0.2%/pt, 고용가 5골드/pt는 바이두백과·17173 실측(baike/17173). 보정 계수와 지휘병력 공식은 원자료 미확보로 estimate — 바이두백과 지휘병력 표(레벨 1~50) 추출 후 교체할 것.",
+  "statMapping": {
+    "endurance": { "labelKo": "내력", "affects": "유닛 생명 증가", "provenance": "baike" },
+    "strength": { "labelKo": "힘", "affects": "유닛 물리공격 증가", "provenance": "baike" },
+    "agility": { "labelKo": "민첩", "affects": "유닛 물리방어·속도 증가", "provenance": "baike" },
+    "intellect": { "labelKo": "지력", "affects": "유닛 마법공격 증가", "provenance": "baike" },
+    "spirit": { "labelKo": "정신", "affects": "유닛 마법방어 증가", "provenance": "baike" },
+    "charisma": { "labelKo": "매력", "affects": "정찰 능력", "provenance": "baike" }
+  },
+  "critChancePerPoint": { "value": 0.002, "provenance": "baike" },
+  "hirePricePerStatPoint": { "value": 5, "provenance": "17173" },
+  "candidateStatTotalRange": { "min": 7, "max": 35, "provenance": "baike", "$note": "영웅 품급 속성점 범위는 II 문서 기준" },
+  "bonusPerPoint": {
+    "$note": "속성 1점당 병종 능력치 보정 비율 — 계수 미확보, 추정치",
+    "hpPerEndurance": 0.01,
+    "patkPerStrength": 0.01,
+    "pdefPerAgility": 0.008,
+    "speedPerAgility": 0.004,
+    "matkPerIntellect": 0.01,
+    "mdefPerSpirit": 0.01,
+    "provenance": "estimate"
+  },
+  "commandLimit": { "base": 60, "perLevel": 12, "provenance": "estimate" },
+  "tavern": {
+    "$note": "주점 갱신 규칙 — 원작에 주점 갱신 개념 존재(baike), 세부 수치는 추정",
+    "candidateCount": 3,
+    "freeRestockSeconds": 300,
+    "manualRefreshGold": 20,
+    "provenance": "estimate"
+  }
+}

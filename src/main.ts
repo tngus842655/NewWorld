@@ -4,7 +4,8 @@ import elfUnits from '../data/units/elf.json';
 import undeadUnits from '../data/units/undead.json';
 import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
 import { advance } from './core/tick';
-import { startTraining, startUpgrade } from './core/actions';
+import { hireHero, refreshTavern, startTraining, startUpgrade } from './core/actions';
+import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { createStorage } from './db/storage';
 import { render, setMessage } from './ui/render';
 
@@ -26,6 +27,8 @@ function newGame(now: number): GameState {
     resources: { wood: 200, stone: 200, food: 200, crystal: 50, gold: 150 },
     buildings: [...buildingDefs.keys()].map((defId) => ({ defId, level: 0 })),
     army: {},
+    heroes: [],
+    tavern: { candidates: [], refreshedAt: 0 },
     upgradeQueue: null,
     trainQueue: null,
   };
@@ -35,6 +38,8 @@ function newGame(now: number): GameState {
 function migrate(state: GameState): GameState {
   state.raceId ??= null;
   state.army ??= {};
+  state.heroes ??= [];
+  state.tavern ??= { candidates: [], refreshedAt: 0 };
   state.trainQueue ??= null;
   // 이후 추가된 건물(병영 등)을 기존 도시에 등록
   for (const defId of buildingDefs.keys()) {
@@ -80,6 +85,22 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(now);
     },
+    onHire(candidateIndex: number) {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, now);
+      const result = hireHero(state, candidateIndex);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
+    onRefreshTavern() {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, now);
+      const result = refreshTavern(state, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
   };
 
   // 1초 틱: 진행 반영 + 렌더. 저장은 변경이 있거나 30초마다.
@@ -91,6 +112,8 @@ async function main(): Promise<void> {
     if ((hadJobs.build && !state.upgradeQueue) || (hadJobs.train && !state.trainQueue)) {
       dirty = true; // 큐 완료됨
     }
+    const tavernLevel = state.buildings.find((b) => b.defId === TAVERN_ID)?.level ?? 0;
+    if (maybeRestockTavern(state, tavernLevel, now)) dirty = true;
     rerender(now);
     if (dirty || now - lastSave > 30_000) {
       void storage.save(state);

@@ -1,11 +1,21 @@
-import type { BuildingDef, GameState, RaceId, ResourceKind, UnitDef } from '../core/types';
-import { RACE_LABELS, RESOURCE_LABELS } from '../core/types';
+import type { BuildingDef, GameState, HeroStats, RaceId, ResourceKind, UnitDef } from '../core/types';
+import { HERO_STAT_LABELS, RACE_LABELS, RESOURCE_LABELS } from '../core/types';
 import { BARRACKS_ID, canAfford } from '../core/actions';
+import {
+  commandLimit,
+  critChance,
+  FREE_RESTOCK_SECONDS,
+  MANUAL_REFRESH_GOLD,
+  statTotal,
+  TAVERN_ID,
+} from '../core/heroes';
 
 export interface RenderCallbacks {
   onUpgrade(defId: string): void;
   onTrain(unitId: string, count: number): void;
   onSelectRace(raceId: RaceId): void;
+  onHire(candidateIndex: number): void;
+  onRefreshTavern(): void;
 }
 
 const STYLE = `
@@ -137,6 +147,59 @@ export function render(
         .join('')
     : '<small>아직 병력이 없다.</small>';
 
+  // ── 영웅 / 주점 ──
+  const statLine = (s: HeroStats) =>
+    (Object.keys(HERO_STAT_LABELS) as (keyof HeroStats)[])
+      .map((k) => `${HERO_STAT_LABELS[k]} ${s[k]}`)
+      .join(' · ');
+
+  const heroList = state.heroes.length
+    ? state.heroes
+        .map(
+          (h) => `<div class="card">
+            <div><b>${h.name}</b> Lv.${h.level}
+              <small>${statLine(h.stats)}</small>
+              <small>지휘 ${commandLimit(h)}명 · 치명타 ${(critChance(h) * 100).toFixed(1)}%</small>
+            </div>
+          </div>`,
+        )
+        .join('')
+    : '<div class="card"><small>고용한 영웅이 없다.</small></div>';
+
+  const tavernLevel = state.buildings.find((b) => b.defId === TAVERN_ID)?.level ?? 0;
+  let tavernHtml: string;
+  if (tavernLevel < 1) {
+    tavernHtml = '<div class="card"><small>주점을 지으면 영웅을 고용할 수 있다.</small></div>';
+  } else {
+    const nextRestock = Math.max(
+      0,
+      Math.ceil((state.tavern.refreshedAt + FREE_RESTOCK_SECONDS * 1000 - now) / 1000),
+    );
+    const canHireMore = state.heroes.length < tavernLevel;
+    const candidates = state.tavern.candidates
+      .map((c, i) => {
+        const affordable = canHireMore && state.resources.gold >= c.price;
+        return `<div class="card">
+          <div><b>${c.name}</b> <span class="tier">속성합 ${statTotal(c.stats)}</span>
+            <small>${statLine(c.stats)}</small>
+          </div>
+          <div class="actions">
+            <button data-hire="${i}" ${affordable ? '' : 'disabled'}>고용 (금화 ${c.price})</button>
+          </div>
+        </div>`;
+      })
+      .join('');
+    tavernHtml = `
+      <div class="card">
+        <div><small>보유 ${state.heroes.length}/${tavernLevel}명 · 무료 갱신까지 ${nextRestock}초</small></div>
+        <div class="actions">
+          <button data-refresh-tavern ${state.resources.gold >= MANUAL_REFRESH_GOLD ? '' : 'disabled'}>
+            즉시 갱신 (금화 ${MANUAL_REFRESH_GOLD})</button>
+        </div>
+      </div>
+      ${candidates}`;
+  }
+
   // ── 병영 / 훈련 ──
   const barracksLevel = state.buildings.find((b) => b.defId === BARRACKS_ID)?.level ?? 0;
   const raceUnits = [...unitDefs.values()]
@@ -183,6 +246,10 @@ export function render(
     <div class="msg">${message}</div>
     <h2>병력</h2>
     <div class="army">${army}</div>
+    <h2>영웅</h2>
+    ${heroList}
+    <h2>주점 (Lv.${tavernLevel})</h2>
+    ${tavernHtml}
     <h2>건물</h2>
     ${buildings}
     <h2>훈련 (병영 Lv.${barracksLevel})</h2>
@@ -197,4 +264,10 @@ export function render(
       cb.onTrain(btn.dataset.train!, Number(btn.dataset.count)),
     );
   });
+  root.querySelectorAll<HTMLButtonElement>('button[data-hire]').forEach((btn) => {
+    btn.addEventListener('click', () => cb.onHire(Number(btn.dataset.hire)));
+  });
+  root
+    .querySelector<HTMLButtonElement>('button[data-refresh-tavern]')
+    ?.addEventListener('click', () => cb.onRefreshTavern());
 }

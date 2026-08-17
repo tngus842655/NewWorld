@@ -74,6 +74,19 @@
       ]
     },
     {
+      "id": "tavern",
+      "name": "주점",
+      "description": "영웅을 고용한다. 주점 레벨만큼 영웅을 보유할 수 있다.",
+      "provenance": "estimate",
+      "levels": [
+        { "upgradeCost": { "wood": 150, "stone": 100, "gold": 200 }, "upgradeSeconds": 45 },
+        { "upgradeCost": { "wood": 350, "stone": 250, "gold": 500 }, "upgradeSeconds": 150 },
+        { "upgradeCost": { "wood": 800, "stone": 600, "gold": 1200, "crystal": 100 }, "upgradeSeconds": 420 },
+        { "upgradeCost": { "wood": 1800, "stone": 1400, "gold": 2800, "crystal": 300 }, "upgradeSeconds": 1200 },
+        { "upgradeCost": { "wood": 4000, "stone": 3200, "gold": 6500, "crystal": 800 }, "upgradeSeconds": 3000 }
+      ]
+    },
+    {
       "id": "market",
       "name": "시장",
       "description": "금화를 생산한다.",
