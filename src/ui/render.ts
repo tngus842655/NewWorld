@@ -35,6 +35,7 @@ import {
   researchSeconds,
 } from '../core/actions';
 import { previewBattle, selectArmyForMarch } from '../core/combat';
+import { nextWave, raidsPaused } from '../core/raid';
 import { drawWorld, siteAt, WORLD_SIZE, WTILE, type WorldSite } from './worldmap';
 import {
   commandLimit,
@@ -347,6 +348,15 @@ export function formatNumber(n: number): string {
   return String(v);
 }
 
+/** 긴 대기 시간을 사람이 읽는 단위로 (침공 카운트다운처럼 시간 단위인 것들) */
+export function formatDuration(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  if (s < 60) return `${s}초`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}분 ${s % 60}초`;
+  return `${Math.floor(m / 60)}시간 ${m % 60}분`;
+}
+
 function costText(cost: Partial<Record<ResourceKind, number>>): string {
   return Object.entries(cost)
     .filter(([, v]) => (v ?? 0) > 0)
@@ -415,9 +425,11 @@ function cityTab(
 
   if (selectedCell) return `${canvas}${buildPanel(state, buildingDefs, selectedCell)}`;
 
+  const defense = defensePanel(state, buildingDefs, unitDefs, now);
+
   const sel = selectedBuilding ? state.buildings.find((b) => b.defId === selectedBuilding) : null;
   const def = sel ? buildingDefs.get(sel.defId) : null;
-  if (!sel || !def) return `${canvas}${hint}`;
+  if (!sel || !def) return `${canvas}${defense}${hint}`;
 
   // ── 건물 공통: 건설/확장 ──
   const next = def.levels[sel.level];
@@ -465,7 +477,7 @@ function cityTab(
   } else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
 
-  return `${canvas}${header}${body}`;
+  return `${canvas}${defense}${header}${body}`;
 }
 
 /**
@@ -503,6 +515,50 @@ function buildPanel(
   return `<h2>건설 — ${cellLabel(cell)}
       <span class="tier">가능 ${ready} / 남은 건물 ${candidates.length}</span></h2>
     ${buildSlotLine(state)}${sections}`;
+}
+
+/**
+ * 침공 대비 현황 — 다음 침공까지 남은 시간과 지금 방어 태세를 한 줄로 보여준다.
+ * 방어 건물을 왜 지어야 하는지가 여기서 드러난다.
+ */
+function defensePanel(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  unitDefs: Map<string, UnitDef>,
+  now: number,
+): string {
+  if (raidsPaused(state)) {
+    return `<div class="card"><small class="faint">기지가 아직 작아 침공을 받지 않는다.
+      건물을 더 올리면 침략군이 눈독을 들이기 시작한다.</small></div>`;
+  }
+
+  const remain = Math.max(0, Math.ceil(((state.nextRaidAt ?? now) - now) / 1000));
+  const wave = nextWave(state);
+  const enemies = wave.monsters
+    .map((m) => `${unitDefs.get(m.unitId)?.nameKo ?? m.unitId} ${m.count}기`)
+    .join(', ');
+
+  const parts: string[] = [];
+  const def = buildingEffect(state, buildingDefs, 'baseDefensePercent');
+  const shield = buildingEffect(state, buildingDefs, 'baseShieldPercent');
+  const intercept = buildingEffect(state, buildingDefs, 'interceptDamage');
+  const hide = buildingEffect(state, buildingDefs, 'hideTroops');
+  const resist = buildingEffect(state, buildingDefs, 'plunderResistPercent');
+  if (def) parts.push(`방어력 +${def}%`);
+  if (shield) parts.push(`역장 +${shield}%`);
+  if (intercept) parts.push(`요격 ${formatNumber(intercept)}`);
+  if (hide) parts.push(`대피 ${formatNumber(hide)}명`);
+  if (resist) parts.push(`약탈 저항 ${Math.min(90, resist)}%`);
+  const garrison = Object.values(state.army).reduce((sum, n) => sum + n, 0);
+
+  return `<div class="card">
+    <div><b>⚔️ 침공 대비</b>
+      <small>다음 침공까지 <span id="raid-countdown">${formatDuration(remain)}</span> · 예상 규모: ${wave.name}</small>
+      <small>${enemies}</small>
+      <small>주둔 병력 ${formatNumber(garrison)}명${parts.length ? ` · ${parts.join(' · ')}` : ''}</small>
+      ${parts.length ? '' : '<small class="locked">🔒 방어 건물이 하나도 없다 — 성벽·포탑부터 올리자</small>'}
+    </div>
+  </div>`;
 }
 
 /** 건설 슬롯 사용 현황 — 버튼이 왜 꺼져 있는지 알 수 있게 */
@@ -998,6 +1054,14 @@ function reportsSection(
       const lootText = Object.entries(r.loot)
         .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${formatNumber(v)}`)
         .join(' · ');
+      // 침공 방어전은 이겼다/졌다의 뜻이 다르다
+      const raid = r.kind === 'raid';
+      const verdict = raid
+        ? r.victory ? '방어 성공' : '기지 함락'
+        : r.victory ? '승리' : '패배';
+      const plunderText = Object.entries(r.plundered ?? {})
+        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${formatNumber(v)}`)
+        .join(' · ');
       const logLines = r.log
         .map(
           (l) =>
@@ -1012,16 +1076,27 @@ function reportsSection(
         <summary>
           <i class="dot"></i>
           <span class="mtitle">
-            <b class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</b>
-            ${r.campName}${r.captured ? ' 🚩' : ''}${r.drops?.length ? ' 🎁' : ''}
+            <b class="${r.victory ? 'win' : 'lose'}">${verdict}</b>
+            ${raid ? '🛡 ' : ''}${r.campName}${r.captured ? ' 🚩' : ''}${r.drops?.length ? ' 🎁' : ''}
           </span>
           <span class="mtime">${when}</span>
           <button class="del" data-del-report="${r.id}" aria-label="삭제">✕</button>
         </summary>
         <div class="report-body">
-          <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
+          <small>${raid ? '침공' : '지휘'}: ${r.heroName} · ${r.rounds}라운드</small>
+          ${
+            r.intercepted
+              ? `<small>🎯 요격: ${r.intercepted}기 (교전 전 격추)</small>`
+              : ''
+          }
           <small>적 처치: ${unitCountText(r.defenderLosses, unitDefs)}</small>
           <small>아군 손실: ${unitCountText(r.attackerLosses, unitDefs)}</small>
+          ${
+            r.hidden?.length
+              ? `<small>🕳 대피: ${unitCountText(r.hidden, unitDefs)}</small>`
+              : ''
+          }
+          ${plunderText ? `<small class="locked">💸 약탈당함: ${plunderText}</small>` : ''}
           ${
             r.recovered?.length
               ? `<small>🚑 부상 복귀: ${unitCountText(r.recovered, unitDefs)}</small>`
@@ -1040,7 +1115,7 @@ function reportsSection(
                   .join(', ')}</small>`
               : ''
           }
-          <small>경험치 +${r.xpGained}</small>
+          ${raid ? '' : `<small>경험치 +${r.xpGained}</small>`}
           <div class="log">${logLines}</div>
         </div>
       </details>`;
@@ -1290,6 +1365,7 @@ export function render(
     state.march.map((m) => `${m.campId}:${m.heroId}`),
     marchSlots(state, buildingDefs),
     state.reports.map((r) => `${r.id}:${r.read ? 1 : 0}`),
+    raidsPaused(state),
     selectedHeroId,
     selectedSiteId,
     state.heroes.map(
@@ -1485,6 +1561,11 @@ function updateDynamic(
     const el = root.querySelector(`[data-march-remain="${m.campId}"]`);
     if (el) el.textContent = String(Math.max(0, Math.ceil((m.returnsAt - now) / 1000)));
   });
+
+  const raidEl = root.querySelector('#raid-countdown');
+  if (raidEl && state.nextRaidAt !== undefined) {
+    raidEl.textContent = formatDuration(Math.ceil((state.nextRaidAt - now) / 1000));
+  }
 
   const countdown = root.querySelector('#tavern-countdown');
   if (countdown) {

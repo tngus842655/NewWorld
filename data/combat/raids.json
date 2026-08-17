@@ -1,0 +1,65 @@
+{
+  "$comment": "기지 침공(방어전) 설정. 원작에도 NPC 습격이 있었는지는 자료가 없어 전부 estimate — 방어 건물 6종에 역할을 주려고 넣은 자체 시스템이다. 전력(power) = 건물 레벨 합 + 병력 수/10. 그 값 이하의 waves 중 가장 센 것이 온다.",
+  "provenance": "estimate",
+  "intervalSeconds": 14400,
+  "graceBuildingLevels": 8,
+  "maxPerCatchUp": 2,
+  "plunderPercent": 15,
+  "scalePer100Power": 0.5,
+  "waves": [
+    {
+      "minPower": 0,
+      "name": "들개 무리",
+      "monsters": [{ "unitId": "wild-t1", "count": 12 }]
+    },
+    {
+      "minPower": 20,
+      "name": "야생종 습격",
+      "monsters": [
+        { "unitId": "wild-t1", "count": 24 },
+        { "unitId": "wild-t2", "count": 10 }
+      ]
+    },
+    {
+      "minPower": 45,
+      "name": "군락 이동",
+      "monsters": [
+        { "unitId": "wild-t2", "count": 30 },
+        { "unitId": "wild-t3", "count": 14 }
+      ]
+    },
+    {
+      "minPower": 80,
+      "name": "침략군 정찰대",
+      "monsters": [
+        { "unitId": "invader-t1", "count": 50 },
+        { "unitId": "invader-t3", "count": 12 }
+      ]
+    },
+    {
+      "minPower": 130,
+      "name": "침략군 강습",
+      "monsters": [
+        { "unitId": "invader-t3", "count": 35 },
+        { "unitId": "invader-t4", "count": 18 }
+      ]
+    },
+    {
+      "minPower": 190,
+      "name": "침략군 본대",
+      "monsters": [
+        { "unitId": "invader-t4", "count": 45 },
+        { "unitId": "invader-t6", "count": 12 }
+      ]
+    },
+    {
+      "minPower": 260,
+      "name": "지배체 강림",
+      "monsters": [
+        { "unitId": "invader-t4", "count": 60 },
+        { "unitId": "invader-t6", "count": 30 },
+        { "unitId": "invader-t7", "count": 10 }
+      ]
+    }
+  ]
+}

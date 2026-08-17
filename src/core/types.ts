@@ -72,7 +72,18 @@ export type BuildingEffectKind =
   /** 정찰 등급 +N — 출정 전에 적 전력을 얼마나 자세히 보는지 */
   | 'scoutLevel'
   /** 자원 보관 한도 +N (자원 종류마다) */
-  | 'storageCapacity';
+  | 'storageCapacity'
+  // ── 기지 방어전(침공) ──
+  /** 방어 병력의 물리·마법 방어 +% — 성벽·성문 */
+  | 'baseDefensePercent'
+  /** 방어 병력의 실효 체력 +% — 실드 제너레이터의 역장 */
+  | 'baseShieldPercent'
+  /** 교전 전에 접근하는 적을 요격하는 피해량 — 포탑류 */
+  | 'interceptDamage'
+  /** 전투에서 빼돌려 지키는 병력 수 — 지하 병영 */
+  | 'hideTroops'
+  /** 방어 실패 시 약탈당하는 자원 비율 −% — 물류 창고 */
+  | 'plunderResistPercent';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -93,6 +104,11 @@ export const BUILDING_EFFECT_INFO: Record<
   marchSpeedPercent: { label: '행군 시간 단축', unit: 'percent' },
   scoutLevel: { label: '정찰 등급', unit: 'count' },
   storageCapacity: { label: '자원별 보관 한도', unit: 'count' },
+  baseDefensePercent: { label: '방어 병력 방어력', unit: 'percent' },
+  baseShieldPercent: { label: '방어 병력 실효 체력', unit: 'percent' },
+  interceptDamage: { label: '침공 요격 피해', unit: 'count' },
+  hideTroops: { label: '침공 시 대피 병력', unit: 'count' },
+  plunderResistPercent: { label: '약탈 피해 감소', unit: 'percent' },
 };
 
 /**
@@ -347,10 +363,23 @@ export interface BattleLogEntry {
 export interface BattleReport {
   id: string;
   at: number; // epoch ms
+  /**
+   * march = 내가 나가서 친 전투, raid = 기지가 침공당한 방어전.
+   * 어느 쪽이든 **attacker* 필드가 내 편**이고 defender* 가 상대다.
+   * 생략하면 march (옛 저장분 호환).
+   */
+  kind?: 'march' | 'raid';
   campId: string;
   campName: string;
   heroName: string;
+  /** march면 사냥 성공, raid면 방어 성공 */
   victory: boolean;
+  /** raid: 포탑류가 교전 전에 요격해 없앤 적 수 */
+  intercepted?: number;
+  /** raid: 지하 병영으로 대피시켜 전투에서 뺀 병력 */
+  hidden?: UnitCount[];
+  /** raid: 방어 실패로 약탈당한 자원 */
+  plundered?: Partial<Resources>;
   /** 자원지 점령전에서 승리해 점령했는가 */
   captured?: boolean;
   rounds: number;
@@ -417,6 +446,11 @@ export interface GameState {
   march: MarchJob[];
   /** 최근 전투 리포트 (최신순, 최대 10건) */
   reports: BattleReport[];
+  /**
+   * 다음 침공이 닥치는 시각 (epoch ms). 없으면 첫 접속 때 정해진다.
+   * 오프라인 중에도 이 시각이 지나면 advance()가 방어전을 정산한다.
+   */
+  nextRaidAt?: number;
   /** 점령해 보유 중인 자원지 */
   heldNodes: NodeHolding[];
   /** 창고에 있는 미착용 장비 */

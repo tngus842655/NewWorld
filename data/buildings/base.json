@@ -518,8 +518,14 @@
     {
       "id": "rampart",
       "name": "성벽",
-      "description": "기지를 두르는 외벽. 레벨이 오를수록 두꺼워지고 방어 전투에서 아군 피해를 줄인다.",
+      "description": "기지를 두르는 외벽. 침공 방어전에서 수비 병력의 방어력을 레벨당 5% 올린다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "baseDefensePercent",
+          "perLevel": 5
+        }
+      ],
       "placement": "wall",
       "provenance": "estimate",
       "levels": [
@@ -616,8 +622,14 @@
     {
       "id": "turret",
       "name": "포탑",
-      "description": "자동 방어 화기. 기지를 노리는 적에게 반격한다. (효과는 PvP 도입 시 적용)",
+      "description": "자동 방어 화기. 침공군이 성벽에 닿기 전에 요격한다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "interceptDamage",
+          "perLevel": 120
+        }
+      ],
       "requires": [
         {
           "buildingId": "rampart",
@@ -1044,12 +1056,16 @@
     {
       "id": "warehouse",
       "name": "물류 창고",
-      "description": "자원 보관 한도를 레벨당 50,000씩 늘린다. 한도가 차면 생산이 멈춘다.",
+      "description": "자원 보관 한도를 레벨당 50,000 늘리고, 약탈 피해를 레벨당 6% 줄인다.",
       "category": "자원",
       "effects": [
         {
           "kind": "storageCapacity",
           "perLevel": 50000
+        },
+        {
+          "kind": "plunderResistPercent",
+          "perLevel": 6
         }
       ],
       "requires": [
@@ -1488,8 +1504,14 @@
     {
       "id": "bunker",
       "name": "지하 병영",
-      "description": "병력을 숨겨 약탈당하지 않게 한다. 원작의 장병동.",
+      "description": "침공이 오면 병력 일부를 지하로 대피시킨다. 싸우지 않는 대신 확실히 살아남는다.",
       "category": "군사",
+      "effects": [
+        {
+          "kind": "hideTroops",
+          "perLevel": 60
+        }
+      ],
       "requires": [
         {
           "buildingId": "barracks",
@@ -1500,7 +1522,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1736,8 +1757,14 @@
     {
       "id": "missile-turret",
       "name": "미사일 포탑",
-      "description": "장거리 요격 화기. 공중 목표까지 상대한다.",
+      "description": "장거리 요격 화기. 포탑보다 훨씬 두껍게 걷어 낸다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "interceptDamage",
+          "perLevel": 300
+        }
+      ],
       "requires": [
         {
           "buildingId": "turret",
@@ -1748,7 +1775,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1871,8 +1897,14 @@
     {
       "id": "shield-generator",
       "name": "실드 제너레이터",
-      "description": "기지 전체를 덮는 역장을 친다. 방어전 최후의 보루.",
+      "description": "기지 전체에 역장을 쳐 수비 병력의 실효 체력을 레벨당 8% 올린다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "baseShieldPercent",
+          "perLevel": 8
+        }
+      ],
       "requires": [
         {
           "buildingId": "shield-battery",
@@ -1883,7 +1915,6 @@
           "level": 3
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -2385,8 +2416,14 @@
     {
       "id": "gate",
       "name": "성문",
-      "description": "성벽 남쪽에 낸 출입구. 부대가 드나드는 길목이라 이곳이 뚫리면 기지가 열린다.",
+      "description": "성벽 남쪽에 낸 출입구. 여기서 적을 붙잡아 수비 병력의 방어력을 레벨당 4% 올린다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "baseDefensePercent",
+          "perLevel": 4
+        }
+      ],
       "placement": "gate",
       "requires": [
         {
@@ -2394,7 +2431,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

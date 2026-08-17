@@ -129,6 +129,11 @@ export interface BattleInput {
   unitLevels?: Record<string, number>;
   /** 기지 건물 보정 (없으면 보정 없음) */
   cityBonus?: CityBonus;
+  /**
+   * 수비 측 배율 — 기지 방어전에서 성벽·실드가 여기로 들어온다.
+   * 사냥 출정에서는 쓰지 않는다(몬스터는 맨몸).
+   */
+  defenderBonus?: ReturnType<typeof troopBonuses>;
   /** 장비 드롭 판정용 사냥터 난이도 0~1 (없으면 드롭 없음) */
   dropDifficulty?: number;
   now: number;
@@ -155,7 +160,9 @@ export function simulateBattle(input: BattleInput): BattleReport {
   }
   for (const { unitId, count } of defenderArmy) {
     const def = unitDefs.get(unitId);
-    if (def && count > 0) stacks.push(makeStack(def, count, 'defender', null, 0, 1));
+    if (def && count > 0) {
+      stacks.push(makeStack(def, count, 'defender', input.defenderBonus ?? null, 0, 1));
+    }
   }
 
   const log: BattleLogEntry[] = [];

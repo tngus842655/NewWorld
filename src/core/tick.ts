@@ -10,6 +10,12 @@ import type {
 } from './types';
 import { grantXp } from './heroes';
 import { productionBoosts, storageCap } from './city';
+import {
+  MAX_RAIDS_PER_CATCH_UP,
+  RAID_INTERVAL_SECONDS,
+  raidsPaused,
+  resolveRaid,
+} from './raid';
 
 /** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다. 직접 삭제도 가능. */
 const MAX_REPORTS = 30;
@@ -35,7 +41,7 @@ export function advance(
 
   type Ev = {
     at: number;
-    kind: 'build' | 'train' | 'march' | 'research';
+    kind: 'build' | 'train' | 'march' | 'research' | 'raid';
     job?: UpgradeJob;
     march?: MarchJob;
   };
@@ -55,6 +61,8 @@ export function advance(
   for (const march of next.march) {
     if (march.returnsAt <= now) events.push({ at: march.returnsAt, kind: 'march', march });
   }
+  // 침공 — 자리를 오래 비웠어도 한 번에 몰아치지 않게 횟수를 제한한다
+  for (const at of scheduleRaids(next, now)) events.push({ at, kind: 'raid' });
   events.sort((a, b) => a.at - b.at);
 
   let from = next.updatedAt;
@@ -74,6 +82,10 @@ export function advance(
       next.researchQueue = null;
     } else if (ev.kind === 'march' && ev.march) {
       finishMarch(next, ev.march);
+    } else if (ev.kind === 'raid') {
+      const report = resolveRaid(next, unitDefs, buildingDefs, ev.at);
+      next.reports.unshift(report);
+      next.reports.length = Math.min(next.reports.length, MAX_REPORTS);
     }
     from = ev.at;
   }
@@ -81,6 +93,32 @@ export function advance(
 
   next.updatedAt = now;
   return next;
+}
+
+/**
+ * 침공 일정을 잡고, 이번 구간에 닥친 침공을 이벤트로 만든다.
+ *
+ * 오래 자리를 비우면 밀린 침공이 수십 번 쌓일 수 있어 한 번에 처리하는 횟수를
+ * 제한한다(자비 규칙). 남은 몫은 버리고 다음 침공 시각을 now 기준으로 다시 잡는다.
+ */
+function scheduleRaids(state: GameState, now: number): number[] {
+  const interval = RAID_INTERVAL_SECONDS * 1000;
+
+  // 아직 지킬 게 없는 초반이거나 첫 일정이면 그냥 다음 시각만 잡아 둔다
+  if (raidsPaused(state) || state.nextRaidAt === undefined) {
+    state.nextRaidAt = now + interval;
+    return [];
+  }
+
+  const due: number[] = [];
+  let at = state.nextRaidAt;
+  while (at <= now && due.length < MAX_RAIDS_PER_CATCH_UP) {
+    due.push(at);
+    at += interval;
+  }
+  // 밀린 몫이 남았으면 버리고 지금 기준으로 다시 잡는다
+  state.nextRaidAt = at <= now ? now + interval : at;
+  return due;
 }
 
 /** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 점령 처리 + 리포트 보관 */
