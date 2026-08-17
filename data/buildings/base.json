@@ -1934,15 +1934,20 @@
     {
       "id": "observatory",
       "name": "관제탑",
-      "description": "넓은 반경을 감시해 적 부대의 규모까지 읽어낸다.",
+      "description": "넓은 반경을 감시해 출정 전에 적 전력과 승산을 읽어 낸다. 3레벨부터는 예상 손실까지 나온다.",
       "category": "방어",
+      "effects": [
+        {
+          "kind": "scoutLevel",
+          "perLevel": 1
+        }
+      ],
       "requires": [
         {
           "buildingId": "radar",
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -2308,8 +2313,14 @@
     {
       "id": "warp-gate",
       "name": "차원문",
-      "description": "먼 거리의 아군 거점으로 병력을 즉시 보낸다.",
+      "description": "부대를 좌표로 직접 흘려보내 행군 시간을 레벨당 6% 줄인다. 최대 60%까지.",
       "category": "특수",
+      "effects": [
+        {
+          "kind": "marchSpeedPercent",
+          "perLevel": 6
+        }
+      ],
       "requires": [
         {
           "buildingId": "academy",
@@ -2320,7 +2331,6 @@
           "level": 4
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

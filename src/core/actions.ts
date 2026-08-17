@@ -26,6 +26,9 @@ import {
   unmetRequirements,
 } from './city';
 
+/** 차원문이 깎을 수 있는 행군 시간의 상한 (%) */
+export const MAX_MARCH_CUT = 60;
+
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
 /** 병종 연구를 담당하는 건물 id */
@@ -335,9 +338,11 @@ export function dispatchMarch(
     now,
   });
 
-  // 신행 목걸이(神行项链)의 행군 속도 증가 — 4399 실측 효과
+  // 신행 목걸이(神行项链)의 행군 속도 증가 — 4399 실측 효과.
+  // 차원문(기지)은 행군 시간 자체를 깎는다 — 너무 짧아지지 않게 상한을 둔다.
   const speedBonus = equipTotals(hero).effects.marchSpeed ?? 0;
-  const seconds = target.marchSeconds / (1 + speedBonus / 100);
+  const cut = Math.min(MAX_MARCH_CUT, buildingEffect(state, buildingDefs, 'marchSpeedPercent'));
+  const seconds = (target.marchSeconds / (1 + speedBonus / 100)) * (1 - cut / 100);
 
   state.march.push({
     kind,

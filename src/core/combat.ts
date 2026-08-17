@@ -277,6 +277,35 @@ export function simulateBattle(input: BattleInput): BattleReport {
   };
 }
 
+export interface BattlePreview {
+  /** 0~1 */
+  winRate: number;
+  /** 이겼을 때 평균 손실 병력 수 */
+  avgLosses: number;
+}
+
+/**
+ * 관제탑 정찰용 — 같은 전투를 여러 번 돌려 승산과 예상 손실을 뽑는다.
+ * 전투에 치명타 난수가 있어 한 번만 돌리면 값이 튄다.
+ */
+export function previewBattle(input: BattleInput, runs = 9): BattlePreview {
+  let wins = 0;
+  let losses = 0;
+  let counted = 0;
+  for (let i = 0; i < runs; i++) {
+    const r = simulateBattle(input);
+    if (r.victory) {
+      wins++;
+      losses += r.attackerLosses.reduce((sum, l) => sum + l.count, 0);
+      counted++;
+    }
+  }
+  return {
+    winRate: wins / runs,
+    avgLosses: counted ? Math.round(losses / counted) : 0,
+  };
+}
+
 /**
  * 영웅이 지휘할 수 있는 만큼 병력을 고른다 (병계 높은 유닛 우선).
  * 원작의 "영웅 레벨별 지휘 병력" 개념을 따른다.

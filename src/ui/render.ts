@@ -28,7 +28,7 @@ import {
   researchCost,
   researchSeconds,
 } from '../core/actions';
-import { selectArmyForMarch } from '../core/combat';
+import { previewBattle, selectArmyForMarch } from '../core/combat';
 import { drawWorld, siteAt, WORLD_SIZE, WTILE, type WorldSite } from './worldmap';
 import {
   commandLimit,
@@ -51,6 +51,7 @@ import {
 } from './cityview';
 import {
   buildingAtCell,
+  buildingEffect,
   buildSlots,
   isHeroMarching,
   marchSlots,
@@ -752,6 +753,51 @@ function heroTab(state: GameState): string {
     <h2>창고 (${state.inventory.length})</h2>${inventory}`;
 }
 
+/**
+ * 관제탑 정찰 — 출정 전에 승산을 미리 본다.
+ * 전투에 난수가 있어 여러 번 돌린 평균을 쓰고, 같은 조건이면 다시 계산하지 않는다
+ * (매 틱 다시 돌리면 숫자가 흔들려 읽을 수 없다).
+ */
+let scoutCache: { key: string; text: string } | null = null;
+
+function scoutText(
+  state: GameState,
+  target: CampDef | NodeDef,
+  hero: GameState['heroes'][number] | undefined,
+  army: UnitCount[],
+  unitDefs: Map<string, UnitDef>,
+  buildingDefs: Map<string, BuildingDef>,
+): string {
+  const level = buildingEffect(state, buildingDefs, 'scoutLevel');
+  if (level < 1) return '';
+  if (!hero || !army.length) {
+    return '<small class="faint">정찰: 부대를 갖춰야 승산을 볼 수 있다</small>';
+  }
+
+  const key = [target.id, hero.id, level, JSON.stringify(army), JSON.stringify(state.unitLevels)].join('|');
+  if (scoutCache?.key !== key) {
+    const preview = previewBattle({
+      hero,
+      attackerArmy: army,
+      defenderArmy: target.monsters,
+      campId: target.id,
+      campName: target.name,
+      loot: {},
+      unitDefs,
+      unitLevels: state.unitLevels,
+      cityBonus: cityBonus(state, buildingDefs),
+      now: 0,
+    });
+    const rate = Math.round(preview.winRate * 100);
+    const verdict = rate >= 90 ? '무난' : rate >= 50 ? '접전' : rate > 0 ? '위험' : '승산 없음';
+    // 정찰 등급이 높아야 손실까지 읽어 낸다
+    const detail =
+      level >= 3 && rate > 0 ? ` · 예상 손실 ${preview.avgLosses}기` : '';
+    scoutCache = { key, text: `<small>🔭 정찰: 승산 ${rate}% (${verdict})${detail}</small>` };
+  }
+  return scoutCache.text;
+}
+
 function unitCountText(list: UnitCount[], unitDefs: Map<string, UnitDef>): string {
   if (!list.length) return '없음';
   return list.map((u) => `${unitDefs.get(u.unitId)?.nameKo ?? u.unitId} ${u.count}기`).join(', ');
@@ -810,6 +856,7 @@ function worldTab(
       <div><b>${target.name}</b>${held ? ' <span class="tier">점령 중</span>' : ''}
         <small>${target.description}</small>
         <small>수비: ${enemies}</small>
+        ${scoutText(state, target, hero, marchArmy, unitDefs, buildingDefs)}
         <small>${rewardLine} · 왕복 ${Math.round(target.marchSeconds / 60)}분</small>
       </div>
       <div class="actions">${action}</div>

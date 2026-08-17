@@ -36,7 +36,7 @@ import {
 } from './core/actions';
 import { buildSlots, DEFAULT_SLOTS, repairLayout } from './core/city';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
-import { simulateBattle } from './core/combat';
+import { previewBattle, simulateBattle } from './core/combat';
 import { createStorage, StaleStateError } from './db/storage';
 import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
 import type { CampDef, NodeDef } from './core/types';
@@ -437,8 +437,10 @@ async function main(): Promise<void> {
       unitDefs,
       buildingDefs,
       simulateBattle,
+      previewBattle,
       advance,
       startUpgrade,
+      dispatchMarch,
       save: () => persist(),
       rerender: () => rerender(Date.now()),
     };

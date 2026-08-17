@@ -66,7 +66,11 @@ export type BuildingEffectKind =
   /** 전사자 중 부상으로 처리돼 복귀하는 비율 % */
   | 'woundedRecoveryPercent'
   /** 동시에 내보낼 수 있는 부대 수 +N */
-  | 'marchSlots';
+  | 'marchSlots'
+  /** 행군 시간 −% */
+  | 'marchSpeedPercent'
+  /** 정찰 등급 +N — 출정 전에 적 전력을 얼마나 자세히 보는지 */
+  | 'scoutLevel';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -84,6 +88,8 @@ export const BUILDING_EFFECT_INFO: Record<
   heroXpPercent: { label: '전투 획득 경험치', unit: 'percent' },
   woundedRecoveryPercent: { label: '승리 시 전사자 중 부상 복귀', unit: 'percent' },
   marchSlots: { label: '동시 출정 부대', unit: 'count' },
+  marchSpeedPercent: { label: '행군 시간 단축', unit: 'percent' },
+  scoutLevel: { label: '정찰 등급', unit: 'count' },
 };
 
 export interface BuildingDef {
