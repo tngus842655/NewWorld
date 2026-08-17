@@ -1,11 +1,11 @@
 import type { BuildingDef, GameState } from '../core/types';
 
 /**
- * 기지 화면 — 아이소메트릭 렌더러.
+ * 기지 화면 — 정면 3/4 시점(캐비닛 투영) 렌더러.
  *
- * 정면 평면도로는 깊이가 없어 조잡해 보이므로 2:1 아이소 투영으로 그린다.
- * 건물은 윗면·좌면·우면 3면을 가진 상자로 쌓고, 그 위에 실루엣을 얹어
- * 종류를 한눈에 구분할 수 있게 했다.
+ * 마름모로 눕힌 아이소는 네 귀퉁이에 빈 공간이 남아 모바일 화면을 못 채운다.
+ * 그래서 격자를 45도 돌려 정면을 보게 하고(= 축 정렬 직사각형), 건물만
+ * 앞면·윗면·우측면 3면으로 그려 깊이를 준다. 직사각형이라 화면을 꽉 채운다.
  *
  * public/assets/city/base.png 를 두면 그 이미지를 배경으로 대신 쓴다.
  */
@@ -13,18 +13,21 @@ import type { BuildingDef, GameState } from '../core/types';
 export const CITY_W = 480;
 export const CITY_H = 430;
 
-/**
- * 아이소 타일. 정통 2:1은 세로가 너무 납작해 모바일 세로 화면에 여백이 크게 남는다.
- * 약 1.4:1로 눕혀 화면을 꽉 채우면서도 입체감은 유지한다.
- */
-const TW = 66;
-const TH = 50;
-const GRID = 7;
-const ORIGIN_X = CITY_W / 2;
-const ORIGIN_Y = 40;
+/** 격자: 화면을 정확히 나누어 여백이 남지 않게 한다 */
+const COLS = 8;
+const ROWS = 7;
+const TW = CITY_W / COLS; // 60
+const TH = CITY_H / ROWS; // ≈61.4
 
-const isoX = (gx: number, gy: number) => (gx - gy) * (TW / 2) + ORIGIN_X;
-const isoY = (gx: number, gy: number) => (gx + gy) * (TH / 2) + ORIGIN_Y;
+/** 깊이(안쪽으로 밀려나는 양) — 캐비닛 투영 */
+const DX = 13;
+const DY = 11;
+
+const tileX = (gx: number) => gx * TW;
+const tileY = (gy: number) => gy * TH;
+/** 구조물 코드가 쓰는 좌표 헬퍼 (격자 좌표 → 화면 좌표) */
+const isoX = (gx: number, _gy: number) => gx * TW;
+const isoY = (_gx: number, gy: number) => gy * TH;
 
 // ── 팔레트 ───────────────────────────────────────────────────
 const C = {
@@ -41,7 +44,6 @@ const C = {
   steelTop: '#6f7a87',
   steelDark: '#414a54',
   accent: '#35c7e0',
-  accentDim: '#1d7e91',
   amber: '#e0a020',
   glass: '#7fe6ff',
   hazard: '#c9a227',
@@ -51,40 +53,44 @@ interface Slot {
   id: string;
   gx: number;
   gy: number;
-  /** 차지하는 타일 수 */
   w: number;
   d: number;
 }
 
-/** 기능 건물 배치 */
+/** 기능 건물 배치 (격자 8×7) */
 const SLOTS: Slot[] = [
-  { id: 'sawmill', gx: 2, gy: 0, w: 1, d: 1 },
+  { id: 'sawmill', gx: 1, gy: 0, w: 1, d: 1 },
   { id: 'quarry', gx: 4, gy: 0, w: 1, d: 1 },
-  { id: 'crystal-mine', gx: 5, gy: 1, w: 1, d: 1 },
-  { id: 'barracks', gx: 0, gy: 2, w: 1, d: 1 },
+  { id: 'crystal-mine', gx: 6, gy: 1, w: 1, d: 1 },
+  { id: 'barracks', gx: 1, gy: 2, w: 1, d: 1 },
   { id: 'academy', gx: 6, gy: 3, w: 1, d: 1 },
-  { id: 'farm', gx: 0, gy: 5, w: 1, d: 1 },
+  { id: 'farm', gx: 1, gy: 4, w: 1, d: 1 },
   { id: 'tavern', gx: 5, gy: 5, w: 1, d: 1 },
-  { id: 'market', gx: 2, gy: 6, w: 1, d: 1 },
+  { id: 'market', gx: 3, gy: 6, w: 1, d: 1 },
 ];
 
 /** 중앙 사령부 — 기능 없는 상징물 */
-const HQ = { gx: 2, gy: 3, w: 2, d: 2 };
+const HQ = { gx: 3, gy: 2, w: 2, d: 2 };
 
-/** 빈 구역을 채우는 소품 (기능 없음) */
+/** 빈 구역을 채우는 소품 */
 const PROPS: { gx: number; gy: number; kind: 'crates' | 'mast' | 'pad' | 'pipe' }[] = [
   { gx: 0, gy: 0, kind: 'mast' },
-  { gx: 6, gy: 0, kind: 'crates' },
-  { gx: 3, gy: 1, kind: 'pipe' },
-  { gx: 1, gy: 1, kind: 'crates' },
-  { gx: 6, gy: 1, kind: 'mast' },
-  { gx: 4, gy: 2, kind: 'pad' },
-  { gx: 1, gy: 4, kind: 'pipe' },
-  { gx: 4, gy: 4, kind: 'crates' },
-  { gx: 6, gy: 5, kind: 'mast' },
-  { gx: 3, gy: 6, kind: 'pipe' },
-  { gx: 0, gy: 6, kind: 'crates' },
-  { gx: 5, gy: 6, kind: 'pad' },
+  { gx: 2, gy: 1, kind: 'crates' },
+  { gx: 5, gy: 1, kind: 'pipe' },
+  { gx: 7, gy: 0, kind: 'crates' },
+  { gx: 0, gy: 2, kind: 'pipe' },
+  { gx: 5, gy: 2, kind: 'crates' },
+  { gx: 7, gy: 2, kind: 'mast' },
+  { gx: 2, gy: 3, kind: 'pad' },
+  { gx: 0, gy: 4, kind: 'crates' },
+  { gx: 3, gy: 4, kind: 'pipe' },
+  { gx: 6, gy: 5, kind: 'crates' },
+  { gx: 7, gy: 4, kind: 'pipe' },
+  { gx: 0, gy: 6, kind: 'mast' },
+  { gx: 1, gy: 5, kind: 'crates' },
+  { gx: 4, gy: 5, kind: 'pad' },
+  { gx: 5, gy: 6, kind: 'crates' },
+  { gx: 7, gy: 6, kind: 'pipe' },
 ];
 
 /** 화면 좌표 기준 클릭 영역 (그릴 때 채운다) */
@@ -117,25 +123,20 @@ export function buildingAt(px: number, py: number): string | null {
   return null;
 }
 
-// ── 아이소 프리미티브 ────────────────────────────────────────
+// ── 프리미티브 ───────────────────────────────────────────────
 
-/** 타일 한 칸(마름모) */
+/** 바닥 타일 (직사각형) */
 function tile(ctx: CanvasRenderingContext2D, gx: number, gy: number, fill: string): void {
-  const x = isoX(gx, gy);
-  const y = isoY(gx, gy);
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + TW / 2, y + TH / 2);
-  ctx.lineTo(x, y + TH);
-  ctx.lineTo(x - TW / 2, y + TH / 2);
-  ctx.closePath();
   ctx.fillStyle = fill;
-  ctx.fill();
+  ctx.fillRect(tileX(gx), tileY(gy), TW, TH);
 }
 
 /**
- * 아이소 상자. (gx,gy)를 왼쪽 위 모서리로 w×d 타일을 차지하고 높이 h픽셀.
- * 윗면 중심 좌표를 돌려준다 (그 위에 장식을 얹기 위해).
+ * 캐비닛 투영 상자. (gx,gy)에서 w×d 타일을 차지하고 높이 h픽셀.
+ * 앞면·윗면·우측면 3면을 그린다.
+ *
+ * 돌려주는 W/S/E는 창문을 찍을 두 면의 모서리다:
+ *   W→S = 앞면 아래 모서리, S→E = 우측면 아래 모서리
  */
 function box(
   ctx: CanvasRenderingContext2D,
@@ -145,7 +146,7 @@ function box(
   d: number,
   h: number,
   face: { top: string; left: string; right: string },
-  inset = 6,
+  inset = 10,
 ): {
   cx: number;
   cy: number;
@@ -155,66 +156,58 @@ function box(
   S: { x: number; y: number };
   W: { x: number; y: number };
 } {
-  // 타일 네 꼭짓점 (안쪽으로 inset 만큼 줄여 여백을 준다)
-  const n = { x: isoX(gx, gy), y: isoY(gx, gy) };
-  const e = { x: isoX(gx + w, gy), y: isoY(gx + w, gy) };
-  const s = { x: isoX(gx + w, gy + d), y: isoY(gx + w, gy + d) };
-  const wst = { x: isoX(gx, gy + d), y: isoY(gx, gy + d) };
-  const cx = (n.x + s.x) / 2;
-  const cy = (n.y + s.y) / 2;
-  const shrink = (p: { x: number; y: number }) => ({
-    x: p.x + (cx - p.x) * (inset / 100),
-    y: p.y + (cy - p.y) * (inset / 100),
-  });
-  const N = shrink(n);
-  const E = shrink(e);
-  const S = shrink(s);
-  const W = shrink(wst);
+  const pad = (TW * inset) / 100;
+  const x = tileX(gx) + pad;
+  const bw = TW * w - pad * 2;
+  // 바닥선: 타일 아래쪽에서 깊이만큼 올려 세운다
+  const baseY = tileY(gy) + TH * d - pad * 0.8;
+  const topY = baseY - h;
 
   // 바닥 그림자
-  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  ctx.fillStyle = 'rgba(0,0,0,0.34)';
   ctx.beginPath();
-  ctx.moveTo(N.x, N.y + 3);
-  ctx.lineTo(E.x + 3, E.y + 3);
-  ctx.lineTo(S.x, S.y + 5);
-  ctx.lineTo(W.x - 3, W.y + 3);
-  ctx.closePath();
+  ctx.ellipse(x + bw / 2 + DX / 2, baseY + 2, bw * 0.62, 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 좌면 (W-S)
+  // 우측면
   ctx.beginPath();
-  ctx.moveTo(W.x, W.y);
-  ctx.lineTo(S.x, S.y);
-  ctx.lineTo(S.x, S.y - h);
-  ctx.lineTo(W.x, W.y - h);
-  ctx.closePath();
-  ctx.fillStyle = face.left;
-  ctx.fill();
-
-  // 우면 (S-E)
-  ctx.beginPath();
-  ctx.moveTo(S.x, S.y);
-  ctx.lineTo(E.x, E.y);
-  ctx.lineTo(E.x, E.y - h);
-  ctx.lineTo(S.x, S.y - h);
+  ctx.moveTo(x + bw, baseY);
+  ctx.lineTo(x + bw + DX, baseY - DY);
+  ctx.lineTo(x + bw + DX, topY - DY);
+  ctx.lineTo(x + bw, topY);
   ctx.closePath();
   ctx.fillStyle = face.right;
   ctx.fill();
 
   // 윗면
   ctx.beginPath();
-  ctx.moveTo(N.x, N.y - h);
-  ctx.lineTo(E.x, E.y - h);
-  ctx.lineTo(S.x, S.y - h);
-  ctx.lineTo(W.x, W.y - h);
+  ctx.moveTo(x, topY);
+  ctx.lineTo(x + DX, topY - DY);
+  ctx.lineTo(x + bw + DX, topY - DY);
+  ctx.lineTo(x + bw, topY);
   ctx.closePath();
   ctx.fillStyle = face.top;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
 
-  return { cx, cy: cy - h, top: cy - h, N, E, S, W };
+  // 앞면
+  ctx.beginPath();
+  ctx.rect(x, topY, bw, h);
+  ctx.fillStyle = face.left;
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, topY + 0.5, bw - 1, h - 1);
+
+  return {
+    cx: x + bw / 2,
+    cy: topY,
+    top: topY,
+    N: { x: x + DX, y: topY - DY },
+    E: { x: x + bw + DX, y: baseY - DY },
+    S: { x: x + bw, y: baseY },
+    W: { x, y: baseY },
+  };
 }
 
 /**
@@ -242,7 +235,6 @@ function windows(
         const v = (r + 1) / (rows + 1);
         const x = p0.x + (p1.x - p0.x) * u;
         const y = p0.y + (p1.y - p0.y) * u - h * v;
-        // 일부 창만 켜져 있고 아주 느리게 깜빡인다
         const k = Math.sin(seed * 3.1 + fi * 2.7 + r * 1.9 + c * 4.3);
         if (k < -0.35) continue;
         const flick = 0.55 + 0.45 * Math.sin(t / 900 + seed + r + c * 2);
@@ -255,9 +247,9 @@ function windows(
   });
 }
 
-const STEEL = { top: C.steelTop, left: C.steelDark, right: C.steel };
+const STEEL = { top: C.steelTop, left: C.steel, right: C.steelDark };
 
-/** 건물별 강조색 — 윗면에 살짝 물들여 종류를 구분한다 */
+/** 건물별 강조색 — 윗면에 물들여 종류를 구분한다 */
 const TINT: Record<string, string> = {
   sawmill: '#8a6a3a',
   quarry: '#8a4f3a',
@@ -270,7 +262,7 @@ const TINT: Record<string, string> = {
 };
 
 function tinted(id: string): { top: string; left: string; right: string } {
-  return { top: TINT[id] ?? C.steelTop, left: C.steelDark, right: C.steel };
+  return { top: TINT[id] ?? C.steelTop, left: C.steel, right: C.steelDark };
 }
 
 /** 발광 점 (창문·표시등) */
@@ -672,97 +664,71 @@ export function drawCity(
 
   const t = now;
 
-  // ── 외곽 지형 ──
-  const sky = ctx.createLinearGradient(0, 0, 0, CITY_H);
-  sky.addColorStop(0, C.terrainC);
-  sky.addColorStop(0.5, C.terrainA);
-  sky.addColorStop(1, C.terrainB);
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, CITY_W, CITY_H);
-  // 암석 얼룩
-  for (let y = 0; y < CITY_H; y += 22) {
-    for (let x = 0; x < CITY_W; x += 22) {
-      const r = hash(x, y);
-      if (r > 0.72) {
-        ctx.fillStyle = `rgba(30,20,16,${0.12 + r * 0.14})`;
-        ctx.beginPath();
-        ctx.ellipse(x + r * 12, y + r * 9, 12 + r * 10, 5 + r * 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  // ── 기지 바닥 (아이소 플랫폼) ──
-  for (let gy = 0; gy < GRID; gy++) {
-    for (let gx = 0; gx < GRID; gx++) {
+  // ── 기지 바닥: 화면 전체를 덮는 격자 데크 ──
+  for (let gy = 0; gy < ROWS; gy++) {
+    for (let gx = 0; gx < COLS; gx++) {
       const r = hash(gx * 31, gy * 17);
       tile(ctx, gx, gy, r < 0.5 ? C.deckA : C.deckB);
     }
   }
+  // 원경 명암 — 위쪽이 어두워 깊이가 생긴다
+  const depth = ctx.createLinearGradient(0, 0, 0, CITY_H);
+  depth.addColorStop(0, 'rgba(0,0,0,0.45)');
+  depth.addColorStop(0.45, 'rgba(0,0,0,0.10)');
+  depth.addColorStop(1, 'rgba(0,0,0,0.22)');
+  ctx.fillStyle = depth;
+  ctx.fillRect(0, 0, CITY_W, CITY_H);
+
   // 패널 라인
   ctx.strokeStyle = C.deckLine;
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.3;
   ctx.lineWidth = 1;
-  for (let i = 0; i <= GRID; i++) {
+  for (let i = 0; i <= COLS; i++) {
     ctx.beginPath();
-    ctx.moveTo(isoX(i, 0), isoY(i, 0));
-    ctx.lineTo(isoX(i, GRID), isoY(i, GRID));
-    ctx.moveTo(isoX(0, i), isoY(0, i));
-    ctx.lineTo(isoX(GRID, i), isoY(GRID, i));
+    ctx.moveTo(tileX(i), 0);
+    ctx.lineTo(tileX(i), CITY_H);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= ROWS; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, tileY(i));
+    ctx.lineTo(CITY_W, tileY(i));
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
 
-  // ── 방벽: 플랫폼 테두리 + 에너지 장막 ──
-  const corners: [number, number][] = [
-    [0, 0],
-    [GRID, 0],
-    [GRID, GRID],
-    [0, GRID],
-  ];
-  const pts = corners.map(([gx, gy]) => ({ x: isoX(gx, gy), y: isoY(gx, gy) }));
+  // ── 방벽: 화면 가장자리를 두르는 테두리 + 에너지 장막 ──
   const barrier = 0.45 + 0.25 * Math.sin(t / 700);
-
-  ctx.beginPath();
-  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-  ctx.closePath();
+  const m = 3;
   ctx.strokeStyle = C.wallDark;
-  ctx.lineWidth = 7;
-  ctx.stroke();
+  ctx.lineWidth = 10;
+  ctx.strokeRect(m, m, CITY_W - m * 2, CITY_H - m * 2);
   ctx.strokeStyle = C.wall;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  // 에너지 장막
+  ctx.lineWidth = 5;
+  ctx.strokeRect(m, m, CITY_W - m * 2, CITY_H - m * 2);
   ctx.save();
   ctx.globalAlpha = barrier;
   ctx.strokeStyle = C.accent;
   ctx.lineWidth = 2;
   ctx.shadowColor = C.accent;
   ctx.shadowBlur = 8;
-  ctx.beginPath();
-  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y - 9) : ctx.moveTo(p.x, p.y - 9)));
-  ctx.closePath();
-  ctx.stroke();
+  ctx.strokeRect(m + 5, m + 5, CITY_W - (m + 5) * 2, CITY_H - (m + 5) * 2);
   ctx.restore();
 
-  // 방벽 기둥
-  for (let i = 0; i <= GRID; i += 1) {
-    const posts: [number, number][] = [
-      [i, 0],
-      [i, GRID],
-      [0, i],
-      [GRID, i],
-    ];
-    for (const [gx, gy] of posts) {
-      if (i % 2 !== 0) continue;
-      const x = isoX(gx, gy);
-      const y = isoY(gx, gy);
-      ctx.fillStyle = C.wallDark;
-      ctx.fillRect(x - 3, y - 14, 6, 14);
-      ctx.fillStyle = C.wallTop;
-      ctx.fillRect(x - 4, y - 17, 8, 4);
-      glow(ctx, x, y - 18, 1.4, C.accent, barrier);
-    }
+  // 방벽 기둥 — 가장자리를 따라 일정 간격으로
+  const posts: [number, number][] = [];
+  for (let i = 0; i <= COLS; i += 2) {
+    posts.push([tileX(i), 6], [tileX(i), CITY_H - 6]);
+  }
+  for (let i = 1; i < ROWS; i += 2) {
+    posts.push([6, tileY(i)], [CITY_W - 6, tileY(i)]);
+  }
+  for (const [x, y] of posts) {
+    ctx.fillStyle = C.wallDark;
+    ctx.fillRect(x - 4, y - 12, 8, 16);
+    ctx.fillStyle = C.wallTop;
+    ctx.fillRect(x - 5, y - 15, 10, 4);
+    glow(ctx, x, y - 16, 1.5, C.accent, barrier);
   }
 
   // ── 건물·소품: 뒤(작은 gx+gy)부터 앞으로 ──
