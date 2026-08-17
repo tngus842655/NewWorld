@@ -98,7 +98,7 @@ function pickTarget(stacks: Stack[], side: 'attacker' | 'defender'): Stack | nul
   return best;
 }
 
-/** 기지 건물이 출정 부대에 얹어 주는 보정 (병기고·방어막 충전소·훈련장 등) */
+/** 기지 건물이 출정 부대에 얹어 주는 보정 (병기고·방어막 충전소·훈련장·의무동 등) */
 export interface CityBonus {
   /** 물리방어 +% */
   pdefPercent: number;
@@ -106,9 +106,16 @@ export interface CityBonus {
   mdefPercent: number;
   /** 획득 경험치 +% */
   xpPercent: number;
+  /** 승리 시 전사자 중 부상으로 살려 내는 비율 % (의무동) */
+  woundedPercent: number;
 }
 
-export const NO_CITY_BONUS: CityBonus = { pdefPercent: 0, mdefPercent: 0, xpPercent: 0 };
+export const NO_CITY_BONUS: CityBonus = {
+  pdefPercent: 0,
+  mdefPercent: 0,
+  xpPercent: 0,
+  woundedPercent: 0,
+};
 
 export interface BattleInput {
   hero: Hero;
@@ -205,6 +212,22 @@ export function simulateBattle(input: BattleInput): BattleReport {
     .filter((s) => s.side === 'attacker' && aliveCount(s) > 0)
     .map((s) => ({ unitId: s.unitId, count: aliveCount(s) }));
 
+  /**
+   * 의무동: 전사자 일부를 부상으로 돌려 살려 낸다.
+   * 전장을 확보해야 부상병을 수습할 수 있다고 보고 **승리했을 때만** 적용한다
+   * (원작 医疗帐篷의 판정 조건은 자료가 없어 estimate).
+   */
+  const attackerLosses = losses('attacker');
+  const recovered: UnitCount[] = [];
+  if (victory && city.woundedPercent > 0) {
+    for (const loss of attackerLosses) {
+      const back = Math.floor((loss.count * city.woundedPercent) / 100);
+      if (back <= 0) continue;
+      recovered.push({ unitId: loss.unitId, count: back });
+      loss.count -= back;
+    }
+  }
+
   const defenderLosses = losses('defender');
   const xpGained = defenderLosses.reduce((sum, l) => {
     const tier = unitDefs.get(l.unitId)?.tier ?? 1;
@@ -244,9 +267,10 @@ export function simulateBattle(input: BattleInput): BattleReport {
     victory,
     rounds: round,
     log,
-    attackerLosses: losses('attacker'),
+    attackerLosses: attackerLosses.filter((l) => l.count > 0),
     defenderLosses,
     survivors,
+    recovered,
     loot,
     xpGained: Math.round(xpGained * (1 + xpBonus / 100)),
     drops,

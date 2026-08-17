@@ -1416,8 +1416,14 @@
     {
       "id": "medbay",
       "name": "의무동",
-      "description": "전투에서 다친 병력 일부를 회복시킨다.",
+      "description": "전장에서 실려 온 부상병을 치료해 전열로 돌려보낸다. 승리한 전투에서만 수습할 수 있다.",
       "category": "군사",
+      "effects": [
+        {
+          "kind": "woundedRecoveryPercent",
+          "perLevel": 5
+        }
+      ],
       "requires": [
         {
           "buildingId": "barracks",
@@ -1428,7 +1434,6 @@
           "level": 3
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

@@ -62,7 +62,9 @@ export type BuildingEffectKind =
   /** 출정 부대의 마법방어 +% */
   | 'armyMdefPercent'
   /** 전투에서 얻는 지휘관 경험치 +% */
-  | 'heroXpPercent';
+  | 'heroXpPercent'
+  /** 전사자 중 부상으로 처리돼 복귀하는 비율 % */
+  | 'woundedRecoveryPercent';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -75,6 +77,7 @@ export const BUILDING_EFFECT_LABELS: Record<BuildingEffectKind, string> = {
   armyPdefPercent: '출정 부대 물리방어',
   armyMdefPercent: '출정 부대 마법방어',
   heroXpPercent: '전투 획득 경험치',
+  woundedRecoveryPercent: '승리 시 전사자 중 부상 복귀',
 };
 
 export interface BuildingDef {
@@ -311,11 +314,13 @@ export interface BattleReport {
   captured?: boolean;
   rounds: number;
   log: BattleLogEntry[];
-  /** 아군 전사 */
+  /** 아군 전사 (의무동이 살려 낸 부상병을 뺀 순손실) */
   attackerLosses: UnitCount[];
   /** 적 처치 */
   defenderLosses: UnitCount[];
   survivors: UnitCount[];
+  /** 의무동이 전사자 중에서 살려 낸 병력 — 귀환 시 생환자와 함께 복귀한다 */
+  recovered?: UnitCount[];
   loot: Partial<Resources>;
   xpGained: number;
   /** 전투에서 얻은 장비 */

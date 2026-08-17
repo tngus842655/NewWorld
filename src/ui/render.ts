@@ -835,6 +835,7 @@ function worldTab(
     if (city.pdefPercent) bonusParts.push(`물리방어 +${city.pdefPercent}%`);
     if (city.mdefPercent) bonusParts.push(`마법방어 +${city.mdefPercent}%`);
     if (city.xpPercent) bonusParts.push(`경험치 +${city.xpPercent}%`);
+    if (city.woundedPercent) bonusParts.push(`부상 복귀 ${city.woundedPercent}%`);
     const bonusLine = bonusParts.length
       ? `<small>기지 보정: ${bonusParts.join(' · ')}</small>`
       : '';
@@ -914,6 +915,11 @@ function reportsSection(
           <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
           <small>적 처치: ${unitCountText(r.defenderLosses, unitDefs)}</small>
           <small>아군 손실: ${unitCountText(r.attackerLosses, unitDefs)}</small>
+          ${
+            r.recovered?.length
+              ? `<small>🚑 부상 복귀: ${unitCountText(r.recovered, unitDefs)}</small>`
+              : ''
+          }
           <small>생환: ${unitCountText(r.survivors, unitDefs)}</small>
           ${lootText ? `<small>전리품: ${lootText}</small>` : ''}
           ${

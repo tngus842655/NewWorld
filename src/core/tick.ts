@@ -82,7 +82,8 @@ function finishMarch(state: GameState): void {
   if (!march) return;
   const { report } = march;
 
-  for (const { unitId, count } of report.survivors) {
+  // 생환자 + 의무동이 살려 낸 부상병이 함께 복귀한다
+  for (const { unitId, count } of [...report.survivors, ...(report.recovered ?? [])]) {
     state.army[unitId] = (state.army[unitId] ?? 0) + count;
   }
 

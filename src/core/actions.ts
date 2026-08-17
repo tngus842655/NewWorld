@@ -264,6 +264,7 @@ export function cityBonus(
     pdefPercent: buildingEffect(state, buildingDefs, 'armyPdefPercent'),
     mdefPercent: buildingEffect(state, buildingDefs, 'armyMdefPercent'),
     xpPercent: buildingEffect(state, buildingDefs, 'heroXpPercent'),
+    woundedPercent: buildingEffect(state, buildingDefs, 'woundedRecoveryPercent'),
   };
 }
 
