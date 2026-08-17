@@ -1546,15 +1546,20 @@
     {
       "id": "command-post",
       "name": "전술 지휘소",
-      "description": "동시에 내보낼 수 있는 부대 수를 늘린다.",
+      "description": "동시에 내보낼 수 있는 부대 수를 레벨당 하나씩 늘린다.",
       "category": "군사",
+      "effects": [
+        {
+          "kind": "marchSlots",
+          "perLevel": 1
+        }
+      ],
       "requires": [
         {
           "buildingId": "barracks",
           "level": 3
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

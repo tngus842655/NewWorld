@@ -18,8 +18,10 @@ import {
   isBuilding,
   isFreeCell,
   isGridBuilding,
+  isHeroMarching,
   isPlaced,
   inGrid,
+  marchSlots,
   requirementText,
   unmetRequirements,
 } from './city';
@@ -283,7 +285,17 @@ export function dispatchMarch(
   maxHeld: number,
   now: number,
 ): ActionResult {
-  if (state.march) return { ok: false, reason: '이미 출정 중인 부대가 있습니다.' };
+  const slots = marchSlots(state, buildingDefs);
+  if (state.march.length >= slots) {
+    return { ok: false, reason: `출정 부대가 모두 나가 있습니다 (${slots}/${slots}).` };
+  }
+  // 한 지휘관이 두 부대를 동시에 이끌 수는 없다
+  if (isHeroMarching(state, heroId)) {
+    return { ok: false, reason: '이 지휘관은 이미 출정 중입니다.' };
+  }
+  if (state.march.some((m) => m.campId === target.id)) {
+    return { ok: false, reason: '이미 그곳으로 출정한 부대가 있습니다.' };
+  }
 
   if (kind === 'capture') {
     if (state.heldNodes.some((h) => h.nodeId === target.id)) {
@@ -327,14 +339,14 @@ export function dispatchMarch(
   const speedBonus = equipTotals(hero).effects.marchSpeed ?? 0;
   const seconds = target.marchSeconds / (1 + speedBonus / 100);
 
-  state.march = {
+  state.march.push({
     kind,
     campId: target.id,
     campName: target.name,
     heroId,
     returnsAt: now + seconds * 1000,
     report,
-  };
+  });
   return { ok: true };
 }
 

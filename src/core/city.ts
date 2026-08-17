@@ -6,7 +6,13 @@ import type {
   ResourceKind,
   UpgradeJob,
 } from './types';
-import { DEFAULT_BUILD_SLOTS, MAX_BUILD_SLOTS, RESOURCE_LABELS } from './types';
+import {
+  BASE_MARCH_SLOTS,
+  DEFAULT_BUILD_SLOTS,
+  MAX_BUILD_SLOTS,
+  MAX_MARCH_SLOTS,
+  RESOURCE_LABELS,
+} from './types';
 
 /**
  * 기지 부지(6×6 격자)의 배치 규칙.
@@ -164,6 +170,29 @@ export function buildingEffect(
     }
   }
   return total;
+}
+
+// ── 출정 슬롯 ─────────────────────────────────────────────────
+
+/** 동시에 내보낼 수 있는 부대 수 (기본 1 + 전술 지휘소) */
+export function marchSlots(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): number {
+  const extra = buildingEffect(state, buildingDefs, 'marchSlots');
+  return Math.min(MAX_MARCH_SLOTS, BASE_MARCH_SLOTS + extra);
+}
+
+export function freeMarchSlots(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): number {
+  return Math.max(0, marchSlots(state, buildingDefs) - state.march.length);
+}
+
+/** 이 지휘관이 이미 나가 있는가 — 한 지휘관은 한 부대만 이끈다 */
+export function isHeroMarching(state: GameState, heroId: string): boolean {
+  return state.march.some((m) => m.heroId === heroId);
 }
 
 // ── 가공 건물 보정 ────────────────────────────────────────────

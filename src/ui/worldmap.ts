@@ -114,14 +114,14 @@ export function drawWorld(
   for (const c of camps) {
     drawSite(c.pos, '💀', c.name, {
       selected: selectedSiteId === c.id,
-      marching: state.march?.campId === c.id,
+      marching: state.march.some((m) => m.campId === c.id),
     });
   }
   for (const n of nodes) {
     drawSite(n.pos, NODE_ICON[n.produces] ?? '❓', n.name, {
       owned: state.heldNodes.some((h) => h.nodeId === n.id),
       selected: selectedSiteId === n.id,
-      marching: state.march?.campId === n.id,
+      marching: state.march.some((m) => m.campId === n.id),
     });
   }
 
@@ -137,24 +137,20 @@ export function drawWorld(
   ctx.fillStyle = '#ffe9c9';
   ctx.fillText('내 도시', cx * WTILE + WTILE / 2, cy * WTILE + WTILE - 6);
 
-  // 출정 중이면 도시→목표 경로 표시
-  if (state.march) {
+  // 나가 있는 부대마다 도시→목표 경로 표시
+  for (const march of state.march) {
     const target =
-      camps.find((c) => c.id === state.march!.campId) ??
-      nodes.find((n) => n.id === state.march!.campId);
-    if (target) {
-      const remain = Math.max(0, state.march.returnsAt - now);
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.setLineDash([6, 6]);
-      // 시간이 흐르면 점선이 흘러가는 느낌만 준다
-      ctx.lineDashOffset = -((now / 200) % 12);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx * WTILE + WTILE / 2, cy * WTILE + WTILE / 2);
-      ctx.lineTo(target.pos[0] * WTILE + WTILE / 2, target.pos[1] * WTILE + WTILE / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      void remain;
-    }
+      camps.find((c) => c.id === march.campId) ?? nodes.find((n) => n.id === march.campId);
+    if (!target) continue;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.setLineDash([6, 6]);
+    // 시간이 흐르면 점선이 흘러가는 느낌만 준다
+    ctx.lineDashOffset = -((now / 200) % 12);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx * WTILE + WTILE / 2, cy * WTILE + WTILE / 2);
+    ctx.lineTo(target.pos[0] * WTILE + WTILE / 2, target.pos[1] * WTILE + WTILE / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 }

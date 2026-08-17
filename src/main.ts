@@ -4,7 +4,15 @@ import clusterUnits from '../data/units/cluster.json';
 import swarmUnits from '../data/units/swarm.json';
 import invaderUnits from '../data/units/invader.json';
 import wildUnits from '../data/units/wild.json';
-import type { BuildingDef, EquipSlot, GameState, RaceId, UnitDef, UpgradeJob } from './core/types';
+import type {
+  BuildingDef,
+  EquipSlot,
+  GameState,
+  MarchJob,
+  RaceId,
+  UnitDef,
+  UpgradeJob,
+} from './core/types';
 import { DEFAULT_BUILD_SLOTS, MAX_BUILD_SLOTS } from './core/types';
 import campData from '../data/combat/camps.json';
 import nodeData from '../data/world/nodes.json';
@@ -50,7 +58,7 @@ const unitDefs = new Map<string, UnitDef>(
     .map((u) => [u.id, u]),
 );
 
-const STATE_VERSION = 6;
+const STATE_VERSION = 7;
 
 /** 판타지 → SF 컨셉 전환 시 옛 식별자를 새 것으로 옮긴다 */
 const RACE_MIGRATION: Record<string, RaceId> = {
@@ -96,7 +104,7 @@ function newGame(now: number): GameState {
     upgradeQueue: [],
     buildSlots: DEFAULT_BUILD_SLOTS,
     trainQueue: null,
-    march: null,
+    march: [],
     reports: [],
     heldNodes: [],
     inventory: [],
@@ -110,7 +118,7 @@ function migrate(state: GameState): GameState {
   state.heroes ??= [];
   state.tavern ??= { candidates: [], refreshedAt: 0 };
   state.trainQueue ??= null;
-  state.march ??= null;
+  state.march ??= [];
   state.reports ??= [];
   state.heldNodes ??= [];
   state.unitLevels ??= {};
@@ -118,7 +126,7 @@ function migrate(state: GameState): GameState {
   state.inventory ??= [];
   for (const h of state.heroes) h.equipment ??= {};
   // M4 이전 출정 데이터에는 kind가 없다
-  if (state.march) state.march.kind ??= 'hunt';
+  for (const m of Array.isArray(state.march) ? state.march : []) m.kind ??= 'hunt';
   // v2: 시작 자원에 가스 50이 추가되기 전에 만들어진 저장분 보정
   if ((state.stateVersion ?? 1) < 2) {
     state.resources.crystal = Math.max(state.resources.crystal, 50);
@@ -136,7 +144,7 @@ function migrate(state: GameState): GameState {
       state.researchQueue.unitId = migrateUnitId(state.researchQueue.unitId);
     }
     // 진행 중이던 출정은 옛 유닛 정보를 담고 있어 취소한다
-    state.march = null;
+    state.march = [];
     state.stateVersion = 3;
   }
   // 이후 추가된 건물(병영 등)을 기존 도시에 등록
@@ -171,6 +179,12 @@ function migrate(state: GameState): GameState {
   if ((state.stateVersion ?? 1) < 6) {
     delete state.buildSlots;
     state.stateVersion = 6;
+  }
+  // v7: 출정이 1부대 고정에서 슬롯 배열로 바뀌었다
+  if ((state.stateVersion ?? 1) < 7) {
+    const old = state.march as unknown as MarchJob | MarchJob[] | null;
+    state.march = old == null ? [] : Array.isArray(old) ? old : [old];
+    state.stateVersion = 7;
   }
   state.upgradeQueue ??= [];
   if (state.buildSlots !== undefined) {
@@ -349,7 +363,7 @@ async function main(): Promise<void> {
       for (const job of state.upgradeQueue) job.finishesAt = now;
       if (state.trainQueue) state.trainQueue.finishesAt = now;
       if (state.researchQueue) state.researchQueue.finishesAt = now;
-      if (state.march) state.march.returnsAt = now;
+      for (const m of state.march) m.returnsAt = now;
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       dirty = true;
       rerender(now);

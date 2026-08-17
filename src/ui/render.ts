@@ -13,7 +13,7 @@ import type {
   UnitDef,
 } from '../core/types';
 import {
-  BUILDING_EFFECT_LABELS,
+  BUILDING_EFFECT_INFO,
   HERO_STAT_LABELS,
   RACE_LABELS,
   RESOURCE_LABELS,
@@ -52,6 +52,8 @@ import {
 import {
   buildingAtCell,
   buildSlots,
+  isHeroMarching,
+  marchSlots,
   hasFreeBuildSlot,
   isBuilding,
   isGridBuilding,
@@ -533,8 +535,10 @@ function boostText(def: BuildingDef): string {
 function effectText(def: BuildingDef, level = 0): string {
   return (def.effects ?? [])
     .map((e) => {
-      const now = level >= 1 ? ` (현재 +${e.perLevel * level}%)` : '';
-      return `<small>${BUILDING_EFFECT_LABELS[e.kind]} +${e.perLevel}%/레벨${now}</small>`;
+      const info = BUILDING_EFFECT_INFO[e.kind];
+      const unit = info.unit === 'percent' ? '%' : '';
+      const now = level >= 1 ? ` (현재 +${e.perLevel * level}${unit})` : '';
+      return `<small>${info.label} +${e.perLevel}${unit}/레벨${now}</small>`;
     })
     .join('');
 }
@@ -762,7 +766,11 @@ function worldTab(
   maxHeld: number,
   now: number,
 ): string {
-  const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
+  // 동시 출정 슬롯 — 전술 지휘소가 늘려 준다
+  const slots = marchSlots(state, buildingDefs);
+  // 나가 있지 않은 지휘관을 우선으로 고른다
+  const free = state.heroes.filter((h) => !isHeroMarching(state, h.id));
+  const hero = free.find((h) => h.id === selectedHeroId) ?? free[0];
   const marchArmy = hero ? selectArmyForMarch(state.army, hero, unitDefs) : [];
   const hasArmy = marchArmy.length > 0;
 
@@ -787,7 +795,7 @@ function worldTab(
         .join(' · ');
       rewardLine = `보상: ${lootText}`;
       action = `<button data-dispatch="${camp.id}" data-kind="hunt"
-        ${hasArmy && !state.march ? '' : 'disabled'}>출정</button>`;
+        ${hasArmy && hero && state.march.length < slots ? '' : 'disabled'}>출정</button>`;
     } else if (held) {
       rewardLine = `생산 중: ${RESOURCE_LABELS[node!.produces]} ${node!.perHour}/시간`;
       action = `<button class="small" data-abandon="${node!.id}">점령 포기</button>`;
@@ -795,7 +803,7 @@ function worldTab(
       rewardLine = `점령 시: ${RESOURCE_LABELS[node!.produces]} ${node!.perHour}/시간`;
       const capped = state.heldNodes.length >= maxHeld;
       action = `<button data-dispatch="${node!.id}" data-kind="capture"
-        ${hasArmy && !state.march && !capped ? '' : 'disabled'}>${capped ? '한도 초과' : '점령'}</button>`;
+        ${hasArmy && hero && state.march.length < slots && !capped ? '' : 'disabled'}>${capped ? '한도 초과' : '점령'}</button>`;
     }
 
     sitePanel = `<div class="card">
@@ -809,24 +817,39 @@ function worldTab(
   }
 
   // ── 부대 상태 ──
+  // 나가 있는 부대는 몇이든 한 줄씩 보여주고, 슬롯이 남으면 그 아래에 출정 준비창을 둔다
+  const outbound = state.march
+    .map((m) => {
+      const remain = Math.max(0, Math.ceil((m.returnsAt - now) / 1000));
+      const heroName = state.heroes.find((h) => h.id === m.heroId)?.name ?? '지휘관';
+      return `<div class="card">
+        <div><b>${m.campName}</b> ${m.kind === 'capture' ? '점령전' : '사냥'} 출정 중
+          <small>${heroName} · 귀환까지
+            <span data-march-remain="${m.campId}">${remain}</span>초</small>
+        </div>
+      </div>`;
+    })
+    .join('');
+  const slotLine =
+    slots > 1 || state.march.length
+      ? `<div class="card"><small class="faint">출정 부대 ${state.march.length}/${slots}</small></div>`
+      : '';
+
   let armyPanel: string;
-  if (state.march) {
-    const remain = Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000));
-    armyPanel = `<div class="card">
-      <div><b>${state.march.campName}</b> ${state.march.kind === 'capture' ? '점령전' : '사냥'} 출정 중
-        <small>귀환까지 <span id="march-countdown">${remain}</span>초</small>
-      </div>
-    </div>`;
+  if (state.march.length >= slots) {
+    armyPanel = `${outbound}${slotLine}`;
   } else if (!hero) {
     armyPanel = '<div class="card"><small>용병 사무소에서 지휘관을 영입해야 부대를 이끌 수 있다.</small></div>';
   } else {
+    // 이미 나가 있는 지휘관은 고를 수 없다
     const heroPicker =
       state.heroes.length > 1
         ? `<div class="chips">${state.heroes
-            .map(
-              (h) =>
-                `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}">${h.name} Lv.${h.level}</button>`,
-            )
+            .map((h) => {
+              const out = isHeroMarching(state, h.id);
+              return `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}"
+                ${out ? 'disabled' : ''}>${h.name} Lv.${h.level}${out ? ' 출정중' : ''}</button>`;
+            })
             .join('')}</div>`
         : '';
     // 기지 건물이 부대에 얹어 주는 보정 — 병기고·방어막 충전소·훈련장
@@ -840,7 +863,7 @@ function worldTab(
       ? `<small>기지 보정: ${bonusParts.join(' · ')}</small>`
       : '';
 
-    armyPanel = `${heroPicker}
+    armyPanel = `${outbound}${slotLine}${heroPicker}
       <div class="card">
         <div><b>${hero.name}</b> Lv.${hero.level}
           <small>지휘 한도 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
@@ -1144,11 +1167,11 @@ export function render(
       <span class="bar"><i id="q-research-bar"></i></span>
       <span id="q-research-remain"></span>${instant}</div>`);
   }
-  if (state.march) {
-    queues.push(`<div class="queue"><span>🗡️ ${state.march.campName} 출정</span>
-      <span class="bar"><i id="q-march-bar"></i></span>
-      <span id="q-march-remain"></span>${instant}</div>`);
-  }
+  state.march.forEach((m, i) => {
+    queues.push(`<div class="queue"><span>🗡️ ${m.campName} 출정</span>
+      <span class="bar"><i id="q-march-${i}-bar"></i></span>
+      <span id="q-march-${i}-remain"></span>${instant}</div>`);
+  });
 
   let body: string;
   if (activeTab === 'city') body = cityTab(state, buildingDefs, unitDefs, now);
@@ -1180,7 +1203,8 @@ export function render(
     state.trainQueue && `${state.trainQueue.unitId}:${state.trainQueue.count}`,
     state.researchQueue && `${state.researchQueue.unitId}:${state.researchQueue.targetLevel}`,
     Object.entries(state.unitLevels),
-    state.march?.campId ?? '',
+    state.march.map((m) => `${m.campId}:${m.heroId}`),
+    marchSlots(state, buildingDefs),
     state.reports.map((r) => `${r.id}:${r.read ? 1 : 0}`),
     selectedHeroId,
     selectedSiteId,
@@ -1364,14 +1388,12 @@ function updateDynamic(
       def ? researchSeconds(def, state.researchQueue.targetLevel) : 0,
     );
   }
-  if (state.march) {
-    const camp = camps.find((c) => c.id === state.march!.campId);
-    setQueue('march', state.march.returnsAt, camp?.marchSeconds ?? 0);
-    const el = root.querySelector('#march-countdown');
-    if (el) {
-      el.textContent = String(Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000)));
-    }
-  }
+  state.march.forEach((m, i) => {
+    const site = camps.find((c) => c.id === m.campId) ?? nodes.find((n) => n.id === m.campId);
+    setQueue(`march-${i}`, m.returnsAt, site?.marchSeconds ?? 0);
+    const el = root.querySelector(`[data-march-remain="${m.campId}"]`);
+    if (el) el.textContent = String(Math.max(0, Math.ceil((m.returnsAt - now) / 1000)));
+  });
 
   const countdown = root.querySelector('#tavern-countdown');
   if (countdown) {

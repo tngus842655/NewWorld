@@ -1,6 +1,7 @@
 import type {
   BuildingDef,
   GameState,
+  MarchJob,
   NodeDef,
   ResourceKind,
   Resources,
@@ -32,7 +33,12 @@ export function advance(
 
   const next: GameState = structuredClone(state);
 
-  type Ev = { at: number; kind: 'build' | 'train' | 'march' | 'research'; job?: UpgradeJob };
+  type Ev = {
+    at: number;
+    kind: 'build' | 'train' | 'march' | 'research';
+    job?: UpgradeJob;
+    march?: MarchJob;
+  };
   const events: Ev[] = [];
   // 건설은 슬롯마다 따로 끝난다 — 끝난 순서대로 하나씩 반영해야
   // "완료 시점 이후부터 새 생산량" 계산이 어긋나지 않는다
@@ -45,8 +51,9 @@ export function advance(
   if (next.researchQueue && next.researchQueue.finishesAt <= now) {
     events.push({ at: next.researchQueue.finishesAt, kind: 'research' });
   }
-  if (next.march && next.march.returnsAt <= now) {
-    events.push({ at: next.march.returnsAt, kind: 'march' });
+  // 출정도 부대마다 따로 돌아온다
+  for (const march of next.march) {
+    if (march.returnsAt <= now) events.push({ at: march.returnsAt, kind: 'march', march });
   }
   events.sort((a, b) => a.at - b.at);
 
@@ -65,8 +72,8 @@ export function advance(
       const { unitId, targetLevel } = next.researchQueue;
       next.unitLevels[unitId] = targetLevel;
       next.researchQueue = null;
-    } else if (ev.kind === 'march' && next.march) {
-      finishMarch(next);
+    } else if (ev.kind === 'march' && ev.march) {
+      finishMarch(next, ev.march);
     }
     from = ev.at;
   }
@@ -77,9 +84,7 @@ export function advance(
 }
 
 /** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 점령 처리 + 리포트 보관 */
-function finishMarch(state: GameState): void {
-  const march = state.march;
-  if (!march) return;
+function finishMarch(state: GameState, march: MarchJob): void {
   const { report } = march;
 
   // 생환자 + 의무동이 살려 낸 부상병이 함께 복귀한다
@@ -101,7 +106,7 @@ function finishMarch(state: GameState): void {
 
   state.reports.unshift(report);
   state.reports.length = Math.min(state.reports.length, MAX_REPORTS);
-  state.march = null;
+  state.march = state.march.filter((m) => m !== march);
 }
 
 /** from~to 구간의 자원 생산(건물+점령 자원지)과 병력 식량 소모를 반영 */

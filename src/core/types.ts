@@ -64,7 +64,9 @@ export type BuildingEffectKind =
   /** 전투에서 얻는 지휘관 경험치 +% */
   | 'heroXpPercent'
   /** 전사자 중 부상으로 처리돼 복귀하는 비율 % */
-  | 'woundedRecoveryPercent';
+  | 'woundedRecoveryPercent'
+  /** 동시에 내보낼 수 있는 부대 수 +N */
+  | 'marchSlots';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -73,11 +75,15 @@ export interface BuildingEffect {
 }
 
 /** 화면 표기용 — 효과를 추가하면 여기에도 한 줄 넣는다 */
-export const BUILDING_EFFECT_LABELS: Record<BuildingEffectKind, string> = {
-  armyPdefPercent: '출정 부대 물리방어',
-  armyMdefPercent: '출정 부대 마법방어',
-  heroXpPercent: '전투 획득 경험치',
-  woundedRecoveryPercent: '승리 시 전사자 중 부상 복귀',
+export const BUILDING_EFFECT_INFO: Record<
+  BuildingEffectKind,
+  { label: string; unit: 'percent' | 'count' }
+> = {
+  armyPdefPercent: { label: '출정 부대 물리방어', unit: 'percent' },
+  armyMdefPercent: { label: '출정 부대 마법방어', unit: 'percent' },
+  heroXpPercent: { label: '전투 획득 경험치', unit: 'percent' },
+  woundedRecoveryPercent: { label: '승리 시 전사자 중 부상 복귀', unit: 'percent' },
+  marchSlots: { label: '동시 출정 부대', unit: 'count' },
 };
 
 export interface BuildingDef {
@@ -165,6 +171,11 @@ export interface UpgradeJob {
 export const DEFAULT_BUILD_SLOTS = 10;
 /** 화면·정산이 감당하는 슬롯 상한 */
 export const MAX_BUILD_SLOTS = 20;
+
+/** 전술 지휘소 없이 기본으로 내보낼 수 있는 부대 수 */
+export const BASE_MARCH_SLOTS = 1;
+/** 화면·정산이 감당하는 출정 상한 */
+export const MAX_MARCH_SLOTS = 10;
 
 export interface TrainJob {
   unitId: string;
@@ -372,8 +383,8 @@ export interface GameState {
   buildSlots?: number;
   /** 훈련 큐도 한 번에 하나 */
   trainQueue: TrainJob | null;
-  /** 출정 중인 부대 (한 번에 하나) */
-  march: MarchJob | null;
+  /** 출정 중인 부대들 — 슬롯마다 하나씩, 각자 귀환 시각을 가진다 */
+  march: MarchJob[];
   /** 최근 전투 리포트 (최신순, 최대 10건) */
   reports: BattleReport[];
   /** 점령해 보유 중인 자원지 */
