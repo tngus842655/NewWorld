@@ -13,7 +13,6 @@ import { equipTotals } from './equipment';
 import {
   buildingAtCell,
   isFreeCell,
-  isHqCell,
   isPlaced,
   inGrid,
   requirementText,
@@ -167,7 +166,6 @@ export function moveBuilding(state: GameState, defId: string, c: number, r: numb
   const building = state.buildings.find((b) => b.defId === defId);
   if (!building || !isPlaced(building)) return { ok: false, reason: '옮길 수 없는 건물입니다.' };
   if (!inGrid(c, r)) return { ok: false, reason: '부지 밖으로는 옮길 수 없습니다.' };
-  if (isHqCell(c, r)) return { ok: false, reason: '사령부 자리에는 놓을 수 없습니다.' };
   if (building.col === c && building.row === r) return { ok: true };
 
   const occupant = buildingAtCell(state, c, r);

@@ -44,8 +44,6 @@ import {
 } from './cityview';
 import {
   buildingAtCell,
-  HQ_ID,
-  isHqCell,
   requirementText,
   unmetRequirements,
   unplacedBuildings,
@@ -375,11 +373,6 @@ function cityTab(
   const canvas = `<canvas id="cityview" width="${CITY_W}" height="${CITY_H}"></canvas>`;
   const hint = `<div class="card"><small>건물을 끌어다 놓아 자리를 바꾸고(놓는 자리에 건물이 있으면 서로 맞바꾼다),
     빈 터 <b>+</b>를 눌러 새 건물을 짓는다.</small></div>`;
-
-  if (selectedBuilding === HQ_ID) {
-    return `${canvas}<div class="card"><div><b>사령부</b> <span class="tier">기지 중심</span>
-      <small>기지의 심장부. 2×2 부지를 차지하며 옮길 수 없다.</small></div></div>${hint}`;
-  }
 
   if (selectedCell) return `${canvas}${buildPanel(state, buildingDefs, selectedCell)}`;
 
@@ -934,9 +927,7 @@ function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
 
   canvas.addEventListener('pointerdown', (e) => {
     const p = toCanvasPoint(canvas, e.clientX, e.clientY);
-    const id = buildingAt(p.x, p.y);
-    // 사령부는 고정 건물이라 끌기 대상이 아니다
-    origin = { x: p.x, y: p.y, defId: id === null || id === HQ_ID ? null : id };
+    origin = { x: p.x, y: p.y, defId: buildingAt(p.x, p.y) };
     dragging = false;
     if (origin.defId) canvas.setPointerCapture(e.pointerId);
   });
@@ -952,7 +943,7 @@ function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
       px: p.x,
       py: p.y,
       cell,
-      valid: cell !== null && !isHqCell(cell.c, cell.r),
+      valid: cell !== null,
     });
   });
 
@@ -966,8 +957,8 @@ function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
     const cell = cellAt(p.x, p.y);
 
     if (wasDrag && start.defId) {
-      // 격자 밖이나 사령부 위에 놓으면 제자리로 돌아간다
-      if (cell && !isHqCell(cell.c, cell.r)) cb.onMoveBuilding(start.defId, cell.c, cell.r);
+      // 격자 밖에 놓으면 제자리로 돌아간다
+      if (cell) cb.onMoveBuilding(start.defId, cell.c, cell.r);
       return;
     }
 
@@ -975,7 +966,7 @@ function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
     if (id) {
       selectedBuilding = id;
       selectedCell = null;
-    } else if (cell && !isHqCell(cell.c, cell.r)) {
+    } else if (cell) {
       selectedCell = cell;
       selectedBuilding = null;
     } else {

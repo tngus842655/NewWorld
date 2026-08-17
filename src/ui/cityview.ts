@@ -1,15 +1,5 @@
 import type { GameState } from '../core/types';
-import {
-  buildingAtCell,
-  GRID_COLS,
-  GRID_ROWS,
-  HQ_COL,
-  HQ_ID,
-  HQ_ROW,
-  isHqCell,
-  placedBuildings,
-  type Cell,
-} from '../core/city';
+import { buildingAtCell, GRID_COLS, GRID_ROWS, placedBuildings, type Cell } from '../core/city';
 
 /**
  * 기지 화면 — 정면 시점 + 바둑판 부지.
@@ -284,39 +274,6 @@ function drawBuilding(
   }
 }
 
-/** 사령부 — 2×2 칸을 쓰는 큰 건물 */
-function drawHQ(ctx: CanvasRenderingContext2D, t: number): { cx: number; cy: number } {
-  const cx = cellX(HQ_COL) + CW;
-  const baseY = cellY(HQ_ROW) + CH * 1.78;
-  const w = CW * 1.24;
-  const h = CH * 0.72;
-  const x = cx - w / 2;
-
-  shadow(ctx, cx, baseY, w);
-  box(ctx, x, baseY, w, h, C.body, C.bodyDark, C.bodySide);
-  // 2층
-  const w2 = w * 0.52;
-  box(ctx, cx - w2 / 2, baseY - h, w2, h * 0.5, C.body, C.bodyDark, C.bodySide);
-  roof(ctx, cx - w2 / 2, baseY - h - h * 0.5, w2, CH * 0.3, '#7a5fb0');
-
-  // 창문 띠
-  ctx.fillStyle = C.glass;
-  for (let i = -2; i <= 2; i++) ctx.fillRect(cx + i * (w * 0.16) - 5, baseY - h * 0.72, 10, 12);
-  // 정문
-  ctx.fillStyle = C.door;
-  ctx.fillRect(cx - w * 0.09, baseY - h * 0.42, w * 0.18, h * 0.42);
-  // 깃대
-  const beacon = 0.5 + 0.5 * Math.sin(t / 300);
-  ctx.strokeStyle = '#8c98a6';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, baseY - h - h * 0.5 - CH * 0.3);
-  ctx.lineTo(cx, baseY - h - h * 0.5 - CH * 0.3 - 18);
-  ctx.stroke();
-  lamp(ctx, cx, baseY - h - h * 0.5 - CH * 0.3 - 20, '#ff6a55', beacon);
-  return { cx, cy: baseY };
-}
-
 // ── 메인 ─────────────────────────────────────────────────────
 
 export function drawCity(
@@ -391,7 +348,6 @@ export function drawCity(
   const dragging = ghost?.defId ?? null;
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
-      if (isHqCell(c, r)) continue;
       const occupant = buildingAtCell(state, c, r);
       const empty = !occupant || occupant.defId === dragging;
       const isSelected = selectedCell?.c === c && selectedCell?.r === r;
@@ -415,15 +371,14 @@ export function drawCity(
     }
   }
 
-  // ── 건물: 뒤 행부터 앞 행으로 (사령부는 아랫줄 기준) ──
+  // ── 건물: 뒤 행부터 앞 행으로 ──
   interface Item {
+    c: number;
     r: number;
-    hq?: boolean;
-    defId?: string;
-    c?: number;
-    level?: number;
+    defId: string;
+    level: number;
   }
-  const items: Item[] = [{ r: HQ_ROW + 1, hq: true }];
+  const items: Item[] = [];
   for (const b of placedBuildings(state)) {
     if (b.defId === dragging) continue; // 드래그 중인 건물은 맨 마지막에 손끝에 그린다
     items.push({ r: b.row, c: b.col, defId: b.defId, level: b.level });
@@ -431,15 +386,7 @@ export function drawCity(
   items.sort((a, b) => a.r - b.r);
 
   for (const item of items) {
-    if (item.hq) {
-      const p = drawHQ(ctx, t);
-      hitAreas.push({ id: HQ_ID, x: p.cx - 40, y: p.cy - 90, w: 80, h: 100 });
-      continue;
-    }
-    const c = item.c!;
-    const r = item.r;
-    const defId = item.defId!;
-    const level = item.level ?? 0;
+    const { c, r, defId, level } = item;
     const cx = cellX(c) + CW / 2;
     const cy = cellY(r) + CH * 0.82;
     const building = state.upgradeQueue?.defId === defId;

@@ -12,13 +12,6 @@ import type { BuildingDef, CityBuilding, GameState } from './types';
 export const GRID_COLS = 6;
 export const GRID_ROWS = 6;
 
-/** 사령부 — 왼쪽 위 모서리가 (2,1)인 2×2 고정 건물. 옮길 수도 지울 수도 없다. */
-export const HQ_COL = 2;
-export const HQ_ROW = 1;
-export const HQ_SPAN = 2;
-/** 사령부는 건물 목록(BuildingDef)에 없는 장식이라 별도 식별자를 쓴다 */
-export const HQ_ID = '__hq';
-
 export interface Cell {
   c: number;
   r: number;
@@ -26,10 +19,6 @@ export interface Cell {
 
 export function inGrid(c: number, r: number): boolean {
   return Number.isInteger(c) && Number.isInteger(r) && c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS;
-}
-
-export function isHqCell(c: number, r: number): boolean {
-  return c >= HQ_COL && c < HQ_COL + HQ_SPAN && r >= HQ_ROW && r < HQ_ROW + HQ_SPAN;
 }
 
 /** 부지에 올라와 있는 건물(건설 완료 또는 건설 중)인가 */
@@ -50,9 +39,9 @@ export function buildingAtCell(state: GameState, c: number, r: number): CityBuil
   return placedBuildings(state).find((b) => b.col === c && b.row === r) ?? null;
 }
 
-/** 건물을 놓을 수 있는 칸인가 (격자 안 · 사령부 아님 · 비어 있음) */
+/** 건물을 놓을 수 있는 칸인가 (격자 안 · 비어 있음) */
 export function isFreeCell(state: GameState, c: number, r: number): boolean {
-  return inGrid(c, r) && !isHqCell(c, r) && !buildingAtCell(state, c, r);
+  return inGrid(c, r) && !buildingAtCell(state, c, r);
 }
 
 /** 배치가 깨졌을 때 대피시킬 빈 칸 하나 */
@@ -139,7 +128,7 @@ export function repairLayout(state: GameState): void {
       continue;
     }
     const key = `${b.col},${b.row}`;
-    if (!isPlaced(b) || !inGrid(b.col!, b.row!) || isHqCell(b.col!, b.row!) || taken.has(key)) {
+    if (!isPlaced(b) || !inGrid(b.col!, b.row!) || taken.has(key)) {
       homeless.push(b);
       delete b.col;
       delete b.row;
