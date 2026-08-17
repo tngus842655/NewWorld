@@ -1,15 +1,18 @@
 import type {
   BuildingDef,
+  CampDef,
   GameState,
   HeroStats,
+  NodeDef,
   RaceId,
   ResourceKind,
   UnitCount,
   UnitDef,
 } from '../core/types';
 import { HERO_STAT_LABELS, RACE_LABELS, RESOURCE_LABELS } from '../core/types';
-import { BARRACKS_ID, canAfford, type CampDef } from '../core/actions';
+import { BARRACKS_ID, canAfford } from '../core/actions';
 import { selectArmyForMarch } from '../core/combat';
+import { drawWorld, siteAt, WORLD_SIZE, WTILE, type WorldSite } from './worldmap';
 import {
   commandLimit,
   critChance,
@@ -20,7 +23,7 @@ import {
 } from '../core/heroes';
 import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
 
-export type Tab = 'city' | 'barracks' | 'tavern' | 'battle' | 'codex';
+export type Tab = 'city' | 'barracks' | 'tavern' | 'world' | 'codex';
 
 export interface RenderCallbacks {
   onUpgrade(defId: string): void;
@@ -32,10 +35,14 @@ export interface RenderCallbacks {
   onSelectBuilding(defId: string | null): void;
   /** 하단 탭 전환 */
   onSelectTab(tab: Tab): void;
-  /** 사냥터 출정 */
-  onDispatch(campId: string, heroId: string): void;
+  /** 사냥터/자원지 출정 */
+  onDispatch(targetId: string, kind: 'hunt' | 'capture', heroId: string): void;
   /** 출정 보낼 영웅 선택 */
   onSelectHero(heroId: string): void;
+  /** 월드맵 장소 선택 — 리렌더 트리거용 */
+  onSelectSite(siteId: string | null): void;
+  /** 점령한 자원지 포기 */
+  onAbandon(nodeId: string): void;
   /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
   onInstantFinish(): void;
 }
@@ -45,8 +52,10 @@ let selectedBuilding: string | null = null;
 let activeTab: Tab = 'city';
 let message = '';
 let selectedHeroId: string | null = null;
+let selectedSiteId: string | null = null;
 /** 마지막으로 그린 DOM의 구조 지문 — 바뀔 때만 다시 그린다 */
 let lastStructureKey = '';
+
 
 export function setSelectedHero(id: string): void {
   selectedHeroId = id;
@@ -173,7 +182,7 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'city', icon: '🏰', label: '도시' },
   { id: 'barracks', icon: '⚔️', label: '병영' },
   { id: 'tavern', icon: '🍺', label: '주점' },
-  { id: 'battle', icon: '🗡️', label: '전투' },
+  { id: 'world', icon: '🗺️', label: '지도' },
   { id: 'codex', icon: '📖', label: '도감' },
 ];
 
@@ -349,77 +358,111 @@ function unitCountText(list: UnitCount[], unitDefs: Map<string, UnitDef>): strin
   return list.map((u) => `${unitDefs.get(u.unitId)?.nameKo ?? u.unitId} ${u.count}기`).join(', ');
 }
 
-function battleTab(
+function worldTab(
   state: GameState,
   camps: CampDef[],
+  nodes: NodeDef[],
   unitDefs: Map<string, UnitDef>,
+  maxHeld: number,
   now: number,
 ): string {
-  // 출정 중 상태
-  if (state.march) {
-    const remain = Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000));
-    return `<h2>출정 중</h2>
-      <div class="card">
-        <div><b>${state.march.campName}</b>
-          <small>부대가 이동 중입니다. 귀환하면 전투 결과가 표시됩니다.</small>
-          <small>귀환까지 <span id="march-countdown">${remain}</span>초</small>
-        </div>
-      </div>
-      ${reportsSection(state, unitDefs, now)}`;
-  }
-
   const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
-  if (!hero) {
-    return `<h2>출정</h2>
-      <div class="card"><small>주점에서 영웅을 고용해야 부대를 이끌 수 있다.</small></div>
-      ${reportsSection(state, unitDefs, now)}`;
-  }
-
-  const heroPicker =
-    state.heroes.length > 1
-      ? `<div class="chips">${state.heroes
-          .map(
-            (h) =>
-              `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}">${h.name} Lv.${h.level}</button>`,
-          )
-          .join('')}</div>`
-      : '';
-
-  const marchArmy = selectArmyForMarch(state.army, hero, unitDefs);
-  const armyText = unitCountText(marchArmy, unitDefs);
+  const marchArmy = hero ? selectArmyForMarch(state.army, hero, unitDefs) : [];
   const hasArmy = marchArmy.length > 0;
 
-  const campCards = camps
-    .map((c) => {
-      const enemies = c.monsters
-        .map((m) => `${unitDefs.get(m.unitId)?.nameKo ?? m.unitId} ${m.count}기`)
-        .join(', ');
-      const lootText = Object.entries(c.loot)
+  // ── 선택한 장소 패널 ──
+  let sitePanel = `<div class="card"><small>지도의 장소를 눌러 정보를 확인하세요.
+    💀 사냥터는 전리품을, 자원 아이콘은 점령 시 시간당 생산을 준다.</small></div>`;
+  const camp = camps.find((c) => c.id === selectedSiteId);
+  const node = nodes.find((n) => n.id === selectedSiteId);
+  const target = camp ?? node;
+
+  if (target) {
+    const enemies = target.monsters
+      .map((m) => `${unitDefs.get(m.unitId)?.nameKo ?? m.unitId} ${m.count}기`)
+      .join(', ');
+    const held = node && state.heldNodes.some((h) => h.nodeId === node.id);
+    let rewardLine: string;
+    let action: string;
+
+    if (camp) {
+      const lootText = Object.entries(camp.loot)
         .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
         .join(' · ');
-      return `<div class="card">
-        <div><b>${c.name}</b>
-          <small>${c.description}</small>
-          <small>적: ${enemies}</small>
-          <small>보상: ${lootText} · 왕복 ${Math.round(c.marchSeconds / 60)}분</small>
-        </div>
-        <div class="actions">
-          <button data-dispatch="${c.id}" ${hasArmy ? '' : 'disabled'}>출정</button>
+      rewardLine = `보상: ${lootText}`;
+      action = `<button data-dispatch="${camp.id}" data-kind="hunt"
+        ${hasArmy && !state.march ? '' : 'disabled'}>출정</button>`;
+    } else if (held) {
+      rewardLine = `생산 중: ${RESOURCE_LABELS[node!.produces]} ${node!.perHour}/시간`;
+      action = `<button class="small" data-abandon="${node!.id}">점령 포기</button>`;
+    } else {
+      rewardLine = `점령 시: ${RESOURCE_LABELS[node!.produces]} ${node!.perHour}/시간`;
+      const capped = state.heldNodes.length >= maxHeld;
+      action = `<button data-dispatch="${node!.id}" data-kind="capture"
+        ${hasArmy && !state.march && !capped ? '' : 'disabled'}>${capped ? '한도 초과' : '점령'}</button>`;
+    }
+
+    sitePanel = `<div class="card">
+      <div><b>${target.name}</b>${held ? ' <span class="tier">점령 중</span>' : ''}
+        <small>${target.description}</small>
+        <small>수비: ${enemies}</small>
+        <small>${rewardLine} · 왕복 ${Math.round(target.marchSeconds / 60)}분</small>
+      </div>
+      <div class="actions">${action}</div>
+    </div>`;
+  }
+
+  // ── 부대 상태 ──
+  let armyPanel: string;
+  if (state.march) {
+    const remain = Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000));
+    armyPanel = `<div class="card">
+      <div><b>${state.march.campName}</b> ${state.march.kind === 'capture' ? '점령전' : '사냥'} 출정 중
+        <small>귀환까지 <span id="march-countdown">${remain}</span>초</small>
+      </div>
+    </div>`;
+  } else if (!hero) {
+    armyPanel = '<div class="card"><small>주점에서 영웅을 고용해야 부대를 이끌 수 있다.</small></div>';
+  } else {
+    const heroPicker =
+      state.heroes.length > 1
+        ? `<div class="chips">${state.heroes
+            .map(
+              (h) =>
+                `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}">${h.name} Lv.${h.level}</button>`,
+            )
+            .join('')}</div>`
+        : '';
+    armyPanel = `${heroPicker}
+      <div class="card">
+        <div><b>${hero.name}</b> Lv.${hero.level}
+          <small>지휘 한도 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
+          <small>출정 병력: ${unitCountText(marchArmy, unitDefs)}</small>
         </div>
       </div>`;
-    })
-    .join('');
+  }
 
-  return `<h2>부대 편성</h2>
-    ${heroPicker}
-    <div class="card">
-      <div><b>${hero.name}</b> Lv.${hero.level}
-        <small>지휘 한도 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
-        <small>출정 병력: ${armyText}</small>
-      </div>
-    </div>
-    <h2>사냥터</h2>
-    ${campCards}
+  // ── 보유 자원지 ──
+  const holdings = state.heldNodes.length
+    ? state.heldNodes
+        .map((h) => {
+          const def = nodes.find((n) => n.id === h.nodeId);
+          if (!def) return '';
+          return `<div class="card">
+            <div><b>${def.name}</b>
+              <small>${RESOURCE_LABELS[def.produces]} ${def.perHour}/시간</small></div>
+            <div class="actions"><button class="small" data-abandon="${def.id}">포기</button></div>
+          </div>`;
+        })
+        .join('')
+    : '<div class="card"><small>점령한 자원지가 없다. 지도에서 자원지를 골라 점령해보자.</small></div>';
+
+  return `<canvas id="worldmap" width="${WORLD_SIZE}" height="${WORLD_SIZE}"></canvas>
+    ${sitePanel}
+    <h2>부대</h2>
+    ${armyPanel}
+    <h2>보유 자원지 (${state.heldNodes.length}/${maxHeld})</h2>
+    ${holdings}
     ${reportsSection(state, unitDefs, now)}`;
 }
 
@@ -448,7 +491,7 @@ function reportsSection(
       return `<details class="report">
         <summary>
           <span class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</span>
-          ${r.campName} · ${when}
+          ${r.campName}${r.captured ? ' 🚩점령' : ''} · ${when}
         </summary>
         <div class="report-body">
           <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
@@ -511,6 +554,8 @@ export function render(
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
   camps: CampDef[],
+  nodes: NodeDef[],
+  maxHeld: number,
   now: number,
   cb: RenderCallbacks,
 ): void {
@@ -549,7 +594,7 @@ export function render(
   if (activeTab === 'city') body = cityTab(state, buildingDefs);
   else if (activeTab === 'barracks') body = barracksTab(state, unitDefs);
   else if (activeTab === 'tavern') body = tavernTab(state, now);
-  else if (activeTab === 'battle') body = battleTab(state, camps, unitDefs, now);
+  else if (activeTab === 'world') body = worldTab(state, camps, nodes, unitDefs, maxHeld, now);
   else body = codexTab(state, unitDefs);
 
   const tabs = TABS.map(
@@ -573,7 +618,9 @@ export function render(
     state.march?.campId ?? '',
     state.reports.map((r) => r.id),
     selectedHeroId,
+    selectedSiteId,
     state.heroes.map((h) => `${h.id}:${h.level}`),
+    state.heldNodes.map((h) => h.nodeId),
   ]);
 
   if (key !== lastStructureKey) {
@@ -622,14 +669,39 @@ export function render(
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-dispatch]').forEach((btn) => {
       const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
-      btn.addEventListener('click', () => cb.onDispatch(btn.dataset.dispatch!, hero?.id ?? ''));
+      btn.addEventListener('click', () =>
+        cb.onDispatch(
+          btn.dataset.dispatch!,
+          btn.dataset.kind as 'hunt' | 'capture',
+          hero?.id ?? '',
+        ),
+      );
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-hero]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onSelectHero(btn.dataset.hero!));
     });
+    root.querySelectorAll<HTMLButtonElement>('button[data-abandon]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onAbandon(btn.dataset.abandon!));
+    });
+
+    const worldCanvas = root.querySelector<HTMLCanvasElement>('#worldmap');
+    if (worldCanvas) {
+      const sites: WorldSite[] = [
+        ...camps.map((c) => ({ id: c.id, kind: 'camp' as const, pos: c.pos })),
+        ...nodes.map((n) => ({ id: n.id, kind: 'node' as const, pos: n.pos })),
+      ];
+      worldCanvas.addEventListener('click', (e) => {
+        const rect = worldCanvas.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) * worldCanvas.width) / rect.width;
+        const y = ((e.clientY - rect.top) * worldCanvas.height) / rect.height;
+        const site = siteAt(sites, Math.floor(x / WTILE), Math.floor(y / WTILE));
+        selectedSiteId = site?.id ?? null;
+        cb.onSelectSite(selectedSiteId);
+      });
+    }
   }
 
-  updateDynamic(root, state, buildingDefs, unitDefs, camps, now);
+  updateDynamic(root, state, buildingDefs, unitDefs, camps, nodes, now);
 }
 
 /** 매 틱 갱신: 숫자·타이머·캔버스·버튼 활성 상태만 손댄다 (DOM 구조는 그대로) */
@@ -639,6 +711,7 @@ function updateDynamic(
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
   camps: CampDef[],
+  nodes: NodeDef[],
   now: number,
 ): void {
   root.querySelectorAll<HTMLElement>('b[data-res]').forEach((el) => {
@@ -691,4 +764,7 @@ function updateDynamic(
 
   const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
   if (canvas) drawCity(canvas, state, buildingDefs, selectedBuilding, now);
+
+  const worldCanvas = root.querySelector<HTMLCanvasElement>('#worldmap');
+  if (worldCanvas) drawWorld(worldCanvas, state, camps, nodes, selectedSiteId, now);
 }

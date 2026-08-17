@@ -1,4 +1,4 @@
-import type { BuildingDef, GameState, Resources, UnitDef } from './types';
+import type { BuildingDef, GameState, NodeDef, Resources, UnitDef } from './types';
 import { grantXp } from './heroes';
 
 /** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다 */
@@ -16,6 +16,7 @@ export function advance(
   state: GameState,
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
+  nodeDefs: Map<string, NodeDef>,
   now: number,
 ): GameState {
   if (now <= state.updatedAt) return state;
@@ -37,7 +38,7 @@ export function advance(
 
   let from = next.updatedAt;
   for (const ev of events) {
-    settle(next, buildingDefs, unitDefs, from, ev.at);
+    settle(next, buildingDefs, unitDefs, nodeDefs, from, ev.at);
     if (ev.kind === 'build' && next.upgradeQueue) {
       const b = next.buildings.find((x) => x.defId === next.upgradeQueue!.defId);
       if (b) b.level = next.upgradeQueue.targetLevel;
@@ -51,13 +52,13 @@ export function advance(
     }
     from = ev.at;
   }
-  settle(next, buildingDefs, unitDefs, from, now);
+  settle(next, buildingDefs, unitDefs, nodeDefs, from, now);
 
   next.updatedAt = now;
   return next;
 }
 
-/** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 리포트 보관 */
+/** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 점령 처리 + 리포트 보관 */
 function finishMarch(state: GameState): void {
   const march = state.march;
   if (!march) return;
@@ -65,6 +66,11 @@ function finishMarch(state: GameState): void {
 
   for (const { unitId, count } of report.survivors) {
     state.army[unitId] = (state.army[unitId] ?? 0) + count;
+  }
+
+  if (march.kind === 'capture' && report.victory) {
+    report.captured = true;
+    state.heldNodes.push({ nodeId: march.campId, capturedAt: march.returnsAt });
   }
   for (const [k, v] of Object.entries(report.loot) as [keyof Resources, number][]) {
     state.resources[k] += v;
@@ -77,11 +83,12 @@ function finishMarch(state: GameState): void {
   state.march = null;
 }
 
-/** from~to 구간의 자원 생산과 병력 식량 소모를 반영 */
+/** from~to 구간의 자원 생산(건물+점령 자원지)과 병력 식량 소모를 반영 */
 function settle(
   state: GameState,
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
+  nodeDefs: Map<string, NodeDef>,
   from: number,
   to: number,
 ): void {
@@ -95,6 +102,15 @@ function settle(
     const lvl = def.levels[b.level - 1];
     if (!lvl?.productionPerHour) continue;
     state.resources[def.produces] += lvl.productionPerHour * hours;
+  }
+
+  // 점령한 자원지 생산 — 점령 시각 이후 구간만 반영
+  for (const h of state.heldNodes) {
+    const def = nodeDefs.get(h.nodeId);
+    if (!def) continue;
+    const effFrom = Math.max(from, h.capturedAt);
+    const effHours = (to - effFrom) / 3_600_000;
+    if (effHours > 0) state.resources[def.produces] += def.perHour * effHours;
   }
 
   // 병력 식량 소모 (원작 每小时消耗粮食). 지금은 0 밑으로 내려가지 않게만 처리 —

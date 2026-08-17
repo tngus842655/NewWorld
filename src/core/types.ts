@@ -142,6 +142,33 @@ export interface UnitCount {
   count: number;
 }
 
+/** 월드맵 위 장소의 공통 속성 */
+export interface WorldSiteBase {
+  id: string;
+  name: string;
+  description: string;
+  /** 월드맵 타일 좌표 */
+  pos: [number, number];
+  marchSeconds: number;
+  monsters: UnitCount[];
+}
+
+/** 사냥터 — 이기면 전리품을 한 번 받는다 */
+export interface CampDef extends WorldSiteBase {
+  loot: Partial<Resources>;
+}
+
+/** 자원지 — 점령하면 보유하는 동안 시간당 자원을 생산한다 */
+export interface NodeDef extends WorldSiteBase {
+  produces: ResourceKind;
+  perHour: number;
+}
+
+export interface NodeHolding {
+  nodeId: string;
+  capturedAt: number; // epoch ms
+}
+
 export interface BattleLogEntry {
   round: number;
   /** 공격 측 */
@@ -160,6 +187,8 @@ export interface BattleReport {
   campName: string;
   heroName: string;
   victory: boolean;
+  /** 자원지 점령전에서 승리해 점령했는가 */
+  captured?: boolean;
   rounds: number;
   log: BattleLogEntry[];
   /** 아군 전사 */
@@ -172,6 +201,8 @@ export interface BattleReport {
 }
 
 export interface MarchJob {
+  /** hunt = 사냥터 약탈, capture = 자원지 점령 */
+  kind: 'hunt' | 'capture';
   campId: string;
   campName: string;
   heroId: string;
@@ -204,4 +235,6 @@ export interface GameState {
   march: MarchJob | null;
   /** 최근 전투 리포트 (최신순, 최대 10건) */
   reports: BattleReport[];
+  /** 점령해 보유 중인 자원지 */
+  heldNodes: NodeHolding[];
 }

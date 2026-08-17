@@ -6,21 +6,26 @@ import devilUnits from '../data/units/devil.json';
 import neutralUnits from '../data/units/neutral.json';
 import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
 import campData from '../data/combat/camps.json';
+import nodeData from '../data/world/nodes.json';
 import { advance } from './core/tick';
 import {
+  abandonNode,
   dispatchMarch,
   hireHero,
   refreshTavern,
   startTraining,
   startUpgrade,
-  type CampDef,
 } from './core/actions';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
 import { createStorage } from './db/storage';
 import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
+import type { CampDef, NodeDef } from './core/types';
 
-const camps = campData.camps as CampDef[];
+const camps = campData.camps as unknown as CampDef[];
+const nodes = nodeData.nodes as unknown as NodeDef[];
+const MAX_HELD_NODES: number = nodeData.maxHeld;
+const nodeDefs = new Map<string, NodeDef>(nodes.map((n) => [n.id, n]));
 
 const buildingDefs = new Map<string, BuildingDef>(
   (buildingData.buildings as BuildingDef[]).map((d) => [d.id, d]),
@@ -51,6 +56,7 @@ function newGame(now: number): GameState {
     trainQueue: null,
     march: null,
     reports: [],
+    heldNodes: [],
   };
 }
 
@@ -63,6 +69,9 @@ function migrate(state: GameState): GameState {
   state.trainQueue ??= null;
   state.march ??= null;
   state.reports ??= [];
+  state.heldNodes ??= [];
+  // M4 이전 출정 데이터에는 kind가 없다
+  if (state.march) state.march.kind ??= 'hunt';
   // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
   if ((state.stateVersion ?? 1) < 2) {
     state.resources.crystal = Math.max(state.resources.crystal, 50);
@@ -85,7 +94,7 @@ async function main(): Promise<void> {
 
   let dirty = false;
   const rerender = (now: number) =>
-    render(root, state, buildingDefs, unitDefs, camps, now, callbacks);
+    render(root, state, buildingDefs, unitDefs, camps, nodes, MAX_HELD_NODES, now, callbacks);
 
   const callbacks = {
     onSelectRace(raceId: RaceId) {
@@ -97,7 +106,7 @@ async function main(): Promise<void> {
       const def = buildingDefs.get(defId);
       if (!def) return;
       const now = Date.now();
-      state = advance(state, buildingDefs, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       const result = startUpgrade(state, def, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
@@ -107,7 +116,7 @@ async function main(): Promise<void> {
       const def = unitDefs.get(unitId);
       if (!def) return;
       const now = Date.now();
-      state = advance(state, buildingDefs, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       const result = startTraining(state, def, count, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
@@ -115,7 +124,7 @@ async function main(): Promise<void> {
     },
     onHire(candidateIndex: number) {
       const now = Date.now();
-      state = advance(state, buildingDefs, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       const result = hireHero(state, candidateIndex);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
@@ -123,7 +132,7 @@ async function main(): Promise<void> {
     },
     onRefreshTavern() {
       const now = Date.now();
-      state = advance(state, buildingDefs, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       const result = refreshTavern(state, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
@@ -141,12 +150,26 @@ async function main(): Promise<void> {
       setSelectedHero(heroId);
       rerender(Date.now());
     },
-    onDispatch(campId: string, heroId: string) {
-      const camp = camps.find((c) => c.id === campId);
-      if (!camp) return;
+    onDispatch(targetId: string, kind: 'hunt' | 'capture', heroId: string) {
+      const target =
+        kind === 'hunt'
+          ? camps.find((c) => c.id === targetId)
+          : nodes.find((n) => n.id === targetId);
+      if (!target) return;
       const now = Date.now();
-      state = advance(state, buildingDefs, unitDefs, now);
-      const result = dispatchMarch(state, camp, heroId, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = dispatchMarch(state, target, kind, heroId, unitDefs, MAX_HELD_NODES, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
+    onSelectSite() {
+      rerender(Date.now());
+    },
+    onAbandon(nodeId: string) {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = abandonNode(state, nodeId);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);
@@ -157,7 +180,7 @@ async function main(): Promise<void> {
       if (state.upgradeQueue) state.upgradeQueue.finishesAt = now;
       if (state.trainQueue) state.trainQueue.finishesAt = now;
       if (state.march) state.march.returnsAt = now;
-      state = advance(state, buildingDefs, unitDefs, now);
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
       dirty = true;
       rerender(now);
     },
@@ -172,7 +195,7 @@ async function main(): Promise<void> {
       train: !!state.trainQueue,
       march: !!state.march,
     };
-    state = advance(state, buildingDefs, unitDefs, now);
+    state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
     if (
       (had.build && !state.upgradeQueue) ||
       (had.train && !state.trainQueue) ||
@@ -197,6 +220,8 @@ async function main(): Promise<void> {
         return state;
       },
       camps,
+      nodes,
+      nodeDefs,
       unitDefs,
       buildingDefs,
       simulateBattle,

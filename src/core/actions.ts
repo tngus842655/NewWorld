@@ -1,4 +1,4 @@
-import type { BuildingDef, GameState, Resources, UnitDef } from './types';
+import type { BuildingDef, CampDef, GameState, NodeDef, Resources, UnitDef } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle } from './combat';
 
@@ -109,28 +109,30 @@ export function hireHero(state: GameState, candidateIndex: number): ActionResult
   return { ok: true };
 }
 
-export interface CampDef {
-  id: string;
-  name: string;
-  description: string;
-  marchSeconds: number;
-  monsters: { unitId: string; count: number }[];
-  loot: Partial<Resources>;
-}
-
 /**
- * 사냥터로 부대를 출정시킨다.
+ * 사냥터/자원지로 부대를 출정시킨다.
  * 전투 결과는 출정 시점에 미리 계산해 두고(advance를 순수하게 유지),
  * 부대가 돌아오는 시각에 tick이 결과를 반영한다.
  */
 export function dispatchMarch(
   state: GameState,
-  camp: CampDef,
+  target: CampDef | NodeDef,
+  kind: 'hunt' | 'capture',
   heroId: string,
   unitDefs: Map<string, UnitDef>,
+  maxHeld: number,
   now: number,
 ): ActionResult {
   if (state.march) return { ok: false, reason: '이미 출정 중인 부대가 있습니다.' };
+
+  if (kind === 'capture') {
+    if (state.heldNodes.some((h) => h.nodeId === target.id)) {
+      return { ok: false, reason: '이미 점령한 자원지입니다.' };
+    }
+    if (state.heldNodes.length >= maxHeld) {
+      return { ok: false, reason: `자원지 점령 한도(${maxHeld}곳)를 넘을 수 없습니다.` };
+    }
+  }
 
   const hero = state.heroes.find((h) => h.id === heroId);
   if (!hero) return { ok: false, reason: '영웅을 먼저 고용해야 합니다.' };
@@ -147,21 +149,30 @@ export function dispatchMarch(
   const report = simulateBattle({
     hero,
     attackerArmy: army,
-    defenderArmy: camp.monsters,
-    campId: camp.id,
-    campName: camp.name,
-    loot: camp.loot,
+    defenderArmy: target.monsters,
+    campId: target.id,
+    campName: target.name,
+    loot: kind === 'hunt' ? (target as CampDef).loot : {},
     unitDefs,
     now,
   });
 
   state.march = {
-    campId: camp.id,
-    campName: camp.name,
+    kind,
+    campId: target.id,
+    campName: target.name,
     heroId,
-    returnsAt: now + camp.marchSeconds * 1000,
+    returnsAt: now + target.marchSeconds * 1000,
     report,
   };
+  return { ok: true };
+}
+
+/** 점령한 자원지를 포기한다 */
+export function abandonNode(state: GameState, nodeId: string): ActionResult {
+  const idx = state.heldNodes.findIndex((h) => h.nodeId === nodeId);
+  if (idx < 0) return { ok: false, reason: '점령하지 않은 자원지입니다.' };
+  state.heldNodes.splice(idx, 1);
   return { ok: true };
 }
 

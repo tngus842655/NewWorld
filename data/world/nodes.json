@@ -1,0 +1,76 @@
+{
+  "$comment": "점령형 자원지. 원작의 '자원지 점령' 루프(디지털타임스 2010 기사: 자원 획득→건설→영웅 고용→자원지 점령 반복)를 재현. 구체적 생산량·수비 편성·점령 한도 수치는 자료가 없어 전부 estimate. 수비 몬스터 스탯은 4399 실측 데이터를 사용.",
+  "maxHeld": 3,
+  "nodes": [
+    {
+      "id": "lumber-grove",
+      "name": "울창한 벌목지",
+      "description": "질 좋은 목재가 자라는 숲. 놀 무리가 자리를 잡았다.",
+      "pos": [4, 3],
+      "marchSeconds": 90,
+      "monsters": [{ "unitId": "neutral-t1", "count": 8 }],
+      "produces": "wood",
+      "perHour": 200
+    },
+    {
+      "id": "farm-plain",
+      "name": "비옥한 평야",
+      "description": "곡물이 잘 자라는 너른 들판.",
+      "pos": [6, 4],
+      "marchSeconds": 120,
+      "monsters": [{ "unitId": "neutral-t1", "count": 15 }],
+      "produces": "food",
+      "perHour": 250
+    },
+    {
+      "id": "stone-pit",
+      "name": "노출 암반 지대",
+      "description": "석재를 캐기 좋은 암반. 리자드맨이 서식한다.",
+      "pos": [3, 6],
+      "marchSeconds": 180,
+      "monsters": [{ "unitId": "neutral-t2", "count": 10 }],
+      "produces": "stone",
+      "perHour": 180
+    },
+    {
+      "id": "crystal-vein",
+      "name": "수정 광맥",
+      "description": "지표로 드러난 수정 광맥. 용파리 떼가 지킨다.",
+      "pos": [7, 7],
+      "marchSeconds": 300,
+      "monsters": [{ "unitId": "neutral-t3", "count": 10 }],
+      "produces": "crystal",
+      "perHour": 60
+    },
+    {
+      "id": "gold-mine",
+      "name": "금광",
+      "description": "바실리스크가 둥지를 튼 금광.",
+      "pos": [4, 8],
+      "marchSeconds": 420,
+      "monsters": [{ "unitId": "neutral-t4", "count": 10 }],
+      "produces": "gold",
+      "perHour": 150
+    },
+    {
+      "id": "deep-crystal",
+      "name": "심층 수정 광맥",
+      "description": "와이번이 지키는 깊은 광맥. 산출량이 크다.",
+      "pos": [9, 4],
+      "marchSeconds": 800,
+      "monsters": [{ "unitId": "neutral-t6", "count": 8 }],
+      "produces": "crystal",
+      "perHour": 150
+    },
+    {
+      "id": "rich-gold",
+      "name": "노다지 금광",
+      "description": "히드라가 웅크린 전설의 금맥.",
+      "pos": [1, 9],
+      "marchSeconds": 1000,
+      "monsters": [{ "unitId": "neutral-t7", "count": 6 }],
+      "produces": "gold",
+      "perHour": 400
+    }
+  ]
+}
