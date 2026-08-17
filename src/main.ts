@@ -10,6 +10,7 @@ import type {
   GameState,
   MarchJob,
   RaceId,
+  ResourceKind,
   UnitDef,
   UpgradeJob,
 } from './core/types';
@@ -26,6 +27,7 @@ import {
   dispatchMarch,
   enhanceEquipment,
   equipItem,
+  exchangeResources,
   markReportRead,
   hireHero,
   moveBuilding,
@@ -34,6 +36,8 @@ import {
   startTraining,
   startUpgrade,
   trainingRequirement,
+  tradeFee,
+  tradeYield,
   unequipItem,
 } from './core/actions';
 import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
@@ -337,6 +341,14 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(Date.now());
     },
+    onTrade(from: ResourceKind, to: ResourceKind, amount: number) {
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = exchangeResources(state, from, to, amount, buildingDefs);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
     onDiscard(itemId: string) {
       const result = discardItem(state, itemId);
       setMessage(result.ok ? '' : result.reason);
@@ -449,6 +461,8 @@ async function main(): Promise<void> {
       previewBattle,
       storageCap,
       equipTotals,
+      tradeFee,
+      tradeYield,
       advance,
       startUpgrade,
       dispatchMarch,

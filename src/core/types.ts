@@ -85,7 +85,9 @@ export type BuildingEffectKind =
   /** 방어 실패 시 약탈당하는 자원 비율 −% — 물류 창고 */
   | 'plunderResistPercent'
   /** 장비 강화 상한 +N — 장비 공방 */
-  | 'maxEnhance';
+  | 'maxEnhance'
+  /** 자원 교환 수수료 −%p — 암시장 */
+  | 'tradeFeeReduction';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -112,7 +114,12 @@ export const BUILDING_EFFECT_INFO: Record<
   hideTroops: { label: '침공 시 대피 병력', unit: 'count' },
   plunderResistPercent: { label: '약탈 피해 감소', unit: 'percent' },
   maxEnhance: { label: '장비 강화 상한', unit: 'count' },
+  tradeFeeReduction: { label: '교환 수수료 감소', unit: 'percent' },
 };
+
+/** 암시장 기본 교환 수수료(%)와 아무리 낮춰도 남는 하한 */
+export const BASE_TRADE_FEE = 30;
+export const MIN_TRADE_FEE = 5;
 
 /**
  * 창고 없이도 쌓아 둘 수 있는 기본 보관 한도 (자원 종류마다).

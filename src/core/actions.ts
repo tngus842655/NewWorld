@@ -4,9 +4,11 @@ import type {
   EquipSlot,
   GameState,
   NodeDef,
+  ResourceKind,
   Resources,
   UnitDef,
 } from './types';
+import { BASE_TRADE_FEE, MIN_TRADE_FEE } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle, type CityBonus } from './combat';
 import { canEnhance, enhanceCost, equipTotals } from './equipment';
@@ -64,6 +66,8 @@ export function trainingRequirement(
   const idx = peers.findIndex((u) => u.id === def.id);
   return { buildingId, level: Math.max(1, idx + 1) };
 }
+/** 자원 교환소 */
+export const BLACK_MARKET_ID = 'black-market';
 /** 병종 연구를 담당하는 건물 id */
 export const ACADEMY_ID = 'academy';
 /** 유닛 연구 최대 레벨 — 4399 스탯표가 20레벨까지 있다 */
@@ -440,6 +444,45 @@ export function enhanceEquipment(
 
   pay(state.resources, cost);
   item.plus = plus + 1;
+  return { ok: true };
+}
+
+/** 암시장 교환 수수료 (%) — 레벨이 오를수록 낮아지고 하한이 있다 */
+export function tradeFee(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): number {
+  const cut = buildingEffect(state, buildingDefs, 'tradeFeeReduction');
+  return Math.max(MIN_TRADE_FEE, BASE_TRADE_FEE - cut);
+}
+
+/** 교환으로 실제 받게 되는 양 */
+export function tradeYield(amount: number, fee: number): number {
+  return Math.floor(amount * (1 - fee / 100));
+}
+
+/**
+ * 암시장에서 자원을 맞바꾼다. 1:1에서 수수료를 뗀 만큼 받는다.
+ * 시세 변동은 두지 않았다 — 수수료만으로 충분히 제동이 걸린다(estimate).
+ */
+export function exchangeResources(
+  state: GameState,
+  from: ResourceKind,
+  to: ResourceKind,
+  amount: number,
+  buildingDefs: Map<string, BuildingDef>,
+): ActionResult {
+  const level = state.buildings.find((b) => b.defId === BLACK_MARKET_ID)?.level ?? 0;
+  if (level < 1) return { ok: false, reason: '암시장을 먼저 지어야 합니다.' };
+  if (from === to) return { ok: false, reason: '같은 자원끼리는 바꿀 수 없습니다.' };
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: '수량이 잘못됐습니다.' };
+  if (state.resources[from] < amount) return { ok: false, reason: '자원이 부족합니다.' };
+
+  const got = tradeYield(amount, tradeFee(state, buildingDefs));
+  if (got <= 0) return { ok: false, reason: '수수료를 떼면 남는 게 없습니다.' };
+
+  state.resources[from] -= amount;
+  state.resources[to] += got;
   return { ok: true };
 }
 

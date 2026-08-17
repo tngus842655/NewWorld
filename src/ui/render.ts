@@ -22,11 +22,14 @@ import {
 import {
   ACADEMY_ID,
   ADVANCED_BARRACKS_ID,
+  BLACK_MARKET_ID,
   BARRACKS_ID,
   canAfford,
   cityBonus,
   FACTORY_ID,
   STARPORT_ID,
+  tradeFee,
+  tradeYield,
   trainingBuilding,
   trainingRequirement,
   MAX_UNIT_LEVEL,
@@ -118,6 +121,8 @@ export interface RenderCallbacks {
   onDiscard(itemId: string): void;
   /** 장비 한 단계 강화 */
   onEnhance(itemId: string): void;
+  /** 암시장 자원 교환 */
+  onTrade(from: ResourceKind, to: ResourceKind, amount: number): void;
   /** 전투 기록 삭제 */
   onDeleteReport(reportId: string): void;
   /** 전투 기록 전체 삭제 */
@@ -130,6 +135,9 @@ export interface RenderCallbacks {
 
 // UI 전용 상태
 let selectedBuilding: string | null = null;
+/** 암시장에서 고른 교환 자원 */
+let tradeFrom: ResourceKind = 'wood';
+let tradeTo: ResourceKind = 'gold';
 /** 선택한 빈 부지 — 여기에 건설 목록이 붙는다 */
 let selectedCell: Cell | null = null;
 /** 선택 직후 한 번, 캔버스 아래 패널이 보이도록 스크롤한다 */
@@ -486,6 +494,7 @@ function cityTab(
   if (TRAINING_BUILDINGS.includes(def.id)) {
     body = trainPanel(state, unitDefs, buildingDefs, def.id, sel.level);
   } else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
+  else if (def.id === BLACK_MARKET_ID) body = marketPanel(state, buildingDefs, sel.level);
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
 
   return `${canvas}${defense}${header}${body}`;
@@ -570,6 +579,53 @@ function defensePanel(
       ${parts.length ? '' : '<small class="locked">🔒 방어 건물이 하나도 없다 — 성벽·포탑부터 올리자</small>'}
     </div>
   </div>`;
+}
+
+/**
+ * 암시장 패널 — 자원끼리 맞바꾼다.
+ * 내줄 자원과 받을 자원을 칩으로 고르고, 수량 버튼으로 실행한다.
+ */
+function marketPanel(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  level: number,
+): string {
+  if (level < 1) {
+    return '<div class="card"><small>암시장을 지으면 자원을 맞바꿀 수 있다.</small></div>';
+  }
+  const kinds = Object.keys(RESOURCE_LABELS) as ResourceKind[];
+  // 같은 자원끼리는 못 바꾸므로 겹치면 받을 쪽을 다른 자원으로 민다
+  if (tradeTo === tradeFrom) tradeTo = kinds.find((k) => k !== tradeFrom)!;
+
+  const fee = tradeFee(state, buildingDefs);
+  const chips = (list: ResourceKind[], current: ResourceKind, attr: string) =>
+    `<div class="chips">${list
+      .map(
+        (k) =>
+          `<button class="chip ${k === current ? 'on' : ''}" data-${attr}="${k}">${RESOURCE_LABELS[k]}</button>`,
+      )
+      .join('')}</div>`;
+
+  const have = Math.floor(state.resources[tradeFrom]);
+  const amounts = [1000, 10_000, have].filter((a, i, arr) => a > 0 && arr.indexOf(a) === i);
+  const buttons = amounts
+    .map((a, i) => {
+      const label = i === amounts.length - 1 && a === have ? `전부 ${formatNumber(a)}` : formatNumber(a);
+      return `<button class="small" data-trade="${a}" ${have >= a ? '' : 'disabled'}>${label}
+        → ${formatNumber(tradeYield(a, fee))}</button>`;
+    })
+    .join('');
+
+  return `<h2>자원 교환</h2>
+    <div class="card" style="display:block;">
+      <small>수수료 ${fee}% · 1:1에서 수수료를 뗀 만큼 받는다</small>
+      <small class="faint">내줄 자원</small>
+      ${chips(kinds, tradeFrom, 'trade-from')}
+      <small class="faint">받을 자원</small>
+      ${chips(kinds.filter((k) => k !== tradeFrom), tradeTo, 'trade-to')}
+      <small>보유 ${RESOURCE_LABELS[tradeFrom]} ${formatNumber(have)}</small>
+      <div class="chips" style="margin-top:6px;">${buttons || '<small>내줄 자원이 없다.</small>'}</div>
+    </div>`;
 }
 
 /** 건설 슬롯 사용 현황 — 버튼이 왜 꺼져 있는지 알 수 있게 */
@@ -1400,6 +1456,7 @@ export function render(
     state.tavern.candidates.map((c) => `${c.name}:${c.price}`),
     state.upgradeQueue.map((j) => `${j.defId}:${j.targetLevel}`),
     buildSlots(state),
+    `${tradeFrom}>${tradeTo}`,
     state.trainQueue && `${state.trainQueue.unitId}:${state.trainQueue.count}`,
     state.researchQueue && `${state.researchQueue.unitId}:${state.researchQueue.targetLevel}`,
     Object.entries(state.unitLevels),
@@ -1495,6 +1552,21 @@ export function render(
     root.querySelectorAll<HTMLButtonElement>('button[data-unequip]').forEach((btn) => {
       const [heroId, slot] = btn.dataset.unequip!.split(':');
       btn.addEventListener('click', () => cb.onUnequip(heroId, slot as EquipSlot));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-trade-from]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tradeFrom = btn.dataset.tradeFrom as ResourceKind;
+        cb.onSelectBuilding(selectedBuilding);
+      });
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-trade-to]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tradeTo = btn.dataset.tradeTo as ResourceKind;
+        cb.onSelectBuilding(selectedBuilding);
+      });
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-trade]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onTrade(tradeFrom, tradeTo, Number(btn.dataset.trade)));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-enhance]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onEnhance(btn.dataset.enhance!));

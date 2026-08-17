@@ -1121,8 +1121,14 @@
     {
       "id": "black-market",
       "name": "암시장",
-      "description": "자원을 시세에 따라 서로 바꾼다. 급할 때 쓰는 뒷거래 창구.",
+      "description": "자원을 시세에 따라 맞바꾼다. 레벨이 오를수록 수수료가 낮아진다.",
       "category": "자원",
+      "effects": [
+        {
+          "kind": "tradeFeeReduction",
+          "perLevel": 4
+        }
+      ],
       "requires": [
         {
           "buildingId": "market",
@@ -1133,7 +1139,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
