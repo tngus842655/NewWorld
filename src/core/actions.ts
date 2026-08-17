@@ -1,5 +1,6 @@
 import type { BuildingDef, GameState, Resources, UnitDef } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
+import { selectArmyForMarch, simulateBattle } from './combat';
 
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
@@ -105,6 +106,62 @@ export function hireHero(state: GameState, candidateIndex: number): ActionResult
     stats: candidate.stats,
   });
   state.tavern.candidates.splice(candidateIndex, 1);
+  return { ok: true };
+}
+
+export interface CampDef {
+  id: string;
+  name: string;
+  description: string;
+  marchSeconds: number;
+  monsters: { unitId: string; count: number }[];
+  loot: Partial<Resources>;
+}
+
+/**
+ * 사냥터로 부대를 출정시킨다.
+ * 전투 결과는 출정 시점에 미리 계산해 두고(advance를 순수하게 유지),
+ * 부대가 돌아오는 시각에 tick이 결과를 반영한다.
+ */
+export function dispatchMarch(
+  state: GameState,
+  camp: CampDef,
+  heroId: string,
+  unitDefs: Map<string, UnitDef>,
+  now: number,
+): ActionResult {
+  if (state.march) return { ok: false, reason: '이미 출정 중인 부대가 있습니다.' };
+
+  const hero = state.heroes.find((h) => h.id === heroId);
+  if (!hero) return { ok: false, reason: '영웅을 먼저 고용해야 합니다.' };
+
+  const army = selectArmyForMarch(state.army, hero, unitDefs);
+  if (!army.length) return { ok: false, reason: '출정할 병력이 없습니다.' };
+
+  // 출정 병력은 도시에서 빠진다 (생존자는 귀환 시 복귀)
+  for (const { unitId, count } of army) {
+    state.army[unitId] -= count;
+    if (state.army[unitId] <= 0) delete state.army[unitId];
+  }
+
+  const report = simulateBattle({
+    hero,
+    attackerArmy: army,
+    defenderArmy: camp.monsters,
+    campId: camp.id,
+    campName: camp.name,
+    loot: camp.loot,
+    unitDefs,
+    now,
+  });
+
+  state.march = {
+    campId: camp.id,
+    campName: camp.name,
+    heroId,
+    returnsAt: now + camp.marchSeconds * 1000,
+    report,
+  };
   return { ok: true };
 }
 

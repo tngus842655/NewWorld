@@ -5,11 +5,22 @@ import undeadUnits from '../data/units/undead.json';
 import devilUnits from '../data/units/devil.json';
 import neutralUnits from '../data/units/neutral.json';
 import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
+import campData from '../data/combat/camps.json';
 import { advance } from './core/tick';
-import { hireHero, refreshTavern, startTraining, startUpgrade } from './core/actions';
+import {
+  dispatchMarch,
+  hireHero,
+  refreshTavern,
+  startTraining,
+  startUpgrade,
+  type CampDef,
+} from './core/actions';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
+import { simulateBattle } from './core/combat';
 import { createStorage } from './db/storage';
-import { render, setMessage, setTab, type Tab } from './ui/render';
+import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
+
+const camps = campData.camps as CampDef[];
 
 const buildingDefs = new Map<string, BuildingDef>(
   (buildingData.buildings as BuildingDef[]).map((d) => [d.id, d]),
@@ -38,6 +49,8 @@ function newGame(now: number): GameState {
     tavern: { candidates: [], refreshedAt: 0 },
     upgradeQueue: null,
     trainQueue: null,
+    march: null,
+    reports: [],
   };
 }
 
@@ -48,6 +61,8 @@ function migrate(state: GameState): GameState {
   state.heroes ??= [];
   state.tavern ??= { candidates: [], refreshedAt: 0 };
   state.trainQueue ??= null;
+  state.march ??= null;
+  state.reports ??= [];
   // v2: 시작 자원에 수정 50이 추가되기 전에 만들어진 저장분 보정
   if ((state.stateVersion ?? 1) < 2) {
     state.resources.crystal = Math.max(state.resources.crystal, 50);
@@ -69,7 +84,8 @@ async function main(): Promise<void> {
   let state = migrate((await storage.load()) ?? newGame(Date.now()));
 
   let dirty = false;
-  const rerender = (now: number) => render(root, state, buildingDefs, unitDefs, now, callbacks);
+  const rerender = (now: number) =>
+    render(root, state, buildingDefs, unitDefs, camps, now, callbacks);
 
   const callbacks = {
     onSelectRace(raceId: RaceId) {
@@ -121,11 +137,26 @@ async function main(): Promise<void> {
       setMessage('');
       rerender(Date.now());
     },
+    onSelectHero(heroId: string) {
+      setSelectedHero(heroId);
+      rerender(Date.now());
+    },
+    onDispatch(campId: string, heroId: string) {
+      const camp = camps.find((c) => c.id === campId);
+      if (!camp) return;
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, now);
+      const result = dispatchMarch(state, camp, heroId, unitDefs, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
     onInstantFinish() {
       // 테스트 전용: 큐 완료 시각을 현재로 당기고 advance로 정산
       const now = Date.now();
       if (state.upgradeQueue) state.upgradeQueue.finishesAt = now;
       if (state.trainQueue) state.trainQueue.finishesAt = now;
+      if (state.march) state.march.returnsAt = now;
       state = advance(state, buildingDefs, unitDefs, now);
       dirty = true;
       rerender(now);
@@ -136,9 +167,17 @@ async function main(): Promise<void> {
   let lastSave = Date.now();
   setInterval(() => {
     const now = Date.now();
-    const hadJobs = { build: !!state.upgradeQueue, train: !!state.trainQueue };
+    const had = {
+      build: !!state.upgradeQueue,
+      train: !!state.trainQueue,
+      march: !!state.march,
+    };
     state = advance(state, buildingDefs, unitDefs, now);
-    if ((hadJobs.build && !state.upgradeQueue) || (hadJobs.train && !state.trainQueue)) {
+    if (
+      (had.build && !state.upgradeQueue) ||
+      (had.train && !state.trainQueue) ||
+      (had.march && !state.march)
+    ) {
       dirty = true; // 큐 완료됨
     }
     const tavernLevel = state.buildings.find((b) => b.defId === TAVERN_ID)?.level ?? 0;
@@ -150,6 +189,21 @@ async function main(): Promise<void> {
       lastSave = now;
     }
   }, 1000);
+
+  // 개발용 콘솔 핸들: window.nw 로 상태·데이터·전투 시뮬레이터에 접근
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).nw = {
+      get state() {
+        return state;
+      },
+      camps,
+      unitDefs,
+      buildingDefs,
+      simulateBattle,
+      save: () => storage.save(state),
+      rerender: () => rerender(Date.now()),
+    };
+  }
 
   rerender(Date.now());
 }

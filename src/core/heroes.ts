@@ -86,6 +86,30 @@ export function maybeRestockTavern(state: GameState, tavernLevel: number, now: n
   return true;
 }
 
+/** 다음 레벨까지 필요한 경험치 (공식 미확보 — estimate) */
+export function xpToNext(level: number): number {
+  return 100 * level;
+}
+
+/**
+ * 경험치를 주고 필요하면 레벨업시킨다.
+ * 레벨업 시 속성 2점이 무작위로 붙는다(원작 사양 미확인 — 추후 수동 분배로 교체 예정).
+ * 오른 레벨 수를 돌려준다.
+ */
+export function grantXp(hero: Hero, xp: number): number {
+  hero.xp += xp;
+  let gained = 0;
+  while (hero.xp >= xpToNext(hero.level)) {
+    hero.xp -= xpToNext(hero.level);
+    hero.level++;
+    gained++;
+    for (let i = 0; i < 2; i++) {
+      hero.stats[STAT_KEYS[Math.floor(Math.random() * STAT_KEYS.length)]]++;
+    }
+  }
+  return gained;
+}
+
 export const MANUAL_REFRESH_GOLD: number = formulas.tavern.manualRefreshGold;
 export const FREE_RESTOCK_SECONDS: number = formulas.tavern.freeRestockSeconds;
 

@@ -1,6 +1,15 @@
-import type { BuildingDef, GameState, HeroStats, RaceId, ResourceKind, UnitDef } from '../core/types';
+import type {
+  BuildingDef,
+  GameState,
+  HeroStats,
+  RaceId,
+  ResourceKind,
+  UnitCount,
+  UnitDef,
+} from '../core/types';
 import { HERO_STAT_LABELS, RACE_LABELS, RESOURCE_LABELS } from '../core/types';
-import { BARRACKS_ID, canAfford } from '../core/actions';
+import { BARRACKS_ID, canAfford, type CampDef } from '../core/actions';
+import { selectArmyForMarch } from '../core/combat';
 import {
   commandLimit,
   critChance,
@@ -11,7 +20,7 @@ import {
 } from '../core/heroes';
 import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
 
-export type Tab = 'city' | 'barracks' | 'tavern' | 'codex';
+export type Tab = 'city' | 'barracks' | 'tavern' | 'battle' | 'codex';
 
 export interface RenderCallbacks {
   onUpgrade(defId: string): void;
@@ -23,6 +32,10 @@ export interface RenderCallbacks {
   onSelectBuilding(defId: string | null): void;
   /** 하단 탭 전환 */
   onSelectTab(tab: Tab): void;
+  /** 사냥터 출정 */
+  onDispatch(campId: string, heroId: string): void;
+  /** 출정 보낼 영웅 선택 */
+  onSelectHero(heroId: string): void;
   /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
   onInstantFinish(): void;
 }
@@ -31,8 +44,13 @@ export interface RenderCallbacks {
 let selectedBuilding: string | null = null;
 let activeTab: Tab = 'city';
 let message = '';
+let selectedHeroId: string | null = null;
 /** 마지막으로 그린 DOM의 구조 지문 — 바뀔 때만 다시 그린다 */
 let lastStructureKey = '';
+
+export function setSelectedHero(id: string): void {
+  selectedHeroId = id;
+}
 
 export function setMessage(text: string): void {
   message = text;
@@ -108,6 +126,34 @@ const STYLE = `
   .race-card b { font-size: 17px; display: block; margin-bottom: 6px; color: #e0b568; }
   .race-card small { color: #b5a99f; font-size: 13px; line-height: 1.5; }
 
+  /* 영웅 선택 칩 */
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chip { background: #241e1b; border: 1px solid #3a322c; color: #b5a99f;
+    min-height: 38px; font-size: 13px; }
+  .chip.on { border-color: #a0281c; color: #e0b568; }
+
+  /* 전투 리포트 */
+  .report { background: #241e1b; border: 1px solid #3a322c; border-radius: 10px;
+    margin-bottom: 8px; overflow: hidden; }
+  .report summary { padding: 13px 14px; cursor: pointer; font-size: 14px;
+    list-style: none; display: flex; align-items: center; gap: 8px; }
+  .report summary::-webkit-details-marker { display: none; }
+  .report summary::after { content: '▾'; margin-left: auto; color: #8a7d73; }
+  .report[open] summary::after { content: '▴'; }
+  .report summary .win { color: #7fd39a; font-weight: 700; }
+  .report summary .lose { color: #e08a7e; font-weight: 700; }
+  .report-body { padding: 0 14px 12px; border-top: 1px solid #3a322c; }
+  .report-body small { display: block; color: #b5a99f; font-size: 12px;
+    line-height: 1.6; margin-top: 6px; }
+  .log { margin-top: 10px; max-height: 220px; overflow-y: auto;
+    background: #1b1614; border-radius: 8px; padding: 8px 10px; }
+  .logline { font-size: 11.5px; line-height: 1.7; color: #8a7d73;
+    border-left: 2px solid #3a322c; padding-left: 8px; }
+  .logline.attacker { color: #b5c9d8; border-left-color: #2f6db3; }
+  .logline.defender { color: #d8b5b5; border-left-color: #a0281c; }
+  .logline b { color: #e0b568; }
+  .logline span { color: #6b625b; margin-right: 4px; }
+
   /* 도감 표 */
   .statwrap { overflow-x: auto; margin-top: 6px; }
   table { border-collapse: collapse; font-size: 12px; width: 100%; }
@@ -127,6 +173,7 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'city', icon: '🏰', label: '도시' },
   { id: 'barracks', icon: '⚔️', label: '병영' },
   { id: 'tavern', icon: '🍺', label: '주점' },
+  { id: 'battle', icon: '🗡️', label: '전투' },
   { id: 'codex', icon: '📖', label: '도감' },
 ];
 
@@ -297,6 +344,127 @@ function tavernTab(state: GameState, now: number): string {
     ${candidates}`;
 }
 
+function unitCountText(list: UnitCount[], unitDefs: Map<string, UnitDef>): string {
+  if (!list.length) return '없음';
+  return list.map((u) => `${unitDefs.get(u.unitId)?.nameKo ?? u.unitId} ${u.count}기`).join(', ');
+}
+
+function battleTab(
+  state: GameState,
+  camps: CampDef[],
+  unitDefs: Map<string, UnitDef>,
+  now: number,
+): string {
+  // 출정 중 상태
+  if (state.march) {
+    const remain = Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000));
+    return `<h2>출정 중</h2>
+      <div class="card">
+        <div><b>${state.march.campName}</b>
+          <small>부대가 이동 중입니다. 귀환하면 전투 결과가 표시됩니다.</small>
+          <small>귀환까지 <span id="march-countdown">${remain}</span>초</small>
+        </div>
+      </div>
+      ${reportsSection(state, unitDefs, now)}`;
+  }
+
+  const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
+  if (!hero) {
+    return `<h2>출정</h2>
+      <div class="card"><small>주점에서 영웅을 고용해야 부대를 이끌 수 있다.</small></div>
+      ${reportsSection(state, unitDefs, now)}`;
+  }
+
+  const heroPicker =
+    state.heroes.length > 1
+      ? `<div class="chips">${state.heroes
+          .map(
+            (h) =>
+              `<button class="chip ${h.id === hero.id ? 'on' : ''}" data-hero="${h.id}">${h.name} Lv.${h.level}</button>`,
+          )
+          .join('')}</div>`
+      : '';
+
+  const marchArmy = selectArmyForMarch(state.army, hero, unitDefs);
+  const armyText = unitCountText(marchArmy, unitDefs);
+  const hasArmy = marchArmy.length > 0;
+
+  const campCards = camps
+    .map((c) => {
+      const enemies = c.monsters
+        .map((m) => `${unitDefs.get(m.unitId)?.nameKo ?? m.unitId} ${m.count}기`)
+        .join(', ');
+      const lootText = Object.entries(c.loot)
+        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
+        .join(' · ');
+      return `<div class="card">
+        <div><b>${c.name}</b>
+          <small>${c.description}</small>
+          <small>적: ${enemies}</small>
+          <small>보상: ${lootText} · 왕복 ${Math.round(c.marchSeconds / 60)}분</small>
+        </div>
+        <div class="actions">
+          <button data-dispatch="${c.id}" ${hasArmy ? '' : 'disabled'}>출정</button>
+        </div>
+      </div>`;
+    })
+    .join('');
+
+  return `<h2>부대 편성</h2>
+    ${heroPicker}
+    <div class="card">
+      <div><b>${hero.name}</b> Lv.${hero.level}
+        <small>지휘 한도 ${commandLimit(hero)}명 · 치명타 ${(critChance(hero) * 100).toFixed(1)}%</small>
+        <small>출정 병력: ${armyText}</small>
+      </div>
+    </div>
+    <h2>사냥터</h2>
+    ${campCards}
+    ${reportsSection(state, unitDefs, now)}`;
+}
+
+function reportsSection(
+  state: GameState,
+  unitDefs: Map<string, UnitDef>,
+  now: number,
+): string {
+  if (!state.reports.length) return '';
+  const cards = state.reports
+    .map((r) => {
+      const mins = Math.max(0, Math.round((now - r.at) / 60000));
+      const when = mins < 1 ? '방금' : mins < 60 ? `${mins}분 전` : `${Math.round(mins / 60)}시간 전`;
+      const lootText = Object.entries(r.loot)
+        .map(([k, v]) => `${RESOURCE_LABELS[k as ResourceKind]} ${v}`)
+        .join(' · ');
+      const logLines = r.log
+        .map(
+          (l) =>
+            `<div class="logline ${l.side}">
+              <span>${l.round}R</span> ${l.attacker} → ${l.target}
+              <b>${l.damage}</b> 피해${l.killed > 0 ? ` · ${l.killed}기 처치` : ''}${l.crit ? ' 💥' : ''}
+            </div>`,
+        )
+        .join('');
+      return `<details class="report">
+        <summary>
+          <span class="${r.victory ? 'win' : 'lose'}">${r.victory ? '승리' : '패배'}</span>
+          ${r.campName} · ${when}
+        </summary>
+        <div class="report-body">
+          <small>지휘: ${r.heroName} · ${r.rounds}라운드</small>
+          <small>적 처치: ${unitCountText(r.defenderLosses, unitDefs)}</small>
+          <small>아군 손실: ${unitCountText(r.attackerLosses, unitDefs)}</small>
+          <small>생환: ${unitCountText(r.survivors, unitDefs)}</small>
+          ${lootText ? `<small>전리품: ${lootText}</small>` : ''}
+          <small>경험치 +${r.xpGained}</small>
+          <div class="log">${logLines}</div>
+        </div>
+      </details>`;
+    })
+    .join('');
+  return `<h2>전투 기록</h2>${cards}`;
+}
+
 function codexTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
   const groups: { title: string; race: string }[] = [
     { title: `${RACE_LABELS[state.raceId!]} 병종`, race: state.raceId! },
@@ -342,6 +510,7 @@ export function render(
   state: GameState,
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
+  camps: CampDef[],
   now: number,
   cb: RenderCallbacks,
 ): void {
@@ -370,11 +539,17 @@ export function render(
       <span class="bar"><i id="q-train-bar"></i></span>
       <span id="q-train-remain"></span>${instant}</div>`);
   }
+  if (state.march) {
+    queues.push(`<div class="queue"><span>🗡️ ${state.march.campName} 출정</span>
+      <span class="bar"><i id="q-march-bar"></i></span>
+      <span id="q-march-remain"></span>${instant}</div>`);
+  }
 
   let body: string;
   if (activeTab === 'city') body = cityTab(state, buildingDefs);
   else if (activeTab === 'barracks') body = barracksTab(state, unitDefs);
   else if (activeTab === 'tavern') body = tavernTab(state, now);
+  else if (activeTab === 'battle') body = battleTab(state, camps, unitDefs, now);
   else body = codexTab(state, unitDefs);
 
   const tabs = TABS.map(
@@ -395,6 +570,10 @@ export function render(
     state.tavern.candidates.map((c) => `${c.name}:${c.price}`),
     state.upgradeQueue && `${state.upgradeQueue.defId}:${state.upgradeQueue.targetLevel}`,
     state.trainQueue && `${state.trainQueue.unitId}:${state.trainQueue.count}`,
+    state.march?.campId ?? '',
+    state.reports.map((r) => r.id),
+    selectedHeroId,
+    state.heroes.map((h) => `${h.id}:${h.level}`),
   ]);
 
   if (key !== lastStructureKey) {
@@ -441,9 +620,16 @@ export function render(
     root.querySelectorAll<HTMLButtonElement>('button[data-instant]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onInstantFinish());
     });
+    root.querySelectorAll<HTMLButtonElement>('button[data-dispatch]').forEach((btn) => {
+      const hero = state.heroes.find((h) => h.id === selectedHeroId) ?? state.heroes[0];
+      btn.addEventListener('click', () => cb.onDispatch(btn.dataset.dispatch!, hero?.id ?? ''));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-hero]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onSelectHero(btn.dataset.hero!));
+    });
   }
 
-  updateDynamic(root, state, buildingDefs, unitDefs, now);
+  updateDynamic(root, state, buildingDefs, unitDefs, camps, now);
 }
 
 /** 매 틱 갱신: 숫자·타이머·캔버스·버튼 활성 상태만 손댄다 (DOM 구조는 그대로) */
@@ -452,6 +638,7 @@ function updateDynamic(
   state: GameState,
   buildingDefs: Map<string, BuildingDef>,
   unitDefs: Map<string, UnitDef>,
+  camps: CampDef[],
   now: number,
 ): void {
   root.querySelectorAll<HTMLElement>('b[data-res]').forEach((el) => {
@@ -476,6 +663,14 @@ function updateDynamic(
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     setQueue('train', state.trainQueue.finishesAt, (def?.trainSeconds ?? 0) * state.trainQueue.count);
+  }
+  if (state.march) {
+    const camp = camps.find((c) => c.id === state.march!.campId);
+    setQueue('march', state.march.returnsAt, camp?.marchSeconds ?? 0);
+    const el = root.querySelector('#march-countdown');
+    if (el) {
+      el.textContent = String(Math.max(0, Math.ceil((state.march.returnsAt - now) / 1000)));
+    }
   }
 
   const countdown = root.querySelector('#tavern-countdown');

@@ -1,0 +1,81 @@
+{
+  "$comment": "야외 사냥터. 원작에도 야외 몬스터 사냥/자원지 개념이 있었으나(GG게임·디지털타임스 기사) 구체적 구성·보상 수치는 자료가 없어 전부 estimate. 몬스터는 4399 실측 스탯을 그대로 쓰되 편성·보상만 추정한 것.",
+  "camps": [
+    {
+      "id": "wolf-den",
+      "name": "늑대 소굴",
+      "description": "영지 외곽을 어슬렁거리는 놀 무리.",
+      "marchSeconds": 60,
+      "monsters": [{ "unitId": "neutral-t1", "count": 10 }],
+      "loot": { "food": 300, "gold": 120 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "lizard-nest",
+      "name": "도마뱀 서식지",
+      "description": "습지에 자리 잡은 리자드맨 부족.",
+      "marchSeconds": 150,
+      "monsters": [{ "unitId": "neutral-t2", "count": 12 }],
+      "loot": { "wood": 250, "food": 400, "gold": 220 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "serpent-swarm",
+      "name": "용파리 군체",
+      "description": "빠르게 날아드는 서펜트 플라이 떼. 마법 공격에 주의.",
+      "marchSeconds": 240,
+      "monsters": [{ "unitId": "neutral-t3", "count": 10 }],
+      "loot": { "wood": 400, "stone": 300, "crystal": 40, "gold": 350 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "basilisk-lair",
+      "name": "바실리스크 둥지",
+      "description": "돌투성이 협곡에 사는 대형 파충류.",
+      "marchSeconds": 400,
+      "monsters": [{ "unitId": "neutral-t4", "count": 10 }],
+      "loot": { "stone": 700, "crystal": 80, "gold": 600 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "minotaur-canyon",
+      "name": "미노타우로스 협곡",
+      "description": "단단한 방어를 자랑하는 괴수 무리.",
+      "marchSeconds": 600,
+      "monsters": [{ "unitId": "neutral-t5", "count": 10 }],
+      "loot": { "wood": 900, "stone": 900, "crystal": 150, "gold": 1000 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "wyvern-peak",
+      "name": "와이번 봉우리",
+      "description": "높은 마법 방어를 지닌 비룡의 둥지.",
+      "marchSeconds": 900,
+      "monsters": [{ "unitId": "neutral-t6", "count": 10 }],
+      "loot": { "crystal": 350, "gold": 1800, "food": 1200 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "hydra-marsh",
+      "name": "히드라 늪",
+      "description": "중립 몬스터 중 최강. 어설픈 부대로는 전멸한다.",
+      "marchSeconds": 1200,
+      "monsters": [{ "unitId": "neutral-t7", "count": 8 }],
+      "loot": { "crystal": 700, "gold": 4000, "stone": 1500 },
+      "provenance": "estimate"
+    },
+    {
+      "id": "demon-outpost",
+      "name": "악마 전초기지",
+      "description": "아산 대륙에 발을 들인 악마 군세의 전진 거점.",
+      "marchSeconds": 1500,
+      "monsters": [
+        { "unitId": "devil-t1", "count": 25 },
+        { "unitId": "devil-t3", "count": 10 },
+        { "unitId": "devil-t4", "count": 6 }
+      ],
+      "loot": { "crystal": 500, "gold": 3000, "wood": 1200, "stone": 1200 },
+      "provenance": "estimate"
+    }
+  ]
+}

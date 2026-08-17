@@ -1,4 +1,8 @@
-import type { BuildingDef, GameState, UnitDef } from './types';
+import type { BuildingDef, GameState, Resources, UnitDef } from './types';
+import { grantXp } from './heroes';
+
+/** 리포트 보관 개수 — Supabase jsonb 크기를 억제한다 */
+const MAX_REPORTS = 10;
 
 /**
  * 경과 시간만큼 상태를 전진시키는 순수 함수.
@@ -18,13 +22,16 @@ export function advance(
 
   const next: GameState = structuredClone(state);
 
-  type Ev = { at: number; kind: 'build' | 'train' };
+  type Ev = { at: number; kind: 'build' | 'train' | 'march' };
   const events: Ev[] = [];
   if (next.upgradeQueue && next.upgradeQueue.finishesAt <= now) {
     events.push({ at: next.upgradeQueue.finishesAt, kind: 'build' });
   }
   if (next.trainQueue && next.trainQueue.finishesAt <= now) {
     events.push({ at: next.trainQueue.finishesAt, kind: 'train' });
+  }
+  if (next.march && next.march.returnsAt <= now) {
+    events.push({ at: next.march.returnsAt, kind: 'march' });
   }
   events.sort((a, b) => a.at - b.at);
 
@@ -39,6 +46,8 @@ export function advance(
       const { unitId, count } = next.trainQueue;
       next.army[unitId] = (next.army[unitId] ?? 0) + count;
       next.trainQueue = null;
+    } else if (ev.kind === 'march' && next.march) {
+      finishMarch(next);
     }
     from = ev.at;
   }
@@ -46,6 +55,26 @@ export function advance(
 
   next.updatedAt = now;
   return next;
+}
+
+/** 부대 귀환: 생존자 복귀 + 전리품·경험치 반영 + 리포트 보관 */
+function finishMarch(state: GameState): void {
+  const march = state.march;
+  if (!march) return;
+  const { report } = march;
+
+  for (const { unitId, count } of report.survivors) {
+    state.army[unitId] = (state.army[unitId] ?? 0) + count;
+  }
+  for (const [k, v] of Object.entries(report.loot) as [keyof Resources, number][]) {
+    state.resources[k] += v;
+  }
+  const hero = state.heroes.find((h) => h.id === march.heroId);
+  if (hero) grantXp(hero, report.xpGained);
+
+  state.reports.unshift(report);
+  state.reports.length = Math.min(state.reports.length, MAX_REPORTS);
+  state.march = null;
 }
 
 /** from~to 구간의 자원 생산과 병력 식량 소모를 반영 */

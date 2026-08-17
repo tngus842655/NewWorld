@@ -135,6 +135,52 @@ export interface TavernState {
   refreshedAt: number;
 }
 
+// ── 전투 ──────────────────────────────────────────────────────
+
+export interface UnitCount {
+  unitId: string;
+  count: number;
+}
+
+export interface BattleLogEntry {
+  round: number;
+  /** 공격 측 */
+  side: 'attacker' | 'defender';
+  attacker: string;
+  target: string;
+  damage: number;
+  killed: number;
+  crit: boolean;
+}
+
+export interface BattleReport {
+  id: string;
+  at: number; // epoch ms
+  campId: string;
+  campName: string;
+  heroName: string;
+  victory: boolean;
+  rounds: number;
+  log: BattleLogEntry[];
+  /** 아군 전사 */
+  attackerLosses: UnitCount[];
+  /** 적 처치 */
+  defenderLosses: UnitCount[];
+  survivors: UnitCount[];
+  loot: Partial<Resources>;
+  xpGained: number;
+}
+
+export interface MarchJob {
+  campId: string;
+  campName: string;
+  heroId: string;
+  /** 부대가 돌아오는 시각 — 이때 전투 결과가 반영된다 */
+  returnsAt: number;
+  /** 출정 시점에 미리 계산해 둔 전투 결과 */
+  report: BattleReport;
+}
+
 export interface GameState {
   /** 저장 데이터 버전 — migrate()의 일회성 마이그레이션 기준 */
   stateVersion?: number;
@@ -154,4 +200,8 @@ export interface GameState {
   upgradeQueue: UpgradeJob | null;
   /** 훈련 큐도 한 번에 하나 */
   trainQueue: TrainJob | null;
+  /** 출정 중인 부대 (한 번에 하나) */
+  march: MarchJob | null;
+  /** 최근 전투 리포트 (최신순, 최대 10건) */
+  reports: BattleReport[];
 }
