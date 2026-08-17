@@ -2,19 +2,23 @@ import buildingData from '../data/buildings/base.json';
 import humanUnits from '../data/units/human.json';
 import elfUnits from '../data/units/elf.json';
 import undeadUnits from '../data/units/undead.json';
+import devilUnits from '../data/units/devil.json';
+import neutralUnits from '../data/units/neutral.json';
 import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
 import { advance } from './core/tick';
 import { hireHero, refreshTavern, startTraining, startUpgrade } from './core/actions';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { createStorage } from './db/storage';
-import { render, setMessage } from './ui/render';
+import { render, setMessage, setTab, type Tab } from './ui/render';
 
 const buildingDefs = new Map<string, BuildingDef>(
   (buildingData.buildings as BuildingDef[]).map((d) => [d.id, d]),
 );
 
+// 악마·중립은 훈련 대상이 아니지만 도감·전투(M3)에 필요해 함께 싣는다.
+// 훈련 목록은 raceId로 걸러지므로 섞이지 않는다.
 const unitDefs = new Map<string, UnitDef>(
-  [humanUnits, elfUnits, undeadUnits]
+  [humanUnits, elfUnits, undeadUnits, devilUnits, neutralUnits]
     .flatMap((r) => r.units as unknown as UnitDef[])
     .map((u) => [u.id, u]),
 );
@@ -110,6 +114,11 @@ async function main(): Promise<void> {
       rerender(now);
     },
     onSelectBuilding() {
+      rerender(Date.now());
+    },
+    onSelectTab(tab: Tab) {
+      setTab(tab);
+      setMessage('');
       rerender(Date.now());
     },
     onInstantFinish() {

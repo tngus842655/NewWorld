@@ -6,19 +6,21 @@ import type { BuildingDef, GameState } from '../core/types';
  * 파일이 있으면 자동으로 그 이미지를 대신 사용한다 — 아트 교체는 파일 교체로 끝.
  */
 
+// 모바일 우선: 9×9 격자로 좁혀 세로 화면에서도 타일 하나가 손가락으로 누를 만한
+// 크기(≈40px @ 375px 뷰포트)가 되도록 한다.
 export const TILE = 48;
-export const GRID = 13;
-export const CITY_SIZE = TILE * GRID; // 624
+export const GRID = 9;
+export const CITY_SIZE = TILE * GRID; // 432
 
 /** 건물별 부지 위치(타일 좌표) — 원작처럼 성벽 안에 흩어 배치 */
 const PLOT_POS: Record<string, [number, number]> = {
-  sawmill: [3, 4],
-  quarry: [7, 3],
-  farm: [3, 8],
-  'crystal-mine': [9, 6],
-  market: [6, 6],
-  barracks: [8, 9],
-  tavern: [5, 9],
+  quarry: [3, 2],
+  'crystal-mine': [5, 2],
+  sawmill: [2, 3],
+  market: [4, 3],
+  barracks: [6, 4],
+  farm: [2, 5],
+  tavern: [4, 5],
 };
 
 /** 플레이스홀더 아이콘/지붕색 */
@@ -70,8 +72,8 @@ export function drawCity(
   }
 
   // ── 팔각 성벽 ──
-  const m = TILE * 1.2; // 여백
-  const c = TILE * 3.2; // 모서리 절단
+  const m = TILE * 1.0; // 여백
+  const c = TILE * 2.2; // 모서리 절단
   const S = CITY_SIZE;
   const octagon: [number, number][] = [
     [m + c, m], [S - m - c, m], [S - m, m + c], [S - m, S - m - c],
