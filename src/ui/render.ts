@@ -9,6 +9,7 @@ import {
   statTotal,
   TAVERN_ID,
 } from '../core/heroes';
+import { buildingAt, CITY_SIZE, drawCity, TILE } from './cityview';
 
 export interface RenderCallbacks {
   onUpgrade(defId: string): void;
@@ -16,7 +17,14 @@ export interface RenderCallbacks {
   onSelectRace(raceId: RaceId): void;
   onHire(candidateIndex: number): void;
   onRefreshTavern(): void;
+  /** 도시 뷰에서 건물(또는 빈 곳)을 클릭 — 리렌더 트리거용 */
+  onSelectBuilding(defId: string | null): void;
+  /** 테스트용: 진행 중인 건설/훈련 큐 즉시 완료 (dev 전용) */
+  onInstantFinish(): void;
 }
+
+/** 도시 뷰에서 선택된 건물 (UI 전용 상태) */
+let selectedBuilding: string | null = null;
 
 const STYLE = `
   body { font-family: 'Malgun Gothic', sans-serif; background: #1b1614; color: #ece5df; margin: 0; }
@@ -109,31 +117,42 @@ export function render(
     .map((k) => `<span>${RESOURCE_LABELS[k]} <b>${Math.floor(state.resources[k])}</b></span>`)
     .join('');
 
-  // ── 건물 ──
-  const buildings = state.buildings
-    .map((b) => {
-      const def = buildingDefs.get(b.defId);
-      if (!def) return '';
-      const nextLevel = def.levels[b.level];
-      let action = '<small>최대 레벨</small>';
-      if (nextLevel) {
-        const disabled =
-          state.upgradeQueue !== null || !canAfford(state.resources, nextLevel.upgradeCost);
-        action = `<button data-upgrade="${def.id}" ${disabled ? 'disabled' : ''}>
-          Lv.${b.level + 1} (${costText(nextLevel.upgradeCost)})</button>`;
-      }
-      return `<div class="card">
-        <div><b>${def.name}</b> Lv.${b.level}<small>${def.description}</small></div>
-        <div class="actions">${action}</div>
-      </div>`;
-    })
-    .join('');
+  // ── 도시 뷰 + 선택 건물 패널 ──
+  let buildingPanel = '<div class="card"><small>도시의 건물(또는 빈 터)을 클릭해 관리하세요.</small></div>';
+  const sel = selectedBuilding ? state.buildings.find((b) => b.defId === selectedBuilding) : null;
+  const selDef = sel ? buildingDefs.get(sel.defId) : null;
+  if (sel && selDef) {
+    const nextLevel = selDef.levels[sel.level];
+    let action = '<small>최대 레벨</small>';
+    if (nextLevel) {
+      const disabled =
+        state.upgradeQueue !== null || !canAfford(state.resources, nextLevel.upgradeCost);
+      const verb = sel.level === 0 ? '건설' : `Lv.${sel.level + 1} 확장`;
+      action = `<button data-upgrade="${selDef.id}" ${disabled ? 'disabled' : ''}>
+        ${verb} (${costText(nextLevel.upgradeCost)} · ${nextLevel.upgradeSeconds}초)</button>`;
+    }
+    const produce =
+      selDef.produces && sel.level >= 1
+        ? `<small>생산: ${RESOURCE_LABELS[selDef.produces]} ${selDef.levels[sel.level - 1]?.productionPerHour ?? 0}/시간</small>`
+        : '';
+    buildingPanel = `<div class="card">
+      <div><b>${selDef.name}</b> ${sel.level === 0 ? '(공터)' : `Lv.${sel.level}`}
+        <small>${selDef.description}</small>${produce}
+      </div>
+      <div class="actions">${action}</div>
+    </div>`;
+  }
+
+  // 테스트용 즉시완료 버튼은 dev 서버에서만 노출
+  const instantBtn = import.meta.env.DEV
+    ? ' <button data-instant style="padding:2px 8px;font-size:12px;">⚡ 즉시완료</button>'
+    : '';
 
   let buildQueue = '';
   if (state.upgradeQueue) {
     const def = buildingDefs.get(state.upgradeQueue.defId);
     const remain = Math.max(0, Math.ceil((state.upgradeQueue.finishesAt - now) / 1000));
-    buildQueue = `<div class="queue">🔨 ${def?.name ?? '?'} → Lv.${state.upgradeQueue.targetLevel} (${remain}초 남음)</div>`;
+    buildQueue = `<div class="queue">🔨 ${def?.name ?? '?'} → Lv.${state.upgradeQueue.targetLevel} (${remain}초 남음)${instantBtn}</div>`;
   }
 
   // ── 병력 ──
@@ -236,7 +255,7 @@ export function render(
   if (state.trainQueue) {
     const def = unitDefs.get(state.trainQueue.unitId);
     const remain = Math.max(0, Math.ceil((state.trainQueue.finishesAt - now) / 1000));
-    trainQueue = `<div class="queue">⚔️ ${def?.nameKo ?? '?'} ×${state.trainQueue.count} 훈련 중 (${remain}초 남음)</div>`;
+    trainQueue = `<div class="queue">⚔️ ${def?.nameKo ?? '?'} ×${state.trainQueue.count} 훈련 중 (${remain}초 남음)${instantBtn}</div>`;
   }
 
   root.innerHTML = `
@@ -244,17 +263,31 @@ export function render(
     <div class="resources">${resources}</div>
     ${buildQueue}${trainQueue}
     <div class="msg">${message}</div>
+    <h2>도시</h2>
+    <canvas id="cityview" width="${CITY_SIZE}" height="${CITY_SIZE}"
+      style="width:100%;max-width:${CITY_SIZE}px;display:block;margin:0 auto;border-radius:10px;cursor:pointer;"></canvas>
+    ${buildingPanel}
     <h2>병력</h2>
     <div class="army">${army}</div>
     <h2>영웅</h2>
     ${heroList}
     <h2>주점 (Lv.${tavernLevel})</h2>
     ${tavernHtml}
-    <h2>건물</h2>
-    ${buildings}
     <h2>훈련 (병영 Lv.${barracksLevel})</h2>
     ${training}
   `;
+
+  const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
+  if (canvas) {
+    drawCity(canvas, state, buildingDefs, selectedBuilding, now);
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) * canvas.width) / rect.width;
+      const y = ((e.clientY - rect.top) * canvas.height) / rect.height;
+      selectedBuilding = buildingAt(Math.floor(x / TILE), Math.floor(y / TILE));
+      cb.onSelectBuilding(selectedBuilding);
+    });
+  }
 
   root.querySelectorAll<HTMLButtonElement>('button[data-upgrade]').forEach((btn) => {
     btn.addEventListener('click', () => cb.onUpgrade(btn.dataset.upgrade!));
@@ -270,4 +303,7 @@ export function render(
   root
     .querySelector<HTMLButtonElement>('button[data-refresh-tavern]')
     ?.addEventListener('click', () => cb.onRefreshTavern());
+  root.querySelectorAll<HTMLButtonElement>('button[data-instant]').forEach((btn) => {
+    btn.addEventListener('click', () => cb.onInstantFinish());
+  });
 }

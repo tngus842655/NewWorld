@@ -109,6 +109,18 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(now);
     },
+    onSelectBuilding() {
+      rerender(Date.now());
+    },
+    onInstantFinish() {
+      // 테스트 전용: 큐 완료 시각을 현재로 당기고 advance로 정산
+      const now = Date.now();
+      if (state.upgradeQueue) state.upgradeQueue.finishesAt = now;
+      if (state.trainQueue) state.trainQueue.finishesAt = now;
+      state = advance(state, buildingDefs, unitDefs, now);
+      dirty = true;
+      rerender(now);
+    },
   };
 
   // 1초 틱: 진행 반영 + 렌더. 저장은 변경이 있거나 30초마다.
