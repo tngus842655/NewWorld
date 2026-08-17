@@ -58,6 +58,22 @@
       ]
     },
     {
+      "id": "barracks",
+      "name": "병영",
+      "description": "유닛을 훈련한다. 병영 레벨 이하 병계(티어)의 유닛을 훈련할 수 있다.",
+      "provenance": "estimate",
+      "levels": [
+        { "upgradeCost": { "wood": 100, "stone": 80, "gold": 100 }, "upgradeSeconds": 30 },
+        { "upgradeCost": { "wood": 220, "stone": 180, "gold": 220 }, "upgradeSeconds": 90 },
+        { "upgradeCost": { "wood": 480, "stone": 400, "gold": 480 }, "upgradeSeconds": 240 },
+        { "upgradeCost": { "wood": 1000, "stone": 850, "gold": 1000 }, "upgradeSeconds": 600 },
+        { "upgradeCost": { "wood": 2100, "stone": 1800, "gold": 2100, "crystal": 200 }, "upgradeSeconds": 1500 },
+        { "upgradeCost": { "wood": 4400, "stone": 3800, "gold": 4400, "crystal": 500 }, "upgradeSeconds": 3600 },
+        { "upgradeCost": { "wood": 9000, "stone": 7800, "gold": 9000, "crystal": 1200 }, "upgradeSeconds": 8400 },
+        { "upgradeCost": { "wood": 18500, "stone": 16000, "gold": 18500, "crystal": 2800 }, "upgradeSeconds": 18000 }
+      ]
+    },
+    {
       "id": "market",
       "name": "시장",
       "description": "금화를 생산한다.",

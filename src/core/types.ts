@@ -38,6 +38,14 @@ export interface BuildingDef {
   provenance: Provenance;
 }
 
+export type RaceId = 'human' | 'elf' | 'undead';
+
+export const RACE_LABELS: Record<RaceId, string> = {
+  human: '휴먼',
+  elf: '엘프',
+  undead: '언데드',
+};
+
 export interface UnitStatRow {
   level: number;
   [stat: string]: number;
@@ -48,11 +56,21 @@ export interface UnitDef {
   raceId: string;
   nameKo: string;
   nameCn?: string;
+  /** 병계 (원작 兵阶, 1~8) */
   tier: number;
+  /** 훈련 비용 */
+  cost: Partial<Resources>;
+  speed?: number;
+  /** 시간당 식량 소모 (원작 每小时消耗粮食) */
+  foodUpkeepPerHour?: number;
+  /** 1기 훈련 시간(초) */
+  trainSeconds?: number;
   /** 스탯 컬럼명 (표시 순서) */
   statColumns: string[];
   stats: UnitStatRow[];
-  notes?: string;
+  descriptionCn?: string;
+  imageUrls?: string[];
+  sourceUrl?: string;
   provenance: Provenance;
 }
 
@@ -69,11 +87,23 @@ export interface UpgradeJob {
   finishesAt: number; // epoch ms
 }
 
+export interface TrainJob {
+  unitId: string;
+  count: number;
+  finishesAt: number; // epoch ms
+}
+
 export interface GameState {
   /** 마지막으로 틱이 반영된 시각 (epoch ms) — 오프라인 진행 계산의 기준 */
   updatedAt: number;
+  /** 선택 종족 — null이면 종족 선택 화면 */
+  raceId: RaceId | null;
   resources: Resources;
   buildings: CityBuilding[];
+  /** 보유 병력: 유닛 id → 수량 */
+  army: Record<string, number>;
   /** 원작처럼 건설 큐는 한 번에 하나 */
   upgradeQueue: UpgradeJob | null;
+  /** 훈련 큐도 한 번에 하나 */
+  trainQueue: TrainJob | null;
 }

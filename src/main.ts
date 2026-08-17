@@ -1,40 +1,84 @@
 import buildingData from '../data/buildings/base.json';
-import type { BuildingDef, GameState } from './core/types';
+import humanUnits from '../data/units/human.json';
+import elfUnits from '../data/units/elf.json';
+import undeadUnits from '../data/units/undead.json';
+import type { BuildingDef, GameState, RaceId, UnitDef } from './core/types';
 import { advance } from './core/tick';
-import { startUpgrade } from './core/actions';
+import { startTraining, startUpgrade } from './core/actions';
 import { createStorage } from './db/storage';
 import { render, setMessage } from './ui/render';
 
-const defs = new Map<string, BuildingDef>(
+const buildingDefs = new Map<string, BuildingDef>(
   (buildingData.buildings as BuildingDef[]).map((d) => [d.id, d]),
+);
+
+const unitDefs = new Map<string, UnitDef>(
+  [humanUnits, elfUnits, undeadUnits]
+    .flatMap((r) => r.units as unknown as UnitDef[])
+    .map((u) => [u.id, u]),
 );
 
 function newGame(now: number): GameState {
   return {
     updatedAt: now,
-    resources: { wood: 200, stone: 200, food: 200, crystal: 0, gold: 150 },
-    buildings: [...defs.keys()].map((defId) => ({ defId, level: 0 })),
+    raceId: null,
+    // 시작 자원은 추정치. 수정 50은 1계 유닛(수정 10/기) 초반 훈련용
+    resources: { wood: 200, stone: 200, food: 200, crystal: 50, gold: 150 },
+    buildings: [...buildingDefs.keys()].map((defId) => ({ defId, level: 0 })),
+    army: {},
     upgradeQueue: null,
+    trainQueue: null,
   };
+}
+
+/** 이전 버전 저장 데이터에 새 필드를 채워 넣는다 */
+function migrate(state: GameState): GameState {
+  state.raceId ??= null;
+  state.army ??= {};
+  state.trainQueue ??= null;
+  // 이후 추가된 건물(병영 등)을 기존 도시에 등록
+  for (const defId of buildingDefs.keys()) {
+    if (!state.buildings.some((b) => b.defId === defId)) {
+      state.buildings.push({ defId, level: 0 });
+    }
+  }
+  return state;
 }
 
 async function main(): Promise<void> {
   const root = document.getElementById('app')!;
   const storage = await createStorage();
 
-  let state = (await storage.load()) ?? newGame(Date.now());
+  let state = migrate((await storage.load()) ?? newGame(Date.now()));
 
   let dirty = false;
+  const rerender = (now: number) => render(root, state, buildingDefs, unitDefs, now, callbacks);
+
   const callbacks = {
+    onSelectRace(raceId: RaceId) {
+      state.raceId = raceId;
+      dirty = true;
+      rerender(Date.now());
+    },
     onUpgrade(defId: string) {
-      const def = defs.get(defId);
+      const def = buildingDefs.get(defId);
       if (!def) return;
       const now = Date.now();
-      state = advance(state, defs, now);
+      state = advance(state, buildingDefs, unitDefs, now);
       const result = startUpgrade(state, def, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
-      render(root, state, defs, now, callbacks);
+      rerender(now);
+    },
+    onTrain(unitId: string, count: number) {
+      const def = unitDefs.get(unitId);
+      if (!def) return;
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, now);
+      const result = startTraining(state, def, count, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
     },
   };
 
@@ -42,10 +86,12 @@ async function main(): Promise<void> {
   let lastSave = Date.now();
   setInterval(() => {
     const now = Date.now();
-    const prevQueue = state.upgradeQueue;
-    state = advance(state, defs, now);
-    if (prevQueue && !state.upgradeQueue) dirty = true; // 건설 완료됨
-    render(root, state, defs, now, callbacks);
+    const hadJobs = { build: !!state.upgradeQueue, train: !!state.trainQueue };
+    state = advance(state, buildingDefs, unitDefs, now);
+    if ((hadJobs.build && !state.upgradeQueue) || (hadJobs.train && !state.trainQueue)) {
+      dirty = true; // 큐 완료됨
+    }
+    rerender(now);
     if (dirty || now - lastSave > 30_000) {
       void storage.save(state);
       dirty = false;
@@ -53,7 +99,7 @@ async function main(): Promise<void> {
     }
   }, 1000);
 
-  render(root, state, defs, Date.now(), callbacks);
+  rerender(Date.now());
 }
 
 void main();
