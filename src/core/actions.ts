@@ -10,6 +10,15 @@ import type {
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle } from './combat';
 import { equipTotals } from './equipment';
+import {
+  buildingAtCell,
+  isFreeCell,
+  isHqCell,
+  isPlaced,
+  inGrid,
+  requirementText,
+  unmetRequirements,
+} from './city';
 
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
@@ -91,6 +100,7 @@ function pay(have: Resources, cost: Partial<Resources>): void {
 export function startUpgrade(
   state: GameState,
   def: BuildingDef,
+  buildingDefs: Map<string, BuildingDef>,
   now: number,
 ): ActionResult {
   if (state.upgradeQueue) return { ok: false, reason: '건설 큐가 이미 사용 중입니다.' };
@@ -102,6 +112,13 @@ export function startUpgrade(
   const levelDef = def.levels[targetLevel - 1];
   if (!levelDef) return { ok: false, reason: '이미 최대 레벨입니다.' };
 
+  // 0→1레벨은 '건설'이라 부지와 선행 조건이 필요하다
+  if (building.level === 0) {
+    if (!isPlaced(building)) return { ok: false, reason: '먼저 빈 부지를 골라야 합니다.' };
+    const unmet = unmetRequirements(state, def);
+    if (unmet.length) return { ok: false, reason: requirementText(unmet, buildingDefs) };
+  }
+
   if (!canAfford(state.resources, levelDef.upgradeCost)) {
     return { ok: false, reason: '자원이 부족합니다.' };
   }
@@ -112,6 +129,55 @@ export function startUpgrade(
     targetLevel,
     finishesAt: now + levelDef.upgradeSeconds * 1000,
   };
+  return { ok: true };
+}
+
+/**
+ * 빈 부지에 새 건물을 앉히고 곧바로 1레벨 건설을 시작한다.
+ * 부지 선택과 건설이 한 동작이라, 건설이 실패하면 부지도 되돌린다.
+ */
+export function constructBuilding(
+  state: GameState,
+  def: BuildingDef,
+  buildingDefs: Map<string, BuildingDef>,
+  c: number,
+  r: number,
+  now: number,
+): ActionResult {
+  const building = state.buildings.find((b) => b.defId === def.id);
+  if (!building) return { ok: false, reason: '도시에 없는 건물입니다.' };
+  if (isPlaced(building)) return { ok: false, reason: '이미 부지에 있는 건물입니다.' };
+  if (!isFreeCell(state, c, r)) return { ok: false, reason: '건설할 수 없는 부지입니다.' };
+
+  building.col = c;
+  building.row = r;
+  const result = startUpgrade(state, def, buildingDefs, now);
+  if (!result.ok) {
+    delete building.col;
+    delete building.row;
+  }
+  return result;
+}
+
+/**
+ * 건물을 다른 칸으로 옮긴다(드래그 앤 드롭).
+ * 목적지에 다른 건물이 있으면 자리를 맞바꾼다 — 꽉 찬 부지에서도 정리가 되도록.
+ */
+export function moveBuilding(state: GameState, defId: string, c: number, r: number): ActionResult {
+  const building = state.buildings.find((b) => b.defId === defId);
+  if (!building || !isPlaced(building)) return { ok: false, reason: '옮길 수 없는 건물입니다.' };
+  if (!inGrid(c, r)) return { ok: false, reason: '부지 밖으로는 옮길 수 없습니다.' };
+  if (isHqCell(c, r)) return { ok: false, reason: '사령부 자리에는 놓을 수 없습니다.' };
+  if (building.col === c && building.row === r) return { ok: true };
+
+  const occupant = buildingAtCell(state, c, r);
+  const from = { col: building.col, row: building.row };
+  building.col = c;
+  building.row = r;
+  if (occupant) {
+    occupant.col = from.col;
+    occupant.row = from.row;
+  }
   return { ok: true };
 }
 

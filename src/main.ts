@@ -11,18 +11,21 @@ import { advance } from './core/tick';
 import {
   abandonNode,
   clearReports,
+  constructBuilding,
   deleteReport,
   discardItem,
   dispatchMarch,
   equipItem,
   markReportRead,
   hireHero,
+  moveBuilding,
   refreshTavern,
   startResearch,
   startTraining,
   startUpgrade,
   unequipItem,
 } from './core/actions';
+import { DEFAULT_SLOTS, repairLayout } from './core/city';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
 import { createStorage, StaleStateError } from './db/storage';
@@ -46,7 +49,7 @@ const unitDefs = new Map<string, UnitDef>(
     .map((u) => [u.id, u]),
 );
 
-const STATE_VERSION = 3;
+const STATE_VERSION = 4;
 
 /** 판타지 → SF 컨셉 전환 시 옛 식별자를 새 것으로 옮긴다 */
 const RACE_MIGRATION: Record<string, RaceId> = {
@@ -140,6 +143,21 @@ function migrate(state: GameState): GameState {
       state.buildings.push({ defId, level: 0 });
     }
   }
+  // v4: 건물 배치가 코드 상수에서 저장 상태로 옮겨왔다(드래그 이동).
+  // 이미 지은 건물은 예전 화면과 같은 자리에 그대로 두고,
+  // 짓지 않은 건물은 좌표 없이 둬서 건설 목록으로 돌린다.
+  if ((state.stateVersion ?? 1) < 4) {
+    for (const b of state.buildings) {
+      const slot = DEFAULT_SLOTS[b.defId];
+      if (!slot) continue;
+      if (b.level >= 1 || state.upgradeQueue?.defId === b.defId) {
+        b.col = slot.c;
+        b.row = slot.r;
+      }
+    }
+    state.stateVersion = 4;
+  }
+  repairLayout(state);
   return state;
 }
 
@@ -164,10 +182,26 @@ async function main(): Promise<void> {
       if (!def) return;
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
-      const result = startUpgrade(state, def, now);
+      const result = startUpgrade(state, def, buildingDefs, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);
+    },
+    onPlaceBuilding(defId: string, c: number, r: number) {
+      const def = buildingDefs.get(defId);
+      if (!def) return;
+      const now = Date.now();
+      state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
+      const result = constructBuilding(state, def, buildingDefs, c, r, now);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(now);
+    },
+    onMoveBuilding(defId: string, c: number, r: number) {
+      const result = moveBuilding(state, defId, c, r);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(Date.now());
     },
     onTrain(unitId: string, count: number) {
       const def = unitDefs.get(unitId);

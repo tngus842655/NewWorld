@@ -1,4 +1,15 @@
-import type { BuildingDef, GameState } from '../core/types';
+import type { GameState } from '../core/types';
+import {
+  buildingAtCell,
+  GRID_COLS,
+  GRID_ROWS,
+  HQ_COL,
+  HQ_ID,
+  HQ_ROW,
+  isHqCell,
+  placedBuildings,
+  type Cell,
+} from '../core/city';
 
 /**
  * 기지 화면 — 정면 시점 + 바둑판 부지.
@@ -7,10 +18,11 @@ import type { BuildingDef, GameState } from '../core/types';
  * 바닥은 6×6=36칸 바둑판이고 한 칸에 건물 하나가 선다. 건물만 캐비닛 투영
  * (앞면 + 윗면 + 우측면)으로 그려 평면처럼 보이지 않게 한다.
  *
- * 부지 36칸을 미리 확보해 두었으므로, 건물이 늘어도 화면을 다시 설계할 필요가
- * 없다 — SLOTS 에 한 줄 추가하면 그 칸에 들어간다.
+ * 어느 건물이 어느 칸에 있는지는 저장 상태(CityBuilding.col/row)가 들고 있다.
+ * 여기서는 그걸 읽어 그리기만 하고, 드래그 중에는 setDragGhost()로 받은
+ * 미리보기를 얹는다.
  *
- * public/assets/city/base.png 를 두면 그 이미지를 배경으로 대신 쓴다.
+ * public/assets/city/base.png 를 두면 그 이미지를 바닥 배경으로 대신 쓴다.
  */
 
 export const CITY_W = 480;
@@ -18,15 +30,12 @@ export const CITY_H = 430;
 
 /** 성벽 두께 */
 const WALL = 13;
-/** 부지 격자 */
-const COLS = 6;
-const ROWS = 6;
 const AREA_X = WALL;
 const AREA_Y = WALL;
 const AREA_W = CITY_W - WALL * 2;
 const AREA_H = CITY_H - WALL * 2;
-const CW = AREA_W / COLS; // 칸 너비 ≈75.7
-const CH = AREA_H / ROWS; // 칸 높이 ≈67.3
+const CW = AREA_W / GRID_COLS; // 칸 너비 ≈75.7
+const CH = AREA_H / GRID_ROWS; // 칸 높이 ≈67.3
 
 /** 건물 깊이(캐비닛 투영에서 뒤로 밀리는 양) */
 const DX = 9;
@@ -49,31 +58,10 @@ const C = {
   bodySide: '#a89c80',
   door: '#5f4526',
   glass: '#7fb6d8',
+  ok: '#7fd39a',
+  bad: '#e08a7e',
+  gold: '#ffd479',
 };
-
-interface Slot {
-  id: string;
-  c: number;
-  r: number;
-}
-
-/** 부지 36칸 중 현재 쓰는 11칸 */
-const SLOTS: Slot[] = [
-  { id: 'sawmill', c: 0, r: 0 },
-  { id: 'quarry', c: 2, r: 0 },
-  { id: 'crystal-mine', c: 4, r: 0 },
-  { id: 'radar', c: 5, r: 1 },
-  { id: 'barracks', c: 0, r: 2 },
-  { id: 'academy', c: 4, r: 2 },
-  { id: 'farm', c: 1, r: 3 },
-  { id: 'market', c: 5, r: 3 },
-  { id: 'rampart', c: 0, r: 4 },
-  { id: 'tavern', c: 2, r: 4 },
-  { id: 'turret', c: 5, r: 5 },
-];
-
-/** 중앙 사령부 (기능 없음) — 2×2 칸 */
-const HQ = { c: 2, r: 1 };
 
 /** 건물별 지붕색과 표식 */
 const LOOK: Record<string, { roof: string; icon: string }> = {
@@ -90,9 +78,27 @@ const LOOK: Record<string, { roof: string; icon: string }> = {
   radar: { roof: '#4a90a8', icon: '📡' },
 };
 
+/** 마지막으로 그린 건물들의 클릭 영역 — 건물은 칸보다 위로 솟으므로 칸 계산과 별도로 둔다 */
 const hitAreas: { id: string; x: number; y: number; w: number; h: number }[] = [];
 
-// ── 배경 이미지 (있으면 대체) ────────────────────────────────
+/** 드래그 중인 건물의 미리보기 */
+export interface DragGhost {
+  defId: string;
+  /** 손가락(포인터) 위치 — 캔버스 좌표 */
+  px: number;
+  py: number;
+  /** 놓일 칸. 격자 밖이면 null */
+  cell: Cell | null;
+  /** 여기 놓을 수 있는가 */
+  valid: boolean;
+}
+let ghost: DragGhost | null = null;
+
+export function setDragGhost(next: DragGhost | null): void {
+  ghost = next;
+}
+
+// ── 배경 이미지 (있으면 바닥 대체) ───────────────────────────
 const cityImg = new Image();
 const CANDIDATES = ['/assets/city/base.png', '/assets/city/base.jpg'];
 let tryIdx = 0;
@@ -103,12 +109,21 @@ cityImg.onerror = () => {
 cityImg.src = CANDIDATES[0];
 const imgReady = () => cityImg.complete && cityImg.naturalWidth > 0;
 
+/** 캔버스 좌표 → 건물 id ('__hq' 포함). 건물 그림 위를 눌렀을 때만 잡힌다 */
 export function buildingAt(px: number, py: number): string | null {
   for (let i = hitAreas.length - 1; i >= 0; i--) {
     const a = hitAreas[i];
     if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) return a.id;
   }
   return null;
+}
+
+/** 캔버스 좌표 → 부지 칸. 성벽 위 등 격자 밖이면 null */
+export function cellAt(px: number, py: number): Cell | null {
+  const c = Math.floor((px - AREA_X) / CW);
+  const r = Math.floor((py - AREA_Y) / CH);
+  if (c < 0 || c >= GRID_COLS || r < 0 || r >= GRID_ROWS) return null;
+  return { c, r };
 }
 
 // ── 그리기 도우미 ────────────────────────────────────────────
@@ -211,21 +226,36 @@ function lamp(ctx: CanvasRenderingContext2D, x: number, y: number, color: string
   ctx.fill();
 }
 
+function dashedCell(
+  ctx: CanvasRenderingContext2D,
+  c: number,
+  r: number,
+  color: string,
+  width: number,
+): void {
+  ctx.strokeStyle = color;
+  ctx.setLineDash([5, 4]);
+  ctx.lineWidth = width;
+  ctx.strokeRect(cellX(c) + 8, cellY(r) + 10, CW - 16, CH - 20);
+  ctx.setLineDash([]);
+}
+
 // ── 건물 ─────────────────────────────────────────────────────
 
-/** 한 칸에 건물 하나. 칸 중앙 하단을 기준으로 세운다. */
+/**
+ * 한 칸에 건물 하나. 칸 중앙 하단을 기준으로 세운다.
+ * cx/cy를 넘기면 그 위치에 그린다(드래그 미리보기).
+ */
 function drawBuilding(
   ctx: CanvasRenderingContext2D,
   id: string,
-  c: number,
-  r: number,
+  cx: number,
+  baseY: number,
   level: number,
   t: number,
-): { cx: number; cy: number } {
+): void {
   const look = LOOK[id] ?? { roof: '#8a8a8a', icon: '?' };
-  const cx = cellX(c) + CW / 2;
-  const baseY = cellY(r) + CH * 0.82;
-  const blink = 0.5 + 0.5 * Math.sin(t / 420 + c * 1.7 + r);
+  const blink = 0.5 + 0.5 * Math.sin(t / 420 + cx * 0.02);
 
   const w = CW * 0.62;
   const h = CH * 0.34 + Math.min(level, 10) * 1.1;
@@ -250,15 +280,14 @@ function drawBuilding(
 
   // 몇몇 건물은 등불
   if (id === 'turret' || id === 'radar' || id === 'academy') {
-    lamp(ctx, cx + w * 0.5, baseY - h - CH * 0.2, '#ffd479', blink);
+    lamp(ctx, cx + w * 0.5, baseY - h - CH * 0.2, C.gold, blink);
   }
-  return { cx, cy: baseY };
 }
 
 /** 사령부 — 2×2 칸을 쓰는 큰 건물 */
 function drawHQ(ctx: CanvasRenderingContext2D, t: number): { cx: number; cy: number } {
-  const cx = cellX(HQ.c) + CW;
-  const baseY = cellY(HQ.r) + CH * 1.78;
+  const cx = cellX(HQ_COL) + CW;
+  const baseY = cellY(HQ_ROW) + CH * 1.78;
   const w = CW * 1.24;
   const h = CH * 0.72;
   const x = cx - w / 2;
@@ -293,183 +322,204 @@ function drawHQ(ctx: CanvasRenderingContext2D, t: number): { cx: number; cy: num
 export function drawCity(
   canvas: HTMLCanvasElement,
   state: GameState,
-  defs: Map<string, BuildingDef>,
   selectedId: string | null,
+  selectedCell: Cell | null,
   now: number,
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   hitAreas.length = 0;
-
-  if (imgReady()) {
-    ctx.clearRect(0, 0, CITY_W, CITY_H);
-    ctx.drawImage(cityImg, 0, 0, CITY_W, CITY_H);
-    return;
-  }
   const t = now;
 
-  // ── 성 밖 잔디 ──
-  ctx.fillStyle = C.grass;
-  ctx.fillRect(0, 0, CITY_W, CITY_H);
+  // ── 바닥 ──
+  if (imgReady()) {
+    ctx.drawImage(cityImg, 0, 0, CITY_W, CITY_H);
+  } else {
+    // 성 밖 잔디
+    ctx.fillStyle = C.grass;
+    ctx.fillRect(0, 0, CITY_W, CITY_H);
+    // 바둑판 부지
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        ctx.fillStyle = (c + r) % 2 === 0 ? C.groundA : C.groundB;
+        ctx.fillRect(cellX(c), cellY(r), CW, CH);
+      }
+    }
+    // 격자선
+    ctx.strokeStyle = C.groundLine;
+    ctx.lineWidth = 1;
+    for (let c = 0; c <= GRID_COLS; c++) {
+      ctx.beginPath();
+      ctx.moveTo(cellX(c), AREA_Y);
+      ctx.lineTo(cellX(c), AREA_Y + AREA_H);
+      ctx.stroke();
+    }
+    for (let r = 0; r <= GRID_ROWS; r++) {
+      ctx.beginPath();
+      ctx.moveTo(AREA_X, cellY(r));
+      ctx.lineTo(AREA_X + AREA_W, cellY(r));
+      ctx.stroke();
+    }
 
-  // ── 바둑판 부지 ──
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      ctx.fillStyle = (c + r) % 2 === 0 ? C.groundA : C.groundB;
-      ctx.fillRect(cellX(c), cellY(r), CW, CH);
+    // 성벽 (화면을 두르는 사각 테두리)
+    ctx.fillStyle = C.wallDark;
+    ctx.fillRect(0, 0, CITY_W, WALL);
+    ctx.fillRect(0, CITY_H - WALL, CITY_W, WALL);
+    ctx.fillRect(0, 0, WALL, CITY_H);
+    ctx.fillRect(CITY_W - WALL, 0, WALL, CITY_H);
+    ctx.fillStyle = C.wallFace;
+    ctx.fillRect(2, 2, CITY_W - 4, WALL - 4);
+    ctx.fillRect(2, CITY_H - WALL + 2, CITY_W - 4, WALL - 4);
+    ctx.fillRect(2, 2, WALL - 4, CITY_H - 4);
+    ctx.fillRect(CITY_W - WALL + 2, 2, WALL - 4, CITY_H - 4);
+    // 성가퀴
+    ctx.fillStyle = C.wallTop;
+    for (let x = 4; x < CITY_W - 8; x += 18) {
+      ctx.fillRect(x, 1, 10, 5);
+      ctx.fillRect(x, CITY_H - 6, 10, 5);
+    }
+    for (let y = 4; y < CITY_H - 8; y += 18) {
+      ctx.fillRect(1, y, 5, 10);
+      ctx.fillRect(CITY_W - 6, y, 5, 10);
     }
   }
-  // 격자선
-  ctx.strokeStyle = C.groundLine;
-  ctx.lineWidth = 1;
-  for (let c = 0; c <= COLS; c++) {
-    ctx.beginPath();
-    ctx.moveTo(cellX(c), AREA_Y);
-    ctx.lineTo(cellX(c), AREA_Y + AREA_H);
-    ctx.stroke();
-  }
-  for (let r = 0; r <= ROWS; r++) {
-    ctx.beginPath();
-    ctx.moveTo(AREA_X, cellY(r));
-    ctx.lineTo(AREA_X + AREA_W, cellY(r));
-    ctx.stroke();
-  }
 
-  // ── 성벽 (화면을 두르는 사각 테두리) ──
-  ctx.fillStyle = C.wallDark;
-  ctx.fillRect(0, 0, CITY_W, WALL);
-  ctx.fillRect(0, CITY_H - WALL, CITY_W, WALL);
-  ctx.fillRect(0, 0, WALL, CITY_H);
-  ctx.fillRect(CITY_W - WALL, 0, WALL, CITY_H);
-  ctx.fillStyle = C.wallFace;
-  ctx.fillRect(2, 2, CITY_W - 4, WALL - 4);
-  ctx.fillRect(2, CITY_H - WALL + 2, CITY_W - 4, WALL - 4);
-  ctx.fillRect(2, 2, WALL - 4, CITY_H - 4);
-  ctx.fillRect(CITY_W - WALL + 2, 2, WALL - 4, CITY_H - 4);
-  // 성가퀴
-  ctx.fillStyle = C.wallTop;
-  for (let x = 4; x < CITY_W - 8; x += 18) {
-    ctx.fillRect(x, 1, 10, 5);
-    ctx.fillRect(x, CITY_H - 6, 10, 5);
-  }
-  for (let y = 4; y < CITY_H - 8; y += 18) {
-    ctx.fillRect(1, y, 5, 10);
-    ctx.fillRect(CITY_W - 6, y, 5, 10);
-  }
-
-  // ── 건물: 뒤 행부터 앞 행으로 ──
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  // ── 바닥 표시: 빈 터 · 선택 · 드롭 대상 ──
+  const dragging = ghost?.defId ?? null;
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      if (isHqCell(c, r)) continue;
+      const occupant = buildingAtCell(state, c, r);
+      const empty = !occupant || occupant.defId === dragging;
+      const isSelected = selectedCell?.c === c && selectedCell?.r === r;
+
+      if (empty) {
+        // 미개발 부지 — 다진 흙에 점선 구획 + 가운데 십자
+        dashedCell(ctx, c, r, isSelected ? C.gold : 'rgba(255,255,255,0.14)', isSelected ? 2 : 1);
+        ctx.fillStyle = isSelected ? C.gold : 'rgba(255,255,255,0.22)';
+        ctx.font = `${isSelected ? 'bold ' : ''}16px sans-serif`;
+        ctx.fillText('+', cellX(c) + CW / 2, cellY(r) + CH / 2);
+      }
+
+      // 드래그 중인 손가락 아래 칸
+      if (ghost?.cell?.c === c && ghost.cell.r === r) {
+        ctx.fillStyle = ghost.valid ? 'rgba(127,211,154,0.22)' : 'rgba(224,138,126,0.22)';
+        ctx.fillRect(cellX(c) + 4, cellY(r) + 5, CW - 8, CH - 10);
+        ctx.strokeStyle = ghost.valid ? C.ok : C.bad;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cellX(c) + 4, cellY(r) + 5, CW - 8, CH - 10);
+      }
+    }
+  }
+
+  // ── 건물: 뒤 행부터 앞 행으로 (사령부는 아랫줄 기준) ──
   interface Item {
     r: number;
-    slot?: Slot;
     hq?: boolean;
-    empty?: { c: number; r: number };
+    defId?: string;
+    c?: number;
+    level?: number;
   }
-  const items: Item[] = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const inHQ = c >= HQ.c && c <= HQ.c + 1 && r >= HQ.r && r <= HQ.r + 1;
-      if (inHQ) {
-        if (c === HQ.c && r === HQ.r) items.push({ r: HQ.r + 1, hq: true });
-        continue;
-      }
-      const slot = SLOTS.find((s) => s.c === c && s.r === r);
-      items.push(slot ? { r, slot } : { r, empty: { c, r } });
-    }
+  const items: Item[] = [{ r: HQ_ROW + 1, hq: true }];
+  for (const b of placedBuildings(state)) {
+    if (b.defId === dragging) continue; // 드래그 중인 건물은 맨 마지막에 손끝에 그린다
+    items.push({ r: b.row, c: b.col, defId: b.defId, level: b.level });
   }
   items.sort((a, b) => a.r - b.r);
 
   for (const item of items) {
     if (item.hq) {
       const p = drawHQ(ctx, t);
-      hitAreas.push({ id: '__hq', x: p.cx - 40, y: p.cy - 90, w: 80, h: 100 });
+      hitAreas.push({ id: HQ_ID, x: p.cx - 40, y: p.cy - 90, w: 80, h: 100 });
       continue;
     }
-    if (item.empty) {
-      // 미개발 부지 — 다진 흙에 점선 구획
-      const { c, r } = item.empty;
-      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
-      ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1;
-      ctx.strokeRect(cellX(c) + 8, cellY(r) + 10, CW - 16, CH - 20);
-      ctx.setLineDash([]);
-      continue;
-    }
-
-    const slot = item.slot!;
-    const b = state.buildings.find((x) => x.defId === slot.id);
-    const def = defs.get(slot.id);
-    const level = b?.level ?? 0;
-    const cx = cellX(slot.c) + CW / 2;
-    const cy = cellY(slot.r) + CH * 0.82;
+    const c = item.c!;
+    const r = item.r;
+    const defId = item.defId!;
+    const level = item.level ?? 0;
+    const cx = cellX(c) + CW / 2;
+    const cy = cellY(r) + CH * 0.82;
+    const building = state.upgradeQueue?.defId === defId;
 
     if (level < 1) {
-      // 건설 가능 부지
-      ctx.strokeStyle = 'rgba(255,212,121,0.55)';
-      ctx.setLineDash([5, 4]);
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cellX(slot.c) + 8, cellY(slot.r) + 10, CW - 16, CH - 20);
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      const label = def?.name ?? slot.id;
-      ctx.font = 'bold 10px sans-serif';
-      const lw = ctx.measureText(label).width + 8;
-      ctx.fillRect(cx - lw / 2, cy - 20, lw, 14);
-      ctx.fillStyle = '#ffd479';
-      ctx.fillText(label, cx, cy - 13);
-      hitAreas.push({
-        id: slot.id,
-        x: cellX(slot.c) + 6,
-        y: cellY(slot.r) + 8,
-        w: CW - 12,
-        h: CH - 16,
-      });
-      continue;
+      // 건설 중 — 아직 형태가 없는 공사장
+      ctx.globalAlpha = 0.55;
+      drawBuilding(ctx, defId, cx, cy, 1, t);
+      ctx.globalAlpha = 1;
+      dashedCell(ctx, c, r, C.gold, 1.5);
+    } else {
+      drawBuilding(ctx, defId, cx, cy, level, t);
     }
-
-    drawBuilding(ctx, slot.id, slot.c, slot.r, level, t);
-    hitAreas.push({
-      id: slot.id,
-      x: cellX(slot.c) + 4,
-      y: cellY(slot.r) + 2,
-      w: CW - 8,
-      h: CH - 6,
-    });
+    hitAreas.push({ id: defId, x: cellX(c) + 4, y: cellY(r) + 2, w: CW - 8, h: CH - 6 });
 
     // 레벨 배지
-    ctx.fillStyle = 'rgba(12,16,20,0.85)';
-    ctx.beginPath();
-    ctx.arc(cx + CW * 0.3, cy - 4, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,212,121,0.6)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = '#ffd479';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.fillText(String(level), cx + CW * 0.3, cy - 3);
+    if (level >= 1) {
+      ctx.fillStyle = 'rgba(12,16,20,0.85)';
+      ctx.beginPath();
+      ctx.arc(cx + CW * 0.3, cy - 4, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,212,121,0.6)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = C.gold;
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(String(level), cx + CW * 0.3, cy - 3);
+    }
 
-    // 건설 중
-    if (state.upgradeQueue?.defId === slot.id) {
+    // 건설 중 남은 시간
+    if (building && state.upgradeQueue) {
       const remain = Math.max(0, Math.ceil((state.upgradeQueue.finishesAt - now) / 1000));
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 10px sans-serif';
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
-      ctx.strokeText(`⚙ ${remain}s`, cx, cellY(slot.r) + 10);
-      ctx.fillText(`⚙ ${remain}s`, cx, cellY(slot.r) + 10);
+      ctx.strokeText(`⚙ ${remain}s`, cx, cellY(r) + 10);
+      ctx.fillText(`⚙ ${remain}s`, cx, cellY(r) + 10);
     }
 
     // 선택 표시
-    if (selectedId === slot.id) {
+    if (selectedId === defId) {
       ctx.save();
-      ctx.strokeStyle = '#ffd479';
+      ctx.strokeStyle = C.gold;
       ctx.lineWidth = 2;
-      ctx.shadowColor = '#ffd479';
+      ctx.shadowColor = C.gold;
       ctx.shadowBlur = 8;
-      ctx.strokeRect(cellX(slot.c) + 5, cellY(slot.r) + 6, CW - 10, CH - 12);
+      ctx.strokeRect(cellX(c) + 5, cellY(r) + 6, CW - 10, CH - 12);
       ctx.restore();
     }
   }
+
+  // ── 드래그 미리보기 — 손끝을 따라다니는 반투명 건물 ──
+  if (ghost) {
+    const b = state.buildings.find((x) => x.defId === ghost!.defId);
+    ctx.globalAlpha = 0.75;
+    drawBuilding(ctx, ghost.defId, ghost.px, ghost.py + CH * 0.22, Math.max(1, b?.level ?? 1), t);
+    ctx.globalAlpha = 1;
+    if (!ghost.valid) {
+      ctx.fillStyle = C.bad;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('✕', ghost.px, ghost.py - CH * 0.35);
+    }
+  }
+}
+
+/** 화면 좌표 → 캔버스 좌표 (캔버스는 CSS로 늘어나 있다) */
+export function toCanvasPoint(
+  canvas: HTMLCanvasElement,
+  clientX: number,
+  clientY: number,
+): { x: number; y: number } {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((clientX - rect.left) * canvas.width) / rect.width,
+    y: ((clientY - rect.top) * canvas.height) / rect.height,
+  };
+}
+
+/** 화면(정보 패널)에서 쓰는 칸 이름 — 1부터 센다 */
+export function cellLabel(cell: Cell): string {
+  return `${cell.r + 1}행 ${cell.c + 1}열`;
 }

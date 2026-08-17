@@ -32,7 +32,25 @@ import {
   TAVERN_ID,
 } from '../core/heroes';
 import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
-import { buildingAt, CITY_H, CITY_W, drawCity } from './cityview';
+import {
+  buildingAt,
+  cellAt,
+  cellLabel,
+  CITY_H,
+  CITY_W,
+  drawCity,
+  setDragGhost,
+  toCanvasPoint,
+} from './cityview';
+import {
+  buildingAtCell,
+  HQ_ID,
+  isHqCell,
+  requirementText,
+  unmetRequirements,
+  unplacedBuildings,
+  type Cell,
+} from '../core/city';
 
 /**
  * 원작 메뉴 구성(도시 / 영웅 / 맵 / 길드 / 시장 / 랭킹 / 정보)을 따른다.
@@ -48,6 +66,10 @@ export interface RenderCallbacks {
   onRefreshTavern(): void;
   /** 도시 뷰에서 건물(또는 빈 곳) 선택 — 리렌더 트리거용 */
   onSelectBuilding(defId: string | null): void;
+  /** 빈 부지에 새 건물을 짓는다 */
+  onPlaceBuilding(defId: string, c: number, r: number): void;
+  /** 건물을 다른 칸으로 옮긴다 (드래그 앤 드롭) */
+  onMoveBuilding(defId: string, c: number, r: number): void;
   /** 하단 탭 전환 */
   onSelectTab(tab: Tab): void;
   /** 교전지/자원지 출정 */
@@ -78,6 +100,10 @@ export interface RenderCallbacks {
 
 // UI 전용 상태
 let selectedBuilding: string | null = null;
+/** 선택한 빈 부지 — 여기에 건설 목록이 붙는다 */
+let selectedCell: Cell | null = null;
+/** 선택 직후 한 번, 캔버스 아래 패널이 보이도록 스크롤한다 */
+let scrollToPanel = false;
 let activeTab: Tab = 'city';
 let message = '';
 let selectedHeroId: string | null = null;
@@ -156,6 +182,12 @@ const STYLE = `
   .unitrow > div { min-width: 0; }
 
   canvas { width: 100%; display: block; border-radius: 12px; touch-action: manipulation; }
+  /* 기지 캔버스는 건물을 끌어 옮기므로 터치를 스크롤에 뺏기면 안 된다.
+     대신 목록은 캔버스 아래를 잡고 스크롤한다. */
+  #cityview { touch-action: none; user-select: none; -webkit-user-select: none; }
+
+  .card small.faint { color: #7d7168; }
+  .card small.locked { color: #e0b568; }
 
   /* 하단 탭 — 탭 개수가 늘어도 자동으로 한 줄에 나눠 담는다 */
   .tabs { flex: 0 0 auto; display: grid;
@@ -332,6 +364,7 @@ function renderRaceSelect(root: HTMLElement, cb: RenderCallbacks): void {
 /**
  * 도시 화면. 원작처럼 건물을 눌러 그 건물의 기능을 연다:
  * 병영 → 병력·생산, 연구소 → 병종 연구, 용병 사무소 → 지휘관 영입.
+ * 빈 터를 누르면 그 자리에 지을 수 있는 건물 목록이 아래에 뜬다.
  */
 function cityTab(
   state: GameState,
@@ -340,13 +373,19 @@ function cityTab(
   now: number,
 ): string {
   const canvas = `<canvas id="cityview" width="${CITY_W}" height="${CITY_H}"></canvas>`;
+  const hint = `<div class="card"><small>건물을 끌어다 놓아 자리를 바꾸고(놓는 자리에 건물이 있으면 서로 맞바꾼다),
+    빈 터 <b>+</b>를 눌러 새 건물을 짓는다.</small></div>`;
+
+  if (selectedBuilding === HQ_ID) {
+    return `${canvas}<div class="card"><div><b>사령부</b> <span class="tier">기지 중심</span>
+      <small>기지의 심장부. 2×2 부지를 차지하며 옮길 수 없다.</small></div></div>${hint}`;
+  }
+
+  if (selectedCell) return `${canvas}${buildPanel(state, buildingDefs, selectedCell)}`;
 
   const sel = selectedBuilding ? state.buildings.find((b) => b.defId === selectedBuilding) : null;
   const def = sel ? buildingDefs.get(sel.defId) : null;
-  if (!sel || !def) {
-    return `${canvas}
-      <div class="card"><small>기지의 건물이나 빈 터를 눌러 관리하세요.</small></div>`;
-  }
+  if (!sel || !def) return `${canvas}${hint}`;
 
   // ── 건물 공통: 건설/확장 ──
   const next = def.levels[sel.level];
@@ -363,10 +402,13 @@ function cityTab(
   const costLine = next
     ? `<small>${costText(next.upgradeCost)} · ${next.upgradeSeconds}초</small>`
     : '';
+  const levelText =
+    sel.level === 0 ? '<span class="tier">건설 중</span>' : `Lv.${sel.level}`;
 
   const header = `<div class="card">
-    <div><b>${def.name}</b> ${sel.level === 0 ? '<span class="tier">공터</span>' : `Lv.${sel.level}`}
+    <div><b>${def.name}</b> ${levelText}
       <small>${def.description}</small>${produce}${costLine}
+      <small class="faint">끌어서 자리를 옮길 수 있다.</small>
     </div>
     <div class="actions">${action}</div>
   </div>`;
@@ -378,6 +420,54 @@ function cityTab(
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
 
   return `${canvas}${header}${body}`;
+}
+
+/**
+ * 빈 부지 패널: 그 자리에 지을 수 있는 건물 목록.
+ * 아직 짓지 않은 건물만 후보고, 선행 조건(건축 트리)을 못 채운 건물은 잠긴 채로
+ * 무엇이 필요한지 보여준다 — 원작처럼 다음 목표가 화면에 남아 있어야 한다.
+ */
+function buildPanel(
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+  cell: Cell,
+): string {
+  const candidates = unplacedBuildings(state)
+    .map((b) => buildingDefs.get(b.defId))
+    .filter((d): d is BuildingDef => d !== undefined)
+    .map((def) => ({ def, unmet: unmetRequirements(state, def) }))
+    // 지을 수 있는 것부터, 그다음 잠긴 것
+    .sort((a, b) => a.unmet.length - b.unmet.length);
+
+  if (!candidates.length) {
+    return `<h2>건설 — ${cellLabel(cell)}</h2>
+      <div class="card"><small>지을 수 있는 건물을 모두 지었다.
+        건물을 이 자리로 끌어와 배치를 정리할 수 있다.</small></div>`;
+  }
+
+  const rows = candidates
+    .map(({ def, unmet }) => {
+      const lv1 = def.levels[0];
+      const locked = unmet.length > 0;
+      const blocked = locked || state.upgradeQueue !== null;
+      const produce = def.produces
+        ? `<small>생산 ${RESOURCE_LABELS[def.produces]} ${lv1.productionPerHour ?? 0}/시간</small>`
+        : '';
+      const info = locked
+        ? `<small class="locked">🔒 ${requirementText(unmet, buildingDefs)}</small>`
+        : `<small>${costText(lv1.upgradeCost)} · ${lv1.upgradeSeconds}초</small>`;
+      return `<div class="card">
+        <div><b>${def.name}</b>
+          <small>${def.description}</small>${produce}${info}
+        </div>
+        <div class="actions">
+          <button data-place="${def.id}" ${costAttrs(lv1.upgradeCost, blocked)}>건설</button>
+        </div>
+      </div>`;
+    })
+    .join('');
+
+  return `<h2>건설 — ${cellLabel(cell)}</h2>${rows}`;
 }
 
 /** 병영 패널: 보유 병력 + 훈련 */
@@ -822,6 +912,83 @@ function infoTab(state: GameState, unitDefs: Map<string, UnitDef>): string {
     </div>`;
 }
 
+// ── 기지 캔버스 조작 ─────────────────────────────────────────
+
+/**
+ * 탭하면 선택, 끌면 이동.
+ *
+ * 포인터 이벤트 하나로 마우스·터치를 함께 받는다. 임계값(캔버스 좌표 10px)을
+ * 넘겨야 끌기로 보기 때문에 손가락이 조금 흔들려도 탭은 탭으로 남는다.
+ * 캔버스에 touch-action:none 을 줘서 끌기 도중 화면이 딸려 스크롤되지 않는다.
+ */
+function wireCityCanvas(canvas: HTMLCanvasElement, cb: RenderCallbacks): void {
+  const DRAG_THRESHOLD = 10;
+  let origin: { x: number; y: number; defId: string | null } | null = null;
+  let dragging = false;
+
+  const clear = () => {
+    origin = null;
+    dragging = false;
+    setDragGhost(null);
+  };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const p = toCanvasPoint(canvas, e.clientX, e.clientY);
+    const id = buildingAt(p.x, p.y);
+    // 사령부는 고정 건물이라 끌기 대상이 아니다
+    origin = { x: p.x, y: p.y, defId: id === null || id === HQ_ID ? null : id };
+    dragging = false;
+    if (origin.defId) canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!origin?.defId) return;
+    const p = toCanvasPoint(canvas, e.clientX, e.clientY);
+    if (!dragging && Math.hypot(p.x - origin.x, p.y - origin.y) < DRAG_THRESHOLD) return;
+    dragging = true;
+    const cell = cellAt(p.x, p.y);
+    setDragGhost({
+      defId: origin.defId,
+      px: p.x,
+      py: p.y,
+      cell,
+      valid: cell !== null && !isHqCell(cell.c, cell.r),
+    });
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    const start = origin;
+    const wasDrag = dragging;
+    clear();
+    if (!start) return;
+
+    const p = toCanvasPoint(canvas, e.clientX, e.clientY);
+    const cell = cellAt(p.x, p.y);
+
+    if (wasDrag && start.defId) {
+      // 격자 밖이나 사령부 위에 놓으면 제자리로 돌아간다
+      if (cell && !isHqCell(cell.c, cell.r)) cb.onMoveBuilding(start.defId, cell.c, cell.r);
+      return;
+    }
+
+    const id = buildingAt(p.x, p.y);
+    if (id) {
+      selectedBuilding = id;
+      selectedCell = null;
+    } else if (cell && !isHqCell(cell.c, cell.r)) {
+      selectedCell = cell;
+      selectedBuilding = null;
+    } else {
+      selectedBuilding = null;
+      selectedCell = null;
+    }
+    scrollToPanel = true;
+    cb.onSelectBuilding(selectedBuilding);
+  });
+
+  canvas.addEventListener('pointercancel', clear);
+}
+
 // ── 메인 렌더 ────────────────────────────────────────────────
 
 export function render(
@@ -840,6 +1007,15 @@ export function render(
   if (!state.raceId) {
     renderRaceSelect(root, cb);
     return;
+  }
+
+  // 골라 둔 빈 터에 건물이 들어섰으면(건설 완료·이동) 그 건물 패널로 넘어간다
+  if (selectedCell) {
+    const occupant = buildingAtCell(state, selectedCell.c, selectedCell.r);
+    if (occupant) {
+      selectedBuilding = occupant.defId;
+      selectedCell = null;
+    }
   }
 
   const resources = (Object.keys(RESOURCE_LABELS) as ResourceKind[])
@@ -888,9 +1064,10 @@ export function render(
   const key = JSON.stringify([
     activeTab,
     selectedBuilding,
+    selectedCell && `${selectedCell.c},${selectedCell.r}`,
     message,
     state.raceId,
-    state.buildings.map((b) => `${b.defId}:${b.level}`),
+    state.buildings.map((b) => `${b.defId}:${b.level}:${b.col ?? '-'},${b.row ?? '-'}`),
     Object.entries(state.army).filter(([, n]) => n > 0),
     state.heroes.map((h) => h.id),
     state.tavern.candidates.map((c) => `${c.name}:${c.price}`),
@@ -926,23 +1103,33 @@ export function render(
       <nav class="tabs">${tabs}</nav>
     `;
 
-    const content = root.querySelector('.content');
+    const content = root.querySelector<HTMLElement>('.content');
     if (content) content.scrollTop = prevScroll;
 
+    // 부지를 고른 직후에는 캔버스 아래 패널이 화면에 걸치도록 살짝 끌어올린다.
+    // (기지 캔버스가 세로 화면을 거의 다 먹어서, 안 그러면 목록이 안 보인다)
+    if (content && scrollToPanel) {
+      const cv = content.querySelector<HTMLCanvasElement>('#cityview');
+      if (cv) {
+        const visibleBelow = content.getBoundingClientRect().bottom - cv.getBoundingClientRect().bottom;
+        if (visibleBelow < 160) content.scrollTop += 160 - visibleBelow;
+      }
+    }
+    scrollToPanel = false;
+
     const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
-    canvas?.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) * canvas.width) / rect.width;
-      const y = ((e.clientY - rect.top) * canvas.height) / rect.height;
-      selectedBuilding = buildingAt(x, y);
-      cb.onSelectBuilding(selectedBuilding);
-    });
+    if (canvas) wireCityCanvas(canvas, cb);
 
     root.querySelectorAll<HTMLButtonElement>('button[data-tab]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onSelectTab(btn.dataset.tab as Tab));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-upgrade]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onUpgrade(btn.dataset.upgrade!));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-place]').forEach((btn) => {
+      const cell = selectedCell;
+      if (!cell) return;
+      btn.addEventListener('click', () => cb.onPlaceBuilding(btn.dataset.place!, cell.c, cell.r));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-train]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onTrain(btn.dataset.train!, Number(btn.dataset.count)));
@@ -1099,13 +1286,13 @@ function updateDynamic(
 
   const canvas = root.querySelector<HTMLCanvasElement>('#cityview');
   if (canvas) {
-    drawCity(canvas, state, buildingDefs, selectedBuilding, now);
-    // 조명이 부드럽게 살아 움직이도록 프레임 단위로 다시 그린다.
+    drawCity(canvas, state, selectedBuilding, selectedCell, now);
+    // 조명·드래그 미리보기가 부드럽게 따라오도록 프레임 단위로 다시 그린다.
     // 캔버스가 사라지면(탭 이동) 스스로 멈춘다.
     cancelAnimationFrame(cityAnimId);
     const loop = () => {
       if (!canvas.isConnected) return;
-      drawCity(canvas, state, buildingDefs, selectedBuilding, Date.now());
+      drawCity(canvas, state, selectedBuilding, selectedCell, Date.now());
       cityAnimId = requestAnimationFrame(loop);
     };
     cityAnimId = requestAnimationFrame(loop);

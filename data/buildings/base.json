@@ -1,5 +1,5 @@
 {
-  "$comment": "자원 5종(광물·합금·보급품·가스·크레딧)과 건물 구성. 생산량·비용·시간 수치는 자료가 없어 전부 estimate.",
+  "$comment": "자원 5종(광물·합금·보급품·가스·크레딧)과 건물 구성. 생산량·비용·시간 수치는 자료가 없어 전부 estimate. requires(건설 선행 조건)도 estimate — 원작 七龙纪의 건축 트리 표는 아직 발굴하지 못했다. 확인된 원작 사례는 \"주점(酒馆) Lv.5 → 마구간(马厩) 해금\"뿐이고, 원작 건물 상세 54장이 웨이백(7th.netmarble.net/intro_2_4_1_*)에, 건축 트리 문서가 후속작 라이브 서버(qilongji.90123.com)에 남아 있다. docs/PLAN.md 참고.",
   "buildings": [
     {
       "id": "sawmill",
@@ -159,6 +159,12 @@
       "name": "가스 추출기",
       "description": "가스를 추출한다. 고급 병기와 지휘관에 필요.",
       "produces": "crystal",
+      "requires": [
+        {
+          "buildingId": "quarry",
+          "level": 2
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -211,6 +217,12 @@
       "id": "barracks",
       "name": "병영",
       "description": "병력을 생산한다. 병영 레벨 이하 등급의 병종을 생산할 수 있다.",
+      "requires": [
+        {
+          "buildingId": "farm",
+          "level": 2
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -287,6 +299,16 @@
       "id": "academy",
       "name": "연구소",
       "description": "병종을 연구해 능력치를 올린다. 연구 가능 레벨은 연구소 레벨의 2배까지.",
+      "requires": [
+        {
+          "buildingId": "barracks",
+          "level": 2
+        },
+        {
+          "buildingId": "crystal-mine",
+          "level": 2
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -383,6 +405,12 @@
       "id": "tavern",
       "name": "용병 사무소",
       "description": "지휘관을 영입한다. 사무소 레벨만큼 지휘관을 보유할 수 있다.",
+      "requires": [
+        {
+          "buildingId": "market",
+          "level": 2
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -483,6 +511,12 @@
       "id": "rampart",
       "name": "방벽",
       "description": "기지 외곽을 강화한다. 방어 전투에서 아군 피해를 줄인다. (효과는 PvP 도입 시 적용)",
+      "requires": [
+        {
+          "buildingId": "barracks",
+          "level": 1
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -534,6 +568,16 @@
       "id": "turret",
       "name": "포탑",
       "description": "자동 방어 화기. 기지를 노리는 적에게 반격한다. (효과는 PvP 도입 시 적용)",
+      "requires": [
+        {
+          "buildingId": "rampart",
+          "level": 2
+        },
+        {
+          "buildingId": "crystal-mine",
+          "level": 1
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {
@@ -587,6 +631,12 @@
       "id": "radar",
       "name": "레이더",
       "description": "접근하는 적 부대를 미리 탐지한다. (효과는 PvP 도입 시 적용)",
+      "requires": [
+        {
+          "buildingId": "academy",
+          "level": 1
+        }
+      ],
       "provenance": "estimate",
       "levels": [
         {

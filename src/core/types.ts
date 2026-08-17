@@ -28,6 +28,12 @@ export interface BuildingLevel {
   upgradeSeconds: number;
 }
 
+/** "B를 지으려면 A가 Lv.N 이상" — 원작의 건축 트리(建筑树)에 해당 */
+export interface BuildingRequirement {
+  buildingId: string;
+  level: number;
+}
+
 export interface BuildingDef {
   id: string;
   name: string;
@@ -36,6 +42,8 @@ export interface BuildingDef {
   produces?: ResourceKind;
   /** index 0 = 1레벨 */
   levels: BuildingLevel[];
+  /** 건설(0→1레벨) 선행 조건. 없으면 처음부터 지을 수 있다 */
+  requires?: BuildingRequirement[];
   provenance: Provenance;
 }
 
@@ -80,6 +88,12 @@ export interface UnitDef {
 export interface CityBuilding {
   defId: string;
   level: number; // 0 = 미건설
+  /**
+   * 부지 격자 위치. 짓지 않은 건물은 좌표가 없다(= 건설 목록에 뜬다).
+   * 플레이어가 드래그로 옮길 수 있으므로 코드가 아니라 저장 상태가 들고 있다.
+   */
+  col?: number;
+  row?: number;
 }
 
 export interface UpgradeJob {
