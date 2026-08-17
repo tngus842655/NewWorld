@@ -2159,15 +2159,20 @@
     {
       "id": "workshop",
       "name": "장비 공방",
-      "description": "장비를 제작하고 강화한다.",
+      "description": "장비를 강화한다. 공방 레벨당 강화 상한이 +2씩 올라간다.",
       "category": "지휘",
+      "effects": [
+        {
+          "kind": "maxEnhance",
+          "perLevel": 2
+        }
+      ],
       "requires": [
         {
           "buildingId": "armory",
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

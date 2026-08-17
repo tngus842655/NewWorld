@@ -83,7 +83,9 @@ export type BuildingEffectKind =
   /** 전투에서 빼돌려 지키는 병력 수 — 지하 병영 */
   | 'hideTroops'
   /** 방어 실패 시 약탈당하는 자원 비율 −% — 물류 창고 */
-  | 'plunderResistPercent';
+  | 'plunderResistPercent'
+  /** 장비 강화 상한 +N — 장비 공방 */
+  | 'maxEnhance';
 
 export interface BuildingEffect {
   kind: BuildingEffectKind;
@@ -109,6 +111,7 @@ export const BUILDING_EFFECT_INFO: Record<
   interceptDamage: { label: '침공 요격 피해', unit: 'count' },
   hideTroops: { label: '침공 시 대피 병력', unit: 'count' },
   plunderResistPercent: { label: '약탈 피해 감소', unit: 'percent' },
+  maxEnhance: { label: '장비 강화 상한', unit: 'count' },
 };
 
 /**
@@ -291,6 +294,8 @@ export interface EquipItem {
   /** 세트 부위면 세트 id */
   setId?: string;
   setNameKo?: string;
+  /** 강화 수치. 없으면 0 — 능력치가 단계당 일정 비율로 오른다 */
+  plus?: number;
 }
 
 export interface Hero {

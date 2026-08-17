@@ -9,7 +9,7 @@ import type {
 } from './types';
 import { MANUAL_REFRESH_GOLD, restockNow, TAVERN_ID } from './heroes';
 import { selectArmyForMarch, simulateBattle, type CityBonus } from './combat';
-import { equipTotals } from './equipment';
+import { canEnhance, enhanceCost, equipTotals } from './equipment';
 import {
   buildingAtCell,
   buildingEffect,
@@ -409,6 +409,37 @@ export function equipItem(state: GameState, heroId: string, itemId: string): Act
   hero.equipment[item.slot] = item;
   state.inventory.splice(idx, 1);
   if (previous) state.inventory.push(previous);
+  return { ok: true };
+}
+
+/**
+ * 장비를 한 단계 강화한다. 창고에 있든 지휘관이 차고 있든 강화할 수 있다.
+ * 실패 확률은 두지 않았다 — 비용이 가파르게 오르는 것으로 제동을 건다(estimate).
+ */
+export function enhanceEquipment(
+  state: GameState,
+  itemId: string,
+  buildingDefs: Map<string, BuildingDef>,
+): ActionResult {
+  const max = buildingEffect(state, buildingDefs, 'maxEnhance');
+  if (max < 1) return { ok: false, reason: '장비 공방을 먼저 지어야 합니다.' };
+
+  const item =
+    state.inventory.find((i) => i.id === itemId) ??
+    state.heroes
+      .flatMap((h) => Object.values(h.equipment ?? {}))
+      .find((i) => i?.id === itemId);
+  if (!item) return { ok: false, reason: '없는 장비입니다.' };
+  if (!canEnhance(item)) return { ok: false, reason: '강화할 수치가 없는 장비입니다.' };
+
+  const plus = item.plus ?? 0;
+  if (plus >= max) return { ok: false, reason: `강화 상한 +${max}에 도달했습니다.` };
+
+  const cost = enhanceCost(item);
+  if (!canAfford(state.resources, cost)) return { ok: false, reason: '자원이 부족합니다.' };
+
+  pay(state.resources, cost);
+  item.plus = plus + 1;
   return { ok: true };
 }
 

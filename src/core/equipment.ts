@@ -1,5 +1,5 @@
 import equipData from '../../data/equipment/base.json';
-import type { EquipItem, EquipSlot, Hero, Rarity } from './types';
+import type { EquipItem, EquipSlot, Hero, Rarity, Resources } from './types';
 
 /**
  * 장비 시스템. 아이템 수치·세트 구성·액세서리 효과는 4399 공식 가이드 실측이고,
@@ -185,6 +185,36 @@ export function rollItem(heroLevel: number, difficulty: number, rng: () => numbe
   };
 }
 
+// ── 강화 ──────────────────────────────────────────────────────
+
+/** 강화 한 단계당 능력치 증가율 (estimate) */
+export const ENHANCE_STEP = 0.08;
+
+/** 강화가 반영된 능력치 */
+export function enhancedStat(base: number | undefined, plus: number | undefined): number {
+  if (!base) return 0;
+  return Math.round(base * (1 + (plus ?? 0) * ENHANCE_STEP));
+}
+
+/** 강화할 수치가 있는 장비인가 (액세서리는 특수효과뿐이라 강화 대상이 아니다) */
+export function canEnhance(item: EquipItem): boolean {
+  return Boolean(item.patk || item.matk || item.pdef || item.mdef);
+}
+
+/**
+ * 다음 단계 강화 비용 (estimate).
+ * 등급이 높고 이미 많이 강화했을수록 가파르게 오른다.
+ */
+export function enhanceCost(item: EquipItem): Partial<Resources> {
+  const rarityIdx = Math.max(0, RARITIES.findIndex((r) => r.id === item.rarity));
+  const k = Math.pow(1.6, item.plus ?? 0) * (1 + rarityIdx * 0.35);
+  return {
+    stone: Math.round(250 * k),
+    gold: Math.round(400 * k),
+    crystal: Math.round(60 * k),
+  };
+}
+
 export interface EquipTotals {
   patk: number;
   matk: number;
@@ -209,10 +239,11 @@ export function equipTotals(hero: Hero): EquipTotals {
   const worn = Object.values(hero.equipment ?? {}).filter(Boolean) as EquipItem[];
 
   for (const it of worn) {
-    totals.patk += it.patk ?? 0;
-    totals.matk += it.matk ?? 0;
-    totals.pdef += it.pdef ?? 0;
-    totals.mdef += it.mdef ?? 0;
+    // 강화 수치는 기본 능력치에만 곱한다 (액세서리 특수효과는 그대로)
+    totals.patk += enhancedStat(it.patk, it.plus);
+    totals.matk += enhancedStat(it.matk, it.plus);
+    totals.pdef += enhancedStat(it.pdef, it.plus);
+    totals.mdef += enhancedStat(it.mdef, it.plus);
     if (it.effect && it.effectValue) {
       totals.effects[it.effect] = (totals.effects[it.effect] ?? 0) + it.effectValue;
     }

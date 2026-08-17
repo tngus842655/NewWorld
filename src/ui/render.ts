@@ -45,7 +45,15 @@ import {
   statTotal,
   TAVERN_ID,
 } from '../core/heroes';
-import { equipTotals, RARITIES, SLOT_LABELS, SLOTS } from '../core/equipment';
+import {
+  canEnhance,
+  enhanceCost,
+  enhancedStat,
+  equipTotals,
+  RARITIES,
+  SLOT_LABELS,
+  SLOTS,
+} from '../core/equipment';
 import {
   buildingAt,
   cellAt,
@@ -108,6 +116,8 @@ export interface RenderCallbacks {
   onUnequip(heroId: string, slot: EquipSlot): void;
   /** 창고 장비 버리기 */
   onDiscard(itemId: string): void;
+  /** 장비 한 단계 강화 */
+  onEnhance(itemId: string): void;
   /** 전투 기록 삭제 */
   onDeleteReport(reportId: string): void;
   /** 전투 기록 전체 삭제 */
@@ -212,6 +222,7 @@ const STYLE = `
   .card small.faint { color: #7d7168; }
   .card small.locked { color: #e0b568; }
   .card.dim { opacity: 0.62; }
+  .plus { color: #7fd39a; font-size: 12px; }
   h2.sub { font-size: 12px; color: #8a7d73; margin: 14px 0 6px;
     text-transform: none; letter-spacing: 0.04em; }
   h2 .tier { font-weight: 400; }
@@ -741,10 +752,11 @@ function academyPanel(
 
 function itemLine(it: EquipItem): string {
   const parts: string[] = [];
-  if (it.patk) parts.push(`물공 +${it.patk}`);
-  if (it.matk) parts.push(`마공 +${it.matk}`);
-  if (it.pdef) parts.push(`물방 +${it.pdef}`);
-  if (it.mdef) parts.push(`마방 +${it.mdef}`);
+  // 강화가 붙어 있으면 강화된 수치로 보여준다
+  if (it.patk) parts.push(`물공 +${enhancedStat(it.patk, it.plus)}`);
+  if (it.matk) parts.push(`마공 +${enhancedStat(it.matk, it.plus)}`);
+  if (it.pdef) parts.push(`물방 +${enhancedStat(it.pdef, it.plus)}`);
+  if (it.mdef) parts.push(`마방 +${enhancedStat(it.mdef, it.plus)}`);
   if (it.effect && it.effectValue) {
     parts.push(`${it.effectKo} +${it.effectValue}${it.effectUnit === 'multiplier' ? '배' : '%'}`);
   }
@@ -755,7 +767,34 @@ function rarityColor(r: string): string {
   return RARITIES.find((x) => x.id === r)?.color ?? '#9a9a9a';
 }
 
-function heroEquipBlock(hero: GameState['heroes'][number]): string {
+/** 강화 수치 배지 */
+function plusTag(it: EquipItem): string {
+  return it.plus ? ` <span class="plus">+${it.plus}</span>` : '';
+}
+
+/**
+ * 강화 버튼. 장비 공방이 없으면 아예 나오지 않고,
+ * 상한에 닿으면 상한을 알려 준다.
+ */
+function enhanceButton(
+  state: GameState,
+  it: EquipItem,
+  buildingDefs: Map<string, BuildingDef>,
+): string {
+  const max = buildingEffect(state, buildingDefs, 'maxEnhance');
+  if (max < 1 || !canEnhance(it)) return '';
+  const plus = it.plus ?? 0;
+  if (plus >= max) return `<small class="faint">강화 상한 +${max}</small>`;
+  const cost = enhanceCost(it);
+  return `<button class="small" data-enhance="${it.id}" ${costAttrs(cost, false)}
+    title="${costText(cost)}">+${plus + 1} 강화</button>`;
+}
+
+function heroEquipBlock(
+  hero: GameState['heroes'][number],
+  state: GameState,
+  buildingDefs: Map<string, BuildingDef>,
+): string {
   const t = equipTotals(hero);
   const worn = SLOTS.map((s) => {
     const it = hero.equipment?.[s.id];
@@ -763,9 +802,10 @@ function heroEquipBlock(hero: GameState['heroes'][number]): string {
       return `<div class="slot empty"><span>${s.ko}</span><small>비어 있음</small></div>`;
     }
     return `<div class="slot">
-      <span style="color:${rarityColor(it.rarity)}">${it.nameKo}</span>
+      <span style="color:${rarityColor(it.rarity)}">${it.nameKo}${plusTag(it)}</span>
       <small>${s.ko} · ${itemLine(it)}</small>
       <button class="small" data-unequip="${hero.id}:${s.id}">해제</button>
+      ${enhanceButton(state, it, buildingDefs)}
     </div>`;
   }).join('');
 
@@ -819,9 +859,9 @@ function tavernPanel(state: GameState, level: number, now: number): string {
 }
 
 /** 지휘관 탭: 보유 지휘관 + 장비 + 창고 */
-function heroTab(state: GameState): string {
+function heroTab(state: GameState, buildingDefs: Map<string, BuildingDef>): string {
   const heroes = state.heroes.length
-    ? state.heroes.map((h) => heroEquipBlock(h)).join('')
+    ? state.heroes.map((h) => heroEquipBlock(h, state, buildingDefs)).join('')
     : `<div class="card"><small>영입한 지휘관이 없다. 기지의 용병 사무소에서 영입할 수 있다.</small></div>`;
 
   // ── 창고 ──
@@ -830,10 +870,11 @@ function heroTab(state: GameState): string {
         .map((it) => {
           const target = state.heroes.find((h) => h.level >= it.heroLevel);
           return `<div class="card">
-            <div><b style="color:${rarityColor(it.rarity)}">${it.nameKo}</b>
+            <div><b style="color:${rarityColor(it.rarity)}">${it.nameKo}</b>${plusTag(it)}
               <small>${SLOT_LABELS[it.slot]}${it.setNameKo ? ` · ${it.setNameKo}` : ''} · 요구 Lv.${it.heroLevel}</small>
               <small>${itemLine(it)}</small></div>
             <div class="actions">
+              ${enhanceButton(state, it, buildingDefs)}
               <button data-equip="${it.id}" ${target ? '' : 'disabled'}>착용</button>
               <button class="small" data-discard="${it.id}">버림</button>
             </div>
@@ -1334,7 +1375,7 @@ export function render(
 
   let body: string;
   if (activeTab === 'city') body = cityTab(state, buildingDefs, unitDefs, now);
-  else if (activeTab === 'hero') body = heroTab(state);
+  else if (activeTab === 'hero') body = heroTab(state, buildingDefs);
   else if (activeTab === 'map') {
     body = worldTab(state, camps, nodes, unitDefs, buildingDefs, maxHeld, now);
   }
@@ -1371,11 +1412,11 @@ export function render(
     state.heroes.map(
       (h) =>
         `${h.id}:${h.level}:${Object.values(h.equipment ?? {})
-          .map((i) => i?.id)
+          .map((i) => `${i?.id}+${i?.plus ?? 0}`)
           .join('|')}`,
     ),
     state.heldNodes.map((h) => h.nodeId),
-    state.inventory.map((i) => i.id),
+    state.inventory.map((i) => `${i.id}:${i.plus ?? 0}`),
   ]);
 
   if (key !== lastStructureKey) {
@@ -1454,6 +1495,9 @@ export function render(
     root.querySelectorAll<HTMLButtonElement>('button[data-unequip]').forEach((btn) => {
       const [heroId, slot] = btn.dataset.unequip!.split(':');
       btn.addEventListener('click', () => cb.onUnequip(heroId, slot as EquipSlot));
+    });
+    root.querySelectorAll<HTMLButtonElement>('button[data-enhance]').forEach((btn) => {
+      btn.addEventListener('click', () => cb.onEnhance(btn.dataset.enhance!));
     });
     root.querySelectorAll<HTMLButtonElement>('button[data-discard]').forEach((btn) => {
       btn.addEventListener('click', () => cb.onDiscard(btn.dataset.discard!));

@@ -24,6 +24,7 @@ import {
   deleteReport,
   discardItem,
   dispatchMarch,
+  enhanceEquipment,
   equipItem,
   markReportRead,
   hireHero,
@@ -38,6 +39,7 @@ import {
 import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { previewBattle, simulateBattle } from './core/combat';
+import { equipTotals } from './core/equipment';
 import { createStorage, StaleStateError } from './db/storage';
 import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
 import type { CampDef, NodeDef } from './core/types';
@@ -329,6 +331,12 @@ async function main(): Promise<void> {
       dirty = true;
       rerender(Date.now());
     },
+    onEnhance(itemId: string) {
+      const result = enhanceEquipment(state, itemId, buildingDefs);
+      setMessage(result.ok ? '' : result.reason);
+      dirty = true;
+      rerender(Date.now());
+    },
     onDiscard(itemId: string) {
       const result = discardItem(state, itemId);
       setMessage(result.ok ? '' : result.reason);
@@ -440,6 +448,7 @@ async function main(): Promise<void> {
       simulateBattle,
       previewBattle,
       storageCap,
+      equipTotals,
       advance,
       startUpgrade,
       dispatchMarch,
