@@ -11,23 +11,26 @@ import type { BuildingDef, GameState } from '../core/types';
  */
 
 export const CITY_W = 480;
-export const CITY_H = 420;
+export const CITY_H = 430;
 
-/** 아이소 타일 크기 (2:1) */
-const TW = 60;
-const TH = 30;
+/**
+ * 아이소 타일. 정통 2:1은 세로가 너무 납작해 모바일 세로 화면에 여백이 크게 남는다.
+ * 약 1.4:1로 눕혀 화면을 꽉 채우면서도 입체감은 유지한다.
+ */
+const TW = 66;
+const TH = 50;
 const GRID = 7;
 const ORIGIN_X = CITY_W / 2;
-const ORIGIN_Y = 86;
+const ORIGIN_Y = 40;
 
 const isoX = (gx: number, gy: number) => (gx - gy) * (TW / 2) + ORIGIN_X;
 const isoY = (gx: number, gy: number) => (gx + gy) * (TH / 2) + ORIGIN_Y;
 
 // ── 팔레트 ───────────────────────────────────────────────────
 const C = {
-  terrainA: '#4a3830',
-  terrainB: '#553f34',
-  terrainC: '#3f2f28',
+  terrainA: '#241c19',
+  terrainB: '#2c221c',
+  terrainC: '#191312',
   deckA: '#39424e',
   deckB: '#323b46',
   deckLine: '#4b5764',
@@ -330,8 +333,8 @@ function drawStructure(
   t: number,
 ): void {
   const blink = 0.55 + 0.45 * Math.sin(t / 380 + s.gx * 1.7 + s.gy);
-  // 레벨이 오르면 살짝 높아진다
-  const h = 26 + Math.min(level, 10) * 1.6;
+  // 레벨이 올라도 높이 차이는 작게 — 모바일에서 건물 크기가 들쭉날쭉하면 읽기 나쁘다
+  const h = 30 + Math.min(level, 10) * 0.9;
 
   switch (id) {
     case 'sawmill': {
@@ -576,31 +579,31 @@ function drawHQ(ctx: CanvasRenderingContext2D, t: number): void {
   const beacon = 0.5 + 0.5 * Math.sin(t / 300);
 
   // 1층 — 넓은 기단
-  const b1 = box(ctx, HQ.gx, HQ.gy, HQ.w, HQ.d, 24, {
+  const b1 = box(ctx, HQ.gx, HQ.gy, HQ.w, HQ.d, 22, {
     top: '#4d5763',
     left: '#333b45',
     right: '#454f5a',
   });
-  windows(ctx, b1, 24, 1, 4, C.glass, t, 11);
+  windows(ctx, b1, 22, 1, 4, C.glass, t, 11);
   // 기단 강조 띠
   ctx.save();
   ctx.globalAlpha = 0.85;
   ctx.strokeStyle = C.accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(b1.W.x, b1.W.y - 20);
-  ctx.lineTo(b1.S.x, b1.S.y - 20);
-  ctx.lineTo(b1.E.x, b1.E.y - 20);
+  ctx.moveTo(b1.W.x, b1.W.y - 18);
+  ctx.lineTo(b1.S.x, b1.S.y - 18);
+  ctx.lineTo(b1.E.x, b1.E.y - 18);
   ctx.stroke();
   ctx.restore();
 
   // 2층 — 좁고 높은 본체
-  const b2 = box(ctx, HQ.gx + 0.28, HQ.gy + 0.28, HQ.w - 0.56, HQ.d - 0.56, 62, {
+  const b2 = box(ctx, HQ.gx + 0.28, HQ.gy + 0.28, HQ.w - 0.56, HQ.d - 0.56, 44, {
     top: '#5d6874',
     left: '#3a434e',
     right: '#4f5a66',
   });
-  windows(ctx, b2, 62, 3, 3, C.glass, t, 5);
+  windows(ctx, b2, 44, 2, 3, C.glass, t, 5);
 
   // 관제 링 (돌아가는 느낌)
   ctx.save();
@@ -615,7 +618,7 @@ function drawHQ(ctx: CanvasRenderingContext2D, t: number): void {
   ctx.restore();
 
   // 옥상 관제탑
-  const b3 = box(ctx, HQ.gx + 0.72, HQ.gy + 0.72, 0.56, 0.56, 82, {
+  const b3 = box(ctx, HQ.gx + 0.72, HQ.gy + 0.72, 0.56, 0.56, 58, {
     top: '#79858f',
     left: '#3f4852',
     right: '#586470',
