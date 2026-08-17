@@ -19,7 +19,7 @@ import {
 } from './core/actions';
 import { maybeRestockTavern, TAVERN_ID } from './core/heroes';
 import { simulateBattle } from './core/combat';
-import { createStorage } from './db/storage';
+import { createStorage, StaleStateError } from './db/storage';
 import { render, setMessage, setSelectedHero, setTab, type Tab } from './ui/render';
 import type { CampDef, NodeDef } from './core/types';
 
@@ -202,6 +202,32 @@ async function main(): Promise<void> {
     },
   };
 
+  /**
+   * 저장. 다른 세션(다른 탭·수동 SQL)이 더 최신 상태를 썼으면 덮어쓰지 않고
+   * 그쪽 상태를 받아온다. 예전에는 오래된 탭이 최신 진행을 통째로 날렸다.
+   */
+  let saving = false;
+  async function persist(): Promise<void> {
+    if (saving) return;
+    saving = true;
+    try {
+      await storage.save(state);
+    } catch (e) {
+      if (e instanceof StaleStateError) {
+        const fresh = await storage.load();
+        if (fresh) {
+          state = migrate(fresh);
+          setMessage('다른 창에서 저장된 최신 상태를 불러왔습니다.');
+          rerender(Date.now());
+        }
+      } else {
+        console.error(e);
+      }
+    } finally {
+      saving = false;
+    }
+  }
+
   // 1초 틱: 진행 반영 + 렌더. 저장은 변경이 있거나 30초마다.
   let lastSave = Date.now();
   setInterval(() => {
@@ -225,7 +251,7 @@ async function main(): Promise<void> {
     if (maybeRestockTavern(state, tavernLevel, now)) dirty = true;
     rerender(now);
     if (dirty || now - lastSave > 30_000) {
-      void storage.save(state);
+      void persist();
       dirty = false;
       lastSave = now;
     }
@@ -243,7 +269,7 @@ async function main(): Promise<void> {
       unitDefs,
       buildingDefs,
       simulateBattle,
-      save: () => storage.save(state),
+      save: () => persist(),
       rerender: () => rerender(Date.now()),
     };
   }
