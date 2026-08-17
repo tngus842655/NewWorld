@@ -1,0 +1,75 @@
+{
+  "$comment": "자원 5종(목재·석재·식량·수정·금화)은 일본판 GAME Watch 리뷰(2009)로 확인된 원작 사양. 생산량·비용·시간 수치는 아직 자료가 없어 전부 estimate — 4399/웨이백 자료 확보 시 교체할 것.",
+  "buildings": [
+    {
+      "id": "sawmill",
+      "name": "제재소",
+      "description": "목재를 생산한다.",
+      "produces": "wood",
+      "provenance": "estimate",
+      "levels": [
+        { "productionPerHour": 60, "upgradeCost": { "gold": 50 }, "upgradeSeconds": 10 },
+        { "productionPerHour": 90, "upgradeCost": { "wood": 80, "gold": 100 }, "upgradeSeconds": 30 },
+        { "productionPerHour": 135, "upgradeCost": { "wood": 180, "stone": 60, "gold": 200 }, "upgradeSeconds": 90 },
+        { "productionPerHour": 200, "upgradeCost": { "wood": 400, "stone": 150, "gold": 400 }, "upgradeSeconds": 240 },
+        { "productionPerHour": 300, "upgradeCost": { "wood": 900, "stone": 350, "gold": 800 }, "upgradeSeconds": 600 }
+      ]
+    },
+    {
+      "id": "quarry",
+      "name": "채석장",
+      "description": "석재를 생산한다.",
+      "produces": "stone",
+      "provenance": "estimate",
+      "levels": [
+        { "productionPerHour": 50, "upgradeCost": { "gold": 50 }, "upgradeSeconds": 10 },
+        { "productionPerHour": 75, "upgradeCost": { "wood": 100, "gold": 100 }, "upgradeSeconds": 30 },
+        { "productionPerHour": 115, "upgradeCost": { "wood": 220, "stone": 40, "gold": 200 }, "upgradeSeconds": 90 },
+        { "productionPerHour": 170, "upgradeCost": { "wood": 480, "stone": 120, "gold": 400 }, "upgradeSeconds": 240 },
+        { "productionPerHour": 255, "upgradeCost": { "wood": 1000, "stone": 300, "gold": 800 }, "upgradeSeconds": 600 }
+      ]
+    },
+    {
+      "id": "farm",
+      "name": "농장",
+      "description": "식량을 생산한다. 병력 유지의 기반.",
+      "produces": "food",
+      "provenance": "estimate",
+      "levels": [
+        { "productionPerHour": 70, "upgradeCost": { "gold": 40 }, "upgradeSeconds": 10 },
+        { "productionPerHour": 105, "upgradeCost": { "wood": 70, "gold": 80 }, "upgradeSeconds": 30 },
+        { "productionPerHour": 160, "upgradeCost": { "wood": 160, "stone": 50, "gold": 160 }, "upgradeSeconds": 90 },
+        { "productionPerHour": 240, "upgradeCost": { "wood": 350, "stone": 130, "gold": 320 }, "upgradeSeconds": 240 },
+        { "productionPerHour": 360, "upgradeCost": { "wood": 800, "stone": 300, "gold": 650 }, "upgradeSeconds": 600 }
+      ]
+    },
+    {
+      "id": "crystal-mine",
+      "name": "수정 광산",
+      "description": "수정을 생산한다. 마법 계열 유닛·영웅에 필요.",
+      "produces": "crystal",
+      "provenance": "estimate",
+      "levels": [
+        { "productionPerHour": 20, "upgradeCost": { "wood": 60, "gold": 80 }, "upgradeSeconds": 20 },
+        { "productionPerHour": 30, "upgradeCost": { "wood": 140, "stone": 80, "gold": 160 }, "upgradeSeconds": 60 },
+        { "productionPerHour": 45, "upgradeCost": { "wood": 300, "stone": 180, "gold": 320 }, "upgradeSeconds": 180 },
+        { "productionPerHour": 68, "upgradeCost": { "wood": 650, "stone": 400, "gold": 640 }, "upgradeSeconds": 420 },
+        { "productionPerHour": 100, "upgradeCost": { "wood": 1400, "stone": 900, "gold": 1300 }, "upgradeSeconds": 900 }
+      ]
+    },
+    {
+      "id": "market",
+      "name": "시장",
+      "description": "금화를 생산한다.",
+      "produces": "gold",
+      "provenance": "estimate",
+      "levels": [
+        { "productionPerHour": 40, "upgradeCost": { "wood": 50, "stone": 30 }, "upgradeSeconds": 15 },
+        { "productionPerHour": 60, "upgradeCost": { "wood": 120, "stone": 70 }, "upgradeSeconds": 45 },
+        { "productionPerHour": 90, "upgradeCost": { "wood": 260, "stone": 160 }, "upgradeSeconds": 120 },
+        { "productionPerHour": 135, "upgradeCost": { "wood": 560, "stone": 340 }, "upgradeSeconds": 300 },
+        { "productionPerHour": 200, "upgradeCost": { "wood": 1200, "stone": 700 }, "upgradeSeconds": 700 }
+      ]
+    }
+  ]
+}

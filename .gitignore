@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env.local
+.env.*.local
+
+# 원본 게임 자료(스크린샷, SWF, 일러스트 등)는 저작물이므로 저장소에 포함하지 않는다
+reference/
