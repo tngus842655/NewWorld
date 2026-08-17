@@ -137,6 +137,19 @@ export interface UnitStatRow {
   [stat: string]: number;
 }
 
+/**
+ * 병종 계열 — 어느 건물에서 훈련하는지를 가른다.
+ * 원작은 초급병영(1~3계)/고급병영(4~6계)으로 등급만 갈랐는데,
+ * 여기서는 기갑·항공을 따로 두어 기갑 공장·우주항이 역할을 갖게 했다.
+ */
+export type UnitBranch = 'infantry' | 'vehicle' | 'air';
+
+export const UNIT_BRANCH_LABELS: Record<UnitBranch, string> = {
+  infantry: '보병',
+  vehicle: '기갑',
+  air: '항공',
+};
+
 export interface UnitDef {
   id: string;
   raceId: string;
@@ -144,6 +157,8 @@ export interface UnitDef {
   nameCn?: string;
   /** 병계 (원작 兵阶, 1~8) */
   tier: number;
+  /** 생략하면 보병 — 침략군·야생종처럼 훈련 대상이 아닌 유닛은 비워 둔다 */
+  branch?: UnitBranch;
   /** 훈련 비용 */
   cost: Partial<Resources>;
   speed?: number;

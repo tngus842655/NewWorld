@@ -9,6 +9,7 @@
       "raceId": "coalition",
       "nameKo": "보병",
       "tier": 1,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -201,6 +202,7 @@
       "raceId": "coalition",
       "nameKo": "저격병",
       "tier": 2,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -393,6 +395,7 @@
       "raceId": "coalition",
       "nameKo": "정찰비행체",
       "tier": 3,
+      "branch": "air",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -585,6 +588,7 @@
       "raceId": "coalition",
       "nameKo": "돌격병",
       "tier": 4,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -777,6 +781,7 @@
       "raceId": "coalition",
       "nameKo": "지원드론",
       "tier": 5,
+      "branch": "air",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -969,6 +974,7 @@
       "raceId": "coalition",
       "nameKo": "강습기갑",
       "tier": 6,
+      "branch": "vehicle",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -1161,6 +1167,7 @@
       "raceId": "coalition",
       "nameKo": "전략폭격기",
       "tier": 7,
+      "branch": "air",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -1353,6 +1360,7 @@
       "raceId": "coalition",
       "nameKo": "공성전차",
       "tier": 8,
+      "branch": "vehicle",
       "cost": {
         "wood": 120,
         "stone": 100,

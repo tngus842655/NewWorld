@@ -9,6 +9,7 @@
       "raceId": "cluster",
       "nameKo": "정예병",
       "tier": 1,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -201,6 +202,7 @@
       "raceId": "cluster",
       "nameKo": "중장병",
       "tier": 2,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -393,6 +395,7 @@
       "raceId": "cluster",
       "nameKo": "광선병",
       "tier": 3,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -585,6 +588,7 @@
       "raceId": "cluster",
       "nameKo": "비행정",
       "tier": 4,
+      "branch": "air",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -777,6 +781,7 @@
       "raceId": "cluster",
       "nameKo": "파장술사",
       "tier": 5,
+      "branch": "infantry",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -969,6 +974,7 @@
       "raceId": "cluster",
       "nameKo": "수호기",
       "tier": 6,
+      "branch": "vehicle",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -1161,6 +1167,7 @@
       "raceId": "cluster",
       "nameKo": "전투함",
       "tier": 7,
+      "branch": "air",
       "cost": {
         "wood": 0,
         "stone": 0,
@@ -1353,6 +1360,7 @@
       "raceId": "cluster",
       "nameKo": "파괴포",
       "tier": 8,
+      "branch": "vehicle",
       "cost": {
         "wood": 120,
         "stone": 100,

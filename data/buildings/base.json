@@ -220,7 +220,7 @@
     {
       "id": "barracks",
       "name": "병영",
-      "description": "병력을 생산한다. 병영 레벨 이하 등급의 병종을 생산할 수 있다.",
+      "description": "1~3계 보병을 훈련한다. 레벨이 오를수록 상위 병종이 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1165,7 +1165,7 @@
     {
       "id": "advanced-barracks",
       "name": "고급 병영",
-      "description": "4~6계 상급 병종을 훈련한다. 원작의 고급병영에 해당.",
+      "description": "4계 이상 보병을 훈련한다. 레벨이 오를수록 상위 병종이 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1177,7 +1177,6 @@
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1230,7 +1229,7 @@
     {
       "id": "factory",
       "name": "기갑 공장",
-      "description": "지상 기갑 병기를 조립한다.",
+      "description": "기갑 계열 병기를 조립한다. 레벨이 오를수록 상위 기갑이 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1242,7 +1241,6 @@
           "level": 1
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {
@@ -1295,7 +1293,7 @@
     {
       "id": "starport",
       "name": "우주항",
-      "description": "항공 전력을 배치하고 정비한다.",
+      "description": "항공 계열 전력을 배치한다. 레벨이 오를수록 상위 항공기가 열린다.",
       "category": "군사",
       "requires": [
         {
@@ -1307,7 +1305,6 @@
           "level": 2
         }
       ],
-      "planned": true,
       "provenance": "estimate",
       "levels": [
         {

@@ -32,6 +32,7 @@ import {
   startResearch,
   startTraining,
   startUpgrade,
+  trainingRequirement,
   unequipItem,
 } from './core/actions';
 import { buildSlots, DEFAULT_SLOTS, repairLayout, storageCap } from './core/city';
@@ -244,7 +245,7 @@ async function main(): Promise<void> {
       if (!def) return;
       const now = Date.now();
       state = advance(state, buildingDefs, unitDefs, nodeDefs, now);
-      const result = startTraining(state, def, count, now);
+      const result = startTraining(state, def, count, unitDefs, buildingDefs, now);
       setMessage(result.ok ? '' : result.reason);
       dirty = true;
       rerender(now);
@@ -442,6 +443,8 @@ async function main(): Promise<void> {
       advance,
       startUpgrade,
       dispatchMarch,
+      startTraining,
+      trainingRequirement,
       save: () => persist(),
       rerender: () => rerender(Date.now()),
     };

@@ -31,6 +31,39 @@ export const MAX_MARCH_CUT = 60;
 
 /** 유닛 훈련을 담당하는 건물 id */
 export const BARRACKS_ID = 'barracks';
+/** 4계 이상 보병을 맡는 고급 병영 */
+export const ADVANCED_BARRACKS_ID = 'advanced-barracks';
+/** 기갑 계열 */
+export const FACTORY_ID = 'factory';
+/** 항공 계열 */
+export const STARPORT_ID = 'starport';
+/** 초급 병영이 맡는 최고 병계 — 원작 初级兵营 = 1~3계 */
+export const BASIC_BARRACKS_MAX_TIER = 3;
+
+/** 이 병종을 훈련하는 건물 */
+export function trainingBuilding(def: UnitDef): string {
+  const branch = def.branch ?? 'infantry';
+  if (branch === 'vehicle') return FACTORY_ID;
+  if (branch === 'air') return STARPORT_ID;
+  return def.tier <= BASIC_BARRACKS_MAX_TIER ? BARRACKS_ID : ADVANCED_BARRACKS_ID;
+}
+
+/**
+ * 이 병종을 열려면 담당 건물이 몇 레벨이어야 하는가.
+ * 그 건물이 맡은 같은 종족 병종을 병계 순으로 줄 세웠을 때의 순번을 쓴다 —
+ * 병종이 늘거나 계열이 바뀌어도 규칙이 저절로 따라온다.
+ */
+export function trainingRequirement(
+  def: UnitDef,
+  unitDefs: Map<string, UnitDef>,
+): { buildingId: string; level: number } {
+  const buildingId = trainingBuilding(def);
+  const peers = [...unitDefs.values()]
+    .filter((u) => u.raceId === def.raceId && trainingBuilding(u) === buildingId)
+    .sort((a, b) => a.tier - b.tier);
+  const idx = peers.findIndex((u) => u.id === def.id);
+  return { buildingId, level: Math.max(1, idx + 1) };
+}
 /** 병종 연구를 담당하는 건물 id */
 export const ACADEMY_ID = 'academy';
 /** 유닛 연구 최대 레벨 — 4399 스탯표가 20레벨까지 있다 */
@@ -203,16 +236,19 @@ export function startTraining(
   state: GameState,
   def: UnitDef,
   count: number,
+  unitDefs: Map<string, UnitDef>,
+  buildingDefs: Map<string, BuildingDef>,
   now: number,
 ): ActionResult {
   if (count < 1) return { ok: false, reason: '수량이 잘못됐습니다.' };
   if (state.trainQueue) return { ok: false, reason: '훈련 큐가 이미 사용 중입니다.' };
 
-  const barracks = state.buildings.find((b) => b.defId === BARRACKS_ID);
-  const barracksLevel = barracks?.level ?? 0;
-  if (barracksLevel < 1) return { ok: false, reason: '병영을 먼저 지어야 합니다.' };
-  if (def.tier > barracksLevel) {
-    return { ok: false, reason: `병영 Lv.${def.tier} 필요 (현재 Lv.${barracksLevel})` };
+  // 계열마다 담당 건물이 다르다 — 보병은 (고급)병영, 기갑은 공장, 항공은 우주항
+  const req = trainingRequirement(def, unitDefs);
+  const have = state.buildings.find((b) => b.defId === req.buildingId)?.level ?? 0;
+  const name = buildingDefs.get(req.buildingId)?.name ?? req.buildingId;
+  if (have < req.level) {
+    return { ok: false, reason: `${name} Lv.${req.level} 필요 (현재 Lv.${have})` };
   }
 
   const totalCost: Partial<Resources> = {};

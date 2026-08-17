@@ -15,14 +15,20 @@ import type {
 import {
   BUILDING_EFFECT_INFO,
   HERO_STAT_LABELS,
+  UNIT_BRANCH_LABELS,
   RACE_LABELS,
   RESOURCE_LABELS,
 } from '../core/types';
 import {
   ACADEMY_ID,
+  ADVANCED_BARRACKS_ID,
   BARRACKS_ID,
   canAfford,
   cityBonus,
+  FACTORY_ID,
+  STARPORT_ID,
+  trainingBuilding,
+  trainingRequirement,
   MAX_UNIT_LEVEL,
   maxResearchableLevel,
   researchCost,
@@ -291,6 +297,14 @@ const RACE_FLAVOR: Record<RaceId, string> = {
   swarm: '값싼 개체를 대량으로 쏟아내는 유기 생명체. 수로 전선을 무너뜨린다.',
 };
 
+/** 병종을 훈련하는 건물들 — 이 건물을 누르면 담당 병종 목록이 뜬다 */
+const TRAINING_BUILDINGS: string[] = [
+  BARRACKS_ID,
+  ADVANCED_BARRACKS_ID,
+  FACTORY_ID,
+  STARPORT_ID,
+];
+
 /** 건설 목록에서 묶어 보여줄 순서 */
 const CATEGORY_ORDER: BuildingCategory[] = ['자원', '군사', '방어', '지휘', '특수'];
 
@@ -446,8 +460,9 @@ function cityTab(
 
   // ── 건물별 기능 ──
   let body = '';
-  if (def.id === BARRACKS_ID) body = barracksPanel(state, unitDefs, sel.level);
-  else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
+  if (TRAINING_BUILDINGS.includes(def.id)) {
+    body = trainPanel(state, unitDefs, buildingDefs, def.id, sel.level);
+  } else if (def.id === ACADEMY_ID) body = academyPanel(state, unitDefs, sel.level);
   else if (def.id === TAVERN_ID) body = tavernPanel(state, sel.level, now);
 
   return `${canvas}${header}${body}`;
@@ -548,38 +563,42 @@ function effectText(def: BuildingDef, level = 0): string {
     .join('');
 }
 
-/** 병영 패널: 보유 병력 + 훈련 */
-function barracksPanel(state: GameState, unitDefs: Map<string, UnitDef>, level: number): string {
-  const entries = Object.entries(state.army).filter(([, n]) => n > 0);
-  const army = entries.length
-    ? `<div class="army">${entries
-        .map(([id, n]) => {
-          const lv = state.unitLevels[id] ?? 1;
-          return `<span>${unitIcon(id, 26)}${unitDefs.get(id)?.nameKo ?? id} <b>${formatNumber(n)}</b>
-            ${lv > 1 ? `<span class="tier">Lv.${lv}</span>` : ''}</span>`;
-        })
-        .join('')}</div>`
-    : '<div class="card"><small>아직 병력이 없다.</small></div>';
-
-  const raceUnits = [...unitDefs.values()]
-    .filter((u) => u.raceId === state.raceId)
+/**
+ * 훈련 건물 패널 — 그 건물이 맡은 병종만 보여준다.
+ * 병영은 보유 병력 전체도 함께 보여줘 '군대 현황' 노릇을 한다.
+ */
+function trainPanel(
+  state: GameState,
+  unitDefs: Map<string, UnitDef>,
+  buildingDefs: Map<string, BuildingDef>,
+  buildingId: string,
+  level: number,
+): string {
+  const def = buildingDefs.get(buildingId);
+  const mine = [...unitDefs.values()]
+    .filter((u) => u.raceId === state.raceId && trainingBuilding(u) === buildingId)
     .sort((a, b) => a.tier - b.tier);
 
   let training: string;
   if (level < 1) {
-    training = '<div class="card"><small>병영을 지으면 유닛을 훈련할 수 있다.</small></div>';
+    training = `<div class="card"><small>${def?.name ?? '건물'}을(를) 지으면
+      ${mine.map((u) => u.nameKo).join(' · ') || '병종'}을(를) 훈련할 수 있다.</small></div>`;
+  } else if (!mine.length) {
+    training = '<div class="card"><small>이 종족은 여기서 뽑는 병종이 없다.</small></div>';
   } else {
-    training = raceUnits
+    training = mine
       .map((u) => {
-        const locked = u.tier > level;
+        const req = trainingRequirement(u, unitDefs);
+        const locked = level < req.level;
         const cost5 = Object.fromEntries(Object.entries(u.cost).map(([k, v]) => [k, (v ?? 0) * 5]));
         const blocked = locked || state.trainQueue !== null;
         const info = locked
-          ? `🔒 병영 Lv.${u.tier} 필요`
+          ? `🔒 ${def?.name ?? ''} Lv.${req.level} 필요 (현재 Lv.${level})`
           : `${costText(u.cost)}<br>${u.trainSeconds ?? '?'}초/기 · 식량 ${u.foodUpkeepPerHour ?? 0}/시간`;
-        return `<div class="card">
+        return `<div class="card${locked ? ' dim' : ''}">
           <div class="unitrow">${unitIcon(u.id)}
-            <div><span class="tier">${u.tier}계</span> <b>${u.nameKo}</b><small>${info}</small></div>
+            <div><span class="tier">${u.tier}계 ${UNIT_BRANCH_LABELS[u.branch ?? 'infantry']}</span>
+              <b>${u.nameKo}</b><small>${info}</small></div>
           </div>
           <div class="actions">
             <button data-train="${u.id}" data-count="1" ${costAttrs(u.cost, blocked)}>×1</button>
@@ -590,7 +609,21 @@ function barracksPanel(state: GameState, unitDefs: Map<string, UnitDef>, level: 
       .join('');
   }
 
-  return `<h2>보유 병력</h2>${army}<h2>병력 생산</h2>${training}`;
+  const header = `<h2>${def?.name ?? '훈련'} 병력 생산</h2>${training}`;
+  if (buildingId !== BARRACKS_ID) return header;
+
+  // 병영에서는 보유 병력 전체를 함께 본다
+  const entries = Object.entries(state.army).filter(([, n]) => n > 0);
+  const army = entries.length
+    ? `<div class="army">${entries
+        .map(([id, n]) => {
+          const lv = state.unitLevels[id] ?? 1;
+          return `<span>${unitIcon(id, 26)}${unitDefs.get(id)?.nameKo ?? id} <b>${formatNumber(n)}</b>
+            ${lv > 1 ? `<span class="tier">Lv.${lv}</span>` : ''}</span>`;
+        })
+        .join('')}</div>`
+    : '<div class="card"><small>아직 병력이 없다.</small></div>';
+  return `<h2>보유 병력</h2>${army}${header}`;
 }
 
 /** 연구소 패널: 병종 연구 */
