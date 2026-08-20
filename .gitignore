@@ -9,5 +9,8 @@ reference/
 # 아트 에셋은 저장소에 넣지 않는다 (용량·라이선스).
 # public/assets/city/base.png 를 두면 기지 화면 배경으로 쓰이고,
 # 없으면 코드로 그린 화면으로 폴백한다.
+# public/assets/buildings/<건물id>.png 도 같은 방식이다.
+# 건물 아이콘은 IconScout 유료 구독으로 받은 것이라 저장소에 넣지 않는다.
 public/assets/units/
 public/assets/city/
+public/assets/buildings/
