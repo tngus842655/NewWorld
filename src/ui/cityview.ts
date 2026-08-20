@@ -149,6 +149,24 @@ cityImg.onerror = () => {
 cityImg.src = CANDIDATES[0];
 const imgReady = () => cityImg.complete && cityImg.naturalWidth > 0;
 
+// ── 건물 아이콘 (public/assets/buildings/<id>.png 가 있으면 코드 그림 대신 쓴다) ──
+const iconCache = new Map<string, HTMLImageElement>();
+/**
+ * 아이콘이 준비됐으면 반환, 아직 로딩 중이거나 파일이 없으면 null.
+ * null이면 지금까지처럼 코드로 상자를 그린다 — 아이콘을 덜 받아둔 상태에서도 화면이 깨지지 않는다.
+ */
+function buildingIcon(id: string): HTMLImageElement | null {
+  let img = iconCache.get(id);
+  if (!img) {
+    img = new Image();
+    img.src = '/assets/buildings/' + id + '.png';
+    iconCache.set(id, img);
+  }
+  // 404여도 complete는 true가 되므로 naturalWidth로 실제 로드 여부를 가린다
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
+
 /** 캔버스 좌표 → 건물 id ('__hq' 포함). 건물 그림 위를 눌렀을 때만 잡힌다 */
 export function buildingAt(px: number, py: number): string | null {
   for (let i = hitAreas.length - 1; i >= 0; i--) {
@@ -571,6 +589,18 @@ function drawBuilding(
 ): void {
   const look = LOOK[id] ?? { roof: '#8a8a8a', icon: '?' };
   const blink = 0.5 + 0.5 * Math.sin(t / 420 + cx * 0.02);
+
+  // 3D 아이콘이 있으면 그걸로 대체한다. 칸 하단 중앙에 세우고 레벨만큼 조금 커진다.
+  // (아이콘에 자체 받침대가 있어 shadow()는 생략한다)
+  const icon = buildingIcon(id);
+  if (icon) {
+    const size = CH * 1.02 + Math.min(level, 10) * 1.6;
+    ctx.drawImage(icon, cx - size / 2, baseY - size + CH * 0.06, size, size);
+    if (id === 'turret' || id === 'radar' || id === 'academy') {
+      lamp(ctx, cx + size * 0.32, baseY - size * 0.78, C.gold, blink);
+    }
+    return;
+  }
 
   const w = CW * 0.62;
   const h = CH * 0.34 + Math.min(level, 10) * 1.1;
