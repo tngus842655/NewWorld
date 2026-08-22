@@ -45,10 +45,17 @@ function journalSheet(data: Extract<NonNullable<Overlay>, { kind: 'journal' }>):
   );
 }
 
+// 직전 렌더의 성장 수치 — 같은 시트가 레벨업·각성으로 다시 그려질 때만 스탯 팝
+let lastMonsterRender: { uid: string; level: number; star: number } | null = null;
+
 function monsterSheet(uid: string): HTMLElement | null {
   const state = save();
   const owned = state.roster.find((m) => m.uid === uid);
   if (!owned) return null;
+  const grew =
+    lastMonsterRender?.uid === uid &&
+    (owned.level > lastMonsterRender.level || owned.star > lastMonsterRender.star);
+  lastMonsterRender = { uid, level: owned.level, star: owned.star };
   const monster = content.monsters.get(owned.monsterId)!;
   const { balance } = content;
   const atk = Math.round(statAt(monster.baseAtk, owned.level, owned.star, balance));
@@ -74,9 +81,9 @@ function monsterSheet(uid: string): HTMLElement | null {
       ),
     ),
     el('div.stat-row', {},
-      el('div.stat', {}, el('div.muted.small', {}, '공격'), el('strong', {}, `${atk}`)),
-      el('div.stat', {}, el('div.muted.small', {}, '생명'), el('strong', {}, `${hp}`)),
-      el('div.stat', {}, el('div.muted.small', {}, '전투력'), el('strong', {}, `${ownedCp(owned)}`)),
+      el('div.stat', {}, el('div.muted.small', {}, '공격'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${atk}`)),
+      el('div.stat', {}, el('div.muted.small', {}, '생명'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${hp}`)),
+      el('div.stat', {}, el('div.muted.small', {}, '전투력'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${ownedCp(owned)}`)),
     ),
     el('p.flavor', {}, `“${monster.flavor}”`),
     el('div.row-gap', {},
