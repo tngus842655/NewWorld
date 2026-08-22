@@ -15,7 +15,7 @@
 | 콘텐츠 검증 | zod | 콘텐츠 JSON이 게임의 절반 — 로드 시점 스키마 검증은 필수 |
 | 테스트 | vitest | core 레이어 전수 테스트 |
 | 백엔드 | Supabase (Postgres + Edge Functions + pg_cron) | 이미 프로젝트 존재(sbprvqtpshzrferjauxs), 푸시 스케줄링에 서버 필요 |
-| 플랫폼 | @apps-in-toss/web-framework → (2차) Capacitor Android | MoneyGame 배포 파이프라인 재사용 |
+| 플랫폼 | Capacitor Android (Google Play) → (2차) @apps-in-toss/web-framework | 2026-08-22 우선순위 전환(앱인토스 보류). MoneyGame 배포 파이프라인 재사용 |
 
 **명시적으로 안 쓰는 것**: React/Vue(사유 위), 캔버스 게임엔진(Phaser 등 — DOM UI 게임이라 불필요),
 서버 권위 실시간 판정(v1은 클라 판정 + 결정론 시드로 서버 재검증 *가능성*만 확보).
@@ -151,7 +151,8 @@ effect(() => { el.textContent = label(); }); // 의존 자동 추적, 파괴 시
 ## 7. 시간 처리 (방치형의 아킬레스건)
 
 - `clock.ts`: `now() = Date.now() + serverOffset`
-  - 온라인 시: Supabase RPC(`select now()`) 또는 응답 헤더로 오프셋 보정 (M4 전에는 offset=0)
+  - 온라인 시: Supabase RPC(`select now()`) 또는 응답 헤더로 오프셋 보정
+    (앱인토스 트랙 보류로 당분간 offset=0 — Google Play 1차의 귀환 로컬 알림은 기기 시계 기준)
   - **되감기 클램프**: `now() < save.lastSavedAt`이면 `lastSavedAt`을 하한으로 사용
 - 파견 완료 판정·방치 보상은 전부 `clock.now()` 기준. core에는 `ctx.now`로 주입(직접 호출 금지)
 - 한계 인정: v1 오프라인 단독 플레이는 시계 조작에 완전 방어 불가. 랭킹 없는 v1에서는 수용,

@@ -185,7 +185,7 @@ interface SaveState {
 세이브 (localStorage) ──로드──▶ 마이그레이션 체인 ▶ 파생값 재계산 ▶ 스토어
 ```
 
-## 4. Supabase 스키마 (프로젝트: sbprvqtpshzrferjauxs · M4에 적용)
+## 4. Supabase 스키마 (프로젝트: sbprvqtpshzrferjauxs · 0001 적용 완료 2026-08-22 · 앱인토스 트랙 보류로 휴면 — RLS 정책 없음 = anon 전면 차단)
 
 > 적용 방식: `supabase/migrations/*.sql`로 파일 작성 → 리뷰 → MCP `apply_migration`.
 > 콘텐츠는 DB에 넣지 않는다(클라 JSON이 원본). DB는 **유저 상태와 푸시 스케줄만**.
@@ -230,7 +230,7 @@ alter table public.expeditions enable row level security;
 미결(M4 착수 시 확정): 앱인토스 로그인 검증 API 스펙 확인 → JWT 발급 함수 설계.
 그 전까지 클라우드 저장 없이도 게임 전체가 로컬로 동작해야 한다(TECH §9 web mock).
 
-## 5. 푸시 파이프라인 (M4)
+## 5. 푸시 파이프라인 (보류 트랙 — 앱인토스 재개 시. Google Play 1차는 로컬 알림으로 대체)
 
 ```
 파견 시작 ─▶ expeditions upsert (ends_at)
