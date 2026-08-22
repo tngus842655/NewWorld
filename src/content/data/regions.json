@@ -60,7 +60,7 @@
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": { "whispering-woods": 8 },
-      "materials": { "dew-branch": 10, "spirit-moss": 6 }
+      "materials": { "dew-branch": 8, "spirit-moss": 5 }
     },
     "materials": ["grave-reed", "chill-amber"],
     "legendary": "lich-of-depths",

@@ -1,11 +1,11 @@
 {
   "element": { "same": 1.3, "advantage": 1.3, "disadvantage": 0.77 },
   "cp": { "atkWeight": 2, "hpWeight": 0.5 },
-  "level": { "statGrowth": 0.08, "goldBase": 40, "goldExp": 1.6, "max": 30 },
+  "level": { "statGrowth": 0.08, "goldBase": 40, "goldExp": 1.5, "max": 30 },
   "star": { "mult": 1.25, "max": 5, "essenceCost": [10, 25, 60, 150] },
   "essencePerDupe": { "common": 3, "rare": 8, "epic": 20, "legendary": 50 },
   "capture": {
-    "base": { "common": 0.4, "rare": 0.15, "epic": 0.05, "legendary": 0.015 },
+    "base": { "common": 0.45, "rare": 0.18, "epic": 0.06, "legendary": 0.015 },
     "lureMult": 2,
     "adBuffMult": 2,
     "multCap": 4,
@@ -14,21 +14,21 @@
   "tiers": {
     "scout": { "minutes": 15, "encounters": 3, "crossroads": 0, "yieldMult": 1, "legendaryChance": 0, "rareWeightMult": 1 },
     "standard": { "minutes": 120, "encounters": 8, "crossroads": 1, "yieldMult": 1.2, "legendaryChance": 0, "rareWeightMult": 1 },
-    "deep": { "minutes": 480, "encounters": 20, "crossroads": 2, "yieldMult": 1.35, "legendaryChance": 0.05, "rareWeightMult": 2 }
+    "deep": { "minutes": 480, "encounters": 18, "crossroads": 2, "yieldMult": 1.35, "legendaryChance": 0.05, "rareWeightMult": 2 }
   },
   "combat": {
     "encounterPowerMult": 3.2,
-    "victoryDamageK": 0.09,
-    "defeatDamageK": 0.35,
+    "victoryDamageK": 0.08,
+    "defeatDamageK": 0.25,
     "defeatRatioCap": 2,
-    "trapDamage": 0.12,
-    "fleeRewardRatio": 0.5
+    "trapDamage": 0.1,
+    "fleeRewardRatio": 0.55
   },
   "rewards": {
-    "goldPerVictory": 18,
-    "goldPerTreasure": 90,
-    "gatherMaterialMin": 1,
-    "gatherMaterialMax": 2,
+    "goldPerVictory": 24,
+    "goldPerTreasure": 110,
+    "gatherMaterialMin": 2,
+    "gatherMaterialMax": 3,
     "rarityGoldMult": { "common": 1, "rare": 1.6, "epic": 2.5, "legendary": 5 }
   },
   "crossroad": { "timeoutHours": 4, "riskyCheckRatio": 1.15, "baseChanceFloor": 0.15, "baseChanceCeil": 0.9 },
