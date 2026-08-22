@@ -90,6 +90,7 @@ src/
     screens/           # home / expedition / codex / camp / journal / detail
     components/        # MonsterCard, SynergyGauge, TimelineCard, ...
     fx.ts              # 트윈·흔들림·데미지 숫자 (CSS 기반, rAF 최소)
+    sfx.ts             # 효과음 — Web Audio 지연 로드, settings.sound 게이트 (GDD §11.1)
   main.ts
 tests/
   core/                # 유닛 + 시드 고정 시뮬레이션 스냅샷
@@ -98,6 +99,7 @@ scripts/
   simulate.mjs         # M3 밸런스 시뮬레이터 (7일 진행 리포트)
   fetch-assets.mjs     # IconScout 다운로드 정리 (ASSETS.md)
 public/assets/monsters/  # 3D PNG (git 미포함 — ASSETS.md 참조)
+public/assets/sfx/       # 효과음 ogg (Kenney CC0 — 재배포 자유라 git 포함, ASSETS §4-1)
 supabase/
   migrations/          # DDL (DATA.md §4) — MCP apply 전 파일로 먼저 작성
   functions/           # expedition-push (M4)

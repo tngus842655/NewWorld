@@ -48,6 +48,40 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 
+## 4-1. 사운드 (SFX) 매핑 대장 — 2026-08-23
+
+원천: `C:\Workspace\util\Audio`의 **Kenney 3팩 (CC0)**. IconScout와 달리 재배포 자유이므로
+선별본을 `public/assets/sfx/{id}.ogg`로 리네임해 **저장소에 커밋**한다 (총 23개 ≈ 160KB).
+설계 원칙은 GDD §11.1. 참고: ogg는 iOS 웹뷰 미지원 — 앱인토스 트랙 재개 시 m4a 일괄 변환.
+
+| id | 용도 | 원본 (팩 / 파일) |
+|---|---|---|
+| tap | 탭·일반 버튼 | interface / click_001 |
+| open | 시트 열림 | interface / open_001 |
+| close | 시트 닫힘 | interface / close_001 |
+| confirm | 파견 출발·슬롯 확장 | interface / confirmation_001 |
+| error | 오류 토스트 | interface / error_004 |
+| question | 갈림길 시트 등장 | interface / question_001 |
+| select | 갈림길 선택 | interface / select_001 |
+| treasure | 보물·갈림길 성공 | interface / glass_002 |
+| defeat | 패주·갈림길 실패 | impact / impactSoft_medium_000 |
+| trap | 함정 피격 | impact / impactSoft_heavy_000 |
+| artifact | 유물 발굴·완주 상자 | impact / impactBell_heavy_000 |
+| gather | 채집 | impact / impactMining_000 |
+| enhance | 유물 강화 | impact / impactMetal_medium_000 |
+| salvage | 유물 분해 | impact / impactGlass_medium_000 |
+| craft | 미끼 제작 | impact / impactPlank_medium_000 |
+| capture-new | 포획 성공 (신규 등록) | digital-audio / powerUp1 |
+| capture-dupe | 포획 성공 (정수 전환) | digital-audio / powerUp5 |
+| capture-miss | 포획 실패 | digital-audio / lowDown |
+| levelup | 레벨업 | digital-audio / powerUp3 |
+| awaken | 각성 | digital-audio / powerUp6 |
+| revive | 전멸 부활 (언데드 시너지) | digital-audio / powerUp7 |
+| wipe | 전멸 | digital-audio / lowThreeTone |
+| milestone | 도감 마일스톤 달성 | digital-audio / threeTone1 |
+
+- 교체 시 이 표만 고치고 같은 id로 파일을 갈아끼우면 코드 수정 불필요 (코드는 id만 안다)
+
 ## 4. 라이선스 메모
 
 - IconScout 개인 유료 플랜: 디지털 제품(앱·게임) 내 사용 허용, 원본 파일 재배포·재판매 금지
