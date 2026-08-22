@@ -4,10 +4,11 @@
 import { content } from '../../content';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { exportSave, importSave } from '../../state/save';
-import { buySlot, craft, resetSave, save } from '../../state/store';
+import { buySlot, craft, resetSave, save, toggleSound } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
 import { el, fmtGold, toast } from '../kit';
 import { overlay } from '../router';
+import { playSfx } from '../sfx';
 
 export function renderCamp(): HTMLElement {
   const state = save();
@@ -31,7 +32,7 @@ export function renderCamp(): HTMLElement {
         el('div', {}, `${recipe.name} → 미끼 ${recipe.output.lures}개`),
         el('div.muted.small', {}, costText),
       ),
-      el('button.btn.btn-ghost', { onclick: () => craft(recipe.id) }, '제작'),
+      el('button.btn.btn-ghost', { onclick: () => { if (craft(recipe.id)) playSfx('craft'); } }, '제작'),
     );
   });
 
@@ -71,7 +72,7 @@ export function renderCamp(): HTMLElement {
     slotUnlock
       ? el('div.card.list-row', {},
           el('span.muted.small', {}, `파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots} (도감 ${slotUnlock.totalCaptured}종 + 골드 ${fmtGold(slotUnlock.gold)})`),
-          el('button.btn.btn-ghost', { onclick: () => buySlot() }, '확장'),
+          el('button.btn.btn-ghost', { onclick: () => { if (buySlot()) playSfx('confirm'); } }, '확장'),
         )
       : null,
 
@@ -85,6 +86,16 @@ export function renderCamp(): HTMLElement {
 
     el('h2.section-title', {}, '설정'),
     el('div.card', {},
+      el('div.list-row', {},
+        el('span', {}, '효과음'),
+        el('button.btn.btn-ghost', {
+          onclick: () => {
+            toggleSound();
+            // 켠 직후에만 확인음 (끄면 즉시 무음이 곧 피드백)
+            if (save().settings.sound) playSfx('tap');
+          },
+        }, state.settings.sound ? '🔊 켬' : '🔇 끔'),
+      ),
       el('div.list-row', {},
         el('span', {}, '세이브 내보내기'),
         el('button.btn.btn-ghost', {

@@ -110,29 +110,38 @@ export function crossroadsOf(expeditionId: string) {
   return previewCrossroads(content, save(), expedition);
 }
 
-export function levelUp(uid: string): void {
-  act(() => save.set(levelUpMonster(content, save(), uid)));
+export function levelUp(uid: string): boolean {
+  return act(() => {
+    save.set(levelUpMonster(content, save(), uid));
+    return true;
+  }) !== null;
 }
-export function awaken(uid: string): void {
-  act(() => {
+export function awaken(uid: string): boolean {
+  return act(() => {
     save.set(awakenMonster(content, save(), uid));
     toast('각성! 성급이 올랐습니다 ★', 'ok');
-  });
+    return true;
+  }) !== null;
 }
-export function craft(recipeId: string): void {
-  act(() => {
+export function craft(recipeId: string): boolean {
+  return act(() => {
     save.set(craftRecipe(content, save(), recipeId));
     toast('제작 완료', 'ok');
-  });
+    return true;
+  }) !== null;
 }
-export function enhance(uid: string): void {
-  act(() => save.set(enhanceArtifact(content, save(), uid)));
+export function enhance(uid: string): boolean {
+  return act(() => {
+    save.set(enhanceArtifact(content, save(), uid));
+    return true;
+  }) !== null;
 }
-export function salvage(uid: string): void {
-  act(() => {
+export function salvage(uid: string): boolean {
+  return act(() => {
     save.set(salvageArtifact(content, save(), uid));
     toast('유물을 분해해 가루를 얻었습니다', 'ok');
-  });
+    return true;
+  }) !== null;
 }
 export function unlock(regionId: string): void {
   act(() => {
@@ -141,11 +150,17 @@ export function unlock(regionId: string): void {
     toast(`${name} 해금!`, 'ok');
   });
 }
-export function buySlot(): void {
-  act(() => {
+export function buySlot(): boolean {
+  return act(() => {
     save.set(buyPartySlot(content, save()));
     toast('파티 슬롯이 늘었습니다', 'ok');
-  });
+    return true;
+  }) !== null;
+}
+
+export function toggleSound(): void {
+  const state = save();
+  save.set({ ...state, settings: { ...state.settings, sound: !state.settings.sound } });
 }
 
 export function resetSave(): void {

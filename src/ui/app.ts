@@ -5,7 +5,8 @@ import { effect } from '../state/signal';
 import { save } from '../state/store';
 import { el, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
-import { overlay, tab, type Tab } from './router';
+import { overlay, tab, type Overlay, type Tab } from './router';
+import { playSfx } from './sfx';
 import { renderCamp } from './screens/camp';
 import { renderCodex } from './screens/codex';
 import { renderExpedition } from './screens/expedition';
@@ -61,7 +62,12 @@ export function mountApp(root: HTMLElement): void {
     const current = tab();
     tabbar.replaceChildren(
       ...TABS.map(({ id, label, icon }) =>
-        el(`button.tab${current === id ? '.active' : ''}`, { onclick: () => tab.set(id) },
+        el(`button.tab${current === id ? '.active' : ''}`, {
+          onclick: () => {
+            if (current !== id) playSfx('tap');
+            tab.set(id);
+          },
+        },
           el('span.tab-icon', {}, icon),
           el('span.tab-label', {}, label),
         ),
@@ -69,9 +75,18 @@ export function mountApp(root: HTMLElement): void {
     );
   });
 
+  let prevOverlay: Overlay = null;
   effect(() => {
-    const node = renderOverlay(overlay());
+    const current = overlay();
+    const node = renderOverlay(current);
     overlayHost.replaceChildren(...(node ? [node] : []));
     document.body.classList.toggle('overlay-open', node !== null);
+    // 열림·닫힘·전환(갈림길→일지) 시점 효과음 — 종류가 같은 재렌더는 무음
+    if (current && current.kind !== prevOverlay?.kind) {
+      playSfx(current.kind === 'crossroads' ? 'question' : 'open');
+    } else if (!current && prevOverlay) {
+      playSfx('close');
+    }
+    prevOverlay = current;
   });
 }

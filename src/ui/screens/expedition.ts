@@ -13,6 +13,7 @@ import { dispatchExpedition, save, unlock } from '../../state/store';
 import { artifactCard, monsterChip } from '../components';
 import { SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { tab } from '../router';
+import { playSfx } from '../sfx';
 
 const selRegion = signal<string>(content.regionList[0]!.id);
 const selParty = signal<string[]>([]);
@@ -183,7 +184,10 @@ export function renderExpedition(): HTMLElement {
         disabled: selParty().length === 0,
         onclick: () => {
           const ok = dispatchExpedition({ regionId, tier, partyUids: selParty(), artifactUids: selArtifacts() });
-          if (ok) tab.set('home');
+          if (ok) {
+            playSfx('confirm');
+            tab.set('home');
+          }
         },
       }, `🧭 ${region.name}으로 출발`),
     ),

@@ -4,6 +4,7 @@
 import { content } from '../content';
 import type { Journal, JournalEntry } from '../core/types';
 import { ARTIFACT_RARITY_LABEL, TIER_LABEL, el, fmtGold, fmtPct } from './kit';
+import { playSfx, type SfxId } from './sfx';
 
 const REVEAL_INTERVAL_MS = 420;
 
@@ -16,6 +17,25 @@ function artifactLabel(itemId: string): string {
 }
 function eventName(kind: 'treasures' | 'traps' | 'gathers' | 'crossroads', id: string): string {
   return (content.events[kind] as { id: string; name: string }[]).find((e) => e.id === id)?.name ?? id;
+}
+
+/** 카드당 1음 — 포획 결과음이 승리·드랍음보다 우선 (GDD §11.1) */
+function entrySfx(entry: JournalEntry): SfxId | null {
+  switch (entry.type) {
+    case 'encounter':
+      if (entry.result === 'flee') return 'defeat';
+      if (entry.capture) {
+        if (!entry.capture.success) return 'capture-miss';
+        return entry.capture.essence !== undefined ? 'capture-dupe' : 'capture-new';
+      }
+      return entry.artifact ? 'artifact' : null;
+    case 'treasure': return entry.artifact ? 'artifact' : 'treasure';
+    case 'trap': return entry.avoided ? null : 'trap';
+    case 'gather': return 'gather';
+    case 'crossroad': return entry.success ? 'treasure' : 'defeat';
+    case 'wipe': return entry.revived ? 'revive' : 'wipe';
+    case 'clearBox': return 'artifact';
+  }
 }
 
 function entryCard(entry: JournalEntry): HTMLElement {
@@ -122,13 +142,19 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
 
   const timeline = el('div.jtimeline', {}, ...cards, footer);
   const all = [...cards, footer];
+  const sfxIds: (SfxId | null)[] = [
+    ...journal.entries.map(entrySfx),
+    newMilestones.length > 0 ? 'milestone' : null,
+  ];
 
   let revealed = 0;
-  const revealNext = (): boolean => {
+  const revealNext = (withSound = true): boolean => {
     const node = all[revealed];
     if (!node) return false;
     node.classList.remove('jhidden');
     node.classList.add('jreveal');
+    const sfx = sfxIds[revealed];
+    if (withSound && sfx) playSfx(sfx);
     revealed++;
     timeline.scrollTop = timeline.scrollHeight;
     return true;
@@ -140,7 +166,7 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
 
   const skip = el('button.btn.btn-ghost', {
     onclick: () => {
-      while (revealNext());
+      while (revealNext(false)); // 일괄 공개는 무음 — 전 카드 동시 재생 방지
       clearInterval(interval);
       skip.remove();
     },

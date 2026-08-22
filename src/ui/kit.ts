@@ -3,6 +3,7 @@
  */
 import type { ArtifactRarity, Element, MonsterRarity, Tier, Tribe } from '../content/schema';
 import { effect } from '../state/signal';
+import { playSfx } from './sfx';
 
 // ── 스코프 이펙트 ────────────────────────────────────────────────────────────
 // 화면 단위 렌더가 만든 세부 이펙트(시간 표시 등)를 다음 렌더에서 일괄 해제한다.
@@ -61,6 +62,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 
 // ── 토스트 ───────────────────────────────────────────────────────────────────
 export function toast(message: string, kind: 'ok' | 'error' = 'ok'): void {
+  if (kind === 'error') playSfx('error');
   let host = document.getElementById('toasts');
   if (!host) {
     host = el('div');

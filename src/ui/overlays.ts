@@ -13,6 +13,7 @@ import {
 } from './kit';
 import { journalView } from './journalView';
 import { closeOverlay, overlay, type Overlay } from './router';
+import { playSfx } from './sfx';
 
 export function renderOverlay(current: Overlay): HTMLElement | null {
   if (!current) return null;
@@ -89,11 +90,11 @@ function monsterSheet(uid: string): HTMLElement | null {
     el('div.row-gap', {},
       el('button.btn.btn-primary', {
         disabled: maxLevel || state.wallet.gold < upCost,
-        onclick: () => levelUp(uid),
+        onclick: () => { if (levelUp(uid)) playSfx('levelup'); },
       }, maxLevel ? '최대 레벨' : `레벨업 (골드 ${fmtGold(upCost)})`),
       el('button.btn.btn-primary', {
         disabled: maxStar || essenceHave < starCost,
-        onclick: () => awaken(uid),
+        onclick: () => { if (awaken(uid)) playSfx('awaken'); },
       }, maxStar ? '최대 성급' : `각성 ★${owned.star + 1} (정수 ${starCost} / 보유 ${essenceHave})`),
     ),
   );
@@ -140,14 +141,14 @@ function artifactSheet(uid: string): HTMLElement | null {
     el('div.row-gap', {},
       el('button.btn.btn-primary', {
         disabled: busy || maxEnhance || state.wallet.dust < cost,
-        onclick: () => enhance(uid),
+        onclick: () => { if (enhance(uid)) playSfx('enhance'); },
       }, maxEnhance ? '최대 강화' : `강화 +${owned.enhance + 1} (가루 ${cost} / 보유 ${state.wallet.dust})`),
       el('button.btn.btn-danger', {
         disabled: busy,
         onclick: () => {
           const gain = balance.artifacts.dustPerSalvage[def.rarity];
           if (confirm(`${def.name}을(를) 분해해 가루 ${gain}을 얻을까요? 되돌릴 수 없습니다.`)) {
-            salvage(uid);
+            if (salvage(uid)) playSfx('salvage');
             closeOverlay();
           }
         },
@@ -172,8 +173,8 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
       chosen
         ? el('div.tag', {}, chosen === 'risky' ? '⚡ 위험을 감수하기로 함' : '🛡️ 안전하게 가기로 함')
         : el('div.row-gap', {},
-            el('button.btn.btn-ghost', { onclick: () => choose(expeditionId, index, 'safe') }, '🛡️ 안전하게'),
-            el('button.btn.btn-primary', { onclick: () => choose(expeditionId, index, 'risky') }, '⚡ 위험을 감수'),
+            el('button.btn.btn-ghost', { onclick: () => { choose(expeditionId, index, 'safe'); playSfx('select'); } }, '🛡️ 안전하게'),
+            el('button.btn.btn-primary', { onclick: () => { choose(expeditionId, index, 'risky'); playSfx('select'); } }, '⚡ 위험을 감수'),
           ),
     );
   });
