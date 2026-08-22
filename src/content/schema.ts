@@ -243,6 +243,7 @@ export const BalanceSchema = z.object({
     adBuffMult: z.number(),
     multCap: z.number(),
     chanceCap: z.number(),
+    firstCaptureGuarantee: z.boolean(), // 계정 첫 포획 시도 100% 성공 (GDD §13)
   }),
   tiers: z.record(
     TierSchema,

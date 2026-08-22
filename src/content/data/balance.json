@@ -9,7 +9,8 @@
     "lureMult": 2,
     "adBuffMult": 2,
     "multCap": 4,
-    "chanceCap": 0.95
+    "chanceCap": 0.95,
+    "firstCaptureGuarantee": true
   },
   "tiers": {
     "scout": { "minutes": 15, "encounters": 3, "crossroads": 0, "yieldMult": 1, "legendaryChance": 0, "rareWeightMult": 1 },

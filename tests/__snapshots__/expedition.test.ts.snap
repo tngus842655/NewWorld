@@ -354,7 +354,7 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
     {
       "capture": {
         "retried": false,
-        "success": false,
+        "success": true,
       },
       "enemyPower": 99,
       "gold": 24,
@@ -382,7 +382,9 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
         ],
       },
     ],
-    "capturedMonsterIds": [],
+    "capturedMonsterIds": [
+      "driftwood-golem",
+    ],
     "essence": {},
     "gold": 134,
     "luresGained": 0,

@@ -288,6 +288,8 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   let reviveUsed = false;
   let luresLeft = expedition.luresLoaded;
   let pityAvailable = artifactBalance.firstTreasurePity && !save.profile.flags['firstArtifactDropped'];
+  let firstCaptureAvailable =
+    content.balance.capture.firstCaptureGuarantee && save.profile.flags['firstCaptured'] !== true;
   let monsterIndex = 0;
 
   const markSeen = (monsterId: string) => {
@@ -440,11 +442,14 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
         const chance = captureChance(content, { monster, captureAddSum: captureAdds, useLure, buffMult: 1 });
         let success = captureRng() < chance;
         let retried = false;
-        if (!success && retryBudget > 0) {
+        if (!success && firstCaptureAvailable) {
+          success = true; // 계정 첫 포획 100% 보정 (GDD §13 — 초반 이탈 방지)
+        } else if (!success && retryBudget > 0) {
           retryBudget--;
           retried = true;
           success = captureRng() < chance;
         }
+        firstCaptureAvailable = false; // 보정은 계정 첫 시도 한 번만
         let essence: number | undefined;
         if (success) {
           if (alreadyCaptured) {
@@ -642,6 +647,9 @@ export function claimExpedition(
     next.artifacts.push({ uid: ctx.newUid(), itemId: drop.itemId, enhance: 0, substats: [...drop.substats] });
   }
   if (journal.totals.artifacts.length > 0) next.profile.flags['firstArtifactDropped'] = true;
+  if (journal.entries.some((entry) => entry.type === 'encounter' && entry.capture?.success)) {
+    next.profile.flags['firstCaptured'] = true;
+  }
 
   // 원정 종료 + 일지 요약 보관
   next.expeditions = next.expeditions.filter((e) => e.id !== expeditionId);
