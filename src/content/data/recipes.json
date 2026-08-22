@@ -1,0 +1,14 @@
+[
+  {
+    "id": "basic-lure",
+    "name": "기본 미끼",
+    "cost": { "gold": 150, "materials": { "salt-bloom": 2 } },
+    "output": { "lures": 1 }
+  },
+  {
+    "id": "lure-bundle",
+    "name": "미끼 꾸러미",
+    "cost": { "gold": 400, "materials": { "dew-branch": 2, "spirit-moss": 1 } },
+    "output": { "lures": 3 }
+  }
+]

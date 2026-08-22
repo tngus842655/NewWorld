@@ -1,0 +1,58 @@
+{
+  "beast": {
+    "name": "야수",
+    "at2": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.1 } }],
+    "at3": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.25 } }]
+  },
+  "spirit": {
+    "name": "정령",
+    "at2": [{ "hook": "afterVictory", "do": { "kind": "heal", "ratio": 0.05 } }],
+    "at3": [{ "hook": "afterVictory", "do": { "kind": "heal", "ratio": 0.12 } }]
+  },
+  "undead": {
+    "name": "언데드",
+    "at2": [{ "hook": "afterDefeat", "do": { "kind": "damageReduce", "value": 0.2 } }],
+    "at3": [
+      { "hook": "afterDefeat", "do": { "kind": "damageReduce", "value": 0.2 } },
+      { "hook": "afterDefeat", "do": { "kind": "reviveOnce", "hpRatio": 0.3 } }
+    ]
+  },
+  "aquatic": {
+    "name": "수생",
+    "at2": [
+      {
+        "hook": "computeParty",
+        "when": { "region": ["misty-coast", "sunken-marsh"] },
+        "do": { "kind": "statMult", "stat": "cp", "value": 0.15 }
+      }
+    ],
+    "at3": [
+      {
+        "hook": "computeParty",
+        "when": { "region": ["misty-coast", "sunken-marsh"] },
+        "do": { "kind": "statMult", "stat": "cp", "value": 0.3 }
+      },
+      {
+        "hook": "beforeEncounter",
+        "when": { "region": ["misty-coast", "sunken-marsh"] },
+        "do": { "kind": "trapAvoid", "chance": 1 }
+      }
+    ]
+  },
+  "flying": {
+    "name": "비행",
+    "at2": [{ "hook": "beforeEncounter", "do": { "kind": "trapAvoid", "chance": 0.5 } }],
+    "at3": [
+      { "hook": "beforeEncounter", "do": { "kind": "trapAvoid", "chance": 1 } },
+      { "hook": "expeditionSetup", "do": { "kind": "encounterAdd", "count": 1 } }
+    ]
+  },
+  "construct": {
+    "name": "기계",
+    "at2": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.08 } }],
+    "at3": [
+      { "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.2 } },
+      { "hook": "computeParty", "do": { "kind": "healReceivedMult", "value": 0.5 } }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "element": { "same": 1.3, "advantage": 1.3, "disadvantage": 0.77 },
+  "cp": { "atkWeight": 2, "hpWeight": 0.5 },
+  "level": { "statGrowth": 0.08, "goldBase": 40, "goldExp": 1.6, "max": 30 },
+  "star": { "mult": 1.25, "max": 5, "essenceCost": [10, 25, 60, 150] },
+  "essencePerDupe": { "common": 3, "rare": 8, "epic": 20, "legendary": 50 },
+  "capture": {
+    "base": { "common": 0.4, "rare": 0.15, "epic": 0.05, "legendary": 0.015 },
+    "lureMult": 2,
+    "adBuffMult": 2,
+    "multCap": 4,
+    "chanceCap": 0.95
+  },
+  "tiers": {
+    "scout": { "minutes": 15, "encounters": 3, "crossroads": 0, "yieldMult": 1, "legendaryChance": 0, "rareWeightMult": 1 },
+    "standard": { "minutes": 120, "encounters": 8, "crossroads": 1, "yieldMult": 1.2, "legendaryChance": 0, "rareWeightMult": 1 },
+    "deep": { "minutes": 480, "encounters": 20, "crossroads": 2, "yieldMult": 1.35, "legendaryChance": 0.05, "rareWeightMult": 2 }
+  },
+  "combat": {
+    "encounterPowerMult": 3.2,
+    "victoryDamageK": 0.09,
+    "defeatDamageK": 0.35,
+    "defeatRatioCap": 2,
+    "trapDamage": 0.12,
+    "fleeRewardRatio": 0.5
+  },
+  "rewards": {
+    "goldPerVictory": 18,
+    "goldPerTreasure": 90,
+    "gatherMaterialMin": 1,
+    "gatherMaterialMax": 2,
+    "rarityGoldMult": { "common": 1, "rare": 1.6, "epic": 2.5, "legendary": 5 }
+  },
+  "crossroad": { "timeoutHours": 4, "riskyCheckRatio": 1.15, "baseChanceFloor": 0.15, "baseChanceCeil": 0.9 },
+  "party": {
+    "baseSlots": 3,
+    "slotUnlocks": [
+      { "slots": 4, "gold": 3000, "totalCaptured": 10 },
+      { "slots": 5, "gold": 12000, "totalCaptured": 25 }
+    ]
+  },
+  "teams": [
+    { "count": 2, "regionUnlocked": "sunken-marsh" },
+    { "count": 3, "totalCaptured": 40 }
+  ],
+  "ads": { "daily": { "instantReturn": 3, "scentBuff": 3 } },
+  "lures": { "maxLoad": 3 },
+  "artifacts": {
+    "dropRarity": { "common": 0.55, "rare": 0.3, "heroic": 0.12, "legendary": 0.03 },
+    "sources": { "treasureChance": 0.35, "deepClearBox": true, "legendaryEncounter": 0.35, "crossroadCrit": 0.15 },
+    "firstTreasurePity": true,
+    "enhance": { "max": 5, "dustCost": [10, 25, 50, 90, 150] },
+    "dustPerSalvage": { "common": 5, "rare": 12, "heroic": 30, "legendary": 80 },
+    "substatCount": { "common": 0, "rare": 1, "heroic": 2, "legendary": 3 },
+    "substatPool": [
+      { "stat": "atkMult", "min": 0.03, "max": 0.08, "weight": 22 },
+      { "stat": "hpMult", "min": 0.04, "max": 0.1, "weight": 22 },
+      { "stat": "captureAdd", "min": 0.01, "max": 0.03, "weight": 16 },
+      { "stat": "goldMult", "min": 0.05, "max": 0.12, "weight": 16 },
+      { "stat": "materialMult", "min": 0.05, "max": 0.12, "weight": 12 },
+      { "stat": "damageReduce", "min": 0.02, "max": 0.06, "weight": 12 }
+    ],
+    "effectCaps": {
+      "rewardMult": 3,
+      "timeMultMin": 0.5,
+      "damageReduceMax": 0.6,
+      "synergyAmpMax": 1,
+      "trapAvoidMax": 1
+    }
+  },
+  "starter": { "monsters": ["dune-pup", "bubble-crab", "gull-imp"], "gold": 200, "lures": 1 }
+}

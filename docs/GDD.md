@@ -254,14 +254,14 @@ P = Σ_unit ( CP × elemMult(unit.elem, region.elem) ) × synergyMult(party)
 
 | 훅 | 시점 | 능력 예 |
 |---|---|---|
-| expeditionSetup | 파견 구성 | 시간 -25%, 조우 +2, 미끼 적재 +1 |
+| expeditionSetup | 파견 구성 | 시간 -25%, 조우 +2, 희귀 출현 가중 |
 | computeParty | 유효 CP 계산 | 스탯·속성별·종족별 배수, 시너지 증폭 |
 | beforeEncounter | 조우 직전 | 첫 조우 자동 승리, 함정 회피 |
 | afterVictory | 승리 후 | HP 회복, 추가 골드·정수 |
 | afterDefeat | 패배·전멸 시 | 피해 경감, 1회 부활, 반입 비율 증가 |
 | captureRoll | 포획 판정 | 포획률 가산, 실패 시 재시도 |
 | crossroad | 갈림길 | 실패해도 절반 보상, 위험 성공률 증가 |
-| lootRoll | 드랍 판정 | 골드·재료·유물 드랍률, 희귀 출현 가중 |
+| lootRoll | 드랍 판정 | 골드·재료·유물 드랍률 |
 | journalEnd | 정산 | 총보상 배수 |
 
 - **새 유물 = 기존 액션 조합의 JSON 추가 (코드 0줄).** 새 "종류"의 액션이 필요할 때만

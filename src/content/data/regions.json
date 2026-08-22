@@ -1,0 +1,112 @@
+[
+  {
+    "id": "misty-coast",
+    "name": "물안개 해안",
+    "order": 1,
+    "element": "nature",
+    "recommendedCp": 100,
+    "rewardScale": 1,
+    "unlock": {},
+    "materials": ["salt-bloom", "tide-shell"],
+    "legendary": "leviathan-calf",
+    "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },
+    "spawns": [
+      { "monster": "bubble-crab", "weight": 17 },
+      { "monster": "salt-sprite", "weight": 15 },
+      { "monster": "dune-pup", "weight": 17 },
+      { "monster": "gull-imp", "weight": 15 },
+      { "monster": "tide-snail", "weight": 14 },
+      { "monster": "driftwood-golem", "weight": 13 },
+      { "monster": "moon-jelly", "weight": 13 },
+      { "monster": "pearl-turtle", "weight": 7 },
+      { "monster": "fog-lynx", "weight": 6 },
+      { "monster": "reef-guardian", "weight": 6 },
+      { "monster": "storm-petrel", "weight": 3 },
+      { "monster": "abyss-angler", "weight": 2 }
+    ]
+  },
+  {
+    "id": "whispering-woods",
+    "name": "속삭이는 숲",
+    "order": 2,
+    "element": "nature",
+    "recommendedCp": 400,
+    "rewardScale": 2.4,
+    "unlock": { "codexCaptured": { "misty-coast": 6 } },
+    "materials": ["dew-branch", "spirit-moss"],
+    "legendary": "verdant-phoenix",
+    "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },
+    "spawns": [
+      { "monster": "thorn-wolf", "weight": 17 },
+      { "monster": "acorn-golem", "weight": 15 },
+      { "monster": "gale-owl", "weight": 15 },
+      { "monster": "glow-moth", "weight": 14 },
+      { "monster": "bramble-boar", "weight": 15 },
+      { "monster": "dew-fairy", "weight": 14 },
+      { "monster": "shade-ferret", "weight": 14 },
+      { "monster": "elder-owlbear", "weight": 7 },
+      { "monster": "spore-shaman", "weight": 6 },
+      { "monster": "moss-drake", "weight": 6 },
+      { "monster": "ancient-ent", "weight": 3 },
+      { "monster": "sylvan-stag", "weight": 2 }
+    ]
+  },
+  {
+    "id": "sunken-marsh",
+    "name": "가라앉은 늪",
+    "order": 3,
+    "element": "frost",
+    "recommendedCp": 1200,
+    "rewardScale": 5.5,
+    "unlock": {
+      "codexCaptured": { "whispering-woods": 8 },
+      "materials": { "dew-branch": 10, "spirit-moss": 6 }
+    },
+    "materials": ["grave-reed", "chill-amber"],
+    "legendary": "lich-of-depths",
+    "encounterMix": { "monster": 74, "treasure": 11, "trap": 10, "gather": 5 },
+    "spawns": [
+      { "monster": "bog-slime", "weight": 16 },
+      { "monster": "will-o-wisp", "weight": 15 },
+      { "monster": "mire-toad", "weight": 16 },
+      { "monster": "rot-rat", "weight": 15 },
+      { "monster": "chill-leech", "weight": 14 },
+      { "monster": "gravemoss-crawler", "weight": 14 },
+      { "monster": "mist-widow", "weight": 14 },
+      { "monster": "drowned-knight", "weight": 7 },
+      { "monster": "marsh-siren", "weight": 6 },
+      { "monster": "plague-heron", "weight": 6 },
+      { "monster": "bone-colossus", "weight": 3 },
+      { "monster": "frost-hydra", "weight": 2 }
+    ]
+  },
+  {
+    "id": "ashen-volcano",
+    "name": "잿빛 화산",
+    "order": 4,
+    "element": "fire",
+    "recommendedCp": 3000,
+    "rewardScale": 12,
+    "unlock": {
+      "codexCaptured": { "sunken-marsh": 8 },
+      "materials": { "grave-reed": 12, "chill-amber": 8 }
+    },
+    "materials": ["ember-core", "obsidian-shard"],
+    "legendary": "ember-dragon-king",
+    "encounterMix": { "monster": 74, "treasure": 12, "trap": 9, "gather": 5 },
+    "spawns": [
+      { "monster": "cinder-imp", "weight": 16 },
+      { "monster": "lava-crab", "weight": 16 },
+      { "monster": "magma-hound", "weight": 15 },
+      { "monster": "ash-wraith", "weight": 14 },
+      { "monster": "obsidian-beetle", "weight": 14 },
+      { "monster": "spark-monkey", "weight": 15 },
+      { "monster": "soot-bat", "weight": 14 },
+      { "monster": "forge-golem", "weight": 7 },
+      { "monster": "flame-dancer", "weight": 6 },
+      { "monster": "pyro-drake", "weight": 6 },
+      { "monster": "volcanic-titan", "weight": 3 },
+      { "monster": "inferno-lion", "weight": 2 }
+    ]
+  }
+]

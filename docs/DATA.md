@@ -27,8 +27,8 @@
 }
 ```
 
-- 등급별 기본 CP 밴드(생성 규칙): 커먼 60~90 / 레어 110~160 / 에픽 200~280 / 전설 400~520
-  (지역이 깊을수록 밴드 상단. 개체값은 시트에서 수동 배정 — M1에서 52종 확정)
+- 기본 CP 밴드는 **지역별로 스케일**된다 — 지역 권장 CP 대비 대략 커먼 25~35% / 레어 45~55% /
+  에픽 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정(M1 완료), 조정은 데이터 수정으로만
 - `tags`가 v1의 확장 여지: 스킬/장비 시스템이 와도 스키마 파괴 없이 증축
 
 ### 1.2 regions.json — 지역 4+1
@@ -156,7 +156,8 @@ interface SaveState {
   version: 1;
   profile: { createdAt: number; tutorialDone: boolean; cloudUserKey?: string };
   wallet: { gold: number; materials: Record<MaterialId, number>; essence: Record<MonsterId, number>; lures: number; dust: number };
-  roster: OwnedMonster[];          // { uid, monsterId, level, star, currentHpRatio, expeditionId? }
+  roster: OwnedMonster[];          // { uid, monsterId, level, star } — HP는 원정 내 파티 풀 개념이라 저장 안 함
+                                   //   "원정 중" 여부는 expeditions의 partyUids 스냅샷에서 파생
   artifacts: OwnedArtifact[];      // { uid, itemId, enhance, substats: {stat,value}[], teamId? }
   teams: TeamLoadout[];            // { id, name, partyUids, artifactUids } — 파견 프리셋 (해금 팀 수만큼)
   codex: Record<MonsterId, { seen: boolean; captured: boolean; awakened: boolean; firstCapturedAt?: number }>;

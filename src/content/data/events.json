@@ -1,0 +1,71 @@
+{
+  "crossroads": [
+    {
+      "id": "strange-shrine",
+      "name": "수상한 제단",
+      "text": "이끼에 덮인 제단이 희미하게 빛나고 있습니다. 조사할까요?",
+      "safe": [{ "kind": "gold", "amount": 60 }],
+      "risky": {
+        "success": [
+          { "kind": "material", "slot": 1, "count": 6 },
+          { "kind": "artifactRoll" }
+        ],
+        "fail": { "kind": "damage", "ratio": 0.15 }
+      }
+    },
+    {
+      "id": "glimmer-cage",
+      "name": "반짝이는 새장",
+      "text": "누가 두고 간 새장 안에서 무언가 반짝입니다. 열어볼까요?",
+      "safe": [{ "kind": "gold", "amount": 50 }],
+      "risky": {
+        "success": [{ "kind": "essenceRandom", "count": 10 }, { "kind": "gold", "amount": 80 }],
+        "fail": { "kind": "damage", "ratio": 0.12 }
+      }
+    },
+    {
+      "id": "lost-explorer",
+      "name": "길 잃은 탐험가",
+      "text": "다른 탐험단의 낙오자를 발견했습니다. 위험한 지름길을 안다고 합니다.",
+      "safe": [{ "kind": "material", "slot": 0, "count": 3 }],
+      "risky": {
+        "success": [{ "kind": "gold", "amount": 200 }],
+        "fail": { "kind": "damage", "ratio": 0.1 }
+      }
+    },
+    {
+      "id": "ancient-door",
+      "name": "고대의 문",
+      "text": "덩굴 아래 새겨진 문이 반쯤 열려 있습니다. 안은 어둡습니다.",
+      "safe": [{ "kind": "gold", "amount": 70 }],
+      "risky": {
+        "success": [{ "kind": "artifactRoll", "rarityBonus": 0.1 }],
+        "fail": { "kind": "damage", "ratio": 0.18 }
+      }
+    },
+    {
+      "id": "whisper-idol",
+      "name": "속삭이는 석상",
+      "text": "석상이 원정대의 이름을 부릅니다. 귀를 기울일까요?",
+      "safe": [{ "kind": "essenceRandom", "count": 4 }],
+      "risky": {
+        "success": [{ "kind": "lure", "count": 2 }, { "kind": "gold", "amount": 100 }],
+        "fail": { "kind": "damage", "ratio": 0.12 }
+      }
+    }
+  ],
+  "traps": [
+    { "id": "quicksand", "name": "유사(流沙)", "text": "발밑의 땅이 갑자기 꺼집니다!" },
+    { "id": "thorn-snare", "name": "가시올가미", "text": "덤불 사이에 걸린 올가미가 튀어오릅니다!" },
+    { "id": "choking-fog", "name": "숨막히는 안개", "text": "정체 모를 안개가 원정대를 덮칩니다!" }
+  ],
+  "treasures": [
+    { "id": "moss-chest", "name": "이끼 낀 보물상자" },
+    { "id": "sunken-crate", "name": "가라앉은 나무궤짝" },
+    { "id": "glowing-geode", "name": "빛나는 정동석" }
+  ],
+  "gathers": [
+    { "id": "herb-patch", "name": "무성한 군락지" },
+    { "id": "shiny-pool", "name": "반짝이는 웅덩이" }
+  ]
+}
