@@ -3,7 +3,8 @@
  */
 import { content } from '../content';
 import { enhanceCost, levelUpCost, starUpCost, statAt } from '../core/formulas';
-import { awaken, choose, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import * as clock from '../state/clock';
+import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { describeEffect } from './effectText';
 import {
@@ -153,6 +154,8 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
   const expedition = state.expeditions.find((e) => e.id === expeditionId && !e.claimed);
   if (!expedition) return null;
   const events = crossroadsOf(expeditionId);
+  const done = clock.now() >= expedition.endsAt;
+  const pendingCount = expedition.choices.filter((choice) => choice === null).length;
 
   const rows = events.map((event, index) => {
     const chosen = expedition.choices[index] ?? null;
@@ -171,5 +174,13 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
   return sheetShell('갈림길 선택',
     el('div.muted.small', {}, '선택하지 않으면 원정대는 안전한 길을 고릅니다.'),
     ...rows,
+    done
+      ? el('button.btn.btn-primary.btn-big', {
+          onclick: () => {
+            const result = claim(expeditionId);
+            if (result) overlay.set({ kind: 'journal', ...result });
+          },
+        }, pendingCount > 0 ? `📜 일지 정산 — 남은 ${pendingCount}곳은 안전한 길로` : '📜 일지 정산')
+      : null,
   );
 }

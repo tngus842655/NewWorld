@@ -25,6 +25,13 @@ function expeditionCard(expeditionId: string): HTMLElement {
       : null;
   const claimBtn = el('button.btn.btn-primary.hidden', {
     onclick: () => {
+      // 미선택 갈림길이 있으면 정산 전에 일괄 선택 시트부터 (TECH §4)
+      const current = save().expeditions.find((e) => e.id === expedition.id && !e.claimed);
+      if (!current) return;
+      if (current.choices.some((choice) => choice === null)) {
+        overlay.set({ kind: 'crossroads', expeditionId: expedition.id });
+        return;
+      }
       const result = claim(expedition.id);
       if (result) overlay.set({ kind: 'journal', ...result });
     },
@@ -61,11 +68,16 @@ export function renderHome(): HTMLElement {
   const capturedCount = Object.values(state.codex).filter((c) => c.captured).length;
 
   const tutorialBanner = !state.profile.tutorialDone
-    ? el('div.card.banner', {},
-        el('div', {}, '🧭 신대륙에 도착했습니다! 첫 정찰을 보내보세요.'),
-        el('div.muted.small', {}, '첫 원정은 30초 만에 돌아옵니다.'),
-        el('button.btn.btn-primary', { onclick: () => tab.set('expedition') }, '원정 보내러 가기'),
-      )
+    ? running.length > 0
+      ? el('div.card.banner', {},
+          el('div', {}, '🧭 첫 원정대가 출발했습니다!'),
+          el('div.muted.small', {}, '돌아오면 원정 일지가 기다립니다.'),
+        )
+      : el('div.card.banner', {},
+          el('div', {}, '🧭 신대륙에 도착했습니다! 첫 정찰을 보내보세요.'),
+          el('div.muted.small', {}, '첫 원정은 30초 만에 돌아옵니다.'),
+          el('button.btn.btn-primary', { onclick: () => tab.set('expedition') }, '원정 보내러 가기'),
+        )
     : null;
 
   const recent = state.journalArchive.slice(0, 5).map((summary) => {
