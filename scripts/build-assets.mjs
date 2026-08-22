@@ -18,32 +18,38 @@ const argOf = (name, fallback) => {
   return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
 };
 
-const RAW_DIR = resolve(argOf('raw', 'C:/Workspace/BAK/NewWorld-assets-raw/monsters'));
-const OUT_DIR = resolve(here, '../public/assets/monsters');
+const RAW_ROOT = resolve(argOf('raw', 'C:/Workspace/BAK/NewWorld-assets-raw'));
+const OUT_ROOT = resolve(here, '../public/assets');
 const SIZE = Number(argOf('size', '256'));
 
 const manifest = JSON.parse(readFileSync(join(here, 'assets-manifest.json'), 'utf8'));
-const expected = Object.keys(manifest.monsters);
+const groups = [
+  { name: 'monsters', ids: Object.keys(manifest.monsters) },
+  { name: 'artifacts', ids: Object.keys(manifest.artifacts ?? {}) },
+];
 
-mkdirSync(OUT_DIR, { recursive: true });
-const rawFiles = new Set(readdirSync(RAW_DIR));
-
-let done = 0;
 const missing = [];
-for (const id of expected) {
-  const src = `${id}.png`;
-  if (!rawFiles.has(src)) {
-    missing.push(id);
-    continue;
+for (const group of groups) {
+  const rawDir = join(RAW_ROOT, group.name);
+  const outDir = join(OUT_ROOT, group.name);
+  mkdirSync(outDir, { recursive: true });
+  const rawFiles = new Set(readdirSync(rawDir));
+  let done = 0;
+  for (const id of group.ids) {
+    const src = `${id}.png`;
+    if (!rawFiles.has(src)) {
+      missing.push(`${group.name}/${id}`);
+      continue;
+    }
+    await sharp(join(rawDir, src))
+      .resize(SIZE, SIZE, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82, alphaQuality: 90 })
+      .toFile(join(outDir, `${id}.webp`));
+    done++;
   }
-  await sharp(join(RAW_DIR, src))
-    .resize(SIZE, SIZE, { fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 82, alphaQuality: 90 })
-    .toFile(join(OUT_DIR, `${id}.webp`));
-  done++;
+  console.log(`${group.name}: ${done}/${group.ids.length} → ${outDir}`);
 }
 
-console.log(`변환 완료: ${done}/${expected.length} → ${OUT_DIR}`);
 if (missing.length > 0) {
   console.error(`원본 누락: ${missing.join(', ')}`);
   process.exitCode = 1;

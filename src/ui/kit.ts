@@ -99,7 +99,7 @@ export const TIER_LABEL: Record<Tier, string> = {
   scout: '정찰 · 15분', standard: '원정 · 2시간', deep: '심층 탐사 · 8시간',
 };
 export const SLOT_LABEL: Record<string, string> = {
-  weapon: '무기', armor: '갑주', banner: '깃발', charm: '부적',
+  weapon: '무기', armor: '방어구', banner: '깃발', charm: '부적',
 };
 
 // ── 포맷터 ───────────────────────────────────────────────────────────────────
