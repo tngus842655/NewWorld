@@ -97,6 +97,10 @@ export const MONSTER_RARITY_LABEL: Record<MonsterRarity, string> = {
 export const ARTIFACT_RARITY_LABEL: Record<ArtifactRarity, string> = {
   common: '일반', rare: '희귀', heroic: '영웅', legendary: '전설',
 };
+/** 등급 서열 — 정렬은 반드시 이 랭크로 (id 알파벳순은 heroic/legendary가 뒤집힌다) */
+export const ARTIFACT_RARITY_ORDER: Record<ArtifactRarity, number> = {
+  common: 0, rare: 1, heroic: 2, legendary: 3,
+};
 export const TIER_LABEL: Record<Tier, string> = {
   scout: '정찰 · 15분', standard: '원정 · 2시간', deep: '심층 탐사 · 8시간',
 };

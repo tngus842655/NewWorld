@@ -6,7 +6,7 @@ import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { exportSave, importSave } from '../../state/save';
 import { buySlot, craft, resetSave, save, toggleSound } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
-import { el, fmtGold, toast } from '../kit';
+import { ARTIFACT_RARITY_ORDER, el, fmtGold, toast } from '../kit';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
@@ -19,7 +19,7 @@ export function renderCamp(): HTMLElement {
 
   const artifacts = [...state.artifacts]
     .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
-    .sort((a, b) => b.def.rarity.localeCompare(a.def.rarity) || a.def.slot.localeCompare(b.def.slot))
+    .sort((a, b) => ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity] || a.def.slot.localeCompare(b.def.slot))
     .map(({ owned, def }) => artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) }));
 
   const recipes = [...content.recipes.values()].map((recipe) => {

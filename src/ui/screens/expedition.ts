@@ -11,7 +11,7 @@ import { GameError } from '../../core/types';
 import { signal } from '../../state/signal';
 import { dispatchExpedition, save, unlock } from '../../state/store';
 import { artifactCard, monsterChip } from '../components';
-import { SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_ORDER, SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -132,7 +132,7 @@ export function renderExpedition(): HTMLElement {
 
   const artifactCards = [...state.artifacts]
     .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
-    .sort((a, b) => a.def.slot.localeCompare(b.def.slot))
+    .sort((a, b) => a.def.slot.localeCompare(b.def.slot) || ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity])
     .map(({ owned, def }) =>
       artifactCard(owned, def, {
         selected: selArtifacts().includes(owned.uid),
