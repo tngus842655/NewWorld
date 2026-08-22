@@ -1,13 +1,35 @@
 /**
- * 도감 — 지역별 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 마일스톤.
+ * 도감 — 지역별 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 종족·등급 필터 + 마일스톤.
  */
 import { content } from '../../content';
+import type { Monster } from '../../content/schema';
+import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { monsterIcon } from '../components';
-import { MONSTER_RARITY_LABEL, el } from '../kit';
+import { MONSTER_RARITY_LABEL, TRIBE_LABEL, el } from '../kit';
+
+// 탭을 오가도 유지되는 화면 로컬 필터 (GDD §11)
+const tribeFilter = signal<Monster['tribe'] | null>(null);
+const rarityFilter = signal<Monster['rarity'] | null>(null);
+
+function filterChips<T extends string>(
+  current: T | null,
+  entries: [T, string][],
+  pick: (value: T | null) => void,
+): HTMLElement {
+  return el('div.chips-wrap', {},
+    el(`button.chip${current === null ? '.active' : ''}`, { onclick: () => pick(null) }, '전체'),
+    ...entries.map(([value, label]) =>
+      el(`button.chip${current === value ? '.active' : ''}`,
+        { onclick: () => pick(current === value ? null : value) }, label),
+    ),
+  );
+}
 
 export function renderCodex(): HTMLElement {
   const state = save();
+  const tribe = tribeFilter();
+  const rarity = rarityFilter();
   const captured = Object.values(state.codex).filter((c) => c.captured).length;
   const seen = Object.values(state.codex).filter((c) => c.seen && !c.captured).length;
   const score = Object.entries(state.codex).reduce((sum, [, entry]) => {
@@ -18,8 +40,12 @@ export function renderCodex(): HTMLElement {
   }, 0);
 
   const sections = content.regionList.map((region) => {
-    const natives = content.monsterList.filter((m) => m.habitat === region.id);
-    const regionCaptured = natives.filter((m) => state.codex[m.id]?.captured).length;
+    const allNatives = content.monsterList.filter((m) => m.habitat === region.id);
+    const regionCaptured = allNatives.filter((m) => state.codex[m.id]?.captured).length;
+    const natives = allNatives.filter(
+      (m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
+    );
+    if (natives.length === 0) return null;
     const cells = natives.map((monster) => {
       const entry = state.codex[monster.id];
       if (entry?.captured) {
@@ -37,10 +63,11 @@ export function renderCodex(): HTMLElement {
       return el('div.codex-cell.unknown', {}, el('div.codex-q', {}, '?'), el('div.codex-name.muted', {}, '???'));
     });
     return el('section', {},
-      el('h3.codex-region', {}, `${region.name} (${regionCaptured}/${natives.length})`),
+      el('h3.codex-region', {}, `${region.name} (${regionCaptured}/${allNatives.length})`),
       el('div.codex-grid', {}, ...cells),
     );
   });
+  const visibleSections = sections.filter((s): s is HTMLElement => s !== null);
 
   const milestones = content.milestones.map((milestone) => {
     const done = state.milestones.includes(milestone.id);
@@ -55,7 +82,13 @@ export function renderCodex(): HTMLElement {
       el('div', {}, el('strong', {}, `${captured}`), el('span.muted', {}, ` / 52 포획`)),
       el('div.muted.small', {}, `목격 ${seen} · 도감 점수 ${score}`),
     ),
-    ...sections,
+    el('div.card.stack-sm', {},
+      filterChips(tribe, Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][], (v) => tribeFilter.set(v)),
+      filterChips(rarity, Object.entries(MONSTER_RARITY_LABEL) as [Monster['rarity'], string][], (v) => rarityFilter.set(v)),
+    ),
+    visibleSections.length > 0
+      ? el('div', {}, ...visibleSections)
+      : el('div.card.empty', {}, el('span.muted', {}, '조건에 맞는 몬스터가 없습니다')),
     el('h2.section-title', {}, '마일스톤'),
     el('div.card', {}, ...milestones),
   );

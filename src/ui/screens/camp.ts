@@ -2,7 +2,7 @@
  * 캠프 — 몬스터 관리(레벨·각성), 유물 인벤토리(강화·분해), 미끼 제작, 지갑, 설정.
  */
 import { content } from '../../content';
-import { nextPartySlotUnlock } from '../../core/progression';
+import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { exportSave, importSave } from '../../state/save';
 import { buySlot, craft, resetSave, save } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
@@ -35,8 +35,21 @@ export function renderCamp(): HTMLElement {
     );
   });
 
-  const materials = Object.entries(state.wallet.materials)
-    .filter(([, count]) => count > 0)
+  // 해금 지역의 재료는 보유 0이어도 상시 표시 — "뭘 모아야 하나"가 보이게
+  const shownMaterialIds = new Set<string>();
+  const materialRows = [...content.regions.values()]
+    .filter((region) => isRegionUnlocked(content, state, region.id))
+    .map((region) => {
+      region.materials.forEach((id) => shownMaterialIds.add(id));
+      return el('div.list-row', {},
+        el('span.muted.small', {}, region.name),
+        el('span', {}, region.materials
+          .map((id) => `${content.materials.get(id)?.name ?? id} ${state.wallet.materials[id] ?? 0}`)
+          .join(' · ')),
+      );
+    });
+  const extraMaterials = Object.entries(state.wallet.materials)
+    .filter(([id, count]) => count > 0 && !shownMaterialIds.has(id))
     .map(([id, count]) => el('span.tag', {}, `${content.materials.get(id)?.name ?? id} ${count}`));
 
   const slotUnlock = nextPartySlotUnlock(content, state);
@@ -47,7 +60,11 @@ export function renderCamp(): HTMLElement {
       el('span', {}, `✨ 가루 ${fmtGold(state.wallet.dust)}`),
       el('span', {}, `🪤 미끼 ${state.wallet.lures}`),
     ),
-    materials.length > 0 ? el('div.card.chips-wrap', {}, ...materials) : null,
+    el('h2.section-title', {}, '지역 재료'),
+    el('div.card', {},
+      ...materialRows,
+      extraMaterials.length > 0 ? el('div.chips-wrap', {}, ...extraMaterials) : null,
+    ),
 
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
     el('div.card', {}, el('div.chips', {}, ...roster)),
