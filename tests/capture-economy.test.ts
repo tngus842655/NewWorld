@@ -20,12 +20,13 @@ const dragon = content.monsters.get('ember-dragon-king')!; // 전설
 
 describe('포획 판정', () => {
   it('기본률 = 등급별, 미끼 ×2, 최종 상한 clamp', () => {
-    expect(captureChance(content, { monster: wolf, captureAddSum: 0, useLure: false, buffMult: 1 })).toBeCloseTo(0.4);
-    expect(captureChance(content, { monster: turtle, captureAddSum: 0, useLure: true, buffMult: 1 })).toBeCloseTo(0.3);
-    expect(captureChance(content, { monster: dragon, captureAddSum: 0, useLure: false, buffMult: 1 })).toBeCloseTo(0.015);
-    // 배수 상한: 미끼×버프 = 4 초과분은 무시
+    const base = content.balance.capture.base;
+    expect(captureChance(content, { monster: wolf, captureAddSum: 0, useLure: false, buffMult: 1 })).toBeCloseTo(base.common);
+    expect(captureChance(content, { monster: turtle, captureAddSum: 0, useLure: true, buffMult: 1 })).toBeCloseTo(base.rare * content.balance.capture.lureMult);
+    expect(captureChance(content, { monster: dragon, captureAddSum: 0, useLure: false, buffMult: 1 })).toBeCloseTo(base.legendary);
+    // 배수 상한: 미끼×버프가 multCap을 넘는 만큼은 무시
     const capped = captureChance(content, { monster: dragon, captureAddSum: 0, useLure: true, buffMult: 3 });
-    expect(capped).toBeCloseTo(0.015 * 4);
+    expect(capped).toBeCloseTo(base.legendary * content.balance.capture.multCap);
     // 확률 상한
     const high = captureChance(content, { monster: wolf, captureAddSum: 0.2, useLure: true, buffMult: 2 });
     expect(high).toBe(content.balance.capture.chanceCap);
@@ -124,8 +125,9 @@ describe('경제 액션', () => {
       next.codex[monster.id] = { seen: true, captured: true, awakened: false };
     }
     expect(canUnlockRegion(content, next, 'sunken-marsh').reason).toMatch(/이슬가지/);
-    next.wallet.materials['dew-branch'] = 10;
-    next.wallet.materials['spirit-moss'] = 6;
+    const cost = content.regions.get('sunken-marsh')!.unlock.materials!;
+    next.wallet.materials['dew-branch'] = cost['dew-branch']!;
+    next.wallet.materials['spirit-moss'] = cost['spirit-moss']!;
     const marsh = unlockRegion(content, next, 'sunken-marsh');
     expect(marsh.wallet.materials['dew-branch']).toBe(0);
     expect(teamCount(content, marsh)).toBe(2); // 늪 해금 → 2팀
