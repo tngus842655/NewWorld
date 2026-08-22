@@ -8,11 +8,12 @@
 ## 1. 원칙
 
 1. **작가(스타일) 우선, 낱개 금지.** 몬스터 52종의 톤 통일이 게임의 얼굴이다.
-   대형 팩을 내는 작가 1명을 주력으로 정하고(후보: Didik Prasetio, NuFa Studio, Saw Ind,
-   Pixoo 3d Team 등 다작 작가), 부족분만 렌더 톤이 비슷한 보조 작가 1~2명으로 채운다.
-   낱개 아이콘을 스타일 검토 없이 섞지 않는다.
-2. **선(先)파일럿.** M0에서 주력 작가 후보별로 6~8종씩 받아 실제 도감 그리드 목업에 얹어보고
-   콜라주 스크린샷으로 사용자 컨펌 후 대량 다운로드.
+   **[확정 2026-08-22] 주력: Saw Ind** — Monsters & Magic Halloween Collection(25, 팩ID
+   `monsters-magic-halloween-collection-3d-icon-pack_369694`) + Reptiles And Amphibians(15,
+   `reptiles-and-amphibians-3d-icon-pack_275659`). 클레이 질감 정면 얼굴 스타일, 3000px, png/blend 제공.
+   **보조: IconScout Store — Mascot & Monster**(20, `mascot-monster-3d-icon-pack_159248`) 슬라임·눈알 계열.
+   유물 후보: Saw Ind 오브젝트(마법서·수정구·솥 등) + Naufal Hudallah Adventure Game(35, `adventure-game-3d-icon-pack_273009`).
+2. **선(先)파일럿. [완료]** 후보 6작가 콜라주 비교로 결정 — 사용자 이견 시 대량 다운로드 전 교체.
 3. **저장소 미포함.** IconScout 라이선스상 원본 재배포 금지 — `public/assets/`는 .gitignore 유지
    (구 NewWorld와 동일 원칙). 대신 이 문서의 매핑 대장이 "무엇을 어디서 받았나"의 진실.
 4. **즉시 다운로드.** MCP `download_asset`이 주는 URL은 만료됨 — 발급 즉시 curl로 저장.

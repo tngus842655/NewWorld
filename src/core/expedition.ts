@@ -198,6 +198,21 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
   return items;
 }
 
+/**
+ * 진행 중 원정의 갈림길 이벤트 목록 (결정론 — resolve와 같은 계획을 재생성).
+ * UI가 "어느 갈림길에서 무엇을 고르는지" 보여주기 위해 사용한다.
+ */
+export function previewCrossroads(content: Content, save: SaveState, expedition: ActiveExpedition): CrossroadEvent[] {
+  const region = content.regions.get(expedition.regionId);
+  if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
+  const { effects } = collectTeamEffects(content, save, expedition.partyUids, expedition.artifactUids);
+  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
+  return plan
+    .filter((item): item is Extract<PlanItem, { type: 'crossroad' }> => item.type === 'crossroad')
+    .sort((a, b) => a.index - b.index)
+    .map((item) => item.event);
+}
+
 // ── 유물 드랍 ────────────────────────────────────────────────────────────────
 
 export function rollArtifact(content: Content, rng: Rng, rarityBonus = 0): DroppedArtifact {
