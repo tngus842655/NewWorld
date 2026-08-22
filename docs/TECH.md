@@ -61,6 +61,7 @@ src/
       synergies.json   #   종족 시너지 수치
       events.json      #   갈림길·함정·보물·채집 이벤트 풀
       recipes.json     #   미끼 레시피
+      items.json       #   유물 28종 + 세트 (효과는 공용 Effect 문법 — DATA §1.5)
       milestones.json  #   도감 마일스톤·보상
       balance.json     #   전역 계수(상성 배수, 포획 기본률, 성장 곡선 계수...)
   core/
@@ -69,6 +70,8 @@ src/
     expedition.ts      # 파견 생성(시드 확정) → 조우 시퀀스 → 일지(Journal) 생성
     combat.ts          # 조우 판정 (P vs E, 피해, 패주/전멸)
     capture.ts         # 포획 판정·정수 전환
+    effects.ts         # Effect 훅 엔진 — 시너지·유물·세트·마일스톤 버프를 훅 9종에 일괄 적용
+                       #   (Action에 exhaustive switch, DATA §1.5 문법의 유일한 구현부)
     economy.ts         # 재화 증감·제작·레벨업 검증
     progression.ts     # 도감 상태 전이·마일스톤 평가·해금 판정
     types.ts           # 상태·결과 타입 (SaveState, Journal, ...)
@@ -114,7 +117,7 @@ supabase/
 
 [귀환 시점 — 앱 재진입 or 푸시 탭]
 → [core] expedition.resolve(save, expedition, choices, ctx)
-    · 시드에서 조우 시퀀스 재생성 → 조우별 판정 → Journal 생성
+    · 시드에서 조우 시퀀스 재생성 → (effects 훅 적용) 조우별 판정·드랍 → Journal 생성
     · 같은 (시드, 선택) 입력이면 언제 어디서 계산해도 같은 일지 (결정론)
 → [state] action.claimJournal(journal) — 재화·포획·도감 반영, 저장
 → [ui] 일지 타임라인 재생

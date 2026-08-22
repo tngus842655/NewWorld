@@ -22,6 +22,7 @@
 | 용도 | 수량 | 검색 방향 (asset=3d) |
 |---|---|---|
 | 몬스터 (도감 52종) | 52 | monster / cute monster / halloween monster / dragon / slime / ghost / robot |
+| 유물 (28종) | 28 | medieval weapon / armor / shield / flag / amulet / artifact / relic |
 | 지역 배너 | 5 | forest / swamp / volcano / island / ruins (또는 illustration으로 대체 검토) |
 | 재료 아이콘 | 8 | herb / shell / crystal / moss / branch ... |
 | 재화·아이템 | 6± | gold coin / potion / trap / treasure chest |

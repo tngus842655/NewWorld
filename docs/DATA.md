@@ -88,18 +88,82 @@
 }
 ```
 
+### 1.5 items.json — 유물 28종 + 세트 (GDD §8)
+
+```jsonc
+{
+  "id": "predators-fang",
+  "name": "포식자의 송곳니",
+  "slot": "weapon",             // weapon | armor | banner | charm
+  "rarity": "legendary",        // common | rare | heroic | legendary
+  "set": null,                  // 세트 id 또는 null
+  "main": { "stat": "atkMult", "base": 0.18, "perEnhance": 0.03 },
+  "substatCount": 3,            // 획득 시 substatPool에서 중복 없이 롤 (등급별 0~3)
+  "unique": [                   // 고유 능력 (영웅=조건부 옵션 1, 전설=본격 능력)
+    { "hook": "beforeEncounter",
+      "when": { "encounterIndex": 0, "encounterKind": "monster" },
+      "do": { "kind": "autoWin" } }
+  ],
+  "asset": "predators-fang",
+  "flavor": "첫 사냥감은 도망치지 못한다."
+}
+```
+
+**효과 문법 (확장성의 핵심):**
+
+```
+Effect   = { hook: Hook, when?: Condition, do: Action }
+Hook     = expeditionSetup | computeParty | beforeEncounter | afterVictory
+         | afterDefeat | captureRoll | crossroad | lootRoll | journalEnd   (9종)
+Condition= { region?, element?, tribe?, tier?, encounterKind?, encounterRarity?,
+             encounterIndex?, hpBelow? }                                    (AND 결합)
+Action   = { kind: "statMult", stat, value } | { kind: "captureAdd", value }
+         | { kind: "captureRetry", perExpedition } | { kind: "autoWin" }
+         | { kind: "damageReduce", value } | { kind: "reviveOnce", hpRatio }
+         | { kind: "rewardMult", target, value } | { kind: "timeMult", value }
+         | { kind: "encounterAdd", count } | { kind: "synergyAmp", value }
+         | { kind: "salvageOnFail", ratio } | { kind: "spawnWeightMult", rarity, value }
+         | ...                                          (태그드 유니언 — 필요 시 variant 추가)
+```
+
+- zod discriminated union으로 검증 — 오타·미지원 kind는 **빌드 실패**
+- core `effects.ts`는 Action에 exhaustive switch — variant 추가 시 컴파일러가 미구현을 잡음
+- 같은 Action + 다른 Condition = 다른 유물. **다양성은 조합에서 나온다** (코드 0줄 확장)
+- 스택 규칙: 같은 stat 배수는 곱연산, `balance.json`의 `effectCaps`로 상한
+- 시너지(1.3의 synergies.json) 효과도 동일 Effect 문법으로 통일 — 엔진 하나로 시너지·유물·세트·마일스톤 버프 전부 처리
+
+세트는 같은 파일의 `sets` 배열: `{ id, name, bonuses: { "2": Effect[], "4": Effect[] } }`
+
+**balance.json 추가 키:**
+
+```jsonc
+"artifacts": {
+  "dropRarity": { "common": 0.55, "rare": 0.30, "heroic": 0.12, "legendary": 0.03 },
+  "sources": { "treasureChance": 0.35, "deepClearBox": true,
+               "legendaryEncounter": 0.35, "crossroadCrit": 0.15 },
+  "firstTreasurePity": true,          // 계정 첫 보물 조우는 유물 확정
+  "enhance": { "max": 5, "dustCost": [10, 25, 50, 90, 150] },
+  "dustPerSalvage": { "common": 5, "rare": 12, "heroic": 30, "legendary": 80 },
+  "substatPool": [ { "stat": "atkMult", "min": 0.03, "max": 0.08, "weight": 20 } /* ... */ ],
+  "effectCaps": { "rewardMult": 3.0, "timeMultMin": 0.5, "captureMultCap": 4.0 }
+}
+```
+
 ## 2. 세이브 스키마 (SaveState v1)
 
 ```ts
 interface SaveState {
   version: 1;
   profile: { createdAt: number; tutorialDone: boolean; cloudUserKey?: string };
-  wallet: { gold: number; materials: Record<MaterialId, number>; essence: Record<MonsterId, number>; lures: number };
+  wallet: { gold: number; materials: Record<MaterialId, number>; essence: Record<MonsterId, number>; lures: number; dust: number };
   roster: OwnedMonster[];          // { uid, monsterId, level, star, currentHpRatio, expeditionId? }
+  artifacts: OwnedArtifact[];      // { uid, itemId, enhance, substats: {stat,value}[], teamId? }
+  teams: TeamLoadout[];            // { id, name, partyUids, artifactUids } — 파견 프리셋 (해금 팀 수만큼)
   codex: Record<MonsterId, { seen: boolean; captured: boolean; awakened: boolean; firstCapturedAt?: number }>;
   milestones: MilestoneId[];       // 달성 목록 (버프는 로드 시 재계산 — 저장 안 함)
-  expeditions: ActiveExpedition[]; // { id, regionId, tier, partyUids, seed, startedAt, endsAt,
-                                   //   choices: ('safe'|'risky')[], claimed: boolean }
+  expeditions: ActiveExpedition[]; // { id, regionId, tier, partyUids, artifactUids, seed, startedAt,
+                                   //   endsAt, choices: ('safe'|'risky')[], claimed: boolean }
+                                   //   ※ 파티·유물은 파견 시점 스냅샷 (원정 중 교체 방지)
   journalArchive: JournalSummary[]; // 최근 20건 요약 (풀 일지는 시드에서 재생성 가능하므로 미저장)
   counters: { adUsedToday: Record<AdSlot, number>; day: string };  // 일일 제한
   settings: { sound: boolean; push: boolean };
@@ -176,11 +240,11 @@ pg_cron (매분) ─▶ due & not sent 조회 ─▶ Edge Function expedition-pu
 
 - 푸시 본문에 성과 요약을 넣기 위한 사전 계산은 하지 않는다(서버는 시드를 모름) —
   v1 푸시는 고정 문구 + 지역명. 성과는 열어서 확인 (열어볼 이유가 되기도 함)
-- 수신 동의: 앱인토스 푸시 동의 플로우(§GDD 9) 통과 유저만 expeditions 미러 업로드
+- 수신 동의: 앱인토스 푸시 동의 플로우(§GDD 10) 통과 유저만 expeditions 미러 업로드
 - 갈림길 푸시(M6): crossroad_at 컬럼 추가 예정 — 스키마 변경은 그때 마이그레이션으로
 
 ## 6. 에셋 참조 규칙
 
-- 코드·콘텐츠는 에셋을 `asset` id로만 참조. 실제 파일: `public/assets/monsters/{id}@{128|256}.webp`
+- 코드·콘텐츠는 에셋을 `asset` id로만 참조. 실제 파일: `public/assets/{monsters|artifacts}/{id}@{128|256}.webp`
 - 매핑 대장: `docs/ASSETS.md`의 표 (IconScout 원본 URL·작가·라이선스 메모 포함)
 - 에셋 누락 시 폴백: 등급색 실루엣 + 이니셜 (개발 중 에셋 없이도 전 화면 동작)
