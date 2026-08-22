@@ -246,6 +246,6 @@ pg_cron (매분) ─▶ due & not sent 조회 ─▶ Edge Function expedition-pu
 
 ## 6. 에셋 참조 규칙
 
-- 코드·콘텐츠는 에셋을 `asset` id로만 참조. 실제 파일: `public/assets/{monsters|artifacts}/{id}@{128|256}.webp`
+- 코드·콘텐츠는 에셋을 `asset` id로만 참조. 실제 파일: `public/assets/{monsters|artifacts}/{id}.webp` (256px 단일 크기)
 - 매핑 대장: `docs/ASSETS.md`의 표 (IconScout 원본 URL·작가·라이선스 메모 포함)
 - 에셋 누락 시 폴백: 등급색 실루엣 + 이니셜 (개발 중 에셋 없이도 전 화면 동작)

@@ -37,13 +37,15 @@
 
 ```
 search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선별)
-→ download_asset → 즉시 curl → raw/ (원본 PNG 512, git 외부 폴더)
-→ scripts/fetch-assets.mjs 대장(assets-manifest.json) 갱신: { assetId, iconscoutId, 작가, 원본파일명 }
-→ 빌드 변환: sharp로 128/256 WebP 생성 → public/assets/monsters/{id}@{size}.webp
-→ 코드는 asset id로만 참조 (DATA.md §6), 누락 시 실루엣 폴백
+→ download_asset(png 500) → 만료 전 즉시 curl → C:/Workspace/BAK/NewWorld-assets-raw/monsters/{id}.png
+→ 매핑 대장: scripts/assets-manifest.json { 몬스터id: { slug, contributor } } — 저장소에 커밋
+→ node scripts/build-assets.mjs : sharp로 256px WebP → public/assets/monsters/{id}.webp (git 미포함)
+→ 코드는 asset id로만 참조 (DATA.md §6), 파일 누락 시 종족 이모지 폴백
 ```
 
-- `raw/` 원본은 `BAK` 쪽에 두고 주기 백업 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
+- **[완료 2026-08-22] 몬스터 52종 전량 수급·변환** (총 ~600KB). 새 기기/클론에서는 BAK 원본으로
+  build-assets.mjs만 재실행하면 복원된다
+- 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 
 ## 4. 라이선스 메모
