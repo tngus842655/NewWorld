@@ -39,10 +39,13 @@ export function mountApp(root: HTMLElement): void {
     const state = save();
     header.replaceChildren(
       el('div.appbar-title', {}, 'NewWorld'),
-      el('div.appbar-wallet', {},
-        el('span', {}, `💰 ${fmtGold(state.wallet.gold)}`),
-        el('span', {}, `✨ ${fmtGold(state.wallet.dust)}`),
-        el('span', {}, `🪤 ${state.wallet.lures}`),
+      el('div.appbar-wallet', {
+        title: '재화 안내 보기',
+        onclick: () => overlay.set({ kind: 'help' }),
+      },
+        el('span', { title: '골드' }, `💰 ${fmtGold(state.wallet.gold)}`),
+        el('span', { title: '가루 (유물 강화)' }, `✨ ${fmtGold(state.wallet.dust)}`),
+        el('span', { title: '미끼 (포획률 ×2)' }, `🪤 ${state.wallet.lures}`),
       ),
     );
   });

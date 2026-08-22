@@ -7,6 +7,7 @@ import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { monsterIcon } from '../components';
 import { MONSTER_RARITY_LABEL, TRIBE_LABEL, el } from '../kit';
+import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 필터 (GDD §11)
 const tribeFilter = signal<Monster['tribe'] | null>(null);
@@ -48,14 +49,18 @@ export function renderCodex(): HTMLElement {
     if (natives.length === 0) return null;
     const cells = natives.map((monster) => {
       const entry = state.codex[monster.id];
+      const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
       if (entry?.captured) {
-        return el(`div.codex-cell${entry.awakened ? '.awakened' : ''}`, { title: `${monster.name} · ${MONSTER_RARITY_LABEL[monster.rarity]}` },
+        return el(`div.codex-cell${entry.awakened ? '.awakened' : ''}`, {
+          title: `${monster.name} · ${MONSTER_RARITY_LABEL[monster.rarity]}`,
+          onclick: openSpecies,
+        },
           monsterIcon(monster.id),
           el('div.codex-name', {}, monster.name),
         );
       }
       if (entry?.seen) {
-        return el('div.codex-cell.seen', { title: '목격 — 아직 포획하지 못했다' },
+        return el('div.codex-cell.seen', { title: '목격 — 아직 포획하지 못했다', onclick: openSpecies },
           monsterIcon(monster.id, { silhouette: true }),
           el('div.codex-name.muted', {}, monster.name),
         );

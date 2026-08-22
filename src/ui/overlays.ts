@@ -2,7 +2,7 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
-import { enhanceCost, levelUpCost, starUpCost, statAt } from '../core/formulas';
+import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
@@ -24,7 +24,11 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
         ? monsterSheet(current.uid)
         : current.kind === 'artifact'
           ? artifactSheet(current.uid)
-          : crossroadsSheet(current.expeditionId);
+          : current.kind === 'species'
+            ? speciesSheet(current.monsterId)
+            : current.kind === 'help'
+              ? helpSheet()
+              : crossroadsSheet(current.expeditionId);
   if (!sheet) return null;
   return el('div.overlay', { onclick: (event) => { if (event.target === event.currentTarget) closeOverlay(); } }, sheet);
 }
@@ -154,6 +158,92 @@ function artifactSheet(uid: string): HTMLElement | null {
         },
       }, '분해'),
     ),
+  );
+}
+
+/** 도감 종 정보 — 성장 액션 없이 정보만 (캠프의 monsterSheet와 목적 분리) */
+function speciesSheet(monsterId: string): HTMLElement | null {
+  const monster = content.monsters.get(monsterId);
+  if (!monster) return null;
+  const state = save();
+  const entry = state.codex[monsterId];
+  const captured = entry?.captured === true;
+  if (!captured && entry?.seen !== true) return null; // 미지 종은 진입 차단 (도감 셀에서도 막지만 방어)
+  const habitat = content.regions.get(monster.habitat)?.name ?? monster.habitat;
+
+  // 목격만 한 종: 실루엣 + 서식지 힌트 (GDD §7.2)
+  if (!captured) {
+    return sheetShell('???',
+      el('div.detail-head', {},
+        monsterIcon(monster.id, { silhouette: true }),
+        el('div', {},
+          el('div.chips-wrap', {}, el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity])),
+          el('div.muted.small', {}, `목격 기록 · 서식지 ${habitat}`),
+        ),
+      ),
+      el('p.flavor', {}, '“포획하면 상세 정보가 공개됩니다.”'),
+    );
+  }
+
+  const { balance } = content;
+  const owned = state.roster.find((m) => m.monsterId === monsterId);
+  const synergy = content.synergies.get(monster.tribe);
+  const goodRegions = content.regionList
+    .filter((region) => elementMult(monster.element, region.element, balance) > 1)
+    .map((region) => region.name);
+  const badRegions = content.regionList
+    .filter((region) => elementMult(monster.element, region.element, balance) < 1)
+    .map((region) => region.name);
+  const essenceHave = state.wallet.essence[monsterId] ?? 0;
+
+  return sheetShell(monster.name,
+    el('div.detail-head', {},
+      monsterIcon(monster.id),
+      el('div', {},
+        el('div.chips-wrap', {},
+          el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity]),
+          el('span.tag', {}, ELEMENT_LABEL[monster.element]),
+          el('span.tag', {}, TRIBE_LABEL[monster.tribe]),
+          entry.awakened ? el('span.tag', {}, '✨ 각성') : null,
+        ),
+        el('div.muted.small', {}, `서식지 ${habitat}`),
+        owned ? el('div.tag.busy-tag', {}, `보유 중 · Lv.${owned.level} ${stars(owned.star)}`) : null,
+      ),
+    ),
+    el('div.stat-row', {},
+      el('div.stat', {}, el('div.muted.small', {}, '기본 공격'), el('strong', {}, `${monster.baseAtk}`)),
+      el('div.stat', {}, el('div.muted.small', {}, '기본 생명'), el('strong', {}, `${monster.baseHp}`)),
+      el('div.stat', {}, el('div.muted.small', {}, '기본 전투력'), el('strong', {}, `${Math.round(monsterBaseCp(monster, balance))}`)),
+    ),
+    el('div.card.stack-sm', {},
+      synergy
+        ? el('div', {},
+            el('div.muted.small', {}, `${TRIBE_LABEL[monster.tribe]} 시너지 (같은 종족 편성 시)`),
+            el('div.small', {}, `2마리: ${synergy.at2.map(describeEffect).join(', ')}`),
+            el('div.small', {}, `3마리: ${synergy.at3.map(describeEffect).join(', ')}`),
+          )
+        : null,
+      goodRegions.length > 0 ? el('div.small', {}, `⚔️ 유리한 지역: ${goodRegions.join(', ')}`) : null,
+      badRegions.length > 0 ? el('div.small.muted', {}, `⚠️ 불리한 지역: ${badRegions.join(', ')}`) : null,
+      el('div.small.muted', {}, `보유 정수 ${essenceHave} — 중복 포획 시 자동 전환, 각성(성급)에 사용`),
+    ),
+    el('p.flavor', {}, `“${monster.flavor}”`),
+  );
+}
+
+/** 재화 안내 — 상단 지갑 아이콘이 무엇인지 (신규 유저용) */
+function helpSheet(): HTMLElement {
+  const row = (icon: string, name: string, gain: string, use: string) =>
+    el('div.card.stack-sm', {},
+      el('div', {}, `${icon} ${name}`),
+      el('div.small.muted', {}, `얻기 — ${gain}`),
+      el('div.small.muted', {}, `쓰기 — ${use}`),
+    );
+  return sheetShell('재화 안내',
+    row('💰', '골드', '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', '몬스터 레벨업 · 파티 슬롯 확장 · 미끼 제작'),
+    row('✨', '가루', '유물 분해', '유물 강화'),
+    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 — 레어 이상 몬스터 포획률 ×2'),
+    el('div.muted.small', {}, '지역 재료·정수 보유량은 캠프 화면에서 볼 수 있습니다.'),
   );
 }
 
