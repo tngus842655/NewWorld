@@ -416,6 +416,454 @@
     "volcano-heart": {
       "slug": "fire-flame-10980858",
       "contributor": "Platypus Projects"
+    },
+    "coral-pup": {
+      "slug": "cute-puppy-dog-character-18866875",
+      "contributor": "Aga Arsari"
+    },
+    "sludge-pup": {
+      "slug": "puppy-3690198",
+      "contributor": "Pablo Vargas"
+    },
+    "pumice-pup": {
+      "slug": "bulldog-5551641",
+      "contributor": "Pablo Vargas"
+    },
+    "compass-crab": {
+      "slug": "crab-15033371",
+      "contributor": "Tin Myint Sein"
+    },
+    "coffin-crab": {
+      "slug": "crab-11327725",
+      "contributor": "Gilang Ramadhan"
+    },
+    "cannon-crab": {
+      "slug": "crab-10917023",
+      "contributor": "Andrewtimango"
+    },
+    "sap-slime": {
+      "slug": "slime-doodle-13314316",
+      "contributor": "Creavie Studio"
+    },
+    "slag-snail": {
+      "slug": "slime-snail-doodle-13314306",
+      "contributor": "Creavie Studio"
+    },
+    "beach-scamp": {
+      "slug": "goblin-emoji-15117812",
+      "contributor": "Luthfi Alfarizi"
+    },
+    "ripple-imp": {
+      "slug": "goblin-13854837",
+      "contributor": "Kentung 3D"
+    },
+    "peat-imp": {
+      "slug": "goblin-16042217",
+      "contributor": "Slab Design Studio"
+    },
+    "vent-imp": {
+      "slug": "goblin-12604085",
+      "contributor": "Kerismaker"
+    },
+    "tombstone-golem": {
+      "slug": "gargoyle-18407779",
+      "contributor": "Taru"
+    },
+    "brine-mouse": {
+      "slug": "mouse-4551732",
+      "contributor": "Fuwa Team"
+    },
+    "furnace-mouse": {
+      "slug": "rat-3678233",
+      "contributor": "Creasheeps Studio"
+    },
+    "tide-tinker": {
+      "slug": "cute-robot-say-hello-5665790",
+      "contributor": "Anggi Yansyah"
+    },
+    "tin-soldier": {
+      "slug": "cute-robot-15841314",
+      "contributor": "Fernando Mejia"
+    },
+    "driftnet-phantom": {
+      "slug": "ghost-10514092",
+      "contributor": "Kreev Studio"
+    },
+    "harbor-ghost": {
+      "slug": "ghost-10047290",
+      "contributor": "Nay Design"
+    },
+    "sorrow-candle": {
+      "slug": "candel-holder-13852243",
+      "contributor": "Iconfield"
+    },
+    "spray-finch": {
+      "slug": "bird-blue-8252544",
+      "contributor": "Ashley Blanchette Ohlrich"
+    },
+    "soot-sparrow": {
+      "slug": "sparrow-15043861",
+      "contributor": "Tin Myint Sein"
+    },
+    "glass-eel": {
+      "slug": "eels-11327726",
+      "contributor": "Gilang Ramadhan"
+    },
+    "foam-pony": {
+      "slug": "cute-horse-18822842",
+      "contributor": "Maskur Rosadi"
+    },
+    "barnacle-bandit": {
+      "slug": "raccoon-13324990",
+      "contributor": "Kentung 3D"
+    },
+    "pearl-otter": {
+      "slug": "otter-14407233",
+      "contributor": "Fernanda Aulia Yahya"
+    },
+    "clam-clapper": {
+      "slug": "clam-8759682",
+      "contributor": "Permadi"
+    },
+    "squall-serpent": {
+      "slug": "snake-15987186",
+      "contributor": "Vector Nest"
+    },
+    "weed-serpent": {
+      "slug": "green-snake-emoji-12166615",
+      "contributor": "Nyala Studio"
+    },
+    "glowvine-serpent": {
+      "slug": "rainbow-serpent-15606756",
+      "contributor": "Hoshi Studio"
+    },
+    "worldroot-turtle": {
+      "slug": "cute-green-turtle-character-18875971",
+      "contributor": "Aga Arsari"
+    },
+    "anvil-tortoise": {
+      "slug": "tortoise-8714268",
+      "contributor": "Tin Myint Sein"
+    },
+    "owl-postman": {
+      "slug": "owl-5564196",
+      "contributor": "Luthfi Alfarizi"
+    },
+    "starfall-owl": {
+      "slug": "owl-12823795",
+      "contributor": "Zulfa Mahendra"
+    },
+    "moon-bunny": {
+      "slug": "bunny-atop-moon-shaped-ball-16047455",
+      "contributor": "Meepian Graphic"
+    },
+    "ash-bunny": {
+      "slug": "cute-rabbit-16047459",
+      "contributor": "Meepian Graphic"
+    },
+    "acorn-thief": {
+      "slug": "squirrel-12711101",
+      "contributor": "Zulfa Mahendra"
+    },
+    "mossy-snail": {
+      "slug": "snail-11046993",
+      "contributor": "Zulfa Mahendra"
+    },
+    "barkback-beetle": {
+      "slug": "horned-beetle-15342339",
+      "contributor": "Razz Co"
+    },
+    "whistle-cricket": {
+      "slug": "grasshopper-11806872",
+      "contributor": "Pixfinity Studio"
+    },
+    "grave-cricket": {
+      "slug": "grasshopper-10994846",
+      "contributor": "Gilang Ramadhan"
+    },
+    "whisper-moth": {
+      "slug": "moth-10994861",
+      "contributor": "Gilang Ramadhan"
+    },
+    "dusk-firefly": {
+      "slug": "butterfly-8293885",
+      "contributor": "Rizal Bayu"
+    },
+    "shade-shroom": {
+      "slug": "cute-mushroom-15841313",
+      "contributor": "Fernando Mejia"
+    },
+    "willow-harpist": {
+      "slug": "fairy-8953366",
+      "contributor": "Andrewtimango"
+    },
+    "wilted-sprite": {
+      "slug": "fairy-15029867",
+      "contributor": "Tin Myint Sein"
+    },
+    "antler-archer": {
+      "slug": "deer-14555512",
+      "contributor": "Zulfa Mahendra"
+    },
+    "frost-fawn": {
+      "slug": "deer-9674202",
+      "contributor": "Eklip Studio"
+    },
+    "geode-witch": {
+      "slug": "witch-15872123",
+      "contributor": "Esy Esyarof"
+    },
+    "banshee-widow": {
+      "slug": "witch-12920530",
+      "contributor": "SakuNa W."
+    },
+    "mire-shaman": {
+      "slug": "witch-9307275",
+      "contributor": "Didik Prasetio"
+    },
+    "coal-raven": {
+      "slug": "raven-crow-6482849",
+      "contributor": "Flow Icon"
+    },
+    "crow-keeper": {
+      "slug": "raven-4454190",
+      "contributor": "Vu Hoang viet"
+    },
+    "night-chanter": {
+      "slug": "crow-18869775",
+      "contributor": "Graphic Mall"
+    },
+    "lantern-shrimp": {
+      "slug": "shrimp-15353248",
+      "contributor": "Razz Co"
+    },
+    "tidal-organist": {
+      "slug": "octopus-9440556",
+      "contributor": "Creasheeps Studio"
+    },
+    "cinder-reaper": {
+      "slug": "grim-reaper-13854836",
+      "contributor": "Kentung 3D"
+    },
+    "molten-knight": {
+      "slug": "knight-13854838",
+      "contributor": "Kentung 3D"
+    },
+    "drowned-emperor": {
+      "slug": "king-13854840",
+      "contributor": "Kentung 3D"
+    },
+    "sorrow-queen": {
+      "slug": "queen-13854848",
+      "contributor": "Kentung 3D"
+    },
+    "nightmare-stalker": {
+      "slug": "slenderman-13854841",
+      "contributor": "Kentung 3D"
+    },
+    "mirage-admiral": {
+      "slug": "pirates-13854843",
+      "contributor": "Kentung 3D"
+    },
+    "fern-sage": {
+      "slug": "wizard-13854844",
+      "contributor": "Kentung 3D"
+    },
+    "crater-empress": {
+      "slug": "dragon-10838662",
+      "contributor": "Nay Design"
+    },
+    "tsunami-rider": {
+      "slug": "dragon-6358498",
+      "contributor": "Fuwa Team"
+    },
+    "firebrand-falcon": {
+      "slug": "eagle-12003520",
+      "contributor": "Fernanda Aulia Yahya"
+    },
+    "solar-roc": {
+      "slug": "eagle-12138751",
+      "contributor": "Fuwa Team"
+    },
+    "marsh-lurker": {
+      "slug": "blue-monster-5710646",
+      "contributor": "David Galih"
+    },
+    "spark-wisp": {
+      "slug": "fire-flame-10980858",
+      "contributor": "Platypus Projects"
+    },
+    "caldera-tyrant": {
+      "slug": "red-ogre-monster-5710666",
+      "contributor": "David Galih"
+    },
+    "ashen-behemoth": {
+      "slug": "elephant-15966856",
+      "contributor": "Sagi Agung w"
+    },
+    "swamp-chimera": {
+      "slug": "purple-halloween-devil-monster-5710665",
+      "contributor": "David Galih"
+    },
+    "venom-matriarch": {
+      "slug": "spider-10047285",
+      "contributor": "Nay Design"
+    },
+    "mist-leviathan": {
+      "slug": "whale-15033375",
+      "contributor": "Tin Myint Sein"
+    },
+    "bone-orchard-king": {
+      "slug": "spooky-skull-10881063",
+      "contributor": "Vektora Studio"
+    },
+    "moonwell-newt": {
+      "slug": "axolotl-11889342",
+      "contributor": "Saw Ind"
+    },
+    "storm-albatross": {
+      "slug": "seagull-8574292",
+      "contributor": "Kerismaker"
+    },
+    "mist-heron": {
+      "slug": "seagull-15043867",
+      "contributor": "Tin Myint Sein"
+    },
+    "pelican-corsair": {
+      "slug": "seagull-18882537",
+      "contributor": "Taru"
+    },
+    "beacon-crane": {
+      "slug": "flamingo-6329992",
+      "contributor": "Ashley Blanchette Ohlrich"
+    },
+    "tide-empress": {
+      "slug": "mermaid-16042216",
+      "contributor": "Slab Design Studio"
+    },
+    "thorn-lancer": {
+      "slug": "porcupine-9796115",
+      "contributor": "Didik Prasetio"
+    },
+    "berry-mole": {
+      "slug": "hamster-8449798",
+      "contributor": "Zulfa Mahendra"
+    },
+    "rusty-lantern": {
+      "slug": "camping-lantern-8694180",
+      "contributor": "NukTD 130"
+    },
+    "lantern-titan": {
+      "slug": "lantern-lamp-9952362",
+      "contributor": "Ramanaptr"
+    },
+    "cold-minnow": {
+      "slug": "fish-16343427",
+      "contributor": "Febri Yulianto"
+    },
+    "fog-tadpole": {
+      "slug": "frog-11221857",
+      "contributor": "Charcoal 3D"
+    },
+    "ember-eel": {
+      "slug": "clown-fish-15353239",
+      "contributor": "Razz Co"
+    },
+    "frostbite-eel": {
+      "slug": "piranha-10953147",
+      "contributor": "Fuwa Team"
+    },
+    "hollow-puppeteer": {
+      "slug": "puppet-doll-9188407",
+      "contributor": "Kerismaker"
+    },
+    "grove-matriarch": {
+      "slug": "scary-tree-6711307",
+      "contributor": "Gerry3d"
+    },
+    "ironwood-golem": {
+      "slug": "robot-monster-5710662",
+      "contributor": "David Galih"
+    },
+    "lighthouse-golem": {
+      "slug": "lighthouse-14560497",
+      "contributor": "Yogeeid Std"
+    },
+    "anchor-warden": {
+      "slug": "anchor-11271057",
+      "contributor": "Muhamad Rafly"
+    },
+    "moon-sovereign": {
+      "slug": "crescent-moon-14155271",
+      "contributor": "Ramanaptr"
+    },
+    "dusk-regent": {
+      "slug": "bat-12900393",
+      "contributor": "Afterhours Labs"
+    },
+    "coral-colossus": {
+      "slug": "coral-15498934",
+      "contributor": "Broto Seno"
+    },
+    "algae-blob": {
+      "slug": "soft-coral-12326986",
+      "contributor": "Uneric Studio"
+    },
+    "gnat-cloud": {
+      "slug": "mosquito-11806876",
+      "contributor": "Pixfinity Studio"
+    },
+    "dread-ferryman": {
+      "slug": "viking-11442204",
+      "contributor": "Yacons Design"
+    },
+    "requiem-harpy": {
+      "slug": "swan-swimming-12136364",
+      "contributor": "Tin Naing Linn"
+    },
+    "pinecone-knight": {
+      "slug": "pinecone-12656211",
+      "contributor": "Dzulfikar Laode"
+    },
+    "thorn-emperor": {
+      "slug": "lion-12360443",
+      "contributor": "Kreev Studio"
+    },
+    "blaze-lizard": {
+      "slug": "iguana-14066814",
+      "contributor": "Zulfa Mahendra"
+    },
+    "sun-forger": {
+      "slug": "blacksmith-9915628",
+      "contributor": "Anggi Yansyah"
+    },
+    "mud-golem": {
+      "slug": "cream-monster-5710661",
+      "contributor": "David Galih"
+    },
+    "sulfur-slime": {
+      "slug": "slime-bear-melt-hot-12186642",
+      "contributor": "Sopita Jullaprasertsak"
+    },
+    "obsidian-raptor": {
+      "slug": "t-rex-dinosaur-12048017",
+      "contributor": "Tin Naing Linn"
+    },
+    "ash-dancer": {
+      "slug": "fire-flame-angry-18910179",
+      "contributor": "StoiCreator"
+    },
+    "lava-shepherd": {
+      "slug": "fire-flame-18910200",
+      "contributor": "StoiCreator"
+    },
+    "magma-colossus": {
+      "slug": "volcano-with-lava-10974736",
+      "contributor": "Charcoal 3D"
+    },
+    "obsidian-overlord": {
+      "slug": "knight-16042219",
+      "contributor": "Slab Design Studio"
     }
   },
   "artifacts": {
@@ -642,8 +1090,168 @@
     "twin-lure-flute": {
       "slug": "pan-flute-8708891",
       "contributor": "Creasheeps Studio"
-    }
     },
+    "ember-hatchet": {
+      "slug": "batle-axe-18407769",
+      "contributor": "Taru"
+    },
+    "vigil-torch": {
+      "slug": "magic-torch-18407778",
+      "contributor": "Taru"
+    },
+    "tin-lantern": {
+      "slug": "lantern-18407780",
+      "contributor": "Taru"
+    },
+    "frostshell-mail": {
+      "slug": "chain-mail-18407767",
+      "contributor": "Taru"
+    },
+    "frost-cleaver": {
+      "slug": "sword-18407793",
+      "contributor": "Taru"
+    },
+    "whaler-lance": {
+      "slug": "lance-12478385",
+      "contributor": "Zulfa Mahendra"
+    },
+    "skyhook-javelin": {
+      "slug": "spear-12478394",
+      "contributor": "Zulfa Mahendra"
+    },
+    "forge-hammer": {
+      "slug": "warhammer-12478398",
+      "contributor": "Zulfa Mahendra"
+    },
+    "oak-club": {
+      "slug": "mace-12478391",
+      "contributor": "Zulfa Mahendra"
+    },
+    "dusk-blade": {
+      "slug": "scimitar-12478386",
+      "contributor": "Zulfa Mahendra"
+    },
+    "miser-pouch": {
+      "slug": "money-bag-13852247",
+      "contributor": "Iconfield"
+    },
+    "cinder-shield": {
+      "slug": "knight-shield-13852244",
+      "contributor": "Iconfield"
+    },
+    "reed-pennant": {
+      "slug": "medieval-banner-14716604",
+      "contributor": "Dzulfikar Laode"
+    },
+    "caravan-flag": {
+      "slug": "kingdom-flag-6358512",
+      "contributor": "Fuwa Team"
+    },
+    "furnace-standard": {
+      "slug": "banner-6938926",
+      "contributor": "M Wildan Cahya Syarief"
+    },
+    "bloom-standard": {
+      "slug": "royal-banner-18424120",
+      "contributor": "Fyndertype"
+    },
+    "beacon-flag": {
+      "slug": "royal-banner-17230277",
+      "contributor": "Barudak Lier"
+    },
+    "storm-pennon": {
+      "slug": "flag-13703956",
+      "contributor": "Lerpong Limpiviriyajit"
+    },
+    "current-banner": {
+      "slug": "medieval-12088040",
+      "contributor": "Lerpong Limpiviriyajit"
+    },
+    "requiem-standard": {
+      "slug": "banner-11974003",
+      "contributor": "Hoshi Studio"
+    },
+    "diver-cuirass": {
+      "slug": "armour-vest-13137417",
+      "contributor": "Vectors Market"
+    },
+    "slagsteel-plate": {
+      "slug": "armor-15756708",
+      "contributor": "Qarion Design"
+    },
+    "mossheart-plate": {
+      "slug": "armor-15062013",
+      "contributor": "Tin Myint Sein"
+    },
+    "barkskin-mail": {
+      "slug": "armor-6368199",
+      "contributor": "Slab Design Studio"
+    },
+    "lucky-coin": {
+      "slug": "gold-coin-6823669",
+      "contributor": "Creasheeps Studio"
+    },
+    "fisher-hook": {
+      "slug": "fishing-hook-12731274",
+      "contributor": "3Dafa Rizkiansah"
+    },
+    "fog-whistle": {
+      "slug": "whistle-9606551",
+      "contributor": "Creasheeps Studio"
+    },
+    "forest-totem": {
+      "slug": "totem-pole-15133844",
+      "contributor": "Zulfa Mahendra"
+    },
+    "siren-locket": {
+      "slug": "locket-necklace-13101405",
+      "contributor": "Flat- Icons"
+    },
+    "memento-locket": {
+      "slug": "necklace-8770604",
+      "contributor": "Hasymi Arif"
+    },
+    "tidecaller-harpoon": {
+      "slug": "trident-13619452",
+      "contributor": "Soni Sokell"
+    },
+    "druid-sickle": {
+      "slug": "sickle-6000093",
+      "contributor": "Muhamad Rafly"
+    },
+    "gamblers-dice": {
+      "slug": "dice-10784886",
+      "contributor": "Illustraly Design"
+    },
+    "ember-censer": {
+      "slug": "incense-burner-7410963",
+      "contributor": "Creasheeps Studio"
+    },
+    "seed-pouch": {
+      "slug": "seed-sack-11252708",
+      "contributor": "Creasheeps Studio"
+    },
+    "shell-guard": {
+      "slug": "clam-shell-14312523",
+      "contributor": "Beri"
+    },
+    "night-mantle": {
+      "slug": "body-armour-13137031",
+      "contributor": "Vectors Market"
+    },
+    "spirit-veil": {
+      "slug": "armor-10939653",
+      "contributor": "Sahrul Ramadhani kurniawan"
+    },
+    "mourner-shroud": {
+      "slug": "armor-11442200",
+      "contributor": "Yacons Design"
+    },
+    "straw-cloak": {
+      "slug": "armor-6368200",
+      "contributor": "Slab Design Studio"
+    }
+  },
   "hourglasses": {
     "hourglass-15": {
       "slug": "hourglass-15645067",
