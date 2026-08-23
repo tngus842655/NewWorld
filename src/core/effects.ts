@@ -37,7 +37,7 @@ export interface EffectCtx {
   hpRatio?: number;
 }
 
-export const RARITY_ORDER: Record<MonsterRarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3 };
+export const RARITY_ORDER: Record<MonsterRarity, number> = { common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4 };
 
 export function matchCondition(when: Condition | undefined, ctx: EffectCtx): boolean {
   if (!when) return true;
@@ -184,9 +184,9 @@ export function findArtifact(save: SaveState, uid: string): OwnedArtifact {
   return owned;
 }
 
-export function findMonster(save: SaveState, uid: string): OwnedMonster {
-  const owned = save.roster.find((m) => m.uid === uid);
-  if (!owned) throw new GameError('monster-not-found', `보유하지 않은 몬스터: ${uid}`);
+export function findMonster(save: SaveState, monsterId: string): OwnedMonster {
+  const owned = save.roster.find((m) => m.monsterId === monsterId);
+  if (!owned) throw new GameError('monster-not-found', `보유하지 않은 몬스터: ${monsterId}`);
   return owned;
 }
 
@@ -194,7 +194,7 @@ export function findMonster(save: SaveState, uid: string): OwnedMonster {
  * 파티 + 유물 + 마일스톤에서 활성 효과 전체를 수집한다.
  * 순서: ① 유물(주/부옵션·고유)·세트·마일스톤 → ② synergyAmp 합산 → ③ 시너지 효과(증폭 적용)
  */
-export function collectTeamEffects(content: Content, save: SaveState, partyUids: string[], artifactUids: string[]): TeamEffects {
+export function collectTeamEffects(content: Content, save: SaveState, partyIds: string[], artifactUids: string[]): TeamEffects {
   const effects: ActiveEffect[] = [];
 
   // 유물
@@ -236,8 +236,8 @@ export function collectTeamEffects(content: Content, save: SaveState, partyUids:
 
   // 종족 시너지
   const tribeCounts = new Map<Tribe, number>();
-  for (const uid of partyUids) {
-    const owned = findMonster(save, uid);
+  for (const monsterId of partyIds) {
+    const owned = findMonster(save, monsterId);
     const monster = content.monsters.get(owned.monsterId);
     if (!monster) throw new GameError('monster-def-missing', `콘텐츠에 없는 몬스터: ${owned.monsterId}`);
     tribeCounts.set(monster.tribe, (tribeCounts.get(monster.tribe) ?? 0) + 1);

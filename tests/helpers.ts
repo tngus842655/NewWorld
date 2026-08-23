@@ -50,20 +50,19 @@ export interface SaveOpts {
   dust?: number;
 }
 
-/** 지정 파티로 구성된 테스트 세이브. 파티 몬스터는 도감에 포획 상태로 들어간다. */
-export function saveWithParty(clock: TestClock, party: PartySpec[], opts: SaveOpts = {}): { save: SaveState; partyUids: string[]; artifactUids: string[] } {
+/** 지정 파티로 구성된 테스트 세이브. 파티 몬스터는 도감에 포획 상태로 들어간다. (종 단위 — 2026-08-23) */
+export function saveWithParty(clock: TestClock, party: PartySpec[], opts: SaveOpts = {}): { save: SaveState; partyIds: string[]; artifactUids: string[] } {
   const save = createInitialSave(content, clock.ctx);
   save.roster = [];
   save.codex = {};
   save.teams = [];
 
-  const partyUids: string[] = [];
+  const partyIds: string[] = [];
   for (const spec of party) {
     if (!content.monsters.has(spec.id)) throw new Error(`테스트 파티에 없는 몬스터: ${spec.id}`);
-    const uid = `m:${spec.id}:${partyUids.length}`;
-    save.roster.push({ uid, monsterId: spec.id, level: spec.level ?? 1, star: spec.star ?? 1 });
+    save.roster.push({ monsterId: spec.id, level: spec.level ?? 1, star: spec.star ?? 1, count: 1 });
     save.codex[spec.id] = { seen: true, captured: true, awakened: false, firstCapturedAt: T0 };
-    partyUids.push(uid);
+    partyIds.push(spec.id);
   }
 
   const artifactUids: string[] = [];
@@ -80,7 +79,7 @@ export function saveWithParty(clock: TestClock, party: PartySpec[], opts: SaveOp
   save.wallet.gold = opts.gold ?? save.wallet.gold;
   save.wallet.lures = opts.lures ?? save.wallet.lures;
   save.wallet.dust = opts.dust ?? save.wallet.dust;
-  return { save, partyUids, artifactUids };
+  return { save, partyIds, artifactUids };
 }
 
 import type { ActiveExpedition, CrossroadChoice } from '../src/core/types';
@@ -90,7 +89,7 @@ import type { Tier } from '../src/content/schema';
 export function makeExpedition(
   regionId: string,
   tier: Tier,
-  partyUids: string[],
+  partyIds: string[],
   artifactUids: string[],
   seed: string,
   opts: { choices?: (CrossroadChoice | null)[]; luresLoaded?: number } = {},
@@ -100,7 +99,7 @@ export function makeExpedition(
     id: `exp:${seed}`,
     regionId,
     tier,
-    partyUids,
+    partyIds,
     artifactUids,
     seed,
     startedAt: T0,

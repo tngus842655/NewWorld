@@ -12,13 +12,13 @@ import { playSfx } from '../sfx';
 
 export function renderCamp(): HTMLElement {
   const state = save();
-  const busyUids = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyUids));
+  const busyIds = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyIds));
 
   const roster = [...state.roster]
     .sort((a, b) => ownedCp(b) - ownedCp(a))
     .map((owned) => monsterChip(owned, {
-      onclick: () => overlay.set({ kind: 'monster', uid: owned.uid }),
-      onExpedition: busyUids.has(owned.uid),
+      onclick: () => overlay.set({ kind: 'monster', monsterId: owned.monsterId }),
+      onExpedition: busyIds.has(owned.monsterId),
     }));
 
   const artifacts = [...state.artifacts]

@@ -7,10 +7,10 @@ import type { CoreCtx, SaveState } from './types';
 export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
   const now = ctx.now();
   const starters = content.balance.starter.monsters.map((monsterId) => ({
-    uid: ctx.newUid(),
     monsterId,
     level: 1,
     star: 1,
+    count: 1,
   }));
 
   const codex: SaveState['codex'] = {};
@@ -19,7 +19,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
   }
 
   return {
-    version: 1,
+    version: 2,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -31,7 +31,6 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
       dust: 0,
       lures: content.balance.starter.lures,
       materials: {},
-      essence: {},
     },
     roster: starters,
     artifacts: [],
@@ -39,7 +38,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
       {
         id: 'team-1',
         name: '1번 원정대',
-        partyUids: starters.map((s) => s.uid),
+        partyIds: starters.map((s) => s.monsterId),
         artifactUids: [],
       },
     ],

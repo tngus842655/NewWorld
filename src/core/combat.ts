@@ -9,7 +9,6 @@ import type { OwnedMonster } from './types';
 import { GameError } from './types';
 
 export interface PartyUnitPower {
-  uid: string;
   monsterId: string;
   cp: number;
 }
@@ -42,7 +41,7 @@ export function computePartyPower(
     const atk = statAt(monster.baseAtk, owned.level, owned.star, balance) * (1 + sumStatMult(actions, 'atk'));
     const hp = statAt(monster.baseHp, owned.level, owned.star, balance) * (1 + sumStatMult(actions, 'hp'));
     const cp = cpOf(Math.max(0, atk), Math.max(0, hp), balance) * elementMult(monster.element, region.element, balance);
-    units.push({ uid: owned.uid, monsterId: owned.monsterId, cp });
+    units.push({ monsterId: owned.monsterId, cp });
     total += cp;
   }
   return { total, units };

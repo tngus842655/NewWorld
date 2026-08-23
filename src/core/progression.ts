@@ -83,8 +83,8 @@ export function nextPartySlotUnlock(content: Content, save: SaveState): { slots:
   return next ?? null;
 }
 
-export function assertMonsterOwned(save: SaveState, uid: string): void {
-  if (!save.roster.some((m) => m.uid === uid)) {
-    throw new GameError('monster-not-found', `보유하지 않은 몬스터: ${uid}`);
+export function assertMonsterOwned(save: SaveState, monsterId: string): void {
+  if (!save.roster.some((m) => m.monsterId === monsterId)) {
+    throw new GameError('monster-not-found', `보유하지 않은 몬스터: ${monsterId}`);
   }
 }

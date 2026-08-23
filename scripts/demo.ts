@@ -34,8 +34,8 @@ for (const monster of save.roster) monster.level = level; // 데모 편의: 파�
 for (const region of content.regionList) save.profile.flags[`region:${region.id}`] = true;
 save.wallet.lures = 3;
 
-const partyUids = save.teams[0]!.partyUids;
-const created = createExpedition(content, save, { regionId, tier, partyUids, artifactUids: [] }, ctx);
+const partyIds = save.teams[0]!.partyIds;
+const created = createExpedition(content, save, { regionId, tier, partyIds, artifactUids: [] }, ctx);
 save = created.save;
 const expedition = created.expedition;
 for (let i = 0; i < expedition.choices.length; i++) {
@@ -48,7 +48,7 @@ const { save: after, journal, newMilestones } = claimExpedition(content, save, e
 // ── 출력 ─────────────────────────────────────────────────────────────────────
 const region = content.regions.get(regionId)!;
 const tierLabel = { scout: '정찰 (15분)', standard: '원정 (2시간)', deep: '심층 탐사 (8시간)' }[tier];
-const artifactRarityLabel = { common: '일반', rare: '희귀', heroic: '영웅', legendary: '전설' } as const;
+const artifactRarityLabel = { common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설' } as const;
 const pct = (hp: number) => `${Math.round(hp * 100)}%`;
 const monsterName = (id: string) => content.monsters.get(id)?.name ?? id;
 const artifactLine = (itemId: string) => {
@@ -59,7 +59,7 @@ const rewardText = (r: GrantedReward): string => {
   switch (r.kind) {
     case 'gold': return `골드 +${r.amount}`;
     case 'material': return `${content.materials.get(r.materialId)?.name ?? r.materialId} ×${r.count}`;
-    case 'essence': return `${monsterName(r.monsterId)} 정수 +${r.count}`;
+    case 'card': return `${monsterName(r.monsterId)} 카드 +${r.count}`;
     case 'artifact': return `💎 ${artifactLine(r.drop.itemId)}`;
     case 'lure': return `미끼 +${r.count}`;
   }
@@ -67,8 +67,8 @@ const rewardText = (r: GrantedReward): string => {
 const eventName = (kind: 'treasures' | 'traps' | 'gathers' | 'crossroads', id: string) =>
   (content.events[kind] as { id: string; name: string }[]).find((e) => e.id === id)?.name ?? id;
 
-const party = expedition.partyUids
-  .map((uid) => save.roster.find((m) => m.uid === uid) ?? after.roster.find((m) => m.uid === uid))
+const party = expedition.partyIds
+  .map((id) => save.roster.find((m) => m.monsterId === id) ?? after.roster.find((m) => m.monsterId === id))
   .filter(Boolean)
   .map((m) => `${monsterName(m!.monsterId)} Lv.${m!.level}`);
 
@@ -90,8 +90,8 @@ for (const entry of journal.entries) {
       lines.push(`${head} (골드 +${entry.gold}, HP ${pct(entry.hpAfter)})`);
       if (entry.capture) {
         const retry = entry.capture.retried ? ' (올가미 재시도)' : '';
-        if (entry.capture.success && entry.capture.essence !== undefined) {
-          lines.push(`   🎯 포획 성공${retry} — 이미 아는 종, 정수 +${entry.capture.essence}`);
+        if (entry.capture.success && entry.capture.dupe) {
+          lines.push(`   🎯 포획 성공${retry} — 이미 아는 종, 카드 +1`);
         } else if (entry.capture.success) {
           lines.push(`   🎯 포획 성공${retry} — 도감 신규 등록!`);
         } else {
@@ -136,8 +136,8 @@ for (const line of lines) console.log(line);
 console.log('─'.repeat(60));
 const t = journal.totals;
 const materialText = Object.entries(t.materials).map(([id, n]) => `${content.materials.get(id)?.name} ×${n}`).join(', ');
-const essenceTotal = Object.values(t.essence).reduce((a, b) => a + b, 0);
-console.log(`🏕️ 귀환 — 골드 ${t.gold}${materialText ? ` · ${materialText}` : ''}${essenceTotal ? ` · 정수 ${essenceTotal}` : ''}${t.capturedMonsterIds.length ? ` · 신규 ${t.capturedMonsterIds.length}종` : ''}${t.artifacts.length ? ` · 유물 ${t.artifacts.length}점` : ''}`);
+const cardTotal = Object.values(t.cards).reduce((a, b) => a + b, 0);
+console.log(`🏕️ 귀환 — 골드 ${t.gold}${materialText ? ` · ${materialText}` : ''}${cardTotal ? ` · 카드 +${cardTotal}` : ''}${t.capturedMonsterIds.length ? ` · 신규 ${t.capturedMonsterIds.length}종` : ''}${t.artifacts.length ? ` · 유물 ${t.artifacts.length}점` : ''}`);
 if (t.capturedMonsterIds.length > 0) console.log(`📖 도감 등록: ${t.capturedMonsterIds.map(monsterName).join(', ')}`);
 for (const id of newMilestones) {
   const milestone = content.milestones.find((m) => m.id === id)!;

@@ -8,7 +8,7 @@ export type Tab = 'home' | 'expedition' | 'codex' | 'camp' | 'settings';
 
 export type Overlay =
   | { kind: 'journal'; journal: Journal; newMilestones: string[] }
-  | { kind: 'monster'; uid: string }
+  | { kind: 'monster'; monsterId: string } // 종 단위 (2026-08-23)
   | { kind: 'artifact'; uid: string }
   | { kind: 'crossroads'; expeditionId: string }
   | { kind: 'species'; monsterId: string } // 도감 종 정보 (성장 액션 없음 — 캠프 상세와 목적 분리)

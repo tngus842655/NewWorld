@@ -56,10 +56,7 @@ function expeditionCard(expeditionId: string): HTMLElement {
       el('div.exp-title', {}, region.name),
       el('span.tag', {}, TIER_LABEL[expedition.tier]),
     ),
-    el('div.exp-party', {}, ...expedition.partyUids.map((uid) => {
-      const owned = state.roster.find((m) => m.uid === uid);
-      return owned ? monsterIcon(owned.monsterId) : null;
-    })),
+    el('div.exp-party', {}, ...expedition.partyIds.map((monsterId) => monsterIcon(monsterId))),
     el('div.progress', {}, fill),
     el('div.exp-foot', {}, remain, el('div.row-gap', {}, crossroadBtn, claimBtn)),
   );

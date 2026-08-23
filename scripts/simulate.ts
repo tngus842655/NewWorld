@@ -79,7 +79,7 @@ function safely(fn: () => SaveState): SaveState | null {
 
 /** 슬롯별 최고 유물 선택 (등급 → 강화 순) */
 function pickArtifacts(save: SaveState): string[] {
-  const rank: Record<string, number> = { common: 0, rare: 1, heroic: 2, legendary: 3 };
+  const rank: Record<string, number> = { common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4 };
   const busy = new Set(save.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactUids));
   const bySlot = new Map<string, { uid: string; score: number }>();
   for (const owned of save.artifacts) {
@@ -94,16 +94,16 @@ function pickArtifacts(save: SaveState): string[] {
 
 /** CP 상위 + 같은 종족 뭉치기 휴리스틱으로 파티 선택 */
 function pickParty(save: SaveState, slots: number): string[] {
-  const busy = new Set(save.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyUids));
+  const busy = new Set(save.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyIds));
   const free = save.roster
-    .filter((m) => !busy.has(m.uid))
+    .filter((m) => !busy.has(m.monsterId))
     .map((m) => {
       const def = content.monsters.get(m.monsterId)!;
       const cp =
         (def.baseAtk * content.balance.cp.atkWeight + def.baseHp * content.balance.cp.hpWeight) *
         (1 + content.balance.level.statGrowth * (m.level - 1)) *
         Math.pow(content.balance.star.mult, m.star - 1);
-      return { uid: m.uid, tribe: def.tribe, cp };
+      return { uid: m.monsterId, tribe: def.tribe, cp };
     })
     .sort((a, b) => b.cp - a.cp);
   if (free.length === 0) return [];
@@ -125,10 +125,10 @@ function pickParty(save: SaveState, slots: number): string[] {
   return picked.map((p) => p.uid);
 }
 
-function partyPowerOf(save: SaveState, partyUids: string[], artifactUids: string[], regionId: string, tier: 'scout' | 'standard' | 'deep'): number {
+function partyPowerOf(save: SaveState, partyIds: string[], artifactUids: string[], regionId: string, tier: 'scout' | 'standard' | 'deep'): number {
   const region = content.regions.get(regionId)!;
-  const fx = collectTeamEffects(content, save, partyUids, artifactUids);
-  const party = partyUids.map((uid) => save.roster.find((m) => m.uid === uid)!);
+  const fx = collectTeamEffects(content, save, partyIds, artifactUids);
+  const party = partyIds.map((id) => save.roster.find((m) => m.monsterId === id)!);
   return computePartyPower(content, fx.effects, party, region, tier).total;
 }
 
@@ -198,20 +198,33 @@ function simulate(strategy: Strategy): SimResult {
       if (next) save = next;
     }
 
-    // 4) 성장: 각성(정수는 남겨봐야 쓸 데 없음) → 레벨업(예산 내 CP 최대화)
-    for (const uid of save.roster.map((m) => m.uid)) {
-      for (;;) {
-        const current = save.roster.find((m) => m.uid === uid);
-        if (!current || current.star >= content.balance.star.max) break;
-        const cost = starUpCost(current.star, content.balance);
-        if ((save.wallet.essence[current.monsterId] ?? 0) < cost) break;
-        const next = safely(() => awakenMonster(content, save, uid));
-        if (!next) break;
-        save = next;
-      }
-    }
+    // 4) 성장: 각성(골드 — 2026-08-23 정수 폐기) → 레벨업(예산 내 CP 최대화)
     const budget = Math.floor(save.wallet.gold * strategy.spendRatio);
     let spent = 0;
+    {
+      // 주전(CP 상위 슬롯 수)에 한해 예산 내에서 각성
+      const mains = [...save.roster]
+        .map((m) => {
+          const def = content.monsters.get(m.monsterId)!;
+          const cp = (def.baseAtk * 2 + def.baseHp * 0.5) * Math.pow(content.balance.star.mult, m.star - 1);
+          return { monsterId: m.monsterId, cp };
+        })
+        .sort((a, b) => b.cp - a.cp)
+        .slice(0, save.profile.partySlots);
+      for (const main of mains) {
+        for (let guard = 0; guard < 5; guard++) {
+          const current = save.roster.find((m) => m.monsterId === main.monsterId)!;
+          if (current.star >= content.balance.star.max) break;
+          if (current.level < 10) break; // 초반엔 레벨업이 골드 효율이 좋다 — 각성은 주전이 성장한 뒤
+          const cost = starUpCost(current.star, content.balance);
+          if (spent + cost > budget) break;
+          const next = safely(() => awakenMonster(content, save, main.monsterId));
+          if (!next) break;
+          save = next;
+          spent += cost;
+        }
+      }
+    }
     // 정석 육성: 로스터 전체에서 CP 상위 "주전"(슬롯 수)에 골드를 집중 — 파견 중이어도 육성
     for (let guard = 0; guard < 500; guard++) {
       const ranked = [...save.roster]
@@ -221,16 +234,16 @@ function simulate(strategy: Strategy): SimResult {
             (def.baseAtk * 2 + def.baseHp * 0.5) *
             (1 + content.balance.level.statGrowth * (m.level - 1)) *
             Math.pow(content.balance.star.mult, m.star - 1);
-          return { uid: m.uid, cp };
+          return { uid: m.monsterId, cp };
         })
         .sort((a, b) => b.cp - a.cp);
       const mainParty = new Set(ranked.slice(0, save.profile.partySlots).map((r) => r.uid));
       const candidates = save.roster
-        .filter((m) => m.level < content.balance.level.max && mainParty.has(m.uid))
+        .filter((m) => m.level < content.balance.level.max && mainParty.has(m.monsterId))
         .map((m) => {
           const def = content.monsters.get(m.monsterId)!;
           const baseCp = def.baseAtk * 2 + def.baseHp * 0.5;
-          return { uid: m.uid, level: m.level, gain: baseCp / levelUpCost(m.level, content.balance) };
+          return { uid: m.monsterId, level: m.level, gain: baseCp / levelUpCost(m.level, content.balance) };
         })
         .sort((a, b) => b.gain - a.gain);
       const best = candidates[0];
@@ -280,7 +293,7 @@ function simulate(strategy: Strategy): SimResult {
 
       const result = (() => {
         try {
-          return createExpedition(content, save, { regionId: region.id, tier, partyUids: party, artifactUids: artifacts }, ctx);
+          return createExpedition(content, save, { regionId: region.id, tier, partyIds: party, artifactUids: artifacts }, ctx);
         } catch (error) {
           if (error instanceof GameError) return null;
           throw error;

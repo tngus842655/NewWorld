@@ -27,8 +27,8 @@
 }
 ```
 
-- 기본 CP 밴드는 **지역별로 스케일**된다 — 지역 권장 CP 대비 대략 커먼 25~35% / 레어 45~55% /
-  에픽 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정(M1 완료), 조정은 데이터 수정으로만
+- 기본 CP 밴드는 **지역별로 스케일**된다 — 지역 권장 CP 대비 대략 일반·고급 25~35% / 희귀 45~55% /
+  영웅 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정, 조정은 데이터 수정으로만
 - `tags`가 v1의 확장 여지: 스킬/장비 시스템이 와도 스키마 파괴 없이 증축
 
 ### 1.2 regions.json — 지역 4+1
@@ -45,7 +45,7 @@
   "spawns": [                              // 조우 출현 테이블 (가중치)
     { "monster": "thorn-wolf", "weight": 18 },
     { "monster": "gale-owl",   "weight": 14 }
-    // ... 지역당 커먼14 레어6 에픽4
+    // ... 지역당 일반8 고급6 희귀6 영웅4 (전설 2는 legendary 필드)
   ],
   "legendary": ["elder-treant", "moon-sovereign"], // 심층 한정 전설 (지역당 2종, 조우 시 시드로 1종 선택 — balance.json)
   "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },  // %
@@ -138,7 +138,7 @@ Action   = { kind: "statMult", stat, value } | { kind: "captureAdd", value }
 
 ```jsonc
 "artifacts": {
-  "dropRarity": { "common": 0.55, "rare": 0.30, "heroic": 0.12, "legendary": 0.03 },
+  "dropRarity": { "common": 0.38, "uncommon": 0.27, "rare": 0.22, "heroic": 0.10, "legendary": 0.03 },
   "sources": { "treasureChance": 0.35, "deepClearBox": true,
                "legendaryEncounter": 0.35, "crossroadCrit": 0.15 },
   "firstTreasurePity": true,          // 계정 첫 보물 조우는 유물 확정

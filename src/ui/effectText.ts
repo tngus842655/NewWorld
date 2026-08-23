@@ -46,7 +46,7 @@ function describeAction(action: Action): string {
       return `${target} 빈도 ×${action.value}`;
     }
     case 'spawnWeightMult': {
-      const rarity = { common: '커먼', rare: '레어', epic: '에픽', legendary: '전설' }[action.minRarity];
+      const rarity = { common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설' }[action.minRarity];
       return `${rarity} 이상 출현 가중 ×${action.value}`;
     }
     case 'salvageOnFail': return `갈림길 실패 시에도 보상 ${pct(action.ratio)} 획득`;

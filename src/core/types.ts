@@ -5,11 +5,12 @@
 import type { Substat, Tier } from '../content/schema';
 
 // ── 소유물 ───────────────────────────────────────────────────────────────────
+/** 몬스터는 종 단위로 소유한다 (2026-08-23) — 카드가 몇 장이든 레벨·성급은 종당 하나 */
 export interface OwnedMonster {
-  uid: string;
   monsterId: string;
   level: number;
   star: number; // 1~5
+  count: number; // 보유 카드 수 (중복 포획 누적, 최소 1 — 추후 합성 재료)
 }
 
 export interface RolledSubstat {
@@ -27,7 +28,7 @@ export interface OwnedArtifact {
 export interface TeamLoadout {
   id: string;
   name: string;
-  partyUids: string[];
+  partyIds: string[]; // monsterId 목록 (종 단위 — 같은 종은 한 파티에 하나)
   artifactUids: string[]; // 슬롯당 1개, 최대 4
 }
 
@@ -38,7 +39,7 @@ export interface ActiveExpedition {
   id: string;
   regionId: string;
   tier: Tier;
-  partyUids: string[]; // 파견 시점 스냅샷 — 원정 중 교체 방지
+  partyIds: string[]; // monsterId 스냅샷 — 원정 중 교체 방지
   artifactUids: string[];
   seed: string;
   startedAt: number;
@@ -58,7 +59,7 @@ export interface CodexEntry {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 1;
+  version: 2; // v2 (2026-08-23): 로스터 종 단위 통합·정수 폐기 — migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -70,7 +71,6 @@ export interface SaveState {
     dust: number;
     lures: number;
     materials: Record<string, number>;
-    essence: Record<string, number>; // 몬스터 종별 정수
   };
   roster: OwnedMonster[];
   artifacts: OwnedArtifact[];
@@ -93,7 +93,7 @@ export interface DroppedArtifact {
 export type GrantedReward =
   | { kind: 'gold'; amount: number }
   | { kind: 'material'; materialId: string; count: number }
-  | { kind: 'essence'; monsterId: string; count: number }
+  | { kind: 'card'; monsterId: string; count: number } // 보유 종 카드 (구 정수 보상 대체)
   | { kind: 'artifact'; drop: DroppedArtifact }
   | { kind: 'lure'; count: number };
 
@@ -107,7 +107,7 @@ export type JournalEntry =
       partyPower: number;
       hpAfter: number;
       gold: number;
-      capture?: { success: boolean; retried: boolean; essence?: number };
+      capture?: { success: boolean; retried: boolean; dupe?: boolean }; // dupe = 이미 아는 종, 카드 +1
       artifact?: DroppedArtifact; // 전설 조우 드랍
     }
   | { type: 'treasure'; eventId: string; gold: number; hpAfter: number; artifact?: DroppedArtifact }
@@ -128,8 +128,8 @@ export type JournalEntry =
 export interface JournalTotals {
   gold: number;
   materials: Record<string, number>;
-  essence: Record<string, number>;
-  capturedMonsterIds: string[]; // 신규 도감 등록 (uid는 정산 시 부여)
+  cards: Record<string, number>; // 종별 중복 카드 획득 (전멸 페널티 미적용 — 포획물)
+  capturedMonsterIds: string[]; // 신규 도감 등록
   seenMonsterIds: string[];
   artifacts: DroppedArtifact[];
   luresUsed: number;

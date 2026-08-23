@@ -27,7 +27,7 @@ function entrySfx(entry: JournalEntry): SfxId | null {
       if (entry.result === 'flee') return 'defeat';
       if (entry.capture) {
         if (!entry.capture.success) return 'capture-miss';
-        return entry.capture.essence !== undefined ? 'capture-dupe' : 'capture-new';
+        return entry.capture.dupe ? 'capture-dupe' : 'capture-new';
       }
       return entry.artifact ? 'artifact' : null;
     case 'treasure': return entry.artifact ? 'artifact' : 'treasure';
@@ -59,8 +59,8 @@ function entryCard(entry: JournalEntry): HTMLElement {
       ];
       if (entry.capture) {
         const retry = entry.capture.retried ? ' (올가미 재시도)' : '';
-        if (entry.capture.success && entry.capture.essence !== undefined) {
-          lines.push(el('div.jline.jcapture', {}, `🎯 포획 성공${retry} — 정수 +${entry.capture.essence}`));
+        if (entry.capture.success && entry.capture.dupe) {
+          lines.push(el('div.jline.jcapture', {}, `🎯 포획 성공${retry} — 카드 +1`));
         } else if (entry.capture.success) {
           lines.push(el('div.jline.jcapture.jnew', {}, `🎯 포획 성공${retry} — 도감 신규 등록!`));
         } else {
@@ -95,7 +95,7 @@ function entryCard(entry: JournalEntry): HTMLElement {
         switch (r.kind) {
           case 'gold': return `골드 +${fmtGold(r.amount)}`;
           case 'material': return `${content.materials.get(r.materialId)?.name} ×${r.count}`;
-          case 'essence': return `${monsterName(r.monsterId)} 정수 +${r.count}`;
+          case 'card': return `${monsterName(r.monsterId)} 카드 +${r.count}`;
           case 'artifact': return `💎 ${artifactLabel(r.drop.itemId)}`;
           case 'lure': return `미끼 +${r.count}`;
         }
@@ -126,11 +126,11 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
   });
 
   const materialText = Object.entries(totals.materials).map(([id, n]) => `${content.materials.get(id)?.name} ×${n}`).join(' · ');
-  const essenceTotal = Object.values(totals.essence).reduce((a, b) => a + b, 0);
+  const cardTotal = Object.values(totals.cards).reduce((a, b) => a + b, 0);
   const summaryBits = [
     `골드 ${fmtGold(totals.gold)}`,
     materialText || null,
-    essenceTotal > 0 ? `정수 ${essenceTotal}` : null,
+    cardTotal > 0 ? `카드 +${cardTotal}` : null,
     totals.capturedMonsterIds.length > 0 ? `신규 ${totals.capturedMonsterIds.length}종` : null,
     totals.artifacts.length > 0 ? `유물 ${totals.artifacts.length}점` : null,
   ].filter(Boolean).join(' · ');

@@ -13,8 +13,8 @@ function spendGold(save: SaveState, amount: number): void {
 }
 
 /** 원정 중인 팀이 데려간 몬스터/유물은 잠금 (GDD §8.1) */
-function assertMonsterFree(save: SaveState, uid: string): void {
-  if (save.expeditions.some((e) => !e.claimed && e.partyUids.includes(uid))) {
+function assertMonsterFree(save: SaveState, monsterId: string): void {
+  if (save.expeditions.some((e) => !e.claimed && e.partyIds.includes(monsterId))) {
     throw new GameError('monster-busy', '원정 중인 몬스터입니다');
   }
 }
@@ -24,23 +24,22 @@ function assertArtifactFree(save: SaveState, uid: string): void {
   }
 }
 
-export function levelUpMonster(content: Content, save: SaveState, uid: string): SaveState {
+/** 레벨업 — 종 단위 (카드가 몇 장이든 종당 레벨 하나, 골드 소모) */
+export function levelUpMonster(content: Content, save: SaveState, monsterId: string): SaveState {
   const next = structuredClone(save);
-  const monster = findMonster(next, uid);
+  const monster = findMonster(next, monsterId);
   if (monster.level >= content.balance.level.max) throw new GameError('level-max', '이미 최대 레벨입니다');
   spendGold(next, levelUpCost(monster.level, content.balance));
   monster.level++;
   return next;
 }
 
-export function awakenMonster(content: Content, save: SaveState, uid: string): SaveState {
+/** 각성 — 정수 폐기(2026-08-23), 골드 소모로 변경 */
+export function awakenMonster(content: Content, save: SaveState, monsterId: string): SaveState {
   const next = structuredClone(save);
-  const owned = findMonster(next, uid);
+  const owned = findMonster(next, monsterId);
   if (owned.star >= content.balance.star.max) throw new GameError('star-max', '이미 최대 성급입니다');
-  const cost = starUpCost(owned.star, content.balance);
-  const have = next.wallet.essence[owned.monsterId] ?? 0;
-  if (have < cost) throw new GameError('essence-short', `정수가 부족합니다 (필요: ${cost}, 보유: ${have})`);
-  next.wallet.essence[owned.monsterId] = have - cost;
+  spendGold(next, starUpCost(owned.star, content.balance));
   owned.star++;
   if (owned.star >= 3) {
     const entry = next.codex[owned.monsterId];

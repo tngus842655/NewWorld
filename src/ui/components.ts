@@ -57,6 +57,8 @@ export function monsterChip(
   const icon = monsterIcon(owned.monsterId);
   // 캠프 등에서 파견 중임을 알리는 코너 뱃지 (클릭은 막지 않는다 — busy와 별개)
   if (opts.onExpedition) icon.append(el('span.micon-badge', { title: '원정 중' }, '🧭'));
+  // 보유 카드 수 (중복 포획 누적 — 추후 합성 재료)
+  if (owned.count > 1) icon.append(el('span.micon-count', { title: `보유 카드 ${owned.count}장` }, `×${owned.count}`));
   return el(
     `button.mchip${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`,
     { onclick: opts.onclick, disabled: opts.busy },

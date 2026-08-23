@@ -31,13 +31,13 @@ function resolveWith(party: PartySpec[], regionId: string, tier: 'scout' | 'stan
   mutate?: (save: SaveState) => void;
 } = {}): Journal {
   const clock = makeCtx();
-  const { save, partyUids, artifactUids } = saveWithParty(clock, party, {
+  const { save, partyIds, artifactUids } = saveWithParty(clock, party, {
     artifacts: opts.artifacts,
     partySlots: Math.max(3, party.length),
     unlockAll: true,
   });
   opts.mutate?.(save);
-  const expedition = makeExpedition(regionId, tier, partyUids, artifactUids, seed, {
+  const expedition = makeExpedition(regionId, tier, partyIds, artifactUids, seed, {
     choices: opts.choices,
     luresLoaded: opts.lures ?? 0,
   });
@@ -98,11 +98,11 @@ describe('유물 고유 능력 (훅 통합)', () => {
 
   it('시간모래 호리병 — 파견 시간 25% 단축', () => {
     const clock = makeCtx();
-    const { save, partyUids, artifactUids } = saveWithParty(clock, STARTERS, { artifacts: ['hourglass-flask'] });
+    const { save, partyIds, artifactUids } = saveWithParty(clock, STARTERS, { artifacts: ['hourglass-flask'] });
     const { expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'scout', partyUids, artifactUids },
+      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactUids },
       clock.ctx,
     );
     expect(expedition.endsAt - expedition.startedAt).toBe(Math.round(15 * 60_000 * 0.75));
@@ -131,7 +131,7 @@ describe('유물 고유 능력 (훅 통합)', () => {
       const journal = resolveWith(MARSH_VETERANS, 'sunken-marsh', 'deep', seed, { artifacts });
       return journal.totals.seenMonsterIds.filter((id) => {
         const rarity = content.monsters.get(id)!.rarity;
-        return rarity === 'epic' || rarity === 'legendary';
+        return rarity === 'heroic' || rarity === 'legendary';
       }).length;
     };
     let withLantern = 0;
@@ -299,13 +299,13 @@ describe('드랍과 연민(pity)', () => {
 describe('파견 생성 검증', () => {
   it('잠긴 지역·중복 편성·원정 중 몬스터·슬롯 중복·팀 한도를 막는다', () => {
     const clock = makeCtx();
-    const { save, partyUids, artifactUids } = saveWithParty(clock, STARTERS, {
+    const { save, partyIds, artifactUids } = saveWithParty(clock, STARTERS, {
       artifacts: ['rusty-saber', 'keen-cutlass'],
     });
-    const input = { regionId: 'misty-coast', tier: 'scout' as const, partyUids, artifactUids: [] };
+    const input = { regionId: 'misty-coast', tier: 'scout' as const, partyIds, artifactUids: [] };
 
     expect(() => createExpedition(content, save, { ...input, regionId: 'ashen-volcano' }, clock.ctx)).toThrow(/잠겨/);
-    expect(() => createExpedition(content, save, { ...input, partyUids: [partyUids[0]!, partyUids[0]!] }, clock.ctx)).toThrow(/두 번/);
+    expect(() => createExpedition(content, save, { ...input, partyIds: [partyIds[0]!, partyIds[0]!] }, clock.ctx)).toThrow(/두 번/);
     // 무기 슬롯 중복 (녹슨 세이버 + 예리한 커틀러스)
     expect(() => createExpedition(content, save, { ...input, artifactUids }, clock.ctx)).toThrow(/같은 슬롯/);
 
@@ -316,11 +316,11 @@ describe('파견 생성 검증', () => {
 
   it('미끼는 최대 3개까지 적재되고 지갑에서 차감된다', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, STARTERS, { lures: 5 });
+    const { save, partyIds } = saveWithParty(clock, STARTERS, { lures: 5 });
     const { save: next, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'standard', partyUids, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactUids: [] },
       clock.ctx,
     );
     expect(expedition.luresLoaded).toBe(3);
@@ -331,11 +331,11 @@ describe('파견 생성 검증', () => {
 describe('귀환 정산', () => {
   it('완료 전 정산은 거부, 완료 후 재화·도감·유물·미끼가 반영된다', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, STARTERS, { lures: 2 });
+    const { save, partyIds } = saveWithParty(clock, STARTERS, { lures: 2 });
     const { save: dispatched, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'scout', partyUids, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactUids: [] },
       clock.ctx,
     );
     expect(() => claimExpedition(content, dispatched, expedition.id, clock.ctx)).toThrow(/돌아오지/);
@@ -358,11 +358,11 @@ describe('귀환 정산', () => {
 
   it('갈림길 선택 기록이 정산에 반영된다', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, STARTERS);
+    const { save, partyIds } = saveWithParty(clock, STARTERS);
     const { save: dispatched, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'standard', partyUids, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactUids: [] },
       clock.ctx,
     );
     const chosen = chooseCrossroad(dispatched, expedition.id, 0, 'risky');
@@ -378,9 +378,9 @@ describe('귀환 정산', () => {
 
     const trial = (seed: string): { captured: number } => {
       const clock = makeCtx();
-      const { save, partyUids } = saveWithParty(clock, [{ id: preCaptured[0]!, level: 30 }]);
+      const { save, partyIds } = saveWithParty(clock, [{ id: preCaptured[0]!, level: 30 }]);
       for (const id of preCaptured) save.codex[id] = { seen: true, captured: true, awakened: false };
-      const expedition = makeExpedition('misty-coast', 'standard', partyUids, [], seed);
+      const expedition = makeExpedition('misty-coast', 'standard', partyIds, [], seed);
       save.expeditions.push(expedition);
       const journal = resolveExpedition(content, save, expedition);
       return { captured: journal.totals.capturedMonsterIds.filter((id) => !preCaptured.includes(id)).length };
@@ -388,9 +388,9 @@ describe('귀환 정산', () => {
     const seed = findSeed((s) => trial(s).captured >= 1);
 
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, [{ id: preCaptured[0]!, level: 30 }]);
+    const { save, partyIds } = saveWithParty(clock, [{ id: preCaptured[0]!, level: 30 }]);
     for (const id of preCaptured) save.codex[id] = { seen: true, captured: true, awakened: false };
-    const expedition = makeExpedition('misty-coast', 'standard', partyUids, [], seed);
+    const expedition = makeExpedition('misty-coast', 'standard', partyIds, [], seed);
     save.expeditions.push(expedition);
     clock.set(expedition.endsAt + 1);
     const goldBefore = save.wallet.gold;

@@ -40,9 +40,9 @@ export function levelUpCost(level: number, balance: Balance): number {
   return Math.round(balance.level.goldBase * Math.pow(level, balance.level.goldExp));
 }
 
-/** 성급 각성 정수 비용 (★star → ★star+1) */
+/** 성급 각성 골드 비용 (★star → ★star+1) — 정수 폐기(2026-08-23), 성장 재화는 골드로 일원화 */
 export function starUpCost(star: number, balance: Balance): number {
-  const cost = balance.star.essenceCost[star - 1];
+  const cost = balance.star.goldCost[star - 1];
   if (cost === undefined) throw new Error(`starUpCost: 잘못된 성급 ${star}`);
   return cost;
 }

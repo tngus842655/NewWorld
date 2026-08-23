@@ -23,18 +23,18 @@ let presetLoaded = false;
 
 function busyUids(): Set<string> {
   const state = save();
-  return new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => [...e.partyUids, ...e.artifactUids]));
+  return new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => [...e.partyIds, ...e.artifactUids]));
 }
 
 /**
- * 신호에 남은 uid 중 지금 실제로 편성 가능한 것만.
+ * 신호에 남은 id 중 지금 실제로 편성 가능한 것만.
  * 파견·초기화·가져오기로 무효해진 선택이 화면·미리보기·출발에 끼어들지 않게 하는 단일 관문 —
  * 렌더 중 signal.set을 피하려고 저장값은 그대로 두고 읽는 쪽에서 거른다.
  */
 function effectiveParty(): string[] {
   const state = save();
   const busy = busyUids();
-  return selParty().filter((uid) => state.roster.some((m) => m.uid === uid) && !busy.has(uid));
+  return selParty().filter((monsterId) => state.roster.some((m) => m.monsterId === monsterId) && !busy.has(monsterId));
 }
 
 function effectiveArtifacts(): string[] {
@@ -51,17 +51,17 @@ function loadPresetOnce(): void {
   const busy = busyUids();
   const team = state.teams[0];
   if (!team) return;
-  selParty.set(team.partyUids.filter((uid) => state.roster.some((m) => m.uid === uid) && !busy.has(uid)));
+  selParty.set(team.partyIds.filter((monsterId) => state.roster.some((m) => m.monsterId === monsterId) && !busy.has(monsterId)));
   selArtifacts.set(team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid) && !busy.has(uid)));
 }
 
-function toggleParty(uid: string): void {
+function toggleParty(monsterId: string): void {
   const state = save();
   const current = effectiveParty();
-  if (current.includes(uid)) {
-    selParty.set(current.filter((u) => u !== uid));
+  if (current.includes(monsterId)) {
+    selParty.set(current.filter((id) => id !== monsterId));
   } else if (current.length < state.profile.partySlots) {
-    selParty.set([...current, uid]);
+    selParty.set([...current, monsterId]);
   }
 }
 
@@ -97,7 +97,7 @@ function preview(regionId: string, tier: Tier): Preview | null {
   if (!region || partyUids.length === 0) return null;
   try {
     const fx = collectTeamEffects(content, state, partyUids, effectiveArtifacts());
-    const party = partyUids.map((uid) => state.roster.find((m) => m.uid === uid)!).filter(Boolean);
+    const party = partyUids.map((monsterId) => state.roster.find((m) => m.monsterId === monsterId)!).filter(Boolean);
     const power = computePartyPower(content, fx.effects, party, region, tier).total;
     const tribes = [...fx.tribeCounts.entries()]
       .map(([tribe, count]) => ({ tribe, count }))
@@ -144,12 +144,12 @@ export function renderExpedition(): HTMLElement {
   const artifacts = effectiveArtifacts();
 
   const partyChips = [...state.roster]
-    .sort((a, b) => (busy.has(a.uid) ? 1 : 0) - (busy.has(b.uid) ? 1 : 0))
+    .sort((a, b) => (busy.has(a.monsterId) ? 1 : 0) - (busy.has(b.monsterId) ? 1 : 0))
     .map((owned) =>
       monsterChip(owned, {
-        selected: party.includes(owned.uid),
-        busy: busy.has(owned.uid),
-        onclick: () => toggleParty(owned.uid),
+        selected: party.includes(owned.monsterId),
+        busy: busy.has(owned.monsterId),
+        onclick: () => toggleParty(owned.monsterId),
       }),
     );
 
@@ -232,7 +232,7 @@ export function renderExpedition(): HTMLElement {
       el('button.btn.btn-primary.btn-big', {
         disabled: party.length === 0 || teamsFull,
         onclick: () => {
-          const ok = dispatchExpedition({ regionId, tier, partyUids: effectiveParty(), artifactUids: effectiveArtifacts() });
+          const ok = dispatchExpedition({ regionId, tier, partyIds: effectiveParty(), artifactUids: effectiveArtifacts() });
           if (ok) {
             playSfx('confirm');
             tab.set('home');

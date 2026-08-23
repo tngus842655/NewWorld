@@ -75,7 +75,7 @@ export function dispatchExpedition(input: ExpeditionInput): boolean {
       // 마지막 편성을 팀 프리셋으로 기억
       const team = next.teams[0];
       if (team) {
-        team.partyUids = [...input.partyUids];
+        team.partyIds = [...input.partyIds];
         team.artifactUids = [...input.artifactUids];
       }
       save.set(next);
@@ -110,15 +110,15 @@ export function crossroadsOf(expeditionId: string) {
   return previewCrossroads(content, save(), expedition);
 }
 
-export function levelUp(uid: string): boolean {
+export function levelUp(monsterId: string): boolean {
   return act(() => {
-    save.set(levelUpMonster(content, save(), uid));
+    save.set(levelUpMonster(content, save(), monsterId));
     return true;
   }) !== null;
 }
-export function awaken(uid: string): boolean {
+export function awaken(monsterId: string): boolean {
   return act(() => {
-    save.set(awakenMonster(content, save(), uid));
+    save.set(awakenMonster(content, save(), monsterId));
     toast('각성! 성급이 올랐습니다 ★', 'ok');
     return true;
   }) !== null;

@@ -42,25 +42,27 @@ describe('포획 판정', () => {
 describe('경제 액션', () => {
   it('레벨업 — 골드 차감, 부족하면 GameError', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 10_000 });
-    const next = levelUpMonster(content, save, partyUids[0]!);
+    const { save, partyIds } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 10_000 });
+    const next = levelUpMonster(content, save, partyIds[0]!);
     expect(next.roster[0]!.level).toBe(2);
     expect(next.wallet.gold).toBe(10_000 - levelUpCost(1, content.balance));
     expect(save.roster[0]!.level).toBe(1); // 원본 불변
 
     const poor = { ...save, wallet: { ...save.wallet, gold: 0 } };
-    expect(() => levelUpMonster(content, poor, partyUids[0]!)).toThrow(GameError);
+    expect(() => levelUpMonster(content, poor, partyIds[0]!)).toThrow(GameError);
   });
 
-  it('각성 — 정수 차감, ★3에서 도감 awakened', () => {
+  it('각성 — 골드 차감(정수 폐기), ★3에서 도감 awakened', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, [{ id: 'dune-pup' }]);
-    save.wallet.essence['dune-pup'] = 100;
-    let next = awakenMonster(content, save, partyUids[0]!); // ★2 (비용 10)
-    next = awakenMonster(content, next, partyUids[0]!); // ★3 (비용 25)
+    const goldCost = content.balance.star.goldCost;
+    const startGold = goldCost[0]! + goldCost[1]! + 100;
+    const { save, partyIds } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: startGold });
+    let next = awakenMonster(content, save, partyIds[0]!); // ★2
+    next = awakenMonster(content, next, partyIds[0]!); // ★3
     expect(next.roster[0]!.star).toBe(3);
-    expect(next.wallet.essence['dune-pup']).toBe(100 - 10 - 25);
+    expect(next.wallet.gold).toBe(100);
     expect(next.codex['dune-pup']!.awakened).toBe(true);
+    expect(() => awakenMonster(content, next, partyIds[0]!)).toThrow(/골드/); // ★4 비용 부족
   });
 
   it('미끼 제작 — 재료·골드 차감', () => {
@@ -82,17 +84,18 @@ describe('경제 액션', () => {
     expect(enhanced.artifacts[0]!.enhance).toBe(1);
     expect(enhanced.wallet.dust).toBe(90);
 
-    enhanced.teams = [{ id: 't', name: 't', partyUids: [], artifactUids: [uid] }];
+    enhanced.teams = [{ id: 't', name: 't', partyIds: [], artifactUids: [uid] }];
     const salvaged = salvageArtifact(content, enhanced, uid);
     expect(salvaged.artifacts).toHaveLength(0);
     expect(salvaged.teams[0]!.artifactUids).toHaveLength(0);
-    expect(salvaged.wallet.dust).toBe(90 + content.balance.artifacts.dustPerSalvage.common);
+    const saberRarity = content.artifacts.get('rusty-saber')!.rarity;
+    expect(salvaged.wallet.dust).toBe(90 + content.balance.artifacts.dustPerSalvage[saberRarity]!);
   });
 
   it('원정 중인 유물은 강화·분해 불가', () => {
     const clock = makeCtx();
-    const { save, partyUids, artifactUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['rusty-saber'], dust: 100 });
-    save.expeditions.push(makeExpedition('misty-coast', 'scout', partyUids, artifactUids, 'lock-test'));
+    const { save, partyIds, artifactUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['rusty-saber'], dust: 100 });
+    save.expeditions.push(makeExpedition('misty-coast', 'scout', partyIds, artifactUids, 'lock-test'));
     expect(() => enhanceArtifact(content, save, artifactUids[0]!)).toThrow(/원정 중/);
     expect(() => salvageArtifact(content, save, artifactUids[0]!)).toThrow(/원정 중/);
   });

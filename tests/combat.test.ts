@@ -36,8 +36,8 @@ describe('공식', () => {
 describe('파티 전투력', () => {
   it('지역 우세 속성 유닛이 배수를 받는다', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, [{ id: 'dune-pup' }]); // 자연
-    const fx = collectTeamEffects(content, save, partyUids, []);
+    const { save, partyIds } = saveWithParty(clock, [{ id: 'dune-pup' }]); // 자연
+    const fx = collectTeamEffects(content, save, partyIds, []);
     const coastPower = computePartyPower(content, fx.effects, save.roster, region, 'standard').total;
     const volcanoPower = computePartyPower(content, fx.effects, save.roster, volcano, 'standard').total;
     // 해안(자연 지역)에선 1.3, 화산(화염 지역)에선 0.77
@@ -47,13 +47,13 @@ describe('파티 전투력', () => {
   it('조건부 statMult는 해당 유닛에게만 적용된다 (재의 우상 — 화염 유닛 ATK)', () => {
     const clock = makeCtx();
     const withIdol = saveWithParty(clock, [{ id: 'cinder-imp' }, { id: 'bog-slime' }], { artifacts: ['ashen-idol'] });
-    const fx = collectTeamEffects(content, withIdol.save, withIdol.partyUids, withIdol.artifactUids);
+    const fx = collectTeamEffects(content, withIdol.save, withIdol.partyIds, withIdol.artifactUids);
     const power = computePartyPower(content, fx.effects, withIdol.save.roster, volcano, 'standard');
     const imp = power.units.find((u) => u.monsterId === 'cinder-imp')!;
     const slime = power.units.find((u) => u.monsterId === 'bog-slime')!;
 
     const noIdol = saveWithParty(makeCtx(), [{ id: 'cinder-imp' }, { id: 'bog-slime' }]);
-    const fx0 = collectTeamEffects(content, noIdol.save, noIdol.partyUids, []);
+    const fx0 = collectTeamEffects(content, noIdol.save, noIdol.partyIds, []);
     const power0 = computePartyPower(content, fx0.effects, noIdol.save.roster, volcano, 'standard');
     const imp0 = power0.units.find((u) => u.monsterId === 'cinder-imp')!;
     const slime0 = power0.units.find((u) => u.monsterId === 'bog-slime')!;

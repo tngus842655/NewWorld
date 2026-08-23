@@ -13,7 +13,7 @@ describe('조건 매칭', () => {
     expect(matchCondition({ region: ['ashen-volcano'] }, base)).toBe(false);
   });
   it('encounterRarity는 이상(≥) 판정', () => {
-    const ctx = { ...base, encounterRarity: 'epic' as const };
+    const ctx = { ...base, encounterRarity: 'heroic' as const };
     expect(matchCondition({ encounterRarity: 'rare' }, ctx)).toBe(true);
     expect(matchCondition({ encounterRarity: 'legendary' }, ctx)).toBe(false);
     expect(matchCondition({ encounterRarity: 'rare' }, base)).toBe(false); // ctx에 정보 없으면 불일치
@@ -34,22 +34,22 @@ describe('팀 효과 수집', () => {
   it('종족 2마리·3마리 시너지 발동 (야수 ATK +10% / +25%)', () => {
     const clock = makeCtx();
     const two = saveWithParty(clock, [{ id: 'dune-pup' }, { id: 'fog-lynx' }, { id: 'bubble-crab' }]);
-    const fx2 = collectTeamEffects(content, two.save, two.partyUids, []);
+    const fx2 = collectTeamEffects(content, two.save, two.partyIds, []);
     expect(sumStatMult(query(fx2.effects, 'computeParty', base), 'atk')).toBeCloseTo(0.1);
 
     const three = saveWithParty(clock, [{ id: 'dune-pup' }, { id: 'fog-lynx' }, { id: 'thorn-wolf' }]);
-    const fx3 = collectTeamEffects(content, three.save, three.partyUids, []);
+    const fx3 = collectTeamEffects(content, three.save, three.partyIds, []);
     expect(sumStatMult(query(fx3.effects, 'computeParty', base), 'atk')).toBeCloseTo(0.25);
   });
 
   it('synergyAmp가 시너지 수치를 증폭한다 (개척단의 군기 + 주옵션)', () => {
     const clock = makeCtx();
-    const { save, partyUids, artifactUids } = saveWithParty(
+    const { save, partyIds, artifactUids } = saveWithParty(
       clock,
       [{ id: 'dune-pup' }, { id: 'fog-lynx' }, { id: 'thorn-wolf' }],
       { artifacts: ['pioneers-warbanner'] },
     );
-    const fx = collectTeamEffects(content, save, partyUids, artifactUids);
+    const fx = collectTeamEffects(content, save, partyIds, artifactUids);
     // 군기: 주옵션 amp 0.2 + 고유 amp 0.3 = 0.5 → 야수3 0.25 × 1.5 = 0.375
     expect(fx.synergyAmp).toBeCloseTo(0.5);
     const atk = query(fx.effects, 'computeParty', base).filter((a) => a.kind === 'statMult');
@@ -59,10 +59,10 @@ describe('팀 효과 수집', () => {
 
   it('유물 주옵션·부옵션·고유 능력이 효과로 정규화된다', () => {
     const clock = makeCtx();
-    const { save, partyUids, artifactUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['moss-charm'] });
+    const { save, partyIds, artifactUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['moss-charm'] });
     save.artifacts[0]!.substats = [{ stat: 'goldMult', value: 0.07 }];
     save.artifacts[0]!.enhance = 2;
-    const fx = collectTeamEffects(content, save, partyUids, artifactUids);
+    const fx = collectTeamEffects(content, save, partyIds, artifactUids);
 
     // 주옵션 captureAdd 0.05 + perEnhance 0.01×2 = 0.07
     const capCtx: EffectCtx = { ...base, element: 'nature' };
@@ -78,24 +78,24 @@ describe('팀 효과 수집', () => {
     const clock = makeCtx();
     const setItems = ['tidal-blade', 'entwood-shell', 'gullwing-pennant', 'moss-charm'];
     const two = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: setItems.slice(0, 2) });
-    const fxTwo = collectTeamEffects(content, two.save, two.partyUids, two.artifactUids);
+    const fxTwo = collectTeamEffects(content, two.save, two.partyIds, two.artifactUids);
     expect(fxTwo.effects.some((e) => e.source === 'set:forgotten-pioneers:2')).toBe(true);
     expect(fxTwo.effects.some((e) => e.source === 'set:forgotten-pioneers:4')).toBe(false);
 
     const four = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: setItems });
-    const fxFour = collectTeamEffects(content, four.save, four.partyUids, four.artifactUids);
+    const fxFour = collectTeamEffects(content, four.save, four.partyIds, four.artifactUids);
     expect(fxFour.effects.some((e) => e.source === 'set:forgotten-pioneers:4')).toBe(true);
     expect(sumOf(query(fxFour.effects, 'crossroad', base), 'crossroadSuccessAdd')).toBeCloseTo(0.15);
   });
 
   it('달성한 마일스톤 버프만 포함된다', () => {
     const clock = makeCtx();
-    const { save, partyUids } = saveWithParty(clock, [{ id: 'dune-pup' }]);
-    const none = collectTeamEffects(content, save, partyUids, []);
+    const { save, partyIds } = saveWithParty(clock, [{ id: 'dune-pup' }]);
+    const none = collectTeamEffects(content, save, partyIds, []);
     expect(none.effects.some((e) => e.source.startsWith('milestone:'))).toBe(false);
 
     save.milestones = ['coast-6'];
-    const withMs = collectTeamEffects(content, save, partyUids, []);
+    const withMs = collectTeamEffects(content, save, partyIds, []);
     expect(withMs.effects.some((e) => e.source === 'milestone:coast-6')).toBe(true);
   });
 });

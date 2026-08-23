@@ -4,7 +4,7 @@
  */
 import type { Content } from '../content';
 import type { CrossroadEvent, Region, Reward, Tier } from '../content/schema';
-import { captureChance, essenceForDupe, shouldUseLure } from './capture';
+import { captureChance, shouldUseLure } from './capture';
 import { computePartyPower, enemyPower, partyDamageReduce, resolveClash } from './combat';
 import {
   RARITY_ORDER,
@@ -38,7 +38,7 @@ import {
 export interface ExpeditionInput {
   regionId: string;
   tier: Tier;
-  partyUids: string[];
+  partyIds: string[]; // monsterId — 종 단위 편성
   artifactUids: string[];
 }
 
@@ -57,17 +57,17 @@ export function createExpedition(
     throw new GameError('team-limit', '동시에 보낼 수 있는 원정대가 가득 찼습니다');
   }
 
-  if (input.partyUids.length < 1) throw new GameError('party-empty', '파티가 비어 있습니다');
-  if (input.partyUids.length > save.profile.partySlots) {
+  if (input.partyIds.length < 1) throw new GameError('party-empty', '파티가 비어 있습니다');
+  if (input.partyIds.length > save.profile.partySlots) {
     throw new GameError('party-too-big', `파티 슬롯은 ${save.profile.partySlots}칸입니다`);
   }
-  if (new Set(input.partyUids).size !== input.partyUids.length) {
+  if (new Set(input.partyIds).size !== input.partyIds.length) {
     throw new GameError('party-dup', '같은 몬스터를 두 번 편성할 수 없습니다');
   }
-  const lockedUids = new Set(running.flatMap((e) => e.partyUids));
-  for (const uid of input.partyUids) {
-    findMonster(save, uid);
-    if (lockedUids.has(uid)) throw new GameError('monster-busy', '이미 원정 중인 몬스터입니다');
+  const lockedIds = new Set(running.flatMap((e) => e.partyIds));
+  for (const monsterId of input.partyIds) {
+    findMonster(save, monsterId);
+    if (lockedIds.has(monsterId)) throw new GameError('monster-busy', '이미 원정 중인 몬스터입니다');
   }
 
   if (input.artifactUids.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 장착할 수 있습니다');
@@ -86,7 +86,7 @@ export function createExpedition(
   }
 
   const tierDef = content.balance.tiers[input.tier];
-  const { effects } = collectTeamEffects(content, save, input.partyUids, input.artifactUids);
+  const { effects } = collectTeamEffects(content, save, input.partyIds, input.artifactUids);
   const setupActions = query(effects, 'expeditionSetup', { regionId: region.id, tier: input.tier });
   let timeMult = 1;
   for (const action of setupActions) {
@@ -100,7 +100,7 @@ export function createExpedition(
     id: ctx.newUid(),
     regionId: region.id,
     tier: input.tier,
-    partyUids: [...input.partyUids],
+    partyIds: [...input.partyIds],
     artifactUids: [...input.artifactUids],
     seed: ctx.newSeed(),
     startedAt: now,
@@ -154,7 +154,8 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
   const spawnWeightOf = (monsterId: string, baseWeight: number): number => {
     const monster = content.monsters.get(monsterId)!;
     let weight = baseWeight;
-    if (monster.rarity === 'rare' || monster.rarity === 'epic') weight *= tierDef.rareWeightMult;
+    // 심층 희귀 가중은 희귀·영웅에만 (고급은 준일반 취급, 전설은 spawns에 없음)
+    if (monster.rarity === 'rare' || monster.rarity === 'heroic') weight *= tierDef.rareWeightMult;
     for (const action of setupActions) {
       if (action.kind === 'spawnWeightMult' && RARITY_ORDER[monster.rarity] >= RARITY_ORDER[action.minRarity]) {
         weight *= action.value;
@@ -208,7 +209,7 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
 export function previewCrossroads(content: Content, save: SaveState, expedition: ActiveExpedition): CrossroadEvent[] {
   const region = content.regions.get(expedition.regionId);
   if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
-  const { effects } = collectTeamEffects(content, save, expedition.partyUids, expedition.artifactUids);
+  const { effects } = collectTeamEffects(content, save, expedition.partyIds, expedition.artifactUids);
   const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
   return plan
     .filter((item): item is Extract<PlanItem, { type: 'crossroad' }> => item.type === 'crossroad')
@@ -251,8 +252,8 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   const tierDef = content.balance.tiers[expedition.tier];
   const { combat, rewards: rewardBalance, crossroad: crossroadBalance, artifacts: artifactBalance } = content.balance;
 
-  const party = expedition.partyUids.map((uid) => findMonster(save, uid));
-  const { effects } = collectTeamEffects(content, save, expedition.partyUids, expedition.artifactUids);
+  const party = expedition.partyIds.map((monsterId) => findMonster(save, monsterId));
+  const { effects } = collectTeamEffects(content, save, expedition.partyIds, expedition.artifactUids);
   const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
 
   const captureRng = streamRng(expedition.seed, 'capture');
@@ -278,7 +279,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   const totals: Journal['totals'] = {
     gold: 0,
     materials: {},
-    essence: {},
+    cards: {},
     capturedMonsterIds: [],
     seenMonsterIds: [],
     artifacts: [],
@@ -301,8 +302,8 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   const addMaterial = (materialId: string, count: number) => {
     totals.materials[materialId] = (totals.materials[materialId] ?? 0) + count;
   };
-  const addEssence = (monsterId: string, count: number) => {
-    totals.essence[monsterId] = (totals.essence[monsterId] ?? 0) + count;
+  const addCard = (monsterId: string, count: number) => {
+    totals.cards[monsterId] = (totals.cards[monsterId] ?? 0) + count;
   };
   const dropArtifact = (drop: DroppedArtifact) => {
     totals.artifacts.push(drop);
@@ -351,11 +352,14 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
           granted.push({ kind: 'material', materialId, count });
           break;
         }
-        case 'essenceRandom': {
-          const spawn = pickWeighted(crossroadRng, region.spawns, (s) => s.weight);
+        case 'cardRandom': {
+          // 보유 종 중 랜덤 카드 — 도감에 없는 종이 갑자기 생기지 않게 로스터에서만 뽑는다
+          const owned = save.roster;
+          if (owned.length === 0) break;
+          const picked = owned[Math.floor(crossroadRng() * owned.length)]!;
           const count = Math.max(1, Math.round(reward.count * scale));
-          addEssence(spawn.monster, count);
-          granted.push({ kind: 'essence', monsterId: spawn.monster, count });
+          addCard(picked.monsterId, count);
+          granted.push({ kind: 'card', monsterId: picked.monsterId, count });
           break;
         }
         case 'artifactRoll': {
@@ -453,11 +457,11 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
           success = captureRng() < chance;
         }
         firstCaptureAvailable = false; // 보정은 계정 첫 시도 한 번만
-        let essence: number | undefined;
+        let dupe = false;
         if (success) {
           if (alreadyCaptured) {
-            essence = essenceForDupe(content, monster);
-            addEssence(monster.id, essence);
+            dupe = true;
+            addCard(monster.id, 1); // 중복 포획 = 카드 +1 (구 정수 전환 대체)
           } else {
             totals.capturedMonsterIds.push(monster.id);
           }
@@ -473,7 +477,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
         entries.push({
           type: 'encounter', index: monsterIndex - 1, monsterId: monster.id, result: auto ? 'autowin' : 'win',
           enemyPower: Math.round(enemy), partyPower: Math.round(partyPower), hpAfter: hp, gold,
-          capture: { success, retried, ...(essence !== undefined ? { essence } : {}) },
+          capture: { success, retried, ...(dupe ? { dupe } : {}) },
           ...(artifact ? { artifact } : {}),
         });
       } else {
@@ -570,6 +574,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   }
 
   if (wiped) {
+    // 전멸 페널티는 재화(골드·재료)만 — 카드는 포획물이라 신규 등록과 마찬가지로 유지
     let fleeRatio = combat.fleeRewardRatio;
     for (const action of endActions) {
       if (action.kind === 'fleeRewardRatioSet') fleeRatio = Math.max(fleeRatio, action.value);
@@ -577,9 +582,6 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
     totals.gold = Math.floor(totals.gold * fleeRatio);
     for (const key of Object.keys(totals.materials)) {
       totals.materials[key] = Math.floor(totals.materials[key]! * fleeRatio);
-    }
-    for (const key of Object.keys(totals.essence)) {
-      totals.essence[key] = Math.floor(totals.essence[key]! * fleeRatio);
     }
   }
 
@@ -623,9 +625,6 @@ export function claimExpedition(
   for (const [materialId, count] of Object.entries(journal.totals.materials)) {
     next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + count;
   }
-  for (const [monsterId, count] of Object.entries(journal.totals.essence)) {
-    next.wallet.essence[monsterId] = (next.wallet.essence[monsterId] ?? 0) + count;
-  }
   next.wallet.lures += expedition.luresLoaded - journal.totals.luresUsed + journal.totals.luresGained;
 
   // 도감·로스터
@@ -642,7 +641,14 @@ export function claimExpedition(
       entry.firstCapturedAt = expedition.endsAt;
     }
     next.codex[monsterId] = entry;
-    next.roster.push({ uid: ctx.newUid(), monsterId, level: 1, star: 1 });
+    if (!next.roster.some((m) => m.monsterId === monsterId)) {
+      next.roster.push({ monsterId, level: 1, star: 1, count: 1 });
+    }
+  }
+  // 중복 카드 반영 (신규 등록 뒤에 — 같은 원정에서 신규 포획 후 중복까지 나온 경우 대비)
+  for (const [monsterId, count] of Object.entries(journal.totals.cards)) {
+    const owned = next.roster.find((m) => m.monsterId === monsterId);
+    if (owned) owned.count += count;
   }
 
   // 유물

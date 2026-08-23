@@ -24,7 +24,7 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
     current.kind === 'journal'
       ? journalSheet(current)
       : current.kind === 'monster'
-        ? monsterSheet(current.uid)
+        ? monsterSheet(current.monsterId)
         : current.kind === 'artifact'
           ? artifactSheet(current.uid)
           : current.kind === 'species'
@@ -60,16 +60,16 @@ function journalSheet(data: Extract<NonNullable<Overlay>, { kind: 'journal' }>):
 }
 
 // 직전 렌더의 성장 수치 — 같은 시트가 레벨업·각성으로 다시 그려질 때만 스탯 팝
-let lastMonsterRender: { uid: string; level: number; star: number } | null = null;
+let lastMonsterRender: { monsterId: string; level: number; star: number } | null = null;
 
-function monsterSheet(uid: string): HTMLElement | null {
+function monsterSheet(monsterId: string): HTMLElement | null {
   const state = save();
-  const owned = state.roster.find((m) => m.uid === uid);
+  const owned = state.roster.find((m) => m.monsterId === monsterId);
   if (!owned) return null;
   const grew =
-    lastMonsterRender?.uid === uid &&
+    lastMonsterRender?.monsterId === monsterId &&
     (owned.level > lastMonsterRender.level || owned.star > lastMonsterRender.star);
-  lastMonsterRender = { uid, level: owned.level, star: owned.star };
+  lastMonsterRender = { monsterId, level: owned.level, star: owned.star };
   const monster = content.monsters.get(owned.monsterId)!;
   const { balance } = content;
   const atk = Math.round(statAt(monster.baseAtk, owned.level, owned.star, balance));
@@ -79,8 +79,7 @@ function monsterSheet(uid: string): HTMLElement | null {
   const maxStar = owned.star >= balance.star.max;
   const upCost = maxLevel ? 0 : levelUpCost(owned.level, balance);
   const starCost = maxStar ? 0 : starUpCost(owned.star, balance);
-  const essenceHave = state.wallet.essence[owned.monsterId] ?? 0;
-  const busy = state.expeditions.some((e) => !e.claimed && e.partyUids.includes(uid));
+  const busy = state.expeditions.some((e) => !e.claimed && e.partyIds.includes(monsterId));
 
   // 다음 레벨 미리보기 — "레벨업하면 얼마나 오르나"가 버튼 옆에 바로 보이게
   const nextAtkStat = statAt(monster.baseAtk, owned.level + 1, owned.star, balance);
@@ -107,6 +106,7 @@ function monsterSheet(uid: string): HTMLElement | null {
           el('span.tag', {}, TRIBE_LABEL[monster.tribe]),
         ),
         el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${content.regions.get(monster.habitat)?.name}`),
+        el('div.muted.small', {}, `보유 카드 ${owned.count}장 — 중복 포획으로 누적 (추후 합성 재료)`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중') : null,
       ),
     ),
@@ -119,12 +119,12 @@ function monsterSheet(uid: string): HTMLElement | null {
     el('div.row-gap', {},
       el('button.btn.btn-primary', {
         disabled: maxLevel || state.wallet.gold < upCost,
-        onclick: () => { if (levelUp(uid)) playSfx('levelup'); },
+        onclick: () => { if (levelUp(monsterId)) playSfx('levelup'); },
       }, maxLevel ? '최대 레벨' : `레벨업 (골드 ${fmtGold(upCost)})`),
       el('button.btn.btn-primary', {
-        disabled: maxStar || essenceHave < starCost,
-        onclick: () => { if (awaken(uid)) playSfx('awaken'); },
-      }, maxStar ? '최대 성급' : `각성 ★${owned.star + 1} (정수 ${starCost} / 보유 ${essenceHave})`),
+        disabled: maxStar || state.wallet.gold < starCost,
+        onclick: () => { if (awaken(monsterId)) playSfx('awaken'); },
+      }, maxStar ? '최대 성급' : `각성 ★${owned.star + 1} (골드 ${fmtGold(starCost)})`),
     ),
   );
 }
@@ -225,7 +225,6 @@ function speciesSheet(monsterId: string): HTMLElement | null {
   const badRegions = content.regionList
     .filter((region) => elementMult(monster.element, region.element, balance) < 1)
     .map((region) => region.name);
-  const essenceHave = state.wallet.essence[monsterId] ?? 0;
 
   return sheetShell(monster.name,
     el('div.detail-head', {},
@@ -238,7 +237,7 @@ function speciesSheet(monsterId: string): HTMLElement | null {
           entry.awakened ? el('span.tag', {}, '✨ 각성') : null,
         ),
         el('div.muted.small', {}, `서식지 ${habitat}`),
-        owned ? el('div.tag.busy-tag', {}, `보유 중 · Lv.${owned.level} ${stars(owned.star)}`) : null,
+        owned ? el('div.tag.busy-tag', {}, `보유 중 · Lv.${owned.level} ${stars(owned.star)} · 카드 ${owned.count}장`) : null,
       ),
     ),
     el('div.stat-row', {},
@@ -256,7 +255,7 @@ function speciesSheet(monsterId: string): HTMLElement | null {
         : null,
       goodRegions.length > 0 ? el('div.small', {}, `⚔️ 유리한 지역: ${goodRegions.join(', ')}`) : null,
       badRegions.length > 0 ? el('div.small.muted', {}, `⚠️ 불리한 지역: ${badRegions.join(', ')}`) : null,
-      el('div.small.muted', {}, `보유 정수 ${essenceHave} — 중복 포획 시 자동 전환, 각성(성급)에 사용`),
+      el('div.small.muted', {}, '중복 포획 시 카드가 쌓입니다 — 추후 합성(같은 등급 2장 → 상위 등급)에 사용 예정'),
     ),
     el('p.flavor', {}, `“${monster.flavor}”`),
   );
@@ -271,10 +270,10 @@ function helpSheet(): HTMLElement {
       el('div.small.muted', {}, `쓰기 — ${use}`),
     );
   return sheetShell('재화 안내',
-    row('💰', '골드', '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', '몬스터 레벨업 · 파티 슬롯 확장 · 미끼 제작'),
+    row('💰', '골드', '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작'),
     row('✨', '가루', '유물 분해', '유물 강화'),
-    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 — 레어 이상 몬스터 포획률 ×2'),
-    el('div.muted.small', {}, '지역 재료·정수 보유량은 캠프 화면에서 볼 수 있습니다.'),
+    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 — 희귀 이상 몬스터 포획률 ×2'),
+    el('div.muted.small', {}, '지역 재료 보유량은 캠프 화면에서, 몬스터 카드 수는 도감·캠프 아이콘에서 볼 수 있습니다.'),
   );
 }
 
@@ -290,7 +289,7 @@ function spawnOddsByRarity(region: Region, rareWeightMult: number): Map<MonsterR
   let total = 0;
   for (const spawn of region.spawns) {
     const monster = content.monsters.get(spawn.monster)!;
-    const weight = spawn.weight * (monster.rarity === 'rare' || monster.rarity === 'epic' ? rareWeightMult : 1);
+    const weight = spawn.weight * (monster.rarity === 'rare' || monster.rarity === 'heroic' ? rareWeightMult : 1);
     weights.set(monster.rarity, (weights.get(monster.rarity) ?? 0) + weight);
     total += weight;
   }
@@ -320,7 +319,7 @@ function oddsSheet(): HTMLElement {
       ),
     ),
     el('div.muted.small', {},
-      `미끼 적재 시 ×${balance.capture.lureMult} (레어 이상 조우에 자동 사용) · 배수 상한 ×${balance.capture.multCap} · 최종 상한 ${pct1(balance.capture.chanceCap)}`),
+      `미끼 적재 시 ×${balance.capture.lureMult} (희귀 이상 조우에 자동 사용) · 배수 상한 ×${balance.capture.multCap} · 최종 상한 ${pct1(balance.capture.chanceCap)}`),
     balance.capture.firstCaptureGuarantee ? el('div.muted.small', {}, '계정 첫 포획은 100% 성공합니다.') : null,
   );
 
@@ -415,7 +414,7 @@ function monsterInfoSheet(): HTMLElement {
  */
 function artifactInfoSheet(): HTMLElement {
   const { balance } = content;
-  const rarityCards = (['legendary', 'heroic', 'rare', 'common'] as const).map((rarity) => {
+  const rarityCards = (['legendary', 'heroic', 'rare', 'uncommon', 'common'] as const).map((rarity) => {
     const defs = [...content.artifacts.values()].filter((def) => def.rarity === rarity);
     const substats = balance.artifacts.substatCount[rarity] ?? 0;
     const rows = defs.map((def) => {

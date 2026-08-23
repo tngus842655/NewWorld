@@ -53,11 +53,14 @@ export function renderCodex(): HTMLElement {
       const entry = state.codex[monster.id];
       const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
       if (entry?.captured) {
+        const icon = monsterIcon(monster.id);
+        const count = state.roster.find((m) => m.monsterId === monster.id)?.count ?? 0;
+        if (count > 1) icon.append(el('span.micon-count', { title: `보유 카드 ${count}장` }, `×${count}`));
         return el(`div.codex-cell${entry.awakened ? '.awakened' : ''}`, {
           title: `${monster.name} · ${MONSTER_RARITY_LABEL[monster.rarity]}`,
           onclick: openSpecies,
         },
-          monsterIcon(monster.id),
+          icon,
           el('div.codex-name', {}, monster.name),
         );
       }

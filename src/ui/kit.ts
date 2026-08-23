@@ -91,15 +91,15 @@ export const TRIBE_LABEL: Record<Tribe, string> = {
 export const TRIBE_EMOJI: Record<Tribe, string> = {
   beast: '🐾', spirit: '✨', undead: '💀', aquatic: '💧', flying: '🪽', construct: '⚙️',
 };
-export const MONSTER_RARITY_LABEL: Record<MonsterRarity, string> = {
-  common: '커먼', rare: '레어', epic: '에픽', legendary: '전설',
+/** 등급 라벨 — 몬스터·유물 공용 5단계 (2026-08-23 통일) */
+export const RARITY_LABEL: Record<MonsterRarity, string> = {
+  common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설',
 };
-export const ARTIFACT_RARITY_LABEL: Record<ArtifactRarity, string> = {
-  common: '일반', rare: '희귀', heroic: '영웅', legendary: '전설',
-};
-/** 등급 서열 — 정렬은 반드시 이 랭크로 (id 알파벳순은 heroic/legendary가 뒤집힌다) */
+export const MONSTER_RARITY_LABEL: Record<MonsterRarity, string> = RARITY_LABEL;
+export const ARTIFACT_RARITY_LABEL: Record<ArtifactRarity, string> = RARITY_LABEL;
+/** 등급 서열 — 정렬은 반드시 이 랭크로 (id 알파벳순은 뒤집힌다) */
 export const ARTIFACT_RARITY_ORDER: Record<ArtifactRarity, number> = {
-  common: 0, rare: 1, heroic: 2, legendary: 3,
+  common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4,
 };
 export const TIER_LABEL: Record<Tier, string> = {
   scout: '정찰 · 15분', standard: '원정 · 2시간', deep: '심층 탐사 · 8시간',

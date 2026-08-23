@@ -29,7 +29,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
         "success": true,
       },
       "enemyPower": 614,
-      "gold": 178,
+      "gold": 232,
       "hpAfter": 0.9939780354557989,
       "index": 1,
       "monsterId": "mist-widow",
@@ -53,7 +53,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     },
     {
       "capture": {
-        "essence": 3,
+        "dupe": true,
         "retried": false,
         "success": true,
       },
@@ -92,7 +92,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
         },
         {
           "drop": {
-            "itemId": "cork-vest",
+            "itemId": "drift-flag",
             "substats": [],
           },
           "kind": "artifact",
@@ -107,11 +107,11 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
         "retried": false,
         "success": false,
       },
-      "enemyPower": 1312,
+      "enemyPower": 1504,
       "gold": 446,
-      "hpAfter": 0.9757559525410692,
+      "hpAfter": 0.9747146906602274,
       "index": 5,
-      "monsterId": "bone-colossus",
+      "monsterId": "frost-hydra",
       "partyPower": 14751,
       "result": "win",
       "type": "encounter",
@@ -123,7 +123,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       },
       "enemyPower": 557,
       "gold": 178,
-      "hpAfter": 0.9727362930866282,
+      "hpAfter": 0.9716950312057865,
       "index": 6,
       "monsterId": "candle-ghost",
       "partyPower": 14751,
@@ -133,7 +133,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     {
       "eventId": "sunken-crate",
       "gold": 817,
-      "hpAfter": 0.9727362930866282,
+      "hpAfter": 0.9716950312057865,
       "type": "treasure",
     },
     {
@@ -143,7 +143,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       },
       "enemyPower": 566,
       "gold": 178,
-      "hpAfter": 0.9696645705381453,
+      "hpAfter": 0.9686233086573035,
       "index": 7,
       "monsterId": "sunken-doll",
       "partyPower": 14751,
@@ -157,7 +157,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       },
       "enemyPower": 570,
       "gold": 178,
-      "hpAfter": 0.9665754936249815,
+      "hpAfter": 0.9655342317441398,
       "index": 8,
       "monsterId": "chill-leech",
       "partyPower": 14751,
@@ -171,7 +171,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       },
       "enemyPower": 864,
       "gold": 285,
-      "hpAfter": 0.9618898151611939,
+      "hpAfter": 0.9608485532803521,
       "index": 9,
       "monsterId": "hollow-armor",
       "partyPower": 14751,
@@ -181,7 +181,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     {
       "choice": "safe",
       "eventId": "ancient-door",
-      "hpAfter": 0.9618898151611939,
+      "hpAfter": 0.9608485532803521,
       "rewards": [
         {
           "amount": 520,
@@ -199,7 +199,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       },
       "enemyPower": 864,
       "gold": 285,
-      "hpAfter": 0.9572041366974062,
+      "hpAfter": 0.9561628748165645,
       "index": 10,
       "monsterId": "hollow-armor",
       "partyPower": 14751,
@@ -208,13 +208,13 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     },
     {
       "capture": {
-        "essence": 3,
+        "dupe": true,
         "retried": false,
         "success": true,
       },
       "enemyPower": 566,
       "gold": 178,
-      "hpAfter": 0.9541324141489232,
+      "hpAfter": 0.9530911522680815,
       "index": 11,
       "monsterId": "sunken-doll",
       "partyPower": 14751,
@@ -224,18 +224,18 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     {
       "eventId": "sunken-crate",
       "gold": 817,
-      "hpAfter": 0.9541324141489232,
+      "hpAfter": 0.9530911522680815,
       "type": "treasure",
     },
     {
       "capture": {
-        "essence": 3,
+        "dupe": true,
         "retried": false,
         "success": true,
       },
       "enemyPower": 531,
       "gold": 178,
-      "hpAfter": 0.9512515896119279,
+      "hpAfter": 0.9502103277310862,
       "index": 12,
       "monsterId": "mire-toad",
       "partyPower": 14751,
@@ -244,13 +244,13 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     },
     {
       "capture": {
-        "essence": 3,
+        "dupe": true,
         "retried": false,
         "success": true,
       },
       "enemyPower": 555,
       "gold": 178,
-      "hpAfter": 0.9482406073398273,
+      "hpAfter": 0.9471993454589855,
       "index": 13,
       "monsterId": "gloom-frogling",
       "partyPower": 14751,
@@ -265,7 +265,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     },
     {
       "artifact": {
-        "itemId": "patched-banner",
+        "itemId": "cork-vest",
         "substats": [],
       },
       "type": "clearBox",
@@ -278,11 +278,11 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
   "totals": {
     "artifacts": [
       {
-        "itemId": "cork-vest",
+        "itemId": "drift-flag",
         "substats": [],
       },
       {
-        "itemId": "patched-banner",
+        "itemId": "cork-vest",
         "substats": [],
       },
     ],
@@ -295,13 +295,13 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       "chill-leech",
       "hollow-armor",
     ],
-    "essence": {
-      "bog-slime": 3,
-      "gloom-frogling": 3,
-      "mire-toad": 3,
-      "sunken-doll": 3,
+    "cards": {
+      "bog-slime": 1,
+      "gloom-frogling": 1,
+      "mire-toad": 1,
+      "sunken-doll": 1,
     },
-    "gold": 6544,
+    "gold": 6611,
     "luresGained": 0,
     "luresUsed": 3,
     "materials": {
@@ -312,7 +312,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       "mist-widow",
       "gloom-frogling",
       "carrion-moth",
-      "bone-colossus",
+      "frost-hydra",
       "candle-ghost",
       "sunken-doll",
       "chill-leech",
@@ -328,11 +328,11 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
 {
   "entries": [
     {
-      "enemyPower": 173,
+      "enemyPower": 165,
       "gold": 0,
-      "hpAfter": 0.7002997002997002,
+      "hpAfter": 0.7141747141747141,
       "index": 0,
-      "monsterId": "reef-guardian",
+      "monsterId": "moonlit-seal",
       "partyPower": 144,
       "result": "flee",
       "type": "encounter",
@@ -349,7 +349,7 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
       },
       "eventId": "glowing-geode",
       "gold": 110,
-      "hpAfter": 0.7002997002997002,
+      "hpAfter": 0.7141747141747141,
       "type": "treasure",
     },
     {
@@ -359,7 +359,7 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
       },
       "enemyPower": 93,
       "gold": 24,
-      "hpAfter": 0.6487956487956488,
+      "hpAfter": 0.6626706626706627,
       "index": 1,
       "monsterId": "mist-duckling",
       "partyPower": 144,
@@ -386,13 +386,13 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
     "capturedMonsterIds": [
       "mist-duckling",
     ],
-    "essence": {},
+    "cards": {},
     "gold": 134,
     "luresGained": 0,
     "luresUsed": 0,
     "materials": {},
     "seenMonsterIds": [
-      "reef-guardian",
+      "moonlit-seal",
       "mist-duckling",
     ],
   },

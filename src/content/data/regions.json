@@ -24,7 +24,7 @@
     "spawns": [
       {
         "monster": "bubble-crab",
-        "weight": 17
+        "weight": 15
       },
       {
         "monster": "salt-sprite",
@@ -32,7 +32,7 @@
       },
       {
         "monster": "dune-pup",
-        "weight": 17
+        "weight": 15
       },
       {
         "monster": "gull-imp",
@@ -40,23 +40,23 @@
       },
       {
         "monster": "tide-snail",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "driftwood-golem",
-        "weight": 13
+        "weight": 9
       },
       {
         "monster": "moon-jelly",
-        "weight": 13
+        "weight": 9
       },
       {
         "monster": "hermit-scuttler",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "puffer-balloon",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "starfish-cadet",
@@ -64,19 +64,19 @@
       },
       {
         "monster": "sand-burrower",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "mist-duckling",
-        "weight": 13
-      },
-      {
-        "monster": "buoy-bot",
         "weight": 15
       },
       {
+        "monster": "buoy-bot",
+        "weight": 9
+      },
+      {
         "monster": "kelp-sprout",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "pearl-turtle",
@@ -149,7 +149,7 @@
     "spawns": [
       {
         "monster": "thorn-wolf",
-        "weight": 17
+        "weight": 15
       },
       {
         "monster": "acorn-golem",
@@ -157,27 +157,27 @@
       },
       {
         "monster": "gale-owl",
-        "weight": 15
+        "weight": 9
       },
       {
         "monster": "glow-moth",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "bramble-boar",
-        "weight": 15
+        "weight": 9
       },
       {
         "monster": "dew-fairy",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "shade-ferret",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "hedge-hoglet",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "mush-bouncer",
@@ -185,7 +185,7 @@
       },
       {
         "monster": "twig-sprite",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "honey-cub",
@@ -193,15 +193,15 @@
       },
       {
         "monster": "lantern-beetle",
-        "weight": 13
+        "weight": 15
       },
       {
         "monster": "night-raven",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "root-tortoise",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "elder-owlbear",
@@ -278,7 +278,7 @@
     "spawns": [
       {
         "monster": "bog-slime",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "will-o-wisp",
@@ -286,7 +286,7 @@
       },
       {
         "monster": "mire-toad",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "rot-rat",
@@ -294,15 +294,15 @@
       },
       {
         "monster": "chill-leech",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "gravemoss-crawler",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "mist-widow",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "sunken-doll",
@@ -310,27 +310,27 @@
       },
       {
         "monster": "fungal-shambler",
-        "weight": 15
+        "weight": 9
       },
       {
         "monster": "eel-lurker",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "candle-ghost",
-        "weight": 13
-      },
-      {
-        "monster": "swamp-serpent",
         "weight": 15
       },
       {
+        "monster": "swamp-serpent",
+        "weight": 9
+      },
+      {
         "monster": "gloom-frogling",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "weeping-willow",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "drowned-knight",
@@ -407,11 +407,11 @@
     "spawns": [
       {
         "monster": "cinder-imp",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "lava-crab",
-        "weight": 16
+        "weight": 15
       },
       {
         "monster": "magma-hound",
@@ -419,19 +419,19 @@
       },
       {
         "monster": "ash-wraith",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "obsidian-beetle",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "spark-monkey",
-        "weight": 15
+        "weight": 9
       },
       {
         "monster": "soot-bat",
-        "weight": 14
+        "weight": 9
       },
       {
         "monster": "coal-golem",
@@ -439,11 +439,11 @@
       },
       {
         "monster": "pepper-sprite",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "smoke-serpent",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "brimstone-toad",
@@ -451,15 +451,15 @@
       },
       {
         "monster": "cinder-moth",
-        "weight": 13
+        "weight": 9
       },
       {
         "monster": "magma-slug",
-        "weight": 14
+        "weight": 15
       },
       {
         "monster": "ember-chick",
-        "weight": 15
+        "weight": 9
       },
       {
         "monster": "forge-golem",

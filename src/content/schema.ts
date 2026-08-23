@@ -7,8 +7,10 @@ import { z } from 'zod';
 // ── 기본 열거 ────────────────────────────────────────────────────────────────
 export const ELEMENTS = ['fire', 'nature', 'frost', 'light', 'dark'] as const;
 export const TRIBES = ['beast', 'spirit', 'undead', 'aquatic', 'flying', 'construct'] as const;
-export const MONSTER_RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
-export const ARTIFACT_RARITIES = ['common', 'rare', 'heroic', 'legendary'] as const;
+// 등급 5단계 — 몬스터·유물 공용 (2026-08-23 통일: 일반/고급/희귀/영웅/전설)
+export const RARITIES = ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const;
+export const MONSTER_RARITIES = RARITIES;
+export const ARTIFACT_RARITIES = RARITIES;
 export const SLOTS = ['weapon', 'armor', 'banner', 'charm'] as const;
 export const TIERS = ['scout', 'standard', 'deep'] as const;
 export const HOOKS = [
@@ -140,7 +142,7 @@ export const SynergiesSchema = z.record(TribeSchema, SynergyDefSchema);
 export const RewardSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('gold'), amount: z.number().positive() }), // region.rewardScale 곱해짐
   z.object({ kind: z.literal('material'), slot: z.union([z.literal(0), z.literal(1)]), count: z.number().int().positive() }),
-  z.object({ kind: z.literal('essenceRandom'), count: z.number().int().positive() }),
+  z.object({ kind: z.literal('cardRandom'), count: z.number().int().positive() }), // 보유 종 중 랜덤 카드 +n
   z.object({ kind: z.literal('artifactRoll'), rarityBonus: z.number().min(0).max(1).optional() }),
   z.object({ kind: z.literal('lure'), count: z.number().int().positive() }),
 ]);
@@ -235,8 +237,7 @@ export const BalanceSchema = z.object({
   element: z.object({ same: z.number(), advantage: z.number(), disadvantage: z.number() }),
   cp: z.object({ atkWeight: z.number(), hpWeight: z.number() }),
   level: z.object({ statGrowth: z.number(), goldBase: z.number(), goldExp: z.number(), max: z.number().int() }),
-  star: z.object({ mult: z.number(), max: z.number().int(), essenceCost: z.array(z.number().int()) }),
-  essencePerDupe: z.record(MonsterRaritySchema, z.number().int()),
+  star: z.object({ mult: z.number(), max: z.number().int(), goldCost: z.array(z.number().int()) }),
   capture: z.object({
     base: z.record(MonsterRaritySchema, z.number()),
     lureMult: z.number(),
