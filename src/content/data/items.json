@@ -4,10 +4,18 @@
     { "id": "worn-buckler", "name": "낡은 원형방패", "slot": "armor", "rarity": "uncommon", "set": null, "main": { "stat": "hpMult", "base": 0.08, "perEnhance": 0.016 }, "unique": [], "asset": "worn-buckler", "flavor": "찌그러진 자국 하나하나가 훈장이다." },
     { "id": "patched-banner", "name": "기운 깃발", "slot": "banner", "rarity": "uncommon", "set": null, "main": { "stat": "synergyAmp", "base": 0.1, "perEnhance": 0.02 }, "unique": [], "asset": "patched-banner", "flavor": "천은 낡았지만 바람은 여전히 잘 탄다." },
     { "id": "explorer-charm", "name": "탐험가의 부적", "slot": "charm", "rarity": "uncommon", "set": null, "main": { "stat": "captureAdd", "base": 0.03, "perEnhance": 0.006 }, "unique": [], "asset": "explorer-charm", "flavor": "출항 전 가족이 쥐여준 것이다.", "tags": [] },
+    { "id": "fisher-hook", "name": "어부의 갈고리", "slot": "weapon", "rarity": "uncommon", "set": null, "main": { "stat": "atkMult", "base": 0.06, "perEnhance": 0.012 }, "unique": [], "asset": "fisher-hook", "flavor": "월척의 꿈이 갈고리 끝에 매달려 있다." },
+    { "id": "shell-guard", "name": "조가비 흉갑", "slot": "armor", "rarity": "uncommon", "set": null, "main": { "stat": "hpMult", "base": 0.08, "perEnhance": 0.016 }, "unique": [], "asset": "shell-guard", "flavor": "파도 소리가 나는 갑옷. 마음이 먼저 단단해진다." },
+    { "id": "caravan-flag", "name": "캐러밴 깃발", "slot": "banner", "rarity": "uncommon", "set": null, "main": { "stat": "synergyAmp", "base": 0.1, "perEnhance": 0.02 }, "unique": [], "asset": "caravan-flag", "flavor": "이 깃발을 따라온 자들은 모두 한솥밥을 먹게 된다." },
+    { "id": "lucky-coin", "name": "행운의 동전", "slot": "charm", "rarity": "uncommon", "set": null, "main": { "stat": "goldMult", "base": 0.05, "perEnhance": 0.01 }, "unique": [], "asset": "lucky-coin", "flavor": "던질 때마다 앞면이 나온다. 아무도 뒷면을 본 적 없다." },
     { "id": "wooden-spear", "name": "나무 작살", "slot": "weapon", "rarity": "common", "set": null, "main": { "stat": "atkMult", "base": 0.05, "perEnhance": 0.011 }, "unique": [], "asset": "wooden-spear", "flavor": "물고기보다 나무토막을 더 많이 잡았다." },
     { "id": "cork-vest", "name": "코르크 조끼", "slot": "armor", "rarity": "common", "set": null, "main": { "stat": "hpMult", "base": 0.07, "perEnhance": 0.015 }, "unique": [], "asset": "cork-vest", "flavor": "물에 뜬다. 그 외의 장점은 아직 발견되지 않았다." },
     { "id": "drift-flag", "name": "표류기", "slot": "banner", "rarity": "common", "set": null, "main": { "stat": "synergyAmp", "base": 0.08, "perEnhance": 0.018 }, "unique": [], "asset": "drift-flag", "flavor": "어느 배의 것이었는지는 파도만 안다." },
     { "id": "camp-kettle", "name": "야영 주전자", "slot": "charm", "rarity": "common", "set": null, "main": { "stat": "goldMult", "base": 0.05, "perEnhance": 0.01 }, "unique": [], "asset": "camp-kettle", "flavor": "따뜻한 차 한 잔이면 흥정이 잘 풀린다." },
+    { "id": "oak-club", "name": "참나무 곤봉", "slot": "weapon", "rarity": "common", "set": null, "main": { "stat": "atkMult", "base": 0.05, "perEnhance": 0.011 }, "unique": [], "asset": "oak-club", "flavor": "나이테가 촘촘할수록 잘 맞는다는 소문이 있다." },
+    { "id": "straw-cloak", "name": "짚 망토", "slot": "armor", "rarity": "common", "set": null, "main": { "stat": "hpMult", "base": 0.07, "perEnhance": 0.015 }, "unique": [], "asset": "straw-cloak", "flavor": "비는 못 막지만 눈총은 제법 막아준다." },
+    { "id": "reed-pennant", "name": "갈대 페넌트", "slot": "banner", "rarity": "common", "set": null, "main": { "stat": "synergyAmp", "base": 0.08, "perEnhance": 0.018 }, "unique": [], "asset": "reed-pennant", "flavor": "갈대는 꺾이지 않는다. 휘어질 뿐이다." },
+    { "id": "tin-lantern", "name": "양철 초롱", "slot": "charm", "rarity": "common", "set": null, "main": { "stat": "captureAdd", "base": 0.025, "perEnhance": 0.005 }, "unique": [], "asset": "tin-lantern", "flavor": "불빛이 닿는 곳까지는 다들 순해진다." },
     { "id": "keen-cutlass", "name": "예리한 커틀러스", "slot": "weapon", "rarity": "rare", "set": null, "main": { "stat": "atkMult", "base": 0.1, "perEnhance": 0.02 }, "unique": [], "asset": "keen-cutlass", "flavor": "날이 바람을 가르면 얇은 휘파람 소리가 난다." },
     { "id": "guard-plate", "name": "수호갑판", "slot": "armor", "rarity": "rare", "set": null, "main": { "stat": "hpMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [], "asset": "guard-plate", "flavor": "난파선의 갑판재를 두들겨 만들었다." },
     { "id": "rally-standard", "name": "결집의 군기", "slot": "banner", "rarity": "rare", "set": null, "main": { "stat": "synergyAmp", "base": 0.15, "perEnhance": 0.03 }, "unique": [], "asset": "rally-standard", "flavor": "이 깃발 아래에서는 겁쟁이도 한 걸음 더 나아간다." },
@@ -16,6 +24,14 @@
     { "id": "barnacle-mail", "name": "따개비 갑옷", "slot": "armor", "rarity": "rare", "set": null, "main": { "stat": "hpMult", "base": 0.13, "perEnhance": 0.026 }, "unique": [], "asset": "barnacle-mail", "flavor": "바다에 십 년 잠겨 있던 갑옷. 따개비가 보강재다." },
     { "id": "wayfarer-crest", "name": "길잡이 문장", "slot": "banner", "rarity": "rare", "set": null, "main": { "stat": "synergyAmp", "base": 0.13, "perEnhance": 0.027 }, "unique": [], "asset": "wayfarer-crest", "flavor": "길 잃은 원정대를 몇 번이나 집으로 데려왔다." },
     { "id": "lure-bell", "name": "유인종", "slot": "charm", "rarity": "rare", "set": null, "main": { "stat": "captureAdd", "base": 0.045, "perEnhance": 0.009 }, "unique": [], "asset": "lure-bell", "flavor": "울리면 호기심 많은 것들이 먼저 다가온다." },
+    { "id": "whaler-lance", "name": "포경창", "slot": "weapon", "rarity": "rare", "set": null, "main": { "stat": "atkMult", "base": 0.095, "perEnhance": 0.02 }, "unique": [], "asset": "whaler-lance", "flavor": "큰 것을 겨눠본 창은 작은 것에 흔들리지 않는다." },
+    { "id": "ember-hatchet", "name": "불씨 손도끼", "slot": "weapon", "rarity": "rare", "set": null, "main": { "stat": "atkMult", "base": 0.1, "perEnhance": 0.021 }, "unique": [], "asset": "ember-hatchet", "flavor": "장작을 패면 절반은 이미 불붙어 있다." },
+    { "id": "mossheart-plate", "name": "이끼심장 갑주", "slot": "armor", "rarity": "rare", "set": null, "main": { "stat": "hpMult", "base": 0.135, "perEnhance": 0.027 }, "unique": [], "asset": "mossheart-plate", "flavor": "이끼가 두꺼워질수록 갑옷도 자란다." },
+    { "id": "frostshell-mail", "name": "서리껍질 사슬갑옷", "slot": "armor", "rarity": "rare", "set": null, "main": { "stat": "hpMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [], "asset": "frostshell-mail", "flavor": "한겨울 냇물에 백 번 담금질했다." },
+    { "id": "storm-pennon", "name": "폭풍 삼각기", "slot": "banner", "rarity": "rare", "set": null, "main": { "stat": "synergyAmp", "base": 0.14, "perEnhance": 0.028 }, "unique": [], "asset": "storm-pennon", "flavor": "바람이 거셀수록 더 똑바로 선다." },
+    { "id": "forest-totem", "name": "숲 토템", "slot": "banner", "rarity": "rare", "set": null, "main": { "stat": "synergyAmp", "base": 0.15, "perEnhance": 0.03 }, "unique": [], "asset": "forest-totem", "flavor": "새긴 얼굴이 밤마다 조금씩 바뀐다." },
+    { "id": "fog-whistle", "name": "안개 호루라기", "slot": "charm", "rarity": "rare", "set": null, "main": { "stat": "captureAdd", "base": 0.048, "perEnhance": 0.0095 }, "unique": [], "asset": "fog-whistle", "flavor": "안개 속에서 불면 무언가가 대답한다." },
+    { "id": "miser-pouch", "name": "구두쇠 주머니", "slot": "charm", "rarity": "rare", "set": null, "main": { "stat": "goldMult", "base": 0.09, "perEnhance": 0.018 }, "unique": [], "asset": "miser-pouch", "flavor": "동전이 들어가면 나올 생각을 하지 않는다." },
 
     { "id": "tidal-blade", "name": "조수의 검", "slot": "weapon", "rarity": "heroic", "set": "forgotten-pioneers", "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "region": ["misty-coast"] }, "do": { "kind": "statMult", "stat": "atk", "value": 0.15 } }], "asset": "tidal-blade", "flavor": "칼끝에서 조수가 밀려오는 소리가 난다." },
     { "id": "pearl-aegis", "name": "진주방패", "slot": "armor", "rarity": "heroic", "set": null, "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "region": ["misty-coast"] }, "do": { "kind": "damageReduce", "value": 0.1 } }], "asset": "pearl-aegis", "flavor": "진주거북의 버린 등딱지로 만들었다. 본인 동의하에." },
@@ -41,6 +57,30 @@
     { "id": "grove-whistle", "name": "숲피리", "slot": "banner", "rarity": "heroic", "set": null, "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "spirit" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "grove-whistle", "flavor": "불면 정령들이 어깨를 들썩인다. 음치여도 괜찮다." },
     { "id": "frozen-heart", "name": "얼어붙은 심장", "slot": "charm", "rarity": "heroic", "set": null, "main": { "stat": "captureAdd", "base": 0.05, "perEnhance": 0.01 }, "unique": [{ "hook": "computeParty", "when": { "element": "frost" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "frozen-heart", "flavor": "만지면 차갑지만 품고 있으면 든든하다." },
     { "id": "drakescale-shield", "name": "용비늘 방패", "slot": "armor", "rarity": "heroic", "set": null, "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "afterDefeat", "do": { "kind": "damageReduce", "value": 0.15 } }], "asset": "drakescale-shield", "flavor": "물러설 때 등을 맡길 수 있는 유일한 물건." },
+    { "id": "tidecaller-harpoon", "name": "조류인도자 작살", "slot": "weapon", "rarity": "heroic", "set": "deep-tides", "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "aquatic" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "tidecaller-harpoon", "flavor": "던지면 조류가 알아서 길을 잡아준다." },
+    { "id": "diver-cuirass", "name": "잠수부 흉갑", "slot": "armor", "rarity": "heroic", "set": "deep-tides", "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "aquatic" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "diver-cuirass", "flavor": "숨을 참는 법 대신 견디는 법을 가르쳐준다." },
+    { "id": "current-banner", "name": "해류 깃발", "slot": "banner", "rarity": "heroic", "set": "deep-tides", "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "element": "frost" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "current-banner", "flavor": "물속에서도 펄럭인다. 바람 대신 해류를 탄다." },
+    { "id": "siren-locket", "name": "세이렌 비늘 로켓", "slot": "charm", "rarity": "heroic", "set": "deep-tides", "main": { "stat": "captureAdd", "base": 0.05, "perEnhance": 0.01 }, "unique": [{ "hook": "captureRoll", "when": { "tribe": "aquatic" }, "do": { "kind": "captureAdd", "value": 0.04 } }], "asset": "siren-locket", "flavor": "물속의 것들이 제 동족의 노래로 착각한다." },
+    { "id": "forge-hammer", "name": "대장간 망치", "slot": "weapon", "rarity": "heroic", "set": "emberforge-guild", "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "element": "fire" }, "do": { "kind": "statMult", "stat": "cp", "value": 0.1 } }], "asset": "forge-hammer", "flavor": "두드릴수록 강해지는 건 쇠만이 아니다." },
+    { "id": "slagsteel-plate", "name": "광재강철 갑주", "slot": "armor", "rarity": "heroic", "set": "emberforge-guild", "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "afterDefeat", "do": { "kind": "damageReduce", "value": 0.15 } }], "asset": "slagsteel-plate", "flavor": "실패한 주물로 만들었지만 실패를 가장 잘 견딘다." },
+    { "id": "furnace-standard", "name": "용광로 군기", "slot": "banner", "rarity": "heroic", "set": "emberforge-guild", "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "construct" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "furnace-standard", "flavor": "깃대 속에 꺼지지 않는 숯불이 들어 있다." },
+    { "id": "ember-censer", "name": "불씨 향로", "slot": "charm", "rarity": "heroic", "set": "emberforge-guild", "main": { "stat": "goldMult", "base": 0.1, "perEnhance": 0.02 }, "unique": [{ "hook": "journalEnd", "when": { "region": ["ashen-volcano"] }, "do": { "kind": "rewardMult", "target": "gold", "value": 0.15 } }], "asset": "ember-censer", "flavor": "재 냄새를 맡으면 지갑이 열린다. 상인들의 미신이다." },
+    { "id": "vigil-torch", "name": "야경 횃불", "slot": "weapon", "rarity": "heroic", "set": "grave-vigil", "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "undead" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "vigil-torch", "flavor": "죽은 자들도 이 불빛 앞에서는 줄을 선다." },
+    { "id": "mourner-shroud", "name": "조문객의 수의", "slot": "armor", "rarity": "heroic", "set": "grave-vigil", "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "region": ["sunken-marsh"] }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "mourner-shroud", "flavor": "슬픔을 덮던 천은 무엇이든 덮을 수 있다." },
+    { "id": "requiem-standard", "name": "진혼 깃발", "slot": "banner", "rarity": "heroic", "set": "grave-vigil", "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "undead" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.12 } }], "asset": "requiem-standard", "flavor": "깃발이 지나가면 뒤척이던 것들이 잠잠해진다." },
+    { "id": "memento-locket", "name": "유품 로켓", "slot": "charm", "rarity": "heroic", "set": "grave-vigil", "main": { "stat": "captureAdd", "base": 0.05, "perEnhance": 0.01 }, "unique": [{ "hook": "beforeEncounter", "do": { "kind": "trapAvoid", "chance": 0.15 } }], "asset": "memento-locket", "flavor": "먼저 간 이가 위험한 길목마다 서 있어 준다." },
+    { "id": "druid-sickle", "name": "드루이드의 낫", "slot": "weapon", "rarity": "heroic", "set": "verdant-circle", "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "element": "nature" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "druid-sickle", "flavor": "베인 자리에서 새순이 돋는다. 낫이 사과하는 방식이다." },
+    { "id": "barkskin-mail", "name": "나무껍질 갑주", "slot": "armor", "rarity": "heroic", "set": "verdant-circle", "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "region": ["whispering-woods"] }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "barkskin-mail", "flavor": "봄마다 갑옷에서 꽃이 핀다. 방어력과는 무관하지만." },
+    { "id": "bloom-standard", "name": "만개 군기", "slot": "banner", "rarity": "heroic", "set": "verdant-circle", "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "journalEnd", "do": { "kind": "rewardMult", "target": "materials", "value": 0.12 } }], "asset": "bloom-standard", "flavor": "깃발이 꽂힌 들판은 이듬해 두 배로 자란다." },
+    { "id": "seed-pouch", "name": "씨앗 주머니", "slot": "charm", "rarity": "heroic", "set": "verdant-circle", "main": { "stat": "captureAdd", "base": 0.05, "perEnhance": 0.01 }, "unique": [{ "hook": "journalEnd", "do": { "kind": "rewardMult", "target": "materials", "value": 0.1 } }], "asset": "seed-pouch", "flavor": "주머니 바닥에는 늘 씨앗 한 톨이 남아 있다." },
+    { "id": "frost-cleaver", "name": "서리 대검", "slot": "weapon", "rarity": "heroic", "set": null, "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "element": "frost" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "frost-cleaver", "flavor": "베인 상처보다 한기가 먼저 닿는다." },
+    { "id": "dusk-blade", "name": "황혼검", "slot": "weapon", "rarity": "heroic", "set": null, "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "element": "dark" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "dusk-blade", "flavor": "해가 지는 순간에 벼려져 그 순간만을 기억한다." },
+    { "id": "skyhook-javelin", "name": "하늘갈고리 투창", "slot": "weapon", "rarity": "heroic", "set": null, "main": { "stat": "atkMult", "base": 0.14, "perEnhance": 0.028 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "flying" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "skyhook-javelin", "flavor": "던지면 바람이 마중 나온다." },
+    { "id": "spirit-veil", "name": "정령 면사포", "slot": "armor", "rarity": "heroic", "set": null, "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "tribe": "spirit" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "spirit-veil", "flavor": "정령들이 제 식구로 착각하고 감싸준다." },
+    { "id": "cinder-shield", "name": "잿불 방패", "slot": "armor", "rarity": "heroic", "set": null, "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "element": "fire" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "cinder-shield", "flavor": "재가 될 뻔한 것들이 방패 뒤에서 다시 불붙는다." },
+    { "id": "night-mantle", "name": "밤의 망토", "slot": "armor", "rarity": "heroic", "set": null, "main": { "stat": "hpMult", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "element": "dark" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.15 } }], "asset": "night-mantle", "flavor": "어둠은 가장 오래된 이불이다." },
+    { "id": "beacon-flag", "name": "봉화 깃발", "slot": "banner", "rarity": "heroic", "set": null, "main": { "stat": "synergyAmp", "base": 0.18, "perEnhance": 0.036 }, "unique": [{ "hook": "computeParty", "when": { "element": "light" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.12 } }], "asset": "beacon-flag", "flavor": "멀리서도 보인다는 건 돌아올 곳이 있다는 뜻이다." },
+    { "id": "gamblers-dice", "name": "도박꾼의 주사위", "slot": "charm", "rarity": "heroic", "set": null, "main": { "stat": "goldMult", "base": 0.1, "perEnhance": 0.02 }, "unique": [{ "hook": "crossroad", "do": { "kind": "crossroadSuccessAdd", "value": 0.1 } }], "asset": "gamblers-dice", "flavor": "구르는 동안만큼은 누구나 부자다." },
 
     { "id": "predators-fang", "name": "포식자의 송곳니", "slot": "weapon", "rarity": "legendary", "set": null, "main": { "stat": "atkMult", "base": 0.18, "perEnhance": 0.03 }, "unique": [{ "hook": "beforeEncounter", "when": { "encounterIndex": 0, "encounterKind": "monster" }, "do": { "kind": "autoWin" } }], "asset": "predators-fang", "flavor": "첫 사냥감은 도망치지 못한다." },
     { "id": "gnawing-sawplate", "name": "굶주린 뿔투구", "slot": "armor", "rarity": "legendary", "set": null, "main": { "stat": "hpMult", "base": 0.2, "perEnhance": 0.034 }, "unique": [
@@ -99,6 +139,38 @@
       "bonuses": {
         "2": [{ "hook": "journalEnd", "do": { "kind": "rewardMult", "target": "materials", "value": 0.15 } }],
         "4": [{ "hook": "expeditionSetup", "do": { "kind": "encounterMixMult", "target": "treasure", "value": 1.5 } }]
+      }
+    },
+    {
+      "id": "deep-tides",
+      "name": "심해 조류단",
+      "bonuses": {
+        "2": [{ "hook": "captureRoll", "when": { "tribe": "aquatic" }, "do": { "kind": "captureAdd", "value": 0.03 } }],
+        "4": [{ "hook": "expeditionSetup", "do": { "kind": "timeMult", "value": 0.9 } }]
+      }
+    },
+    {
+      "id": "emberforge-guild",
+      "name": "화로 대장간",
+      "bonuses": {
+        "2": [{ "hook": "computeParty", "when": { "element": "fire" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.08 } }],
+        "4": [{ "hook": "afterVictory", "do": { "kind": "heal", "ratio": 0.03 } }]
+      }
+    },
+    {
+      "id": "grave-vigil",
+      "name": "무덤 야경단",
+      "bonuses": {
+        "2": [{ "hook": "computeParty", "when": { "tribe": "undead" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.1 } }],
+        "4": [{ "hook": "afterDefeat", "do": { "kind": "reviveOnce", "hpRatio": 0.3 } }]
+      }
+    },
+    {
+      "id": "verdant-circle",
+      "name": "신록 결사",
+      "bonuses": {
+        "2": [{ "hook": "journalEnd", "do": { "kind": "rewardMult", "target": "materials", "value": 0.1 } }],
+        "4": [{ "hook": "expeditionSetup", "do": { "kind": "encounterMixMult", "target": "gather", "value": 1.5 } }]
       }
     }
   ]

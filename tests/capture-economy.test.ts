@@ -242,7 +242,8 @@ describe('지역 해금', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }]);
     expect(canUnlockRegion(content, save, 'whispering-woods').ok).toBe(false);
-    for (const monster of content.monsterList.filter((m) => m.habitat === 'misty-coast').slice(0, 6)) {
+    const woodsNeed = content.regions.get('whispering-woods')!.unlock.codexCaptured!['misty-coast']!;
+    for (const monster of content.monsterList.filter((m) => m.habitat === 'misty-coast').slice(0, woodsNeed)) {
       save.codex[monster.id] = { seen: true, captured: true, awakened: false };
     }
     expect(canUnlockRegion(content, save, 'whispering-woods').ok).toBe(true);

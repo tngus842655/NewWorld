@@ -64,10 +64,28 @@
   },
   {
     "id": "coast-26",
-    "name": "물안개 해안 완전 정복",
+    "name": "해무를 꿰뚫는 자",
     "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 26 },
+    "reward": { "gold": 8000 }
+  },
+  {
+    "id": "coast-34",
+    "name": "썰물의 목격자",
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 34 },
+    "reward": { "gold": 10000 }
+  },
+  {
+    "id": "coast-44",
+    "name": "해도의 완성자",
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 44 },
+    "reward": { "gold": 12000, "dust": 200 }
+  },
+  {
+    "id": "coast-54",
+    "name": "물안개 해안 완전 정복",
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 54 },
     "reward": {
-      "gold": 8000,
+      "gold": 16000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.03 } }]
     }
   },
@@ -136,10 +154,28 @@
   },
   {
     "id": "woods-26",
-    "name": "속삭이는 숲 완전 정복",
+    "name": "속삭임을 알아듣는 자",
     "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 26 },
+    "reward": { "gold": 15000 }
+  },
+  {
+    "id": "woods-34",
+    "name": "우듬지의 손님",
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 34 },
+    "reward": { "gold": 18000 }
+  },
+  {
+    "id": "woods-44",
+    "name": "숲그늘의 안내자",
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 44 },
+    "reward": { "gold": 22000, "dust": 350 }
+  },
+  {
+    "id": "woods-54",
+    "name": "속삭이는 숲 완전 정복",
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 54 },
     "reward": {
-      "gold": 15000,
+      "gold": 30000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
     }
   },
@@ -208,10 +244,28 @@
   },
   {
     "id": "marsh-26",
-    "name": "가라앉은 늪 완전 정복",
+    "name": "늪의 오랜 벗",
     "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 26 },
+    "reward": { "gold": 25000 }
+  },
+  {
+    "id": "marsh-34",
+    "name": "이탄 밑을 아는 자",
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 34 },
+    "reward": { "gold": 30000 }
+  },
+  {
+    "id": "marsh-44",
+    "name": "가라앉은 왕국의 사관",
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 44 },
+    "reward": { "gold": 36000, "dust": 600 }
+  },
+  {
+    "id": "marsh-54",
+    "name": "가라앉은 늪 완전 정복",
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 54 },
     "reward": {
-      "gold": 25000,
+      "gold": 50000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
     }
   },
@@ -280,10 +334,28 @@
   },
   {
     "id": "volcano-26",
-    "name": "잿빛 화산 완전 정복",
+    "name": "재의 순례자",
     "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 26 },
+    "reward": { "gold": 40000 }
+  },
+  {
+    "id": "volcano-34",
+    "name": "용암길의 단골",
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 34 },
+    "reward": { "gold": 48000 }
+  },
+  {
+    "id": "volcano-44",
+    "name": "분화구의 초대 손님",
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 44 },
+    "reward": { "gold": 56000, "dust": 1000 }
+  },
+  {
+    "id": "volcano-54",
+    "name": "잿빛 화산 완전 정복",
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 54 },
     "reward": {
-      "gold": 40000,
+      "gold": 80000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.03 } }]
     }
   },
@@ -373,10 +445,28 @@
   },
   {
     "id": "codex-104",
-    "name": "신대륙 도감의 완성",
+    "name": "첫 도감을 채운 자",
     "condition": { "kind": "totalCaptured", "count": 104 },
+    "reward": { "gold": 30000 }
+  },
+  {
+    "id": "codex-130",
+    "name": "대륙이 기억하는 이름",
+    "condition": { "kind": "totalCaptured", "count": 130 },
+    "reward": { "gold": 40000 }
+  },
+  {
+    "id": "codex-170",
+    "name": "걸어 다니는 박물지",
+    "condition": { "kind": "totalCaptured", "count": 170 },
+    "reward": { "gold": 55000, "dust": 400 }
+  },
+  {
+    "id": "codex-216",
+    "name": "신대륙 도감의 완성",
+    "condition": { "kind": "totalCaptured", "count": 216 },
     "reward": {
-      "gold": 30000,
+      "gold": 80000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
     }
   }

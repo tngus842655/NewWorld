@@ -9,7 +9,7 @@
 
 로드 시 zod로 전수 검증. id는 전부 kebab-case 문자열, 참조 무결성 테스트로 보증.
 
-### 1.1 monsters.json — 104종 *(2026-08-23 2배 확장)*
+### 1.1 monsters.json — 216종 *(2026-08-24 재확장 — 비전설 2배·전설 지역당 2→6)*
 
 ```jsonc
 {
@@ -46,9 +46,9 @@
   "spawns": [                              // 조우 출현 테이블 (가중치)
     { "monster": "thorn-wolf", "weight": 18 },
     { "monster": "gale-owl",   "weight": 14 }
-    // ... 지역당 일반8 고급6 희귀6 영웅4 (전설 2는 legendary 필드)
+    // ... 지역당 일반16 고급12 희귀12 영웅8 (전설 6은 legendary 필드)
   ],
-  "legendary": ["elder-treant", "moon-sovereign"], // 심층 한정 전설 (지역당 2종, 조우 시 시드로 1종 선택 — balance.json)
+  "legendary": ["elder-treant", "moon-sovereign"], // 심층 한정 전설 (지역당 6종, 조우 시 시드로 1종 선택 — balance.json)
   "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },  // %
   "tierMods": { "deep": { "rareWeightMult": 2.0 } }
 }
@@ -89,7 +89,7 @@
 }
 ```
 
-### 1.5 items.json — 유물 56종 + 세트 4계열 (GDD §8, 2026-08-23 2배 확장)
+### 1.5 items.json — 유물 96종 + 세트 8계열 (GDD §8, 2026-08-24 재확장 — 전설 제외 2배)
 
 ```jsonc
 {
