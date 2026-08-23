@@ -182,10 +182,10 @@ export function teamSheet(teamId: string): HTMLElement | null {
     el('div.big-tabs', {},
       el(`button.big-tab${listTab() === 'monster' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('monster'); },
-      }, `🐾 몬스터 ${monsterList.length}`),
+      }, `몬스터 (${monsterList.length})`),
       el(`button.big-tab${listTab() === 'artifact' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('artifact'); },
-      }, `💎 유물 ${artifactRows.length}`),
+      }, `유물 (${artifactRows.length})`),
     ),
     ...(listTab() === 'monster'
       ? [
