@@ -242,5 +242,93 @@
         "legendary": 0.05
       }
     }
+  },
+  "attendance": {
+    "rewards": [
+      {
+        "gold": 500
+      },
+      {
+        "dust": 30
+      },
+      {
+        "diamonds": 10
+      },
+      {
+        "gold": 800
+      },
+      {
+        "lures": 2
+      },
+      {
+        "dust": 40
+      },
+      {
+        "diamonds": 20
+      },
+      {
+        "gold": 1000
+      },
+      {
+        "dust": 50
+      },
+      {
+        "lures": 2
+      },
+      {
+        "gold": 1200
+      },
+      {
+        "dust": 60
+      },
+      {
+        "gold": 1500
+      },
+      {
+        "diamonds": 30
+      },
+      {
+        "gold": 1500
+      },
+      {
+        "dust": 70
+      },
+      {
+        "lures": 3
+      },
+      {
+        "gold": 2000
+      },
+      {
+        "dust": 80
+      },
+      {
+        "gold": 2000
+      },
+      {
+        "diamonds": 40
+      },
+      {
+        "gold": 2500
+      },
+      {
+        "dust": 90
+      },
+      {
+        "lures": 3
+      },
+      {
+        "gold": 3000
+      },
+      {
+        "dust": 100
+      },
+      {
+        "gold": 3000
+      },
+      {
+        "diamonds": 60
+      }
+    ]
   }
 }

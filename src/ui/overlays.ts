@@ -12,6 +12,7 @@ import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
+import { attendanceSheet } from './attendanceSheet';
 import { shopSheet } from './shopSheet';
 import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
@@ -41,6 +42,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? rankingSheet()
             : current.kind === 'shop'
               ? shopSheet()
+            : current.kind === 'attendance'
+              ? attendanceSheet()
             : current.kind === 'tasks'
               ? tasksSheet()
               : current.kind === 'fusion'

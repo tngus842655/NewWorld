@@ -46,7 +46,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(7); // v1 → … → v7 체인 끝까지
+    expect(migrated.version).toBe(8); // v1 → … → v8 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -137,5 +137,12 @@ describe('세이브 마이그레이션 v6 → v7 (유물 도감)', () => {
       'rusty-saber': { obtained: true },
       'moss-charm': { obtained: true },
     });
+  });
+});
+
+describe('세이브 마이그레이션 v7 → v8 (월간 출석)', () => {
+  it('빈 출석 상태로 시작한다', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.attendance).toEqual({ month: '', days: [] });
   });
 });

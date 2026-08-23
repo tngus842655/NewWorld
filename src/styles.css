@@ -41,7 +41,38 @@ body {
 }
 .appbar-title { font-weight: 700; letter-spacing: 0.5px; color: var(--accent-2); }
 .appbar-icons { display: flex; gap: 10px; align-items: center; }
-.appbar-rank { background: none; border: none; font-size: 21px; padding: 0 2px; cursor: pointer; line-height: 1; }
+.appbar-rank { background: none; border: none; font-size: 21px; padding: 0 2px; cursor: pointer; line-height: 1; position: relative; }
+/* 출석 미수령 알림 점 */
+.attend-dot {
+  position: absolute; top: -2px; right: -3px; width: 8px; height: 8px;
+  border-radius: 50%; background: #e2554f; box-shadow: 0 0 4px rgba(226, 85, 79, 0.7);
+}
+
+/* 부트 실패 안내 (세이브 보호 — 새 게임으로 덮지 않는다) */
+.boot-error {
+  max-width: 340px; margin: 30vh auto 0; padding: 20px; text-align: center;
+  display: flex; flex-direction: column; gap: 12px; align-items: center;
+  color: var(--fg, #eee);
+}
+
+/* ── 출석 달력 ── */
+.attend-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.attend-dow { text-align: center; font-size: 11px; color: var(--muted); padding: 2px 0; }
+.attend-cell {
+  aspect-ratio: 1 / 1; min-width: 0; border-radius: 10px; background: var(--bg3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 13px; gap: 1px; position: relative;
+}
+.attend-cell.blank { background: none; }
+.attend-cell.stamped { background: #2a2413; color: var(--accent-2); }
+.attend-cell.stamped .attend-day { opacity: 0.7; font-size: 10px; }
+.attend-stamp { font-size: 14px; line-height: 1; }
+.attend-cell.today { border: 1.5px solid var(--accent); }
+.attend-cell.future { opacity: 0.4; }
+.attend-claim { width: 100%; }
+.attend-next { background: #232a1c; border-radius: 8px; padding: 6px 10px; }
+.center { text-align: center; }
+
 /* ── 상점 ── */
 .shop-name { font-weight: 600; font-size: 14px; }
 .shop-buy { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }

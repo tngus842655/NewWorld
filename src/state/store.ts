@@ -25,6 +25,7 @@ import {
   previewCrossroads,
   type ExpeditionInput,
 } from '../core/expedition';
+import { checkIn, type CheckInResult } from '../core/attendance';
 import { createInitialSave } from '../core/newgame';
 import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
 import { ensureTeams, setTeamLoadout } from '../core/teams';
@@ -193,6 +194,15 @@ export function craft(recipeId: string): boolean {
 export function buyShop(input: ShopBuyInput): ShopBuyResult | null {
   return act(() => {
     const result = buyShopProduct(content, save(), input, ctx);
+    save.set(result.save);
+    return result;
+  });
+}
+
+/** 출석 도장 — 결과(보상·n일차)는 UI가 연출용으로 사용 */
+export function checkInToday(): CheckInResult | null {
+  return act(() => {
+    const result = checkIn(content, save(), ctx.now());
     save.set(result.save);
     return result;
   });

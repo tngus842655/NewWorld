@@ -387,5 +387,15 @@ export const BalanceSchema = z.object({
     monsterGacha: z.record(z.enum(MONSTER_GACHA_TABLES), z.record(MonsterRaritySchema, z.number())),
     artifactGacha: z.record(z.enum(ARTIFACT_GACHA_TABLES), z.record(ArtifactRaritySchema, z.number())),
   }),
+  // 월간 출석 (2026-08-23) — n번째 출석 순서대로 지급, 표를 다 받으면 도장만 찍힌다
+  attendance: z.object({
+    rewards: z.array(z.object({
+      gold: z.number().int().positive().optional(),
+      dust: z.number().int().positive().optional(),
+      diamonds: z.number().int().positive().optional(),
+      lures: z.number().int().positive().optional(),
+    })).min(1),
+  }),
 });
 export type Balance = z.infer<typeof BalanceSchema>;
+export type AttendanceReward = Balance['attendance']['rewards'][number];

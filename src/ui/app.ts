@@ -1,8 +1,9 @@
 /**
  * 앱 셸 — 헤더 + 화면 컨테이너 + 하단 탭 + 오버레이. effect가 화면을 다시 그린다.
  */
+import { canCheckIn } from '../core/attendance';
 import { effect } from '../state/signal';
-import { save } from '../state/store';
+import { ctx, save } from '../state/store';
 import { el, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
 import { openRankingBoard } from './rankingSheets';
@@ -61,6 +62,14 @@ export function mountApp(root: HTMLElement): void {
             overlay.set({ kind: 'shop' });
           },
         }, '🏪'),
+        el('button.appbar-rank', {
+          title: '출석 달력',
+          onclick: () => {
+            playSfx('tap');
+            overlay.set({ kind: 'attendance' });
+          },
+          // 비추적 시계 — 매초 헤더 재렌더 방지 (도장 후엔 save 변경으로 즉시 갱신)
+        }, '📅', canCheckIn(state, ctx.now()) ? el('span.attend-dot', {}) : null),
       ),
       el('div.appbar-wallet', {
         title: '재화 안내 보기',
@@ -69,6 +78,7 @@ export function mountApp(root: HTMLElement): void {
         el('span', { title: '골드' }, `💰 ${fmtGold(state.wallet.gold)}`),
         el('span', { title: '가루 (유물 강화)' }, `✨ ${fmtGold(state.wallet.dust)}`),
         el('span', { title: '미끼 (포획률 ×2)' }, `🪤 ${state.wallet.lures}`),
+        el('span', { title: '다이아 (출석·상점)' }, `💎 ${state.wallet.diamonds}`),
       ),
     );
   });

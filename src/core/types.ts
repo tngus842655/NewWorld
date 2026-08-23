@@ -75,9 +75,15 @@ export interface ShopState {
   once: string[]; // 1회 한정 구매 기록 (지역 한정은 `${productId}:${regionId}`)
 }
 
+// ── 월간 출석 (v8) ───────────────────────────────────────────────────────────
+export interface AttendanceState {
+  month: string; // 'YYYY-MM' (로컬 기준) — 달이 바뀌면 리셋
+  days: number[]; // 출석 도장을 찍은 일(day of month) 목록 — 보상은 순서(n번째)대로
+}
+
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 7; // v7 (2026-08-23): 유물 도감(획득 이력). v6: 유물 종 단위 통합. migrations.ts
+  version: 8; // v8 (2026-08-23): 월간 출석. v7: 유물 도감. v6: 유물 종 단위 통합. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -103,6 +109,7 @@ export interface SaveState {
   stats: LifetimeStats;
   tasks: Record<string, number>; // 반복 과업 taskId → 보상 수령 완료 횟수
   shop: ShopState;
+  attendance: AttendanceState; // 월간 출석 (v8)
   expeditions: ActiveExpedition[];
   journalArchive: JournalSummary[]; // 최근 20건 요약 — 풀 일지는 시드에서 재생성
   counters: { day: string; adUsed: Record<string, number> };

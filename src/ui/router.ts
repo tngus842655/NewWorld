@@ -15,6 +15,7 @@ export type Overlay =
   | { kind: 'help' }                       // 재화 안내
   | { kind: 'ranking' }                    // 랭킹 — 내 점수 + 리더보드 (GDD §9.3)
   | { kind: 'shop' }                       // 상점 — 골드/다이아 (GDD §9.4)
+  | { kind: 'attendance' }                 // 월간 출석 달력 (v8 — 다이아 획득처)
   | { kind: 'tasks' }                      // 반복 과업 진행 현황
   | { kind: 'fusion' }                     // 카드 합성 (GDD §4.5)
   | { kind: 'artifactFusion' }             // 유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)
