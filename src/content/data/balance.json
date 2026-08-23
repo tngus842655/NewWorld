@@ -205,11 +205,11 @@
   "shop": {
     "monsterGacha": {
       "normal": {
-        "common": 0.55,
+        "common": 0.54,
         "uncommon": 0.25,
         "rare": 0.15,
         "heroic": 0.05,
-        "legendary": 0
+        "legendary": 0.01
       },
       "premium": {
         "common": 0,

@@ -22,14 +22,12 @@ export function purchasesToday(save: SaveState, productId: string, now: number):
   return save.shop.bought[productId] ?? 0;
 }
 
-export function onceBought(save: SaveState, product: ShopProduct, regionId?: string): boolean {
-  const key = product.limit.kind === 'oncePerRegion' ? `${product.id}:${regionId}` : product.id;
-  return save.shop.once.includes(key);
+export function onceBought(save: SaveState, product: ShopProduct): boolean {
+  return save.shop.once.includes(product.id);
 }
 
 export interface ShopBuyInput {
   productId: string;
-  regionId?: string; // regionPack — 해금 지역 선택
   expeditionId?: string; // rush — 생략 시 남은 시간이 가장 긴 원정
 }
 
@@ -55,21 +53,13 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   if (!product) throw new GameError('shop-missing', `없는 상품: ${input.productId}`);
   const now = ctx.now();
 
-  // ── 한도 검증 ──
+  // ── 한도 검증 — none은 무제한 (2026-08-23 다이아 상점) ──
   if (product.limit.kind === 'daily') {
     if (purchasesToday(save, product.id, now) >= product.limit.count) {
       throw new GameError('shop-limit', '오늘 구매 한도를 모두 사용했습니다');
     }
-  } else if (onceBought(save, product, input.regionId)) {
-    throw new GameError('shop-once', product.limit.kind === 'once' ? '이미 구매한 상품입니다' : '이 지역에서는 이미 구매했습니다');
-  }
-
-  // ── 지역 인자 검증 ──
-  const needsRegion = product.goods.kind === 'regionPack' || product.limit.kind === 'oncePerRegion';
-  const region = needsRegion ? content.regions.get(input.regionId ?? '') : undefined;
-  if (needsRegion) {
-    if (!region) throw new GameError('shop-region', '지역을 선택해 주세요');
-    if (!isRegionUnlocked(content, save, region.id)) throw new GameError('shop-region-locked', '해금한 지역만 선택할 수 있습니다');
+  } else if (product.limit.kind === 'once' && onceBought(save, product)) {
+    throw new GameError('shop-once', '이미 구매한 상품입니다');
   }
 
   const next = structuredClone(save);
@@ -97,7 +87,7 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     if (goods.dust > 0) granted.dust = goods.dust;
     if (goods.lures > 0) granted.lures = goods.lures;
   } else if (goods.kind === 'materialsAll') {
-    // 해금한 모든 지역의 재료를 각 n개 — 지역 선택 없음 (2026-08-23)
+    // 해금한 모든 지역의 재료를 각 n개 (+골드) — 지역 선택 없음 (2026-08-23)
     granted.materials = [];
     for (const unlockedRegion of content.regionList) {
       if (!isRegionUnlocked(content, next, unlockedRegion.id)) continue;
@@ -106,11 +96,6 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
         granted.materials.push({ materialId, count: goods.countEach });
       }
     }
-  } else if (goods.kind === 'regionPack') {
-    granted.materials = region!.materials.map((materialId) => {
-      next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + goods.materialsEach;
-      return { materialId, count: goods.materialsEach };
-    });
     if (goods.gold > 0) {
       next.wallet.gold += goods.gold;
       granted.gold = goods.gold;
@@ -170,7 +155,7 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     granted.rushedExpeditionId = target.id;
   }
 
-  // ── 구매 기록 ──
+  // ── 구매 기록 — none은 기록 없음 ──
   const today = todayKey(now);
   if (next.shop.day !== today) {
     next.shop.day = today;
@@ -178,8 +163,8 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   }
   if (product.limit.kind === 'daily') {
     next.shop.bought[product.id] = (next.shop.bought[product.id] ?? 0) + 1;
-  } else {
-    next.shop.once.push(product.limit.kind === 'oncePerRegion' ? `${product.id}:${region!.id}` : product.id);
+  } else if (product.limit.kind === 'once') {
+    next.shop.once.push(product.id);
   }
 
   return { save: next, product, granted, newMilestones };

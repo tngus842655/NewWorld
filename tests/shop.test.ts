@@ -59,20 +59,22 @@ describe('상점 (GDD §9.4)', () => {
     expect(() => buyShopProduct(content, result.save, { productId: 'dia-starter' }, fixedCtx())).toThrow(/이미 구매/);
   });
 
-  it('지역당 1회 — 개척 패키지는 지역별 기록, 미해금 지역 불가', () => {
+  it('지역 개척 패키지 — 해금 지역 전체 재료 각 10개 + 골드, 무제한 재구매 (2026-08-23)', () => {
     const save = richSave();
-    const result = buyShopProduct(content, save, { productId: 'dia-region-pack', regionId: 'misty-coast' }, fixedCtx());
+    const result = buyShopProduct(content, save, { productId: 'dia-region-pack' }, fixedCtx());
     const region = content.regions.get('misty-coast')!;
     for (const materialId of region.materials) {
       expect(result.save.wallet.materials[materialId]).toBe(10);
     }
     expect(result.save.wallet.gold).toBe(save.wallet.gold + 2000);
-    expect(() =>
-      buyShopProduct(content, result.save, { productId: 'dia-region-pack', regionId: 'misty-coast' }, fixedCtx()),
-    ).toThrow(/이미 구매/);
-    expect(() =>
-      buyShopProduct(content, save, { productId: 'dia-region-pack', regionId: 'ashen-volcano' }, fixedCtx()),
-    ).toThrow(/해금한 지역만/);
+
+    // 무제한(none) — 재구매 가능하고 구매 기록도 남지 않는다
+    const again = buyShopProduct(content, result.save, { productId: 'dia-region-pack' }, fixedCtx());
+    for (const materialId of region.materials) {
+      expect(again.save.wallet.materials[materialId]).toBe(20);
+    }
+    expect(again.save.shop.once).toHaveLength(0);
+    expect(again.save.shop.bought['dia-region-pack']).toBeUndefined();
   });
 
   it('재료 꾸러미 — 해금한 모든 지역의 재료를 각 n개 (지역 선택 없음)', () => {

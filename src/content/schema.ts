@@ -273,8 +273,8 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
     dust: z.number().int().min(0).default(0),
     lures: z.number().int().min(0).default(0),
   }),
-  z.object({ kind: z.literal('materialsAll'), countEach: z.number().int().positive() }), // 해금한 모든 지역의 재료를 각 n개 (2026-08-23 — 지역 선택형에서 변경)
-  z.object({ kind: z.literal('regionPack'), materialsEach: z.number().int().positive(), gold: z.number().int().min(0) }),
+  // 해금한 모든 지역의 재료를 각 n개 (+골드) — 지역 선택형 materials·regionPack 대체 (2026-08-23)
+  z.object({ kind: z.literal('materialsAll'), countEach: z.number().int().positive(), gold: z.number().int().min(0).default(0) }),
   z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),
   z.object({ kind: z.literal('rush') }), // 진행 중 원정 1건 즉시 귀환
@@ -285,7 +285,7 @@ export type ShopGoods = z.infer<typeof ShopGoodsSchema>;
 export const ShopLimitSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('daily'), count: z.number().int().positive() }),
   z.object({ kind: z.literal('once') }),
-  z.object({ kind: z.literal('oncePerRegion') }),
+  z.object({ kind: z.literal('none') }), // 무제한 — 다이아 상점 (2026-08-23 사용자, oncePerRegion은 지역 선택 폐지로 제거)
 ]);
 export type ShopLimit = z.infer<typeof ShopLimitSchema>;
 
