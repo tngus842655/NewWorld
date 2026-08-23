@@ -36,8 +36,9 @@ export function renderCamp(): HTMLElement {
     const costText = [
       recipe.cost.gold > 0 ? `골드 ${fmtGold(recipe.cost.gold)}` : null,
       ...Object.entries(recipe.cost.materials).map(([id, n]) => {
+        const material = content.materials.get(id);
         const have = state.wallet.materials[id] ?? 0;
-        return `${content.materials.get(id)?.name} ×${n}${have < n ? ` (보유 ${have})` : ''}`;
+        return `${material?.icon ?? ''}${material?.name} ×${n}${have < n ? ` (보유 ${have})` : ''}`;
       }),
     ].filter(Boolean).join(' + ');
     return el('div.list-row', {},
@@ -52,35 +53,28 @@ export function renderCamp(): HTMLElement {
     );
   });
 
-  // 해금 지역의 재료는 보유 0이어도 상시 표시 — "뭘 모아야 하나"가 보이게
+  // 지역 재료 — 상단 앱바 지갑과 중복되던 재화 카드 대신, 재료를 아이콘 한 줄로 (해금 지역은 0 포함)
   const shownMaterialIds = new Set<string>();
-  const materialRows = [...content.regions.values()]
-    .filter((region) => isRegionUnlocked(content, state, region.id))
-    .map((region) => {
-      region.materials.forEach((id) => shownMaterialIds.add(id));
-      return el('div.list-row', {},
-        el('span.muted.small', {}, region.name),
-        el('span', {}, region.materials
-          .map((id) => `${content.materials.get(id)?.name ?? id} ${state.wallet.materials[id] ?? 0}`)
-          .join(' · ')),
-      );
-    });
-  const extraMaterials = Object.entries(state.wallet.materials)
-    .filter(([id, count]) => count > 0 && !shownMaterialIds.has(id))
-    .map(([id, count]) => el('span.tag', {}, `${content.materials.get(id)?.name ?? id} ${count}`));
+  for (const region of content.regions.values()) {
+    if (isRegionUnlocked(content, state, region.id)) region.materials.forEach((id) => shownMaterialIds.add(id));
+  }
+  for (const [id, count] of Object.entries(state.wallet.materials)) {
+    if (count > 0) shownMaterialIds.add(id); // 미해금 지역 재료도 보유분이 있으면 표시
+  }
+  const materialChips = [...content.materials.values()]
+    .filter((material) => shownMaterialIds.has(material.id))
+    .map((material) =>
+      el('span.wallet-item', { title: `${material.name} (${content.regions.get(material.region)?.name})` },
+        `${material.icon} ${state.wallet.materials[material.id] ?? 0}`),
+    );
 
   const slotUnlock = nextPartySlotUnlock(content, state);
 
   return el('div.screen', {},
     el('div.card.wallet', {},
-      el('span', {}, `💰 ${fmtGold(state.wallet.gold)}`),
-      el('span', {}, `✨ 가루 ${fmtGold(state.wallet.dust)}`),
-      el('span', {}, `🪤 미끼 ${state.wallet.lures}`),
-    ),
-    el('h2.section-title', {}, '지역 재료'),
-    el('div.card', {},
-      ...materialRows,
-      extraMaterials.length > 0 ? el('div.chips-wrap', {}, ...extraMaterials) : null,
+      ...(materialChips.length > 0
+        ? materialChips
+        : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
     ),
 
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),

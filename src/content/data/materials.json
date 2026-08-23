@@ -1,10 +1,10 @@
 [
-  { "id": "salt-bloom", "name": "소금꽃", "region": "misty-coast" },
-  { "id": "tide-shell", "name": "조가비", "region": "misty-coast" },
-  { "id": "dew-branch", "name": "이슬가지", "region": "whispering-woods" },
-  { "id": "spirit-moss", "name": "정령이끼", "region": "whispering-woods" },
-  { "id": "grave-reed", "name": "무덤갈대", "region": "sunken-marsh" },
-  { "id": "chill-amber", "name": "한기호박", "region": "sunken-marsh" },
-  { "id": "ember-core", "name": "잿불핵", "region": "ashen-volcano" },
-  { "id": "obsidian-shard", "name": "흑요석조각", "region": "ashen-volcano" }
+  { "id": "salt-bloom", "name": "소금꽃", "icon": "🧂", "region": "misty-coast" },
+  { "id": "tide-shell", "name": "조가비", "icon": "🐚", "region": "misty-coast" },
+  { "id": "dew-branch", "name": "이슬가지", "icon": "🌿", "region": "whispering-woods" },
+  { "id": "spirit-moss", "name": "정령이끼", "icon": "🍀", "region": "whispering-woods" },
+  { "id": "grave-reed", "name": "무덤갈대", "icon": "🌾", "region": "sunken-marsh" },
+  { "id": "chill-amber", "name": "한기호박", "icon": "🧊", "region": "sunken-marsh" },
+  { "id": "ember-core", "name": "잿불핵", "icon": "🔥", "region": "ashen-volcano" },
+  { "id": "obsidian-shard", "name": "흑요석조각", "icon": "🪨", "region": "ashen-volcano" }
 ]

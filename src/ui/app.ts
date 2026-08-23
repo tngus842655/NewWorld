@@ -16,8 +16,8 @@ import { renderSettings } from './screens/settings';
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: '홈', icon: '🏕️' },
   { id: 'expedition', label: '원정', icon: '🧭' },
-  { id: 'codex', label: '도감', icon: '📖' },
   { id: 'camp', label: '캠프', icon: '🎒' },
+  { id: 'codex', label: '도감', icon: '📖' },
   { id: 'settings', label: '설정', icon: '⚙️' },
 ];
 
