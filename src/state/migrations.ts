@@ -102,7 +102,7 @@ const migrateV4toV5: Migration = (raw) => {
   const data = structuredClone(raw) as Record<string, any>;
   const teams: any[] = data['teams'] ?? [];
   teams.forEach((team, i) => {
-    team.name = `${i + 1}군`;
+    team.name = `원정대 ${i + 1}`;
   });
   data['teams'] = teams;
   return data;

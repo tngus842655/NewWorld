@@ -102,7 +102,7 @@ describe('세이브 마이그레이션 v3 → v4 (상점)', () => {
 describe('세이브 마이그레이션 v4 → v5 (군 시스템)', () => {
   it('팀 이름을 1군/2군 형식으로 재명명, 진행 원정은 그대로', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.teams[0]!.name).toBe('1군');
+    expect(migrated.teams[0]!.name).toBe('원정대 1');
     expect(migrated.expeditions).toHaveLength(1);
     expect(migrated.expeditions[0]!.teamId).toBeUndefined(); // 구 원정은 teamId 없음 (optional)
   });

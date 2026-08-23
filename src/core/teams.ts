@@ -8,7 +8,7 @@ import { teamCount } from './progression';
 import { GameError, type SaveState, type TeamLoadout } from './types';
 
 export function teamName(index: number): string {
-  return `${index + 1}군`;
+  return `원정대 ${index + 1}`; // 용어 확정 (2026-08-23 사용자) — ensureTeams가 로드 시 기존 세이브도 재명명
 }
 
 /** 해금된 군 수만큼 teams 배열을 보장 — 로드·지역 해금 직후 호출 */

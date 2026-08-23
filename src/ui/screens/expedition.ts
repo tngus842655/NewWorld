@@ -177,10 +177,10 @@ function lockedTeamCards(state: SaveState): HTMLElement[] {
     .map((u) => {
       const region = content.regions.get(u.regionUnlocked!);
       return el('div.card.team-card.team-locked', {},
-        el('div.team-grid', {}, ...Array.from({ length: 4 }, () => el('div.team-cell.team-cell-empty', {}, ''))),
+        el('div.team-row', {}, ...Array.from({ length: 4 }, () => el('div.team-cell.team-cell-empty', {}, ''))),
         el('div.team-info', {},
-          el('div.team-name.muted', {}, `🔒 ${u.count}군`),
-          el('div.muted.small', {}, `${region?.icon ?? ''} ${region?.name ?? ''} 해금 시 편성 가능`),
+          el('div.team-name.muted', {}, `🔒 원정대 ${u.count}`),
+          el('div.muted.small', {}, `${region?.icon ?? ''} ${region?.name ?? ''} 해금 시`),
         ),
       );
     });
