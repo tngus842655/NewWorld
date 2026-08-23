@@ -530,6 +530,118 @@
     "hourglass-flask": {
       "slug": "hourglass-11798667",
       "contributor": "Naufal Hudallah"
+    },
+    "wooden-spear": {
+      "slug": "spear-13292175",
+      "contributor": "Gilang Ramadhan"
+    },
+    "cork-vest": {
+      "slug": "life-jacket-11091113",
+      "contributor": "Esy Esyarof"
+    },
+    "drift-flag": {
+      "slug": "medieval-flag-14716606",
+      "contributor": "Dzulfikar Laode"
+    },
+    "camp-kettle": {
+      "slug": "camping-kettle-8908454",
+      "contributor": "Andrewtimango"
+    },
+    "harpoon-launcher": {
+      "slug": "crossbow-6793700",
+      "contributor": "M Wildan Cahya Syarief"
+    },
+    "barnacle-mail": {
+      "slug": "armor-14125099",
+      "contributor": "Taru"
+    },
+    "wayfarer-crest": {
+      "slug": "royal-crest-15092334",
+      "contributor": "Tin Myint Sein"
+    },
+    "lure-bell": {
+      "slug": "golden-bell-8669341",
+      "contributor": "Didik Prasetio"
+    },
+    "hunters-longbow": {
+      "slug": "bow-and-arrow-13291895",
+      "contributor": "Gilang Ramadhan"
+    },
+    "hunters-cloak": {
+      "slug": "cloak-15214910",
+      "contributor": "Flow Icon"
+    },
+    "hunters-horn": {
+      "slug": "battle-horn-11442160",
+      "contributor": "Yacons Design"
+    },
+    "hunters-pendant": {
+      "slug": "amulets-16005586",
+      "contributor": "3Dafa Rizkiansah"
+    },
+    "starlight-staff": {
+      "slug": "magic-staff-17641285",
+      "contributor": "Icons Home"
+    },
+    "starlight-robe": {
+      "slug": "royal-robe-10744236",
+      "contributor": "Misbah Ihsan"
+    },
+    "starlight-banner": {
+      "slug": "medieval-house-banner-11740131",
+      "contributor": "Wolfy Studio"
+    },
+    "starlight-locket": {
+      "slug": "gem-pendant-18196966",
+      "contributor": "Barudak Lier"
+    },
+    "seafoam-trident": {
+      "slug": "trident-12485304",
+      "contributor": "Permadi"
+    },
+    "grove-whistle": {
+      "slug": "pan-flute-15133768",
+      "contributor": "Zulfa Mahendra"
+    },
+    "frozen-heart": {
+      "slug": "ice-crystal-orb-15135781",
+      "contributor": "Hoshi Studio"
+    },
+    "drakescale-shield": {
+      "slug": "shield-6034983",
+      "contributor": "Creasheeps Studio"
+    },
+    "undying-banner": {
+      "slug": "medieval-war-flag-17673230",
+      "contributor": "Larik Studio"
+    },
+    "trapmasters-gauntlet": {
+      "slug": "bear-trap-8844821",
+      "contributor": "Permadi"
+    },
+    "merchants-scale": {
+      "slug": "balance-scale-12600989",
+      "contributor": "Kerismaker"
+    },
+    "deepstone-idol": {
+      "slug": "totem-12878910",
+      "contributor": "Spacepixel Creative"
+    },
+    "gale-feather": {
+      "slug": "feather-9833164",
+      "contributor": "Ku.3dico"
+    },
+    "colossus-core": {
+      "slug": "crystal-sphere-17326756",
+      "contributor": "Dzii Dsgn"
+    },
+    "beast-kings-mane": {
+      "slug": "lion-head-12888733",
+      "contributor": "Yogeeid Std"
+    },
+    "twin-lure-flute": {
+      "slug": "pan-flute-8708891",
+      "contributor": "Creasheeps Studio"
     }
   }
 }
