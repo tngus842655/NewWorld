@@ -22,8 +22,8 @@
 
 | 용도 | 수량 | 검색 방향 (asset=3d) |
 |---|---|---|
-| 몬스터 (도감 52종) | 52 | monster / cute monster / halloween monster / dragon / slime / ghost / robot |
-| 유물 (28종) | 28 | medieval weapon / armor / shield / flag / amulet / artifact / relic |
+| 몬스터 (도감 104종) | 104 | monster / cute monster / halloween monster / dragon / slime / ghost / robot |
+| 유물 (56종) | 56 | medieval weapon / armor / shield / flag / amulet / artifact / relic |
 | 지역 배너 | 5 | forest / swamp / volcano / island / ruins (또는 illustration으로 대체 검토) |
 | 재료 아이콘 | 8 | herb / shell / crystal / moss / branch ... |
 | 재화·아이템 | 6± | gold coin / potion / trap / treasure chest |
@@ -45,6 +45,8 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
 
 - **[완료 2026-08-22] 몬스터 52종 전량 수급·변환** (총 ~600KB). 새 기기/클론에서는 BAK 원본으로
   build-assets.mjs만 재실행하면 복원된다
+- **[진행 2026-08-23] 2배 확장분 (몬스터 +52 · 유물 +28)** — 콘텐츠 확정 후 동일 파이프라인으로 수급.
+  누락분은 종족 이모지 폴백으로 게임 동작에는 지장 없음 (수급 현황은 assets-manifest.json이 진실)
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 

@@ -6,16 +6,19 @@ describe('콘텐츠 무결성', () => {
     expect(content.monsterList.length).toBeGreaterThan(0);
   });
 
-  it('도감은 정확히 52종 — 지역 4 × (커먼7 + 레어3 + 에픽2) + 전설 4', () => {
-    expect(content.monsterList).toHaveLength(52);
+  it('도감은 정확히 104종 — 지역 4 × (커먼14 + 레어6 + 에픽4 + 전설2)', () => {
+    expect(content.monsterList).toHaveLength(104);
     for (const region of content.regionList) {
       const natives = content.monsterList.filter((m) => m.habitat === region.id);
-      expect(natives, region.id).toHaveLength(13);
+      expect(natives, region.id).toHaveLength(26);
       const by = (rarity: string) => natives.filter((m) => m.rarity === rarity).length;
-      expect(by('common'), region.id).toBe(7);
-      expect(by('rare'), region.id).toBe(3);
-      expect(by('epic'), region.id).toBe(2);
-      expect(by('legendary'), region.id).toBe(1);
+      expect(by('common'), region.id).toBe(14);
+      expect(by('rare'), region.id).toBe(6);
+      expect(by('epic'), region.id).toBe(4);
+      expect(by('legendary'), region.id).toBe(2);
+      // 비전설 24종은 전부 출현 테이블에, 전설 2종은 legendary 필드에
+      expect(region.spawns, region.id).toHaveLength(24);
+      expect(region.legendary, region.id).toHaveLength(2);
     }
   });
 
@@ -33,13 +36,13 @@ describe('콘텐츠 무결성', () => {
     for (let i = 1; i < scales.length; i++) expect(scales[i]!).toBeGreaterThan(scales[i - 1]!);
   });
 
-  it('유물은 28종 — 일반·희귀 8 + 영웅 12 + 전설 8, 세트 2계열', () => {
-    expect(content.artifacts.size).toBe(28);
+  it('유물은 56종 — 일반·희귀 16 + 영웅 24 + 전설 16, 세트 4계열', () => {
+    expect(content.artifacts.size).toBe(56);
     const byRarity = (r: string) => [...content.artifacts.values()].filter((a) => a.rarity === r).length;
-    expect(byRarity('common') + byRarity('rare')).toBe(8);
-    expect(byRarity('heroic')).toBe(12);
-    expect(byRarity('legendary')).toBe(8);
-    expect(content.sets.size).toBe(2);
+    expect(byRarity('common') + byRarity('rare')).toBe(16);
+    expect(byRarity('heroic')).toBe(24);
+    expect(byRarity('legendary')).toBe(16);
+    expect(content.sets.size).toBe(4);
   });
 
   it('전설 유물은 전부 고유 능력을 가진다 (빌드 정의급 — GDD §8.2)', () => {

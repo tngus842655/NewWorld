@@ -98,7 +98,7 @@ export function renderCodex(): HTMLElement {
 
   return el('div.screen', {},
     el('div.card.codex-summary', {},
-      el('div', {}, el('strong', {}, `${captured}`), el('span.muted', {}, ` / 52 포획`)),
+      el('div', {}, el('strong', {}, `${captured}`), el('span.muted', {}, ` / ${content.monsterList.length} 포획`)),
       el('div.muted.small', {}, `목격 ${seen} · 도감 점수 ${score}`),
     ),
     el('div.card.stack-sm', {},

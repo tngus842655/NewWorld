@@ -88,11 +88,13 @@ describe('조우 판정', () => {
     expect(undead.damage).toBeCloseTo(plain.damage * 0.8);
   });
 
-  it('전설 몬스터의 조우 난이도는 권장 CP를 상회한다', () => {
+  it('전설 몬스터의 조우 난이도는 권장 CP를 상회한다 (지역당 2종 전부)', () => {
     for (const r of content.regionList) {
-      const legend = content.monsters.get(r.legendary)!;
-      expect(enemyPower(content, legend)).toBeGreaterThan(r.recommendedCp);
-      expect(monsterBaseCp(legend, content.balance)).toBeGreaterThan(0);
+      for (const legendId of r.legendary) {
+        const legend = content.monsters.get(legendId)!;
+        expect(enemyPower(content, legend), legendId).toBeGreaterThan(r.recommendedCp);
+        expect(monsterBaseCp(legend, content.balance), legendId).toBeGreaterThan(0);
+      }
     }
   });
 });

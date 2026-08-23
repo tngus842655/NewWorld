@@ -2,301 +2,202 @@
   {
     "id": "coast-6",
     "name": "해안 채집가",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "misty-coast",
-      "count": 6
-    },
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 6 },
     "reward": {
       "gold": 800,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "atk",
-            "value": 0.03
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
     }
   },
   {
     "id": "coast-12",
     "name": "해안의 주인",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "misty-coast",
-      "count": 12
-    },
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 12 },
     "reward": {
       "gold": 2500,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "hp",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
+    }
+  },
+  {
+    "id": "coast-24",
+    "name": "해안의 전설",
+    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 24 },
+    "reward": {
+      "gold": 6000,
+      "effects": [{ "hook": "captureRoll", "do": { "kind": "captureAdd", "value": 0.02 } }]
     }
   },
   {
     "id": "woods-6",
     "name": "숲의 친구",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "whispering-woods",
-      "count": 6
-    },
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 6 },
     "reward": {
       "gold": 1500,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "atk",
-            "value": 0.03
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
     }
   },
   {
     "id": "woods-12",
     "name": "숲의 목소리",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "whispering-woods",
-      "count": 12
-    },
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 12 },
     "reward": {
       "gold": 4000,
-      "effects": [
-        {
-          "hook": "captureRoll",
-          "do": {
-            "kind": "captureAdd",
-            "value": 0.02
-          }
-        }
-      ]
+      "effects": [{ "hook": "captureRoll", "do": { "kind": "captureAdd", "value": 0.02 } }]
+    }
+  },
+  {
+    "id": "woods-24",
+    "name": "숲의 어른",
+    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 24 },
+    "reward": {
+      "gold": 9000,
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.05 } }]
     }
   },
   {
     "id": "marsh-6",
     "name": "늪을 걷는 자",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "sunken-marsh",
-      "count": 6
-    },
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 6 },
     "reward": {
       "gold": 3000,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "hp",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
     }
   },
   {
     "id": "marsh-12",
     "name": "심연의 안내자",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "sunken-marsh",
-      "count": 12
-    },
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 12 },
     "reward": {
       "gold": 6000,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "atk",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.05 } }]
+    }
+  },
+  {
+    "id": "marsh-24",
+    "name": "늪의 지배자",
+    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 24 },
+    "reward": {
+      "gold": 14000,
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.08 } }]
     }
   },
   {
     "id": "volcano-6",
     "name": "불길을 지나는 자",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "ashen-volcano",
-      "count": 6
-    },
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 6 },
     "reward": {
       "gold": 5000,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "damageReduce",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.05 } }]
     }
   },
   {
     "id": "volcano-12",
     "name": "화산의 정복자",
-    "condition": {
-      "kind": "regionCaptured",
-      "region": "ashen-volcano",
-      "count": 12
-    },
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 12 },
     "reward": {
       "gold": 12000,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "cp",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
+    }
+  },
+  {
+    "id": "volcano-24",
+    "name": "화산의 심장을 본 자",
+    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 24 },
+    "reward": {
+      "gold": 20000,
+      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.05 } }]
     }
   },
   {
     "id": "beast-tamer",
     "name": "야수 조련사",
-    "condition": {
-      "kind": "tribeCaptured",
-      "tribe": "beast",
-      "count": 5
-    },
+    "condition": { "kind": "tribeCaptured", "tribe": "beast", "count": 5 },
     "reward": {
       "gold": 1200,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "when": {
-            "tribe": "beast"
-          },
-          "do": {
-            "kind": "statMult",
-            "stat": "atk",
-            "value": 0.04
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "when": { "tribe": "beast" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.04 } }]
     }
   },
   {
     "id": "wave-rider",
     "name": "파도를 타는 자",
-    "condition": {
-      "kind": "tribeCaptured",
-      "tribe": "aquatic",
-      "count": 5
-    },
+    "condition": { "kind": "tribeCaptured", "tribe": "aquatic", "count": 5 },
     "reward": {
       "gold": 1200,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "when": {
-            "tribe": "aquatic"
-          },
-          "do": {
-            "kind": "statMult",
-            "stat": "hp",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "when": { "tribe": "aquatic" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
     }
   },
   {
     "id": "sky-watcher",
     "name": "하늘지기",
-    "condition": {
-      "kind": "tribeCaptured",
-      "tribe": "flying",
-      "count": 5
-    },
+    "condition": { "kind": "tribeCaptured", "tribe": "flying", "count": 5 },
     "reward": {
       "gold": 1200,
-      "effects": [
-        {
-          "hook": "beforeEncounter",
-          "do": {
-            "kind": "trapAvoid",
-            "chance": 0.15
-          }
-        }
-      ]
+      "effects": [{ "hook": "beforeEncounter", "do": { "kind": "trapAvoid", "chance": 0.15 } }]
+    }
+  },
+  {
+    "id": "spirit-whisperer",
+    "name": "정령과 말하는 자",
+    "condition": { "kind": "tribeCaptured", "tribe": "spirit", "count": 8 },
+    "reward": {
+      "gold": 2500,
+      "effects": [{ "hook": "computeParty", "do": { "kind": "healReceivedMult", "value": 1.2 } }]
+    }
+  },
+  {
+    "id": "grave-keeper",
+    "name": "무덤지기",
+    "condition": { "kind": "tribeCaptured", "tribe": "undead", "count": 8 },
+    "reward": {
+      "gold": 2500,
+      "effects": [{ "hook": "computeParty", "when": { "tribe": "undead" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.06 } }]
+    }
+  },
+  {
+    "id": "machine-friend",
+    "name": "태엽의 친구",
+    "condition": { "kind": "tribeCaptured", "tribe": "construct", "count": 8 },
+    "reward": {
+      "gold": 2500,
+      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.03 } }]
     }
   },
   {
     "id": "codex-10",
     "name": "신참 기록가",
-    "condition": {
-      "kind": "totalCaptured",
-      "count": 10
-    },
-    "reward": {
-      "gold": 1500
-    }
+    "condition": { "kind": "totalCaptured", "count": 10 },
+    "reward": { "gold": 1500 }
   },
   {
     "id": "codex-25",
     "name": "숙련 기록가",
-    "condition": {
-      "kind": "totalCaptured",
-      "count": 25
-    },
-    "reward": {
-      "gold": 4000,
-      "dust": 100
-    }
+    "condition": { "kind": "totalCaptured", "count": 25 },
+    "reward": { "gold": 4000, "dust": 100 }
   },
   {
     "id": "codex-40",
     "name": "수석 기록가",
-    "condition": {
-      "kind": "totalCaptured",
-      "count": 40
-    },
-    "reward": {
-      "gold": 10000
-    }
+    "condition": { "kind": "totalCaptured", "count": 40 },
+    "reward": { "gold": 10000 }
   },
   {
     "id": "codex-52",
+    "name": "대륙의 절반을 아는 자",
+    "condition": { "kind": "totalCaptured", "count": 52 },
+    "reward": { "gold": 12000 }
+  },
+  {
+    "id": "codex-70",
+    "name": "노련한 개척자",
+    "condition": { "kind": "totalCaptured", "count": 70 },
+    "reward": { "gold": 18000, "dust": 200 }
+  },
+  {
+    "id": "codex-104",
     "name": "신대륙 도감의 완성",
-    "condition": {
-      "kind": "totalCaptured",
-      "count": 52
-    },
+    "condition": { "kind": "totalCaptured", "count": 104 },
     "reward": {
       "gold": 30000,
-      "effects": [
-        {
-          "hook": "computeParty",
-          "do": {
-            "kind": "statMult",
-            "stat": "cp",
-            "value": 0.05
-          }
-        }
-      ]
+      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
     }
   }
 ]

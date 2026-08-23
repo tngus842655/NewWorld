@@ -113,7 +113,7 @@ export const RegionSchema = z.object({
     materials: z.record(z.string(), z.number().int().positive()).optional(),
   }),
   materials: z.array(z.string()).length(2),
-  legendary: z.string(),
+  legendary: z.array(z.string()).nonempty(), // 심층 한정 전설 (지역당 2종 — 조우 시 시드로 1종 선택)
   encounterMix: z.object({
     monster: z.number().positive(),
     treasure: z.number().positive(),

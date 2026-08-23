@@ -96,17 +96,20 @@ function nextGoalCard(): HTMLElement | null {
     );
   }
 
-  if (teamCount(content, state) < 3) {
+  const maxTeamUnlock = content.balance.teams.find((u) => u.count === 3);
+  if (maxTeamUnlock?.totalCaptured !== undefined && teamCount(content, state) < 3) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
       el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 3번째 원정대')),
-      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${Math.min(counts.total, 40)}/40종 포획`)),
+      el('div.goal-items', {}, el('div.goal-item', {},
+        `▫️ 도감 ${Math.min(counts.total, maxTeamUnlock.totalCaptured)}/${maxTeamUnlock.totalCaptured}종 포획`)),
     );
   }
 
-  if (counts.total < 52) {
+  const totalSpecies = content.monsterList.length;
+  if (counts.total < totalSpecies) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
       el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 신대륙 도감의 완성')),
-      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/52종 포획 — 전설은 심층 탐사에서만`)),
+      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 — 전설은 심층 탐사에서만`)),
     );
   }
   return null;
@@ -155,7 +158,7 @@ export function renderHome(): HTMLElement {
     nextGoalCard(),
     el('h2.section-title', {}, '최근 일지'),
     recent.length > 0 ? el('div.card', {}, ...recent) : el('div.card.empty', {}, el('span.muted', {}, '아직 기록이 없습니다')),
-    el('button.codex-link', { onclick: () => tab.set('codex') }, `📖 도감 ${capturedCount}/52`),
+    el('button.codex-link', { onclick: () => tab.set('codex') }, `📖 도감 ${capturedCount}/${content.monsterList.length}`),
     import.meta.env.DEV
       ? el('div.card.devbar', {},
           el('span.muted.small', {}, 'DEV 시간 가속'),

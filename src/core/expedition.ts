@@ -163,14 +163,17 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
     return weight;
   };
 
-  // 전설 조우 주입 (심층 한정, GDD §6) — 계획 중앙 슬롯을 교체
+  // 전설 조우 주입 (심층 한정, GDD §6) — 계획 중앙 슬롯을 교체. 지역 전설 2종 중 시드로 1종
   const legendarySlot = tierDef.legendaryChance > 0 && rng() < tierDef.legendaryChance ? Math.floor(count / 2) : -1;
+  const legendaryId = legendarySlot >= 0
+    ? region.legendary[Math.min(Math.floor(rng() * region.legendary.length), region.legendary.length - 1)]!
+    : region.legendary[0]!;
 
   const kinds = ['monster', 'treasure', 'trap', 'gather'] as const;
   const slots: PlanItem[] = [];
   for (let i = 0; i < count; i++) {
     if (i === legendarySlot) {
-      slots.push({ type: 'monster', monsterId: region.legendary });
+      slots.push({ type: 'monster', monsterId: legendaryId });
       continue;
     }
     const kind = pickWeighted(rng, kinds, (k) => mix[k]);

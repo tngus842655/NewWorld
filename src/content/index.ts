@@ -96,8 +96,11 @@ export function loadContent(): Content {
       if (m.habitat !== region.id) fail(`${spawn.monster}의 habitat(${m.habitat})와 출현 지역(${region.id}) 불일치`);
       if (m.rarity === 'legendary') fail(`${region.id} spawns에 전설 몬스터(${spawn.monster}) — 전설은 legendary 필드로만`);
     }
-    const legend = monsters.get(region.legendary) ?? fail(`${region.id} legendary가 없는 몬스터 참조: ${region.legendary}`);
-    if (legend.rarity !== 'legendary') fail(`${region.id} legendary(${region.legendary})의 등급이 legendary가 아님`);
+    for (const legendId of region.legendary) {
+      const legend = monsters.get(legendId) ?? fail(`${region.id} legendary가 없는 몬스터 참조: ${legendId}`);
+      if (legend.rarity !== 'legendary') fail(`${region.id} legendary(${legendId})의 등급이 legendary가 아님`);
+      if (legend.habitat !== region.id) fail(`${legendId}의 habitat(${legend.habitat})와 legendary 지역(${region.id}) 불일치`);
+    }
     for (const mat of region.materials) {
       if (!materials.has(mat)) fail(`${region.id} materials가 없는 재료 참조: ${mat}`);
     }

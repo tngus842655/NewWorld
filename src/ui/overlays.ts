@@ -325,7 +325,7 @@ function oddsSheet(): HTMLElement {
     const unlocked = isRegionUnlocked(content, state, region.id);
     const base = spawnOddsByRarity(region, 1);
     const deep = spawnOddsByRarity(region, deepMult);
-    const legend = content.monsters.get(region.legendary);
+    const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
     return el('div.card.stack-sm', {},
       el('div.odds-title', {}, `${unlocked ? '' : '🔒 '}${region.name}`),
       el('div.odds-grid.odds-head', {},
@@ -339,7 +339,7 @@ function oddsSheet(): HTMLElement {
         ),
       ),
       el('div.muted.small', {},
-        `⭐ 전설 (${legend?.name ?? region.legendary}) — ${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
+        `⭐ 전설 (${legendNames}) — ${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
     );
   });
 

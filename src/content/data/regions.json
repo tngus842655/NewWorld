@@ -8,7 +8,7 @@
     "rewardScale": 1,
     "unlock": {},
     "materials": ["salt-bloom", "tide-shell"],
-    "legendary": "leviathan-calf",
+    "legendary": ["leviathan-calf", "ancient-whale"],
     "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },
     "spawns": [
       { "monster": "bubble-crab", "weight": 17 },
@@ -18,11 +18,23 @@
       { "monster": "tide-snail", "weight": 14 },
       { "monster": "driftwood-golem", "weight": 13 },
       { "monster": "moon-jelly", "weight": 13 },
+      { "monster": "hermit-scuttler", "weight": 16 },
+      { "monster": "puffer-balloon", "weight": 14 },
+      { "monster": "starfish-cadet", "weight": 15 },
+      { "monster": "sand-burrower", "weight": 14 },
+      { "monster": "mist-duckling", "weight": 13 },
+      { "monster": "buoy-bot", "weight": 15 },
+      { "monster": "kelp-sprout", "weight": 14 },
       { "monster": "pearl-turtle", "weight": 7 },
       { "monster": "fog-lynx", "weight": 6 },
       { "monster": "reef-guardian", "weight": 6 },
+      { "monster": "moonlit-seal", "weight": 6 },
+      { "monster": "thunder-ray", "weight": 7 },
+      { "monster": "siren-conch", "weight": 6 },
       { "monster": "storm-petrel", "weight": 3 },
-      { "monster": "abyss-angler", "weight": 2 }
+      { "monster": "abyss-angler", "weight": 2 },
+      { "monster": "maelstrom-turtle", "weight": 3 },
+      { "monster": "coast-wyrm", "weight": 2 }
     ]
   },
   {
@@ -34,7 +46,7 @@
     "rewardScale": 2.4,
     "unlock": { "codexCaptured": { "misty-coast": 6 } },
     "materials": ["dew-branch", "spirit-moss"],
-    "legendary": "verdant-phoenix",
+    "legendary": ["verdant-phoenix", "ancient-sloth"],
     "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },
     "spawns": [
       { "monster": "thorn-wolf", "weight": 17 },
@@ -44,11 +56,23 @@
       { "monster": "bramble-boar", "weight": 15 },
       { "monster": "dew-fairy", "weight": 14 },
       { "monster": "shade-ferret", "weight": 14 },
+      { "monster": "hedge-hoglet", "weight": 16 },
+      { "monster": "mush-bouncer", "weight": 15 },
+      { "monster": "twig-sprite", "weight": 14 },
+      { "monster": "honey-cub", "weight": 15 },
+      { "monster": "lantern-beetle", "weight": 13 },
+      { "monster": "night-raven", "weight": 14 },
+      { "monster": "root-tortoise", "weight": 14 },
       { "monster": "elder-owlbear", "weight": 7 },
       { "monster": "spore-shaman", "weight": 6 },
       { "monster": "moss-drake", "weight": 6 },
+      { "monster": "moonpetal-fox", "weight": 6 },
+      { "monster": "bramble-golem", "weight": 7 },
+      { "monster": "wind-piper", "weight": 6 },
       { "monster": "ancient-ent", "weight": 3 },
-      { "monster": "sylvan-stag", "weight": 2 }
+      { "monster": "sylvan-stag", "weight": 2 },
+      { "monster": "aurora-unicorn", "weight": 2 },
+      { "monster": "dream-weaver", "weight": 3 }
     ]
   },
   {
@@ -63,7 +87,7 @@
       "materials": { "dew-branch": 8, "spirit-moss": 5 }
     },
     "materials": ["grave-reed", "chill-amber"],
-    "legendary": "lich-of-depths",
+    "legendary": ["lich-of-depths", "black-lotus-regent"],
     "encounterMix": { "monster": 74, "treasure": 11, "trap": 10, "gather": 5 },
     "spawns": [
       { "monster": "bog-slime", "weight": 16 },
@@ -73,11 +97,23 @@
       { "monster": "chill-leech", "weight": 14 },
       { "monster": "gravemoss-crawler", "weight": 14 },
       { "monster": "mist-widow", "weight": 14 },
+      { "monster": "sunken-doll", "weight": 15 },
+      { "monster": "fungal-shambler", "weight": 15 },
+      { "monster": "eel-lurker", "weight": 14 },
+      { "monster": "candle-ghost", "weight": 13 },
+      { "monster": "swamp-serpent", "weight": 15 },
+      { "monster": "gloom-frogling", "weight": 14 },
+      { "monster": "weeping-willow", "weight": 14 },
       { "monster": "drowned-knight", "weight": 7 },
       { "monster": "marsh-siren", "weight": 6 },
       { "monster": "plague-heron", "weight": 6 },
+      { "monster": "hollow-armor", "weight": 7 },
+      { "monster": "bog-witch", "weight": 6 },
+      { "monster": "carrion-moth", "weight": 6 },
       { "monster": "bone-colossus", "weight": 3 },
-      { "monster": "frost-hydra", "weight": 2 }
+      { "monster": "frost-hydra", "weight": 2 },
+      { "monster": "plague-doctor", "weight": 3 },
+      { "monster": "glacier-serpent", "weight": 2 }
     ]
   },
   {
@@ -92,7 +128,7 @@
       "materials": { "grave-reed": 12, "chill-amber": 8 }
     },
     "materials": ["ember-core", "obsidian-shard"],
-    "legendary": "ember-dragon-king",
+    "legendary": ["ember-dragon-king", "volcano-heart"],
     "encounterMix": { "monster": 74, "treasure": 12, "trap": 9, "gather": 5 },
     "spawns": [
       { "monster": "cinder-imp", "weight": 16 },
@@ -102,11 +138,23 @@
       { "monster": "obsidian-beetle", "weight": 14 },
       { "monster": "spark-monkey", "weight": 15 },
       { "monster": "soot-bat", "weight": 14 },
+      { "monster": "coal-golem", "weight": 15 },
+      { "monster": "pepper-sprite", "weight": 14 },
+      { "monster": "smoke-serpent", "weight": 14 },
+      { "monster": "brimstone-toad", "weight": 15 },
+      { "monster": "cinder-moth", "weight": 13 },
+      { "monster": "magma-slug", "weight": 14 },
+      { "monster": "ember-chick", "weight": 15 },
       { "monster": "forge-golem", "weight": 7 },
       { "monster": "flame-dancer", "weight": 6 },
       { "monster": "pyro-drake", "weight": 6 },
+      { "monster": "forge-priest", "weight": 6 },
+      { "monster": "obsidian-panther", "weight": 6 },
+      { "monster": "geyser-golem", "weight": 7 },
       { "monster": "volcanic-titan", "weight": 3 },
-      { "monster": "inferno-lion", "weight": 2 }
+      { "monster": "inferno-lion", "weight": 2 },
+      { "monster": "ash-phoenix", "weight": 3 },
+      { "monster": "hell-warden", "weight": 2 }
     ]
   }
 ]
