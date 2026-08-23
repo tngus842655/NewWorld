@@ -92,7 +92,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
         },
         {
           "drop": {
-            "itemId": "drift-flag",
+            "itemId": "patched-banner",
             "substats": [],
           },
           "kind": "artifact",
@@ -278,7 +278,7 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
   "totals": {
     "artifacts": [
       {
-        "itemId": "drift-flag",
+        "itemId": "patched-banner",
         "substats": [],
       },
       {

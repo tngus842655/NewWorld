@@ -3,7 +3,7 @@
  * 결정론: 같은 (seed, choices, save 상태)면 언제 어디서 계산해도 같은 일지가 나온다.
  */
 import type { Content } from '../content';
-import type { CrossroadEvent, Region, Reward, Tier } from '../content/schema';
+import type { ArtifactRarity, CrossroadEvent, Region, Reward, Tier } from '../content/schema';
 import { captureChance, shouldUseLure } from './capture';
 import { computePartyPower, enemyPower, partyDamageReduce, resolveClash } from './combat';
 import {
@@ -228,7 +228,14 @@ export function rollArtifact(content: Content, rng: Rng, rarityBonus = 0): Dropp
     weights.heroic += rarityBonus * 0.6;
     weights.legendary += rarityBonus * 0.4;
   }
-  const rarity = pickWeighted(rng, ['common', 'rare', 'heroic', 'legendary'] as const, (r) => weights[r]);
+  // 5단계 전 등급에서 추첨 — 고급(uncommon)이 목록에 빠져 표기 확률과 어긋나던 버그 수정 (2026-08-23)
+  const rarity = pickWeighted(rng, ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const, (r) => weights[r]);
+  return rollArtifactOfRarity(content, rng, rarity);
+}
+
+/** 지정 등급의 랜덤 유물 1개 (부옵션 포함) — 드랍·유물 합성이 공유 */
+export function rollArtifactOfRarity(content: Content, rng: Rng, rarity: ArtifactRarity): DroppedArtifact {
+  const { artifacts } = content.balance;
   const defs = content.artifactsByRarity.get(rarity)!;
   const def = defs[Math.floor(rng() * defs.length)]!;
 
