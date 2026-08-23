@@ -10,10 +10,45 @@ import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
 import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
+import { playSfx } from '../sfx';
 
 /** 최근 일지 접힘 상태 — 탭 이동·재렌더에도 유지 (접힘 기본 5건, 펼치면 아카이브 전체) */
 const JOURNAL_COLLAPSED_COUNT = 5;
 const journalExpanded = signal(false);
+
+// ── 재화 지갑 (앱바에서 이동, 2026-08-23) — 캠프 재료처럼 탭하면 말풍선 설명 ──
+const selCurrency = signal<string | null>(null);
+const CURRENCIES = [
+  { id: 'gold', icon: '💰', name: '골드', gain: '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', use: '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작' },
+  { id: 'dust', icon: '✨', name: '가루', gain: '유물 분해', use: '유물 강화' },
+  { id: 'lures', icon: '🪤', name: '미끼', gain: '캠프에서 제작 (지역 재료 + 골드) · 상점', use: '파견에 자동 적재 [희귀 이상 몬스터 포획률 ×2]' },
+  { id: 'diamonds', icon: '💎', name: '다이아', gain: '월간 출석 (충전은 정식 출시 후)', use: '다이아 상점 [뽑기·모래시계·패키지]' },
+] as const;
+
+function walletCard(): HTMLElement {
+  const { wallet } = save();
+  const sel = selCurrency();
+  const valueOf = (id: (typeof CURRENCIES)[number]['id']): string =>
+    id === 'gold' ? fmtGold(wallet.gold)
+    : id === 'dust' ? fmtGold(wallet.dust)
+    : id === 'lures' ? `${wallet.lures}`
+    : `${wallet.diamonds}`;
+  const tip = CURRENCIES.find((c) => c.id === sel);
+  return el('div.card.wallet', {},
+    ...CURRENCIES.map((c) =>
+      el(`button.wallet-item${sel === c.id ? '.active' : ''}`, {
+        title: c.name,
+        onclick: () => { playSfx('tap'); selCurrency.set(sel === c.id ? null : c.id); },
+      }, `${c.icon} ${valueOf(c.id)}`)),
+    tip
+      ? el('div.wallet-tip', {},
+          el('div.wallet-tip-title', {}, `${tip.icon} ${tip.name}`, el('span.muted.small', {}, `  보유 ${valueOf(tip.id)}`)),
+          el('div.small.muted', {}, `얻기 [${tip.gain}]`),
+          el('div.small.wallet-tip-use', {}, `쓰기 [${tip.use}]`),
+        )
+      : null,
+  );
+}
 
 function expeditionCard(expeditionId: string): HTMLElement {
   const state = save();
@@ -166,6 +201,7 @@ export function renderHome(): HTMLElement {
     : null;
 
   return el('div.screen', {},
+    walletCard(),
     tutorialBanner,
     el('h2.section-title', {}, running.length > 0 ? `원정 현황 (${running.length})` : '원정 현황'),
     running.length === 0

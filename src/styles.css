@@ -79,7 +79,6 @@ body {
 .shop-item .list-row { align-items: flex-start; }
 /* 전체 화면 시트 — 랭킹 등 팝업이 아닌 화면형 오버레이 */
 .sheet-full { height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; }
-.appbar-wallet { display: flex; gap: 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .container { flex: 1; overflow-y: auto; padding: 14px 14px 20px; }
 .tabbar {
   display: flex; border-top: 1px solid var(--line); background: var(--bg2);

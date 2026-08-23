@@ -4,7 +4,7 @@
 import { canCheckIn } from '../core/attendance';
 import { effect } from '../state/signal';
 import { ctx, save } from '../state/store';
-import { el, fmtGold, withScope } from './kit';
+import { el, withScope } from './kit';
 import { renderOverlay } from './overlays';
 import { openRankingBoard } from './rankingSheets';
 import { resetShop } from './shopSheet';
@@ -71,15 +71,7 @@ export function mountApp(root: HTMLElement): void {
           // 비추적 시계 — 매초 헤더 재렌더 방지 (도장 후엔 save 변경으로 즉시 갱신)
         }, '📅', canCheckIn(state, ctx.now()) ? el('span.attend-dot', {}) : null),
       ),
-      el('div.appbar-wallet', {
-        title: '재화 안내 보기',
-        onclick: () => overlay.set({ kind: 'help' }),
-      },
-        el('span', { title: '골드' }, `💰 ${fmtGold(state.wallet.gold)}`),
-        el('span', { title: '가루 (유물 강화)' }, `✨ ${fmtGold(state.wallet.dust)}`),
-        el('span', { title: '미끼 (포획률 ×2)' }, `🪤 ${state.wallet.lures}`),
-        el('span', { title: '다이아 (출석·상점)' }, `💎 ${state.wallet.diamonds}`),
-      ),
+      // 재화는 홈 화면 상단으로 이동 (2026-08-23 사용자) — 재화가 커지면 앱바가 줄바꿈되던 문제
     );
   });
 
