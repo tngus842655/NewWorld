@@ -228,5 +228,16 @@
       "heroic": 0.0625,
       "legendary": 0
     }
+  },
+  "shop": {
+    "monsterGacha": {
+      "normal": { "common": 0.55, "uncommon": 0.25, "rare": 0.15, "heroic": 0.05, "legendary": 0 },
+      "premium": { "common": 0, "uncommon": 0, "rare": 0.75, "heroic": 0.22, "legendary": 0.03 },
+      "goldNormal": { "common": 0.7, "uncommon": 0.22, "rare": 0.08, "heroic": 0, "legendary": 0 }
+    },
+    "artifactGacha": {
+      "standard": { "common": 0.38, "uncommon": 0.27, "rare": 0.22, "heroic": 0.1, "legendary": 0.03 },
+      "premium": { "common": 0, "uncommon": 0, "rare": 0.72, "heroic": 0.23, "legendary": 0.05 }
+    }
   }
 }

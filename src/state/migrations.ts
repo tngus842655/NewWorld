@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 3;
+export const CURRENT_SAVE_VERSION = 4;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -86,9 +86,18 @@ const migrateV2toV3: Migration = (raw) => {
   return data;
 };
 
+/** v3 → v4 (2026-08-23): 상점 — 다이아 지갑 0, 구매 기록 빈 상태 */
+const migrateV3toV4: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['wallet'] = { ...data['wallet'], diamonds: data['wallet']?.['diamonds'] ?? 0 };
+  data['shop'] = { day: '', bought: {}, once: [] };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
+  3: migrateV3toV4,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

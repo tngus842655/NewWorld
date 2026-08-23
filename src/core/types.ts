@@ -67,9 +67,16 @@ export interface LifetimeStats {
   bestPower: number; // 파견 시 유효 전투력 최고 기록
 }
 
+// ── 상점 구매 기록 (v4) ──────────────────────────────────────────────────────
+export interface ShopState {
+  day: string; // 일일 한도 기준일 (로컬 YYYY-MM-DD) — 날짜가 바뀌면 bought 리셋
+  bought: Record<string, number>; // productId → 오늘 구매 수
+  once: string[]; // 1회 한정 구매 기록 (지역 한정은 `${productId}:${regionId}`)
+}
+
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 3; // v3 (2026-08-23): 누적 통계·반복 과업·랭킹 신원 — migrations.ts
+  version: 4; // v4 (2026-08-23): 상점 — 다이아 지갑·구매 기록. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -82,6 +89,7 @@ export interface SaveState {
   wallet: {
     gold: number;
     dust: number;
+    diamonds: number; // 충전 재화 (IAP는 M6 — 그 전 획득처는 출석 이벤트 예정)
     lures: number;
     materials: Record<string, number>;
   };
@@ -92,6 +100,7 @@ export interface SaveState {
   milestones: string[]; // 달성 id 목록 (버프는 로드 시 재계산)
   stats: LifetimeStats;
   tasks: Record<string, number>; // 반복 과업 taskId → 보상 수령 완료 횟수
+  shop: ShopState;
   expeditions: ActiveExpedition[];
   journalArchive: JournalSummary[]; // 최근 20건 요약 — 풀 일지는 시드에서 재생성
   counters: { day: string; adUsed: Record<string, number> };

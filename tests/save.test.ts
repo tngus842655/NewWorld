@@ -42,7 +42,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(3); // v1 → v2 → v3 체인 끝까지
+    expect(migrated.version).toBe(4); // v1 → … → v4 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -88,5 +88,13 @@ describe('세이브 마이그레이션 v2 → v3 (누적 통계·과업·랭킹 
     // 기존 진행은 손대지 않는다
     expect(migrated.wallet.gold).toBe(500);
     expect(migrated.roster).toHaveLength(2);
+  });
+});
+
+describe('세이브 마이그레이션 v3 → v4 (상점)', () => {
+  it('다이아 지갑 0·상점 구매 기록 빈 상태로 시작', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.wallet.diamonds).toBe(0);
+    expect(migrated.shop).toEqual({ day: '', bought: {}, once: [] });
   });
 });

@@ -12,6 +12,7 @@ import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { artifactPickSheet, partyPickSheet } from './pickSheets';
 import { rankingSheet, tasksSheet } from './rankingSheets';
+import { shopSheet } from './shopSheet';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
@@ -38,6 +39,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? helpSheet()
             : current.kind === 'ranking'
               ? rankingSheet()
+            : current.kind === 'shop'
+              ? shopSheet()
             : current.kind === 'tasks'
               ? tasksSheet()
               : current.kind === 'fusion'
@@ -420,12 +423,30 @@ function oddsSheet(): HTMLElement {
     ),
   );
 
+  // 5) 상점 뽑기 확률 — 확률형 아이템 고지 (GDD §9.4)
+  const { shop } = balance;
+  const gachaSection = (title: string, table: Record<string, number>, tags: (r: MonsterRarity) => HTMLElement) => [
+    el('div.small', {}, title),
+    ...rarities.filter((rarity) => (table[rarity] ?? 0) > 0).map((rarity) =>
+      pctBarRow(tags(rarity), table[rarity] ?? 0, `--rar-${rarity}`)),
+  ];
+  const gachaCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🏪 상점 뽑기 확률'),
+    el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다.'),
+    ...gachaSection('🃏 몬스터 뽑기 (골드 상점)', shop.monsterGacha.goldNormal!, rarityTag),
+    ...gachaSection('🃏 몬스터 뽑기 (다이아 상점)', shop.monsterGacha.normal!, rarityTag),
+    ...gachaSection('🌟 고급 몬스터 뽑기', shop.monsterGacha.premium!, rarityTag),
+    ...gachaSection('🏺 유물 발굴', shop.artifactGacha.standard!, rarityTag),
+    ...gachaSection('🔮 고급 유물 발굴', shop.artifactGacha.premium!, rarityTag),
+  );
+
   return sheetShell('확률 정보',
     el('div.muted.small', {}, '아래 확률은 게임 데이터의 실제 값 그대로입니다. 모든 판정은 파견 시 확정된 시드에서 결정됩니다.'),
     captureCard,
     fusionCard,
     ...regionCards,
     artifactOddsCard,
+    gachaCard,
   );
 }
 

@@ -31,7 +31,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
 
   const playerId = ctx.newUid() + ctx.newUid(); // 랭킹용 익명 신원 (추후 구글 로그인 연동 전까지)
   return {
-    version: 3,
+    version: 4,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -44,6 +44,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     wallet: {
       gold: content.balance.starter.gold,
       dust: 0,
+      diamonds: 0,
       lures: content.balance.starter.lures,
       materials: {},
     },
@@ -61,6 +62,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     milestones: [],
     stats: emptyStats(),
     tasks: {},
+    shop: { day: '', bought: {}, once: [] },
     expeditions: [],
     journalArchive: [],
     counters: { day: '', adUsed: {} },

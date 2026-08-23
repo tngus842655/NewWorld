@@ -251,6 +251,44 @@ export const TaskSchema = z.object({
 });
 export type TaskDef = z.infer<typeof TaskSchema>;
 
+// ── 상점 (2026-08-23, GDD §9.4) — 골드/다이아 2관, 상품별 구매 한도 ───────────
+export const MONSTER_GACHA_TABLES = ['normal', 'premium', 'goldNormal'] as const;
+export const ARTIFACT_GACHA_TABLES = ['standard', 'premium'] as const;
+
+export const ShopGoodsSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('bundle'),
+    gold: z.number().int().min(0).default(0),
+    dust: z.number().int().min(0).default(0),
+    lures: z.number().int().min(0).default(0),
+  }),
+  z.object({ kind: z.literal('materials'), countEach: z.number().int().positive() }), // 선택한 해금 지역의 재료 2종 각 n개
+  z.object({ kind: z.literal('regionPack'), materialsEach: z.number().int().positive(), gold: z.number().int().min(0) }),
+  z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
+  z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),
+  z.object({ kind: z.literal('rush') }), // 진행 중 원정 1건 즉시 귀환
+]);
+export type ShopGoods = z.infer<typeof ShopGoodsSchema>;
+
+export const ShopLimitSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('daily'), count: z.number().int().positive() }),
+  z.object({ kind: z.literal('once') }),
+  z.object({ kind: z.literal('oncePerRegion') }),
+]);
+export type ShopLimit = z.infer<typeof ShopLimitSchema>;
+
+export const ShopProductSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  desc: z.string(),
+  shop: z.enum(['gold', 'diamond']),
+  price: z.number().int().positive(),
+  limit: ShopLimitSchema,
+  goods: ShopGoodsSchema,
+});
+export type ShopProduct = z.infer<typeof ShopProductSchema>;
+
 // ── 밸런스 (전역 계수 — 코드에 매직넘버 금지) ────────────────────────────────
 export const BalanceSchema = z.object({
   element: z.object({ same: z.number(), advantage: z.number(), disadvantage: z.number() }),
@@ -336,5 +374,10 @@ export const BalanceSchema = z.object({
     }),
   }),
   starter: z.object({ monsters: z.array(z.string()), gold: z.number().int(), lures: z.number().int() }),
+  shop: z.object({
+    // 뽑기 확률표 — 확률 정보 시트에 그대로 공개 (확률형 아이템 고지 의무)
+    monsterGacha: z.record(z.enum(MONSTER_GACHA_TABLES), z.record(MonsterRaritySchema, z.number())),
+    artifactGacha: z.record(z.enum(ARTIFACT_GACHA_TABLES), z.record(ArtifactRaritySchema, z.number())),
+  }),
 });
 export type Balance = z.infer<typeof BalanceSchema>;

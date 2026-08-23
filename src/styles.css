@@ -40,7 +40,12 @@ body {
   padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg2);
 }
 .appbar-title { font-weight: 700; letter-spacing: 0.5px; color: var(--accent-2); }
+.appbar-icons { display: flex; gap: 10px; align-items: center; }
 .appbar-rank { background: none; border: none; font-size: 21px; padding: 0 2px; cursor: pointer; line-height: 1; }
+/* ── 상점 ── */
+.shop-name { font-weight: 600; font-size: 14px; }
+.shop-buy { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.shop-item .list-row { align-items: flex-start; }
 /* 전체 화면 시트 — 랭킹 등 팝업이 아닌 화면형 오버레이 */
 .sheet-full { height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; }
 .appbar-wallet { display: flex; gap: 10px; font-size: 13px; color: var(--muted); cursor: pointer; }

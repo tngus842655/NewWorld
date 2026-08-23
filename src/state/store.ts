@@ -26,6 +26,7 @@ import {
   type ExpeditionInput,
 } from '../core/expedition';
 import { createInitialSave } from '../core/newgame';
+import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
 import { toast } from '../ui/kit';
 import * as clock from './clock';
@@ -176,6 +177,15 @@ export function craft(recipeId: string): boolean {
     notifyNewTasks(prev, next);
     return true;
   }) !== null;
+}
+
+/** 상점 구매 — 결과는 UI가 연출·안내용으로 사용 */
+export function buyShop(input: ShopBuyInput): ShopBuyResult | null {
+  return act(() => {
+    const result = buyShopProduct(content, save(), input, ctx);
+    save.set(result.save);
+    return result;
+  });
 }
 
 /** 랭킹 닉네임 변경 — 2~12자, 공백 정리 */

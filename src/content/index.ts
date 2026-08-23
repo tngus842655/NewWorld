@@ -12,6 +12,7 @@ import {
   MonsterSchema,
   RecipeSchema,
   RegionSchema,
+  ShopProductSchema,
   SynergiesSchema,
   TaskSchema,
   type ArtifactDef,
@@ -24,6 +25,7 @@ import {
   type Recipe,
   type Region,
   type SetDef,
+  type ShopProduct,
   type SynergyDef,
   type TaskDef,
   type Tribe,
@@ -37,6 +39,7 @@ import milestonesRaw from './data/milestones.json';
 import monstersRaw from './data/monsters.json';
 import recipesRaw from './data/recipes.json';
 import regionsRaw from './data/regions.json';
+import shopRaw from './data/shop.json';
 import synergiesRaw from './data/synergies.json';
 import tasksRaw from './data/tasks.json';
 
@@ -54,6 +57,7 @@ export interface Content {
   sets: ReadonlyMap<string, SetDef>;
   milestones: readonly Milestone[];
   tasks: readonly TaskDef[]; // 반복 과업 (GDD §9.3)
+  shopProducts: readonly ShopProduct[]; // 상점 상품 (GDD §9.4)
   balance: Balance;
 }
 
@@ -80,8 +84,10 @@ export function loadContent(): Content {
   const items = ItemsSchema.parse(itemsRaw);
   const milestones = MilestoneSchema.array().parse(milestonesRaw);
   const tasks = TaskSchema.array().parse(tasksRaw);
+  const shopProducts = ShopProductSchema.array().parse(shopRaw);
   const balance = BalanceSchema.parse(balanceRaw);
   toMap(tasks as { id: string }[], 'task'); // id 중복 검증만
+  toMap(shopProducts as { id: string }[], 'shopProduct');
 
   const monsters = toMap(monsterList, 'monster');
   const regions = toMap(regionList, 'region');
@@ -168,6 +174,7 @@ export function loadContent(): Content {
     sets,
     milestones,
     tasks,
+    shopProducts,
     balance,
   };
 }
