@@ -87,18 +87,17 @@ export function renderCodex(): HTMLElement {
       return el('div.codex-cell.unknown', {}, el('div.codex-q', {}, '?'), el('div.codex-name.muted', {}, '???'));
     });
 
-    // 접힘: 아이콘만 가로 슬라이드 (캠프와 동일 패턴)
-    const iconRow = el('div.roster-row', {}, ...natives.map((monster) => {
-      const entry = state.codex[monster.id];
-      const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
-      if (entry?.captured) {
-        return el('button.roster-icon', { title: monster.name, onclick: openSpecies }, capturedIcon(monster));
-      }
-      if (entry?.seen) {
-        return el('button.roster-icon', { title: '목격', onclick: openSpecies }, monsterIcon(monster.id, { silhouette: true }));
-      }
-      return el('div.micon.roster-unknown', { title: '???' }, el('span.micon-fallback', {}, '?'));
-    }));
+    // 접힘: 아이콘만 가로 슬라이드 — 미지(?) 종은 제외 (2026-08-23 사용자)
+    const discovered = natives.filter((monster) => state.codex[monster.id]?.seen || state.codex[monster.id]?.captured);
+    const iconRow = discovered.length > 0
+      ? el('div.roster-row', {}, ...discovered.map((monster) => {
+          const entry = state.codex[monster.id]!;
+          const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
+          return entry.captured
+            ? el('button.roster-icon', { title: monster.name, onclick: openSpecies }, capturedIcon(monster))
+            : el('button.roster-icon', { title: '목격', onclick: openSpecies }, monsterIcon(monster.id, { silhouette: true }));
+        }))
+      : el('div.muted.small', {}, '아직 발견한 몬스터가 없습니다');
 
     return el('div.card.stack-sm', {},
       el('button.roster-head', {
