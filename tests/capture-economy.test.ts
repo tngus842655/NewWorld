@@ -5,6 +5,7 @@ import {
   buyPartySlot,
   craftRecipe,
   enhanceArtifact,
+  fuseArtifacts,
   fuseMonsters,
   levelUpMonster,
   salvageArtifact,
@@ -162,6 +163,63 @@ describe('카드 합성 (GDD §4.5)', () => {
     expect(result.returnedMonsterId).toBe('dune-pup');
     expect(result.save.roster).toHaveLength(1);
     expect(result.save.roster[0]!.count).toBe(2); // 3 - 2(재료) + 1(반환)
+  });
+});
+
+describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
+  const fixedCtx = (seed: string): CoreCtx => ({ now: () => T0, newSeed: () => seed, newUid: () => 'fused-art' });
+  const commonId = content.artifactsByRarity.get('common')![0]!.id;
+  const uncommonId = content.artifactsByRarity.get('uncommon')![0]!.id;
+  const legendaryId = content.artifactsByRarity.get('legendary')![0]!.id;
+
+  const withArtifacts = (items: { uid: string; itemId: string; enhance?: number }[]) => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
+    save.artifacts = items.map((item) => ({ uid: item.uid, itemId: item.itemId, enhance: item.enhance ?? 0, substats: [] }));
+    return save;
+  };
+
+  it('재료 검증 — 개수·중복·등급 혼합·전설 불가', () => {
+    const save = withArtifacts([
+      { uid: 'a', itemId: commonId }, { uid: 'b', itemId: commonId },
+      { uid: 'u', itemId: uncommonId },
+      { uid: 'l1', itemId: legendaryId }, { uid: 'l2', itemId: legendaryId },
+    ]);
+    expect(() => fuseArtifacts(content, save, { materialUids: ['a'] }, fixedCtx('s'))).toThrow(/2개/);
+    expect(() => fuseArtifacts(content, save, { materialUids: ['a', 'a'] }, fixedCtx('s'))).toThrow(/중복/);
+    expect(() => fuseArtifacts(content, save, { materialUids: ['a', 'u'] }, fixedCtx('s'))).toThrow(/같은 등급/);
+    expect(() => fuseArtifacts(content, save, { materialUids: ['l1', 'l2'] }, fixedCtx('s'))).toThrow(/전설/);
+  });
+
+  it('파견 중 장착한 유물은 재료 불가', () => {
+    const save = withArtifacts([{ uid: 'a', itemId: commonId }, { uid: 'b', itemId: commonId }]);
+    save.expeditions.push(makeExpedition('misty-coast', 'scout', ['dune-pup'], ['a'], 'seed'));
+    expect(() => fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx('s'))).toThrow(/원정 중/);
+  });
+
+  it('성공 — 다음 등급 유물 획득 (강화 0·부옵션 규칙 적용), 재료 2개 소멸', () => {
+    const save = withArtifacts([{ uid: 'a', itemId: commonId, enhance: 2 }, { uid: 'b', itemId: commonId }]);
+    const okSeed = findSeed((s) => streamRng(s, 'fusion-artifact')() < content.balance.fusion.chance.common!);
+    const result = fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx(okSeed));
+    expect(result.success).toBe(true);
+    expect(result.save.artifacts).toHaveLength(1);
+    const got = result.save.artifacts[0]!;
+    expect(got.uid).toBe('fused-art');
+    expect(got.enhance).toBe(0);
+    const def = content.artifacts.get(got.itemId)!;
+    expect(def.rarity).toBe('uncommon');
+    expect(got.substats).toHaveLength(content.balance.artifacts.substatCount.uncommon!);
+  });
+
+  it('실패 — 재료 중 1개는 강화 그대로 보존, 1개만 소멸', () => {
+    const save = withArtifacts([{ uid: 'a', itemId: commonId, enhance: 3 }, { uid: 'b', itemId: commonId, enhance: 1 }]);
+    const failSeed = findSeed((s) => streamRng(s, 'fusion-artifact')() >= content.balance.fusion.chance.common!);
+    const result = fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx(failSeed));
+    expect(result.success).toBe(false);
+    expect(result.save.artifacts).toHaveLength(1);
+    const kept = result.save.artifacts[0]!;
+    expect(kept.uid).toBe(result.returnedUid);
+    expect(['a', 'b']).toContain(kept.uid);
+    expect(kept.enhance).toBe(kept.uid === 'a' ? 3 : 1); // 보존분은 강화 유지
   });
 });
 

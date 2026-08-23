@@ -6,15 +6,17 @@ import { content } from '../../content';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
+import { resetArtifactFusion } from '../artifactFusionSheet';
 import { artifactCard, monsterChip, ownedCp } from '../components';
-import { ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
 import { resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
-// 상단 재료 설명(터치 토글)·지역별 몬스터 접힘 상태 — 화면을 오가도 세션 동안 유지
+// 상단 재료 설명(터치 토글)·지역별 몬스터·등급별 유물 접힘 상태 — 화면을 오가도 세션 동안 유지
 const selMaterialId = signal<string | null>(null);
 const openRegions = signal<Record<string, boolean>>({});
+const openArtifactGroups = signal<Record<string, boolean>>({});
 
 export function renderCamp(): HTMLElement {
   const state = save();
@@ -51,10 +53,37 @@ export function renderCamp(): HTMLElement {
       );
     });
 
-  const artifacts = [...state.artifacts]
-    .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
-    .sort((a, b) => ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity] || a.def.slot.localeCompare(b.def.slot))
-    .map(({ owned, def }) => artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) }));
+  // 유물도 몬스터처럼 등급별 카드 — 기본 접힘(가로 슬라이드 1줄), 펼치면 세로 목록
+  const busyArtifactUids = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactUids));
+  const artifactGroupCards = (['legendary', 'heroic', 'rare', 'uncommon', 'common'] as const)
+    .map((rarity) => ({
+      rarity,
+      items: state.artifacts
+        .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
+        .filter(({ def }) => def.rarity === rarity)
+        .sort((a, b) => b.owned.enhance - a.owned.enhance || a.def.slot.localeCompare(b.def.slot)),
+    }))
+    .filter(({ items }) => items.length > 0)
+    .map(({ rarity, items }) => {
+      const open = openArtifactGroups()[rarity] === true;
+      const cards = items.map(({ owned, def }) =>
+        artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) }));
+      return el('div.card.stack-sm', {},
+        el('button.roster-head', {
+          onclick: () => {
+            playSfx('tap');
+            openArtifactGroups.set({ ...openArtifactGroups(), [rarity]: !open });
+          },
+        },
+          el('span.roster-head-title', {},
+            el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
+            el('span.muted.small', {}, ` ${items.length}개`),
+          ),
+          el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
+        ),
+        open ? el('div.stack-sm', {}, ...cards) : el('div.roster-row', {}, ...cards),
+      );
+    });
 
   const recipes = [...content.recipes.values()].map((recipe) => {
     // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
@@ -160,9 +189,18 @@ export function renderCamp(): HTMLElement {
       : null,
 
     el('h2.section-title', {}, `유물 (${state.artifacts.length})`),
-    el('div.card', {},
-      state.artifacts.length === 0 ? el('span.muted', {}, '원정에서 발굴한 유물이 여기 모입니다') : el('div.stack-sm', {}, ...artifacts),
-    ),
+    ...(artifactGroupCards.length > 0
+      ? artifactGroupCards
+      : [el('div.card', {}, el('span.muted', {}, '원정에서 발굴한 유물이 여기 모입니다'))]),
+    (() => {
+      // 유물 합성 진입 — 파견 중 장착분 제외한 재료 후보 수 (전설은 합성 불가)
+      const fusable = state.artifacts.filter((a) =>
+        !busyArtifactUids.has(a.uid) && content.artifacts.get(a.itemId)?.rarity !== 'legendary').length;
+      return el('div.card.list-row', {},
+        el('span.muted.small', {}, `💠 유물 합성 (재료 ${fusable}개)`),
+        el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),
+      );
+    })(),
 
     el('h2.section-title', {}, '미끼 제작'),
     el('div.card', {}, ...recipes),

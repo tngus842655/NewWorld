@@ -85,8 +85,8 @@ function planBatches(state: SaveState, rarity: MonsterRarity, rounds: number): F
 
 // ── 연출 조각 ────────────────────────────────────────────────────────────────
 
-/** 마법진 — 회전 링 2개 + 중앙 코어. fast=의식 중 (강회전 + 섬광) */
-function ritualCircle(nextRarity: MonsterRarity, core: HTMLElement, fast: boolean): HTMLElement {
+/** 마법진 — 회전 링 2개 + 중앙 코어. fast=의식 중 (강회전 + 섬광). 유물 합성 시트와 공유 */
+export function ritualCircle(nextRarity: MonsterRarity, core: HTMLElement, fast: boolean): HTMLElement {
   const glow = `var(--rar-${nextRarity})`;
   const ring1 = el('div.ritual-ring');
   ring1.style.borderColor = glow;

@@ -7,6 +7,7 @@ import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statA
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { artifactPickSheet, partyPickSheet } from './pickSheets';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
@@ -35,6 +36,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? helpSheet()
               : current.kind === 'fusion'
                 ? fusionSheet()
+                : current.kind === 'artifactFusion'
+                  ? artifactFusionSheet()
                 : current.kind === 'partyPick'
                   ? partyPickSheet()
                 : current.kind === 'artifactPick'
@@ -362,6 +365,7 @@ function oddsSheet(): HTMLElement {
       el('div.small.muted', {}, '· 성공: 해금한 지역의 다음 등급 몬스터 중 랜덤 1종 (미보유 종이면 도감 등록)'),
       el('div.small.muted', {}, '· 실패: 재료 2장 중 1장이 사라지고, 1장은 돌아옵니다'),
       el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
+      el('div.small.muted', {}, '· 유물 합성도 같은 확률입니다 — 같은 등급 유물 2개 → 다음 등급 랜덤 1개 (실패 시 1개 반환)'),
     ),
   );
 

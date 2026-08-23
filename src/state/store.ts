@@ -10,8 +10,11 @@ import {
   enhanceArtifact,
   fuseMonsters,
   levelUpMonster,
+  fuseArtifacts,
   salvageArtifact,
   unlockRegion,
+  type ArtifactFusionInput,
+  type ArtifactFusionResult,
   type FusionInput,
   type FusionResult,
 } from '../core/economy';
@@ -130,6 +133,14 @@ export function awaken(monsterId: string): boolean {
 export function fuse(input: FusionInput): FusionResult | null {
   return act(() => {
     const result = fuseMonsters(content, save(), input, ctx);
+    save.set(result.save);
+    return result;
+  });
+}
+/** 유물 합성 — 카드 합성과 동일 규칙·확률 */
+export function fuseArtifact(input: ArtifactFusionInput): ArtifactFusionResult | null {
+  return act(() => {
+    const result = fuseArtifacts(content, save(), input, ctx);
     save.set(result.save);
     return result;
   });

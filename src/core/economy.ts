@@ -2,8 +2,9 @@
  * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
+import type { ArtifactRarity } from '../content/schema';
 import { findArtifact, findMonster } from './effects';
-import { evaluateNewMilestones } from './expedition';
+import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { enhanceCost, levelUpCost, starUpCost } from './formulas';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
 import { streamRng } from './rng';
@@ -145,6 +146,78 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
   }
 
   return { save: next, success: true, materialRarity: rarity!, resultMonsterId: result.id, isNew, newMilestones };
+}
+
+// ── 유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙, 2026-08-23) ─────────────────
+
+/** 재료: 같은 등급 유물 uid 정확히 balance.fusion.materials개 (파견 중 장착분 불가) */
+export interface ArtifactFusionInput {
+  materialUids: string[];
+}
+
+export interface ArtifactFusionResult {
+  save: SaveState;
+  success: boolean;
+  materialRarity: string;
+  resultUid?: string; // 성공 시 생성된 유물 (강화 0, 부옵션 새로 굴림)
+  resultItemId?: string;
+  returnedUid?: string; // 실패 시 보존된 유물 1개 (강화·부옵션 그대로)
+}
+
+/**
+ * 같은 등급 유물 N개 → 다음 등급 랜덤 유물 1개 도전. 확률은 카드 합성과 공유.
+ * 실패 시 재료 중 1개는 그대로 돌려받는다 (실소모 1개).
+ * 성공 결과는 다음 등급 전체 유물 풀에서 랜덤 — 부옵션은 드랍과 동일 규칙으로 새로 굴린다.
+ */
+export function fuseArtifacts(content: Content, save: SaveState, input: ArtifactFusionInput, ctx: CoreCtx): ArtifactFusionResult {
+  const { fusion } = content.balance;
+  if (input.materialUids.length !== fusion.materials) {
+    throw new GameError('fusion-materials', `재료 유물은 정확히 ${fusion.materials}개여야 합니다`);
+  }
+  if (new Set(input.materialUids).size !== input.materialUids.length) {
+    throw new GameError('fusion-materials', '같은 유물을 중복 지정할 수 없습니다');
+  }
+
+  const RARITY_NEXT: Record<string, ArtifactRarity | null> = {
+    common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
+  };
+  let rarity: string | null = null;
+  for (const uid of input.materialUids) {
+    assertArtifactFree(save, uid);
+    const owned = findArtifact(save, uid);
+    const def = content.artifacts.get(owned.itemId);
+    if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${owned.itemId}`);
+    if (rarity === null) rarity = def.rarity;
+    else if (rarity !== def.rarity) throw new GameError('fusion-rarity', '재료는 같은 등급이어야 합니다');
+  }
+  const nextRarity = RARITY_NEXT[rarity!];
+  if (!nextRarity) throw new GameError('fusion-legendary', '전설 유물은 합성할 수 없습니다');
+  const chance = fusion.chance[rarity as keyof typeof fusion.chance] ?? 0;
+
+  const next = structuredClone(save);
+  const removeUid = (uid: string) => {
+    next.artifacts = next.artifacts.filter((a) => a.uid !== uid);
+    for (const team of next.teams) {
+      team.artifactUids = team.artifactUids.filter((id) => id !== uid); // 분해와 동일 — 프리셋 정리
+    }
+  };
+
+  const rng = streamRng(ctx.newSeed(), 'fusion-artifact');
+  const success = rng() < chance;
+  if (!success) {
+    // 실패 — 재료 중 1개를 랜덤으로 보존 (강화·부옵션 그대로)
+    const returnedUid = input.materialUids[Math.floor(rng() * input.materialUids.length)]!;
+    for (const uid of input.materialUids) {
+      if (uid !== returnedUid) removeUid(uid);
+    }
+    return { save: next, success: false, materialRarity: rarity!, returnedUid };
+  }
+
+  for (const uid of input.materialUids) removeUid(uid);
+  const drop = rollArtifactOfRarity(content, rng, nextRarity);
+  const resultUid = ctx.newUid();
+  next.artifacts.push({ uid: resultUid, itemId: drop.itemId, enhance: 0, substats: [...drop.substats] });
+  return { save: next, success: true, materialRarity: rarity!, resultUid, resultItemId: drop.itemId };
 }
 
 export function craftRecipe(content: Content, save: SaveState, recipeId: string): SaveState {
