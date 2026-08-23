@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 2;
+export const CURRENT_SAVE_VERSION = 3;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -59,8 +59,36 @@ const migrateV1toV2: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v2 → v3 (2026-08-23): 랭킹·반복 과업 기반 추가.
+ * - stats: 누적 통계 0에서 시작 (과거 원정은 요약 20건뿐이라 소급하지 않는다 — 도감·유물 점수는 파생이라 무손실)
+ * - tasks: 과업 수령 기록 빈 객체
+ * - profile: 랭킹용 익명 신원(playerId/secret)·닉네임 — 세이브에 저장되어 내보내기로 기기 이동
+ */
+const migrateV2toV3: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['stats'] = {
+    expeditions: { scout: 0, standard: 0, deep: 0 },
+    wipes: { scout: 0, standard: 0, deep: 0 },
+    captures: 0,
+    crafts: 0,
+    fusions: 0,
+    bestPower: 0,
+  };
+  data['tasks'] = {};
+  const playerId = crypto.randomUUID().replaceAll('-', '');
+  data['profile'] = {
+    ...data['profile'],
+    playerId,
+    playerSecret: crypto.randomUUID().replaceAll('-', ''),
+    nickname: `개척자-${playerId.slice(0, 4)}`,
+  };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
+  2: migrateV2toV3,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

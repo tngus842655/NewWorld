@@ -21,6 +21,7 @@ import {
 import { clamp } from './formulas';
 import { isRegionUnlocked, teamCount } from './progression';
 import { pickWeighted, randInt, streamRng, type Rng } from './rng';
+import { settleTasks, type TaskCompletion } from './tasks';
 import {
   GameError,
   type ActiveExpedition,
@@ -113,6 +114,10 @@ export function createExpedition(
   const next = structuredClone(save);
   next.wallet.lures -= luresLoaded;
   next.expeditions.push(expedition);
+  // 최고 유효 전투력 기록 — 랭킹 전투력 카테고리 (GDD §9.3)
+  const party = input.partyIds.map((id) => save.roster.find((m) => m.monsterId === id)!);
+  const power = computePartyPower(content, effects, party, region, input.tier).total;
+  next.stats.bestPower = Math.max(next.stats.bestPower, Math.round(power));
   return { save: next, expedition };
 }
 
@@ -609,6 +614,7 @@ export interface ClaimResult {
   save: SaveState;
   journal: Journal;
   newMilestones: string[];
+  newTasks: TaskCompletion[];
 }
 
 export function claimExpedition(
@@ -690,7 +696,13 @@ export function claimExpedition(
     next.wallet.dust += milestone.reward.dust ?? 0;
   }
 
-  return { save: next, journal, newMilestones };
+  // 누적 통계 + 반복 과업 정산 (GDD §9.3)
+  next.stats.expeditions[expedition.tier] += 1;
+  if (journal.wiped) next.stats.wipes[expedition.tier] += 1;
+  next.stats.captures += journal.entries.filter((e) => e.type === 'encounter' && e.capture?.success).length;
+  const newTasks = settleTasks(content, next);
+
+  return { save: next, journal, newMilestones, newTasks };
 }
 
 /** 아직 미달성인 마일스톤 중 새로 조건을 채운 것들 — 정산·합성 등 도감이 변한 직후 호출 */

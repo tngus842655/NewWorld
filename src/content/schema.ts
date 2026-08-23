@@ -233,6 +233,24 @@ export const MilestoneSchema = z.object({
 });
 export type Milestone = z.infer<typeof MilestoneSchema>;
 
+// ── 반복 과업 (2026-08-23, GDD §9.3) — 업적(마일스톤)과 달리 카운터 기반 무한 반복 ──
+export const TaskCounterSchema = z.enum(['expedition', 'capture', 'craft', 'fusion']);
+export type TaskCounter = z.infer<typeof TaskCounterSchema>;
+
+export const TaskSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  counter: TaskCounterSchema, // 세이브 stats의 어느 누적 카운터를 보는지
+  every: z.number().int().positive(), // N회마다 1회 달성
+  reward: z.object({
+    gold: z.number().int().min(0).default(0), // 소모 재화만 — 영구 버프는 업적 전용 (중첩 방지)
+    dust: z.number().int().min(0).default(0),
+  }),
+  score: z.number().int().positive(), // 달성 1회당 랭킹 점수
+});
+export type TaskDef = z.infer<typeof TaskSchema>;
+
 // ── 밸런스 (전역 계수 — 코드에 매직넘버 금지) ────────────────────────────────
 export const BalanceSchema = z.object({
   element: z.object({ same: z.number(), advantage: z.number(), disadvantage: z.number() }),

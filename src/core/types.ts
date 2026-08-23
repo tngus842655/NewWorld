@@ -57,14 +57,27 @@ export interface CodexEntry {
   firstCapturedAt?: number;
 }
 
+// ── 누적 통계 (랭킹·반복 과업의 원천 — v3) ───────────────────────────────────
+export interface LifetimeStats {
+  expeditions: Record<Tier, number>; // 정산 완료 수 (전멸 포함)
+  wipes: Record<Tier, number>; // 그중 전멸 귀환
+  captures: number; // 포획 성공 누적 (신규 + 중복)
+  crafts: number; // 미끼 제작 횟수
+  fusions: number; // 합성 시도 (카드 + 유물)
+  bestPower: number; // 파견 시 유효 전투력 최고 기록
+}
+
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 2; // v2 (2026-08-23): 로스터 종 단위 통합·정수 폐기 — migrations.ts
+  version: 3; // v3 (2026-08-23): 누적 통계·반복 과업·랭킹 신원 — migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
     partySlots: number;
     flags: Record<string, boolean>; // firstArtifactDropped 등 1회성 플래그
+    playerId: string; // 랭킹용 익명 신원 — 세이브에 저장되어 내보내기로 이동 (추후 구글 로그인 연동 예정)
+    playerSecret: string; // 랭킹 제출 검증 토큰 (서버에 해시로 보관)
+    nickname: string;
   };
   wallet: {
     gold: number;
@@ -77,6 +90,8 @@ export interface SaveState {
   teams: TeamLoadout[];
   codex: Record<string, CodexEntry>;
   milestones: string[]; // 달성 id 목록 (버프는 로드 시 재계산)
+  stats: LifetimeStats;
+  tasks: Record<string, number>; // 반복 과업 taskId → 보상 수령 완료 횟수
   expeditions: ActiveExpedition[];
   journalArchive: JournalSummary[]; // 최근 20건 요약 — 풀 일지는 시드에서 재생성
   counters: { day: string; adUsed: Record<string, number> };

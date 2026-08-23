@@ -13,6 +13,7 @@ import {
   RecipeSchema,
   RegionSchema,
   SynergiesSchema,
+  TaskSchema,
   type ArtifactDef,
   type ArtifactRarity,
   type Balance,
@@ -24,6 +25,7 @@ import {
   type Region,
   type SetDef,
   type SynergyDef,
+  type TaskDef,
   type Tribe,
 } from './schema';
 
@@ -36,6 +38,7 @@ import monstersRaw from './data/monsters.json';
 import recipesRaw from './data/recipes.json';
 import regionsRaw from './data/regions.json';
 import synergiesRaw from './data/synergies.json';
+import tasksRaw from './data/tasks.json';
 
 export interface Content {
   monsters: ReadonlyMap<string, Monster>;
@@ -50,6 +53,7 @@ export interface Content {
   artifactsByRarity: ReadonlyMap<ArtifactRarity, readonly ArtifactDef[]>;
   sets: ReadonlyMap<string, SetDef>;
   milestones: readonly Milestone[];
+  tasks: readonly TaskDef[]; // 반복 과업 (GDD §9.3)
   balance: Balance;
 }
 
@@ -75,7 +79,9 @@ export function loadContent(): Content {
   const recipeList = RecipeSchema.array().parse(recipesRaw);
   const items = ItemsSchema.parse(itemsRaw);
   const milestones = MilestoneSchema.array().parse(milestonesRaw);
+  const tasks = TaskSchema.array().parse(tasksRaw);
   const balance = BalanceSchema.parse(balanceRaw);
+  toMap(tasks as { id: string }[], 'task'); // id 중복 검증만
 
   const monsters = toMap(monsterList, 'monster');
   const regions = toMap(regionList, 'region');
@@ -161,6 +167,7 @@ export function loadContent(): Content {
     artifactsByRarity,
     sets,
     milestones,
+    tasks,
     balance,
   };
 }

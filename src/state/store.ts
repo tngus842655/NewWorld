@@ -68,6 +68,19 @@ function act<T>(fn: () => T): T | null {
   }
 }
 
+/** 반복 과업 달성 알림 — 코어가 tasks 카운트를 올려두면 이전 상태와의 차이로 감지해 토스트 */
+function notifyNewTasks(prev: SaveState, next: SaveState): void {
+  for (const task of content.tasks) {
+    const diff = (next.tasks[task.id] ?? 0) - (prev.tasks[task.id] ?? 0);
+    if (diff <= 0) continue;
+    const rewards = [
+      task.reward.gold > 0 ? `골드 ${task.reward.gold * diff}` : null,
+      task.reward.dust > 0 ? `가루 ${task.reward.dust * diff}` : null,
+    ].filter(Boolean).join(' · ');
+    toast(`${task.icon} 과업 달성 — ${task.name}${diff > 1 ? ` ×${diff}` : ''} (${rewards})`, 'ok');
+  }
+}
+
 export function dispatchExpedition(input: ExpeditionInput): boolean {
   return (
     act(() => {
@@ -93,12 +106,14 @@ export function dispatchExpedition(input: ExpeditionInput): boolean {
 
 export function claim(expeditionId: string): { journal: Journal; newMilestones: string[] } | null {
   return act(() => {
-    const result = claimExpedition(content, save(), expeditionId, ctx);
+    const prev = save();
+    const result = claimExpedition(content, prev, expeditionId, ctx);
     let next = result.save;
     if (!next.profile.tutorialDone) {
       next = { ...next, profile: { ...next.profile, tutorialDone: true } };
     }
     save.set(next);
+    notifyNewTasks(prev, next);
     return { journal: result.journal, newMilestones: result.newMilestones };
   });
 }
@@ -132,26 +147,46 @@ export function awaken(monsterId: string): boolean {
 /** 카드 합성 — 결과를 UI 연출용으로 그대로 돌려준다 (실패도 정상 결과) */
 export function fuse(input: FusionInput): FusionResult | null {
   return act(() => {
-    const result = fuseMonsters(content, save(), input, ctx);
+    const prev = save();
+    const result = fuseMonsters(content, prev, input, ctx);
     save.set(result.save);
+    notifyNewTasks(prev, result.save);
     return result;
   });
 }
 /** 유물 합성 — 카드 합성과 동일 규칙·확률 */
 export function fuseArtifact(input: ArtifactFusionInput): ArtifactFusionResult | null {
   return act(() => {
-    const result = fuseArtifacts(content, save(), input, ctx);
+    const prev = save();
+    const result = fuseArtifacts(content, prev, input, ctx);
     save.set(result.save);
+    notifyNewTasks(prev, result.save);
     return result;
   });
 }
 
 export function craft(recipeId: string): boolean {
   return act(() => {
-    save.set(craftRecipe(content, save(), recipeId));
+    const prev = save();
+    const next = craftRecipe(content, prev, recipeId);
+    save.set(next);
     toast('제작 완료', 'ok');
+    notifyNewTasks(prev, next);
     return true;
   }) !== null;
+}
+
+/** 랭킹 닉네임 변경 — 2~12자, 공백 정리 */
+export function setNickname(raw: string): boolean {
+  const nickname = raw.trim().slice(0, 12);
+  if (nickname.length < 2) {
+    toast('닉네임은 2~12자로 입력해 주세요', 'error');
+    return false;
+  }
+  const state = save();
+  save.set({ ...state, profile: { ...state.profile, nickname } });
+  toast('닉네임을 변경했습니다', 'ok');
+  return true;
 }
 export function enhance(uid: string): boolean {
   return act(() => {

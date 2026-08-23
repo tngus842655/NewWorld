@@ -8,6 +8,7 @@ import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { enhanceCost, investedEnhanceDust, levelUpCost, starUpCost } from './formulas';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
 import { streamRng } from './rng';
+import { settleTasks } from './tasks';
 import { GameError, type CoreCtx, type SaveState } from './types';
 
 function spendGold(save: SaveState, amount: number): void {
@@ -105,6 +106,7 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
     findMonster(next, material.monsterId).count -= material.count;
   }
 
+  next.stats.fusions += 1;
   const rng = streamRng(ctx.newSeed(), 'fusion');
   const success = rng() < chance;
   if (!success) {
@@ -112,6 +114,7 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
     const usedPool: string[] = input.materials.flatMap((m) => Array.from({ length: m.count }, () => m.monsterId));
     const returnedMonsterId = usedPool[Math.floor(rng() * usedPool.length)]!;
     findMonster(next, returnedMonsterId).count += 1;
+    settleTasks(content, next);
     return { save: next, success: false, materialRarity: rarity!, returnedMonsterId, newMilestones: [] };
   }
 
@@ -144,6 +147,7 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
     next.wallet.gold += milestone.reward.gold ?? 0;
     next.wallet.dust += milestone.reward.dust ?? 0;
   }
+  settleTasks(content, next);
 
   return { save: next, success: true, materialRarity: rarity!, resultMonsterId: result.id, isNew, newMilestones };
 }
@@ -206,6 +210,7 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   // 소멸분의 강화 투자 가루는 전액 환급 (재화 보존 원칙 — 보존된 재료는 강화가 그대로라 환급 없음)
   const investedOf = (uid: string) => investedEnhanceDust(findArtifact(save, uid).enhance, content.balance);
 
+  next.stats.fusions += 1;
   const rng = streamRng(ctx.newSeed(), 'fusion-artifact');
   const success = rng() < chance;
   if (!success) {
@@ -219,6 +224,7 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
       }
     }
     next.wallet.dust += refundedDust;
+    settleTasks(content, next);
     return { save: next, success: false, materialRarity: rarity!, returnedUid, refundedDust };
   }
 
@@ -231,6 +237,7 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   const drop = rollArtifactOfRarity(content, rng, nextRarity);
   const resultUid = ctx.newUid();
   next.artifacts.push({ uid: resultUid, itemId: drop.itemId, enhance: 0, substats: [...drop.substats] });
+  settleTasks(content, next);
   return { save: next, success: true, materialRarity: rarity!, resultUid, resultItemId: drop.itemId, refundedDust };
 }
 
@@ -248,6 +255,8 @@ export function craftRecipe(content: Content, save: SaveState, recipeId: string)
     next.wallet.materials[materialId] = have - count;
   }
   next.wallet.lures += recipe.output.lures;
+  next.stats.crafts += 1;
+  settleTasks(content, next); // 반복 과업 — 보상은 제자리 지급, 알림은 store가 tasks 변화로 감지
   return next;
 }
 

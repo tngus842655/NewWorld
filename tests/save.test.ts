@@ -42,7 +42,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(3); // v1 → v2 → v3 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -62,10 +62,31 @@ describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐�
     expect((migrated.teams[0] as unknown as Record<string, unknown>)['partyUids']).toBeUndefined();
   });
 
-  it('v2 세이브는 그대로 통과, 미지 버전은 null', () => {
+  it('최신 세이브는 그대로 통과, 미지 버전은 null', () => {
     const migrated = migrateSave(v1Save())!;
     expect(migrateSave(structuredClone(migrated))).toEqual(migrated);
     expect(migrateSave({ version: 99 })).toBeNull();
     expect(migrateSave({ version: 0 })).toBeNull();
+  });
+});
+
+describe('세이브 마이그레이션 v2 → v3 (누적 통계·과업·랭킹 신원)', () => {
+  it('stats·tasks 기본값과 익명 신원을 만든다', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.stats).toEqual({
+      expeditions: { scout: 0, standard: 0, deep: 0 },
+      wipes: { scout: 0, standard: 0, deep: 0 },
+      captures: 0,
+      crafts: 0,
+      fusions: 0,
+      bestPower: 0,
+    });
+    expect(migrated.tasks).toEqual({});
+    expect(migrated.profile.playerId).toMatch(/^[0-9a-f]{32}$/);
+    expect(migrated.profile.playerSecret).toMatch(/^[0-9a-f]{32}$/);
+    expect(migrated.profile.nickname).toBe(`개척자-${migrated.profile.playerId.slice(0, 4)}`);
+    // 기존 진행은 손대지 않는다
+    expect(migrated.wallet.gold).toBe(500);
+    expect(migrated.roster).toHaveLength(2);
   });
 });

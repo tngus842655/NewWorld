@@ -1,0 +1,38 @@
+[
+  {
+    "id": "task-expedition",
+    "name": "원정 개척단",
+    "icon": "🧭",
+    "counter": "expedition",
+    "every": 5,
+    "reward": { "gold": 600 },
+    "score": 12
+  },
+  {
+    "id": "task-capture",
+    "name": "포획 전문가",
+    "icon": "🎯",
+    "counter": "capture",
+    "every": 20,
+    "reward": { "gold": 500, "dust": 30 },
+    "score": 10
+  },
+  {
+    "id": "task-craft",
+    "name": "미끼 장인",
+    "icon": "🪤",
+    "counter": "craft",
+    "every": 10,
+    "reward": { "gold": 400 },
+    "score": 5
+  },
+  {
+    "id": "task-fusion",
+    "name": "합성 연구자",
+    "icon": "🧬",
+    "counter": "fusion",
+    "every": 5,
+    "reward": { "dust": 50 },
+    "score": 5
+  }
+]
