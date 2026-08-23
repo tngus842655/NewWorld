@@ -127,7 +127,7 @@ export const RegionSchema = z.object({
 });
 export type Region = z.infer<typeof RegionSchema>;
 
-export const MaterialSchema = z.object({ id: z.string(), name: z.string(), icon: z.string(), region: z.string() });
+export const MaterialSchema = z.object({ id: z.string(), name: z.string(), icon: z.string(), region: z.string(), desc: z.string().min(1) });
 export type Material = z.infer<typeof MaterialSchema>;
 
 // ── 시너지 ───────────────────────────────────────────────────────────────────

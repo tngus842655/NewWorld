@@ -426,8 +426,29 @@ body.overlay-open .container { overflow: hidden; }
 @keyframes jup { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ── 기타 ── */
-.wallet { display: flex; gap: 12px; font-size: 14px; flex-wrap: wrap; }
-.wallet-item { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wallet { display: flex; gap: 8px; font-size: 14px; flex-wrap: wrap; align-items: center; }
+.wallet-item {
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+  background: none; border: 1px solid transparent; border-radius: 9px; color: var(--text);
+  font-size: inherit; padding: 3px 7px; cursor: pointer;
+}
+.wallet-item.active { background: var(--bg3); border-color: var(--accent); }
+/* 터치한 재료 설명 말풍선 — 아이콘 줄 바로 아래 */
+.wallet-tip {
+  width: 100%; background: var(--bg3); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 11px; display: flex; flex-direction: column; gap: 3px;
+}
+.wallet-tip-title { font-weight: 600; font-size: 13px; }
+.wallet-tip-use { color: var(--accent-2); }
+
+/* 캠프 몬스터 — 지역별 카드: 접힘은 가로 슬라이드 1줄, 펼침은 그리드 */
+.roster-head {
+  display: flex; justify-content: space-between; align-items: center; width: 100%;
+  background: none; border: none; padding: 0; color: var(--text);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.roster-row { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }
+.roster-row .mchip { flex: none; width: 158px; }
 .cost-short { color: var(--bad); }
 #toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 6px; width: min(400px, 92vw); }
 .toast {

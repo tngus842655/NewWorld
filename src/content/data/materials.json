@@ -1,10 +1,10 @@
 [
-  { "id": "salt-bloom", "name": "소금꽃", "icon": "🧂", "region": "misty-coast" },
-  { "id": "tide-shell", "name": "조가비", "icon": "🐚", "region": "misty-coast" },
-  { "id": "dew-branch", "name": "이슬가지", "icon": "🌿", "region": "whispering-woods" },
-  { "id": "spirit-moss", "name": "정령이끼", "icon": "🍀", "region": "whispering-woods" },
-  { "id": "grave-reed", "name": "무덤갈대", "icon": "🌾", "region": "sunken-marsh" },
-  { "id": "chill-amber", "name": "한기호박", "icon": "🧊", "region": "sunken-marsh" },
-  { "id": "ember-core", "name": "잿불핵", "icon": "🔥", "region": "ashen-volcano" },
-  { "id": "obsidian-shard", "name": "흑요석조각", "icon": "🪨", "region": "ashen-volcano" }
+  { "id": "salt-bloom", "name": "소금꽃", "icon": "🧂", "region": "misty-coast", "desc": "새벽 바위틈에 피는 소금 결정. 혀에 대면 바다 안개 맛이 난다." },
+  { "id": "tide-shell", "name": "조가비", "icon": "🐚", "region": "misty-coast", "desc": "밀물이 두고 간 무지갯빛 껍데기. 귀에 대면 아직 파도 소리가 난다." },
+  { "id": "dew-branch", "name": "이슬가지", "icon": "🌿", "region": "whispering-woods", "desc": "밤새 맺힌 이슬을 머금은 가지. 꺾어도 물기가 마르지 않는다." },
+  { "id": "spirit-moss", "name": "정령이끼", "icon": "🍀", "region": "whispering-woods", "desc": "정령이 잠든 자리에만 자라는 이끼. 어둠 속에서 은은하게 빛난다." },
+  { "id": "grave-reed", "name": "무덤갈대", "icon": "🌾", "region": "sunken-marsh", "desc": "가라앉은 것들 위에서 자라는 갈대. 바람이 없어도 흔들린다." },
+  { "id": "chill-amber", "name": "한기호박", "icon": "🧊", "region": "sunken-marsh", "desc": "얼어붙은 수액이 그대로 굳은 호박. 쥐고 있으면 손끝이 시리다." },
+  { "id": "ember-core", "name": "잿불핵", "icon": "🔥", "region": "ashen-volcano", "desc": "꺼지지 않는 불씨가 갇힌 돌. 재 속에서도 온기가 돈다." },
+  { "id": "obsidian-shard", "name": "흑요석조각", "icon": "🪨", "region": "ashen-volcano", "desc": "화산 유리의 날카로운 조각. 빛을 삼켜 검게 반짝인다." }
 ]

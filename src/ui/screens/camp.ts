@@ -4,6 +4,7 @@
  */
 import { content } from '../../content';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
+import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
 import { ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
@@ -11,16 +12,44 @@ import { resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
+// 상단 재료 설명(터치 토글)·지역별 몬스터 접힘 상태 — 화면을 오가도 세션 동안 유지
+const selMaterialId = signal<string | null>(null);
+const openRegions = signal<Record<string, boolean>>({});
+
 export function renderCamp(): HTMLElement {
   const state = save();
   const busyIds = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyIds));
 
-  const roster = [...state.roster]
-    .sort((a, b) => ownedCp(b) - ownedCp(a))
-    .map((owned) => monsterChip(owned, {
-      onclick: () => overlay.set({ kind: 'monster', monsterId: owned.monsterId }),
-      onExpedition: busyIds.has(owned.monsterId),
-    }));
+  // 몬스터는 지역별 카드로 — 기본은 접힘(가로 슬라이드 1줄), 펼치면 전체 그리드
+  const rosterCards = content.regionList
+    .map((region) => ({
+      region,
+      owned: state.roster
+        .filter((m) => content.monsters.get(m.monsterId)?.habitat === region.id)
+        .sort((a, b) =>
+          ARTIFACT_RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - ARTIFACT_RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
+          || ownedCp(b) - ownedCp(a)),
+    }))
+    .filter(({ owned }) => owned.length > 0)
+    .map(({ region, owned }) => {
+      const open = openRegions()[region.id] === true;
+      const chips = owned.map((o) => monsterChip(o, {
+        onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
+        onExpedition: busyIds.has(o.monsterId),
+      }));
+      return el('div.card.stack-sm', {},
+        el('button.roster-head', {
+          onclick: () => {
+            playSfx('tap');
+            openRegions.set({ ...openRegions(), [region.id]: !open });
+          },
+        },
+          el('span', {}, `${region.icon} ${region.name} (${owned.length})`),
+          el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
+        ),
+        open ? el('div.chips', {}, ...chips) : el('div.roster-row', {}, ...chips),
+      );
+    });
 
   const artifacts = [...state.artifacts]
     .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
@@ -61,12 +90,39 @@ export function renderCamp(): HTMLElement {
   for (const [id, count] of Object.entries(state.wallet.materials)) {
     if (count > 0) shownMaterialIds.add(id); // 미해금 지역 재료도 보유분이 있으면 표시
   }
+  const selMaterial = selMaterialId();
   const materialChips = [...content.materials.values()]
     .filter((material) => shownMaterialIds.has(material.id))
     .map((material) =>
-      el('span.wallet-item', { title: `${material.name} (${content.regions.get(material.region)?.name})` },
-        `${material.icon} ${state.wallet.materials[material.id] ?? 0}`),
+      el(`button.wallet-item${selMaterial === material.id ? '.active' : ''}`, {
+        title: material.name,
+        onclick: () => { playSfx('tap'); selMaterialId.set(selMaterial === material.id ? null : material.id); },
+      }, `${material.icon} ${state.wallet.materials[material.id] ?? 0}`),
     );
+
+  // 터치한 재료의 이름·설명·쓰임을 아이콘 줄 바로 아래 말풍선으로 (쓰임은 레시피·해금 조건에서 도출)
+  const tipMaterial = selMaterial ? content.materials.get(selMaterial) : null;
+  const materialTip = tipMaterial && shownMaterialIds.has(tipMaterial.id)
+    ? (() => {
+        const region = content.regions.get(tipMaterial.region);
+        const uses = [
+          ...[...content.recipes.values()]
+            .filter((recipe) => (recipe.cost.materials[tipMaterial.id] ?? 0) > 0)
+            .map((recipe) => `${recipe.name} 제작`),
+          ...content.regionList
+            .filter((r) => (r.unlock.materials?.[tipMaterial.id] ?? 0) > 0)
+            .map((r) => `${r.icon} ${r.name} 해금`),
+        ];
+        return el('div.wallet-tip', {},
+          el('div.wallet-tip-title', {},
+            `${tipMaterial.icon} ${tipMaterial.name}`,
+            el('span.muted.small', {}, `  ${region?.icon ?? ''} ${region?.name ?? ''} · 보유 ${state.wallet.materials[tipMaterial.id] ?? 0}`),
+          ),
+          el('div.small.muted', {}, tipMaterial.desc),
+          uses.length > 0 ? el('div.small.wallet-tip-use', {}, `쓰임 — ${uses.join(' · ')}`) : null,
+        );
+      })()
+    : null;
 
   const slotUnlock = nextPartySlotUnlock(content, state);
 
@@ -75,10 +131,11 @@ export function renderCamp(): HTMLElement {
       ...(materialChips.length > 0
         ? materialChips
         : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
+      materialTip,
     ),
 
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
-    el('div.card', {}, el('div.chips', {}, ...roster)),
+    ...(rosterCards.length > 0 ? rosterCards : [el('div.card', {}, el('span.muted', {}, '아직 몬스터가 없습니다 — 원정에서 포획해 보세요'))]),
     (() => {
       // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
       const spareTotal = state.roster.reduce((sum, m) => sum + Math.max(0, m.count - 1), 0);
