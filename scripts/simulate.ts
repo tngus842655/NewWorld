@@ -53,6 +53,7 @@ const args = process.argv.slice(2);
 const DAYS = Number(args[args.indexOf('--days') + 1] || 7) || 7;
 const jsonIdx = args.indexOf('--json');
 const JSON_OUT = jsonIdx >= 0 ? args[jsonIdx + 1] : null;
+const CODEX_MODE = args.includes('--codex'); // 도감 우선 파견 (지역 24종 채우기 속도 측정용)
 
 // ── 봇 로직 ──────────────────────────────────────────────────────────────────
 
@@ -290,6 +291,14 @@ function simulate(strategy: Strategy): SimResult {
         const power = partyPowerOf(save, party, artifacts, r.id, tier);
         if (power >= r.recommendedCp * strategy.safety) region = r;
       }
+      // 도감 우선 모드(--codex): 감당 가능한 지역 중 24종 미달인 가장 앞 지역을 돈다 (실유저의 도감 채우기 행동)
+      if (CODEX_MODE) {
+        const counts = capturedCounts(content, save);
+        const target = unlocked.find((r) =>
+          (counts.byRegion.get(r.id) ?? 0) < 24 &&
+          partyPowerOf(save, party, artifacts, r.id, tier) >= r.recommendedCp * strategy.safety);
+        if (target) region = target;
+      }
 
       const result = (() => {
         try {
@@ -325,6 +334,8 @@ function simulate(strategy: Strategy): SimResult {
         wipes,
         runs,
         unlocked: content.regionList.filter((r) => isRegionUnlocked(content, save, r.id)).map((r) => r.order).join(''),
+        // 지역별 도감 수 — 업적 계단 도달 일차 측정용 (2026-08-23)
+        byRegion: Object.fromEntries(content.regionList.map((r) => [r.id, counts.byRegion.get(r.id) ?? 0])),
       });
     }
   }
@@ -371,6 +382,14 @@ for (const result of results) {
       return `${REGION_LABEL[id] ?? id} D${day}(목표 D${lo}~${hi}) ${mark}`;
     });
   console.log(`  해금: ${unlocks.length > 0 ? unlocks.join(' · ') : '없음'}`);
+  // 지역 도감 24종(업적 9단계, 완전 정복 제외) 도달 일차
+  const codexGoals = content.regionList.map((region) => {
+    const label = region.id === 'misty-coast' ? '해안' : (REGION_LABEL[region.id] ?? region.id);
+    const hit = result.days.find((row: any) => (row.byRegion?.[region.id] ?? 0) >= 24);
+    const last = result.days[result.days.length - 1] as any;
+    return `${label} ${hit ? `D${hit.day}` : `미달(${last?.byRegion?.[region.id] ?? 0}/24)`}`;
+  });
+  console.log(`  도감 24종 도달: ${codexGoals.join(' · ')}`);
   console.log(`  총계: 런 ${result.totals.runs} · 전멸 ${result.totals.wipes} · 유물 ${result.totals.artifacts} · 전설 목격 ${result.totals.legendarySeen ? 'O' : 'X'}`);
 }
 
