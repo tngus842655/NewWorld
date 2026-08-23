@@ -10,7 +10,7 @@ import { signal } from '../state/signal';
 import { buyShop, nowTick, save } from '../state/store';
 import { hourglassIcon } from './components';
 import { askConfirm } from './dialog';
-import { MONSTER_RARITY_LABEL, ARTIFACT_RARITY_LABEL, el, fmtGold, fmtRemain, toast } from './kit';
+import { MONSTER_RARITY_LABEL, ARTIFACT_RARITY_LABEL, el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -46,9 +46,6 @@ function purchase(product: ShopProduct): void {
       const def = content.artifacts.get(granted.artifactItemId)!;
       playSfx('artifact');
       toast(`🏺 [${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name} 획득!`, 'ok');
-    } else if (granted.rushedExpeditionId) {
-      playSfx('confirm');
-      toast('⏩ 원정대가 즉시 귀환했습니다', 'ok');
     } else if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약 (+골드는 병기)
       playSfx('treasure');
@@ -94,13 +91,6 @@ function productCard(product: ShopProduct): HTMLElement {
 
   const shortFunds = product.shop === 'gold' ? state.wallet.gold < product.price : state.wallet.diamonds < product.price;
 
-  // rush — 진행 중 원정이 있어야
-  const running = state.expeditions.filter((e) => !e.claimed && e.endsAt > now);
-  const rushTarget = product.goods.kind === 'rush'
-    ? [...running].sort((a, b) => b.endsAt - a.endsAt)[0]
-    : undefined;
-  const rushUnavailable = product.goods.kind === 'rush' && !rushTarget;
-
   // 모래시계 — 가속 시트와 동일하게 등급색 테두리 타일로 (라벨 없이 색으로만 구분)
   const hourglass = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
 
@@ -112,15 +102,12 @@ function productCard(product: ShopProduct): HTMLElement {
           ? el('div.shop-name.hg-name', {}, hourglassIcon(hourglass, { small: true }), product.name, limitTag)
           : el('div.shop-name', {}, `${product.icon} ${product.name} `, limitTag),
         el('div.muted.small', {}, product.desc),
-        rushTarget
-          ? el('div.muted.small', {}, `대상: ${content.regions.get(rushTarget.regionId)?.name} (남은 ${fmtRemain(rushTarget.endsAt - now)})`)
-          : null,
       ),
       el('div.shop-buy', {},
         el('button.btn.btn-primary', {
-          disabled: exhausted || shortFunds || rushUnavailable,
+          disabled: exhausted || shortFunds,
           onclick: () => purchase(product),
-        }, exhausted ? '한도 소진' : rushUnavailable ? '원정 없음' : priceTag(product)),
+        }, exhausted ? '한도 소진' : priceTag(product)),
       ),
     ),
   );

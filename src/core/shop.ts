@@ -28,7 +28,6 @@ export function onceBought(save: SaveState, product: ShopProduct): boolean {
 
 export interface ShopBuyInput {
   productId: string;
-  expeditionId?: string; // rush — 생략 시 남은 시간이 가장 긴 원정
 }
 
 export interface ShopBuyResult {
@@ -42,7 +41,6 @@ export interface ShopBuyResult {
     monsterId?: string;
     isNewMonster?: boolean;
     artifactItemId?: string;
-    rushedExpeditionId?: string;
     hourglass?: { hourglassId: string; count: number };
   };
   newMilestones: string[]; // 뽑기 신규 등록으로 달성된 마일스톤
@@ -141,18 +139,10 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     const drop = rollArtifactOfRarity(content, rng, rarity);
     grantArtifact(next, drop.itemId);
     granted.artifactItemId = drop.itemId;
-  } else if (goods.kind === 'hourglass') {
+  } else {
+    // hourglass — rush(즉시 귀환) 폐지 후 가속은 모래시계로 일원화 (2026-08-23)
     next.wallet.hourglasses[goods.hourglassId] = (next.wallet.hourglasses[goods.hourglassId] ?? 0) + goods.count;
     granted.hourglass = { hourglassId: goods.hourglassId, count: goods.count };
-  } else {
-    // rush — 대상 미지정 시 남은 시간이 가장 긴 원정 (가치 최대 기본값)
-    const running = next.expeditions.filter((e) => !e.claimed && e.endsAt > now);
-    const target = input.expeditionId
-      ? running.find((e) => e.id === input.expeditionId)
-      : [...running].sort((a, b) => b.endsAt - a.endsAt)[0];
-    if (!target) throw new GameError('shop-rush', '단축할 진행 중 원정이 없습니다');
-    target.endsAt = now;
-    granted.rushedExpeditionId = target.id;
   }
 
   // ── 구매 기록 — none은 기록 없음 ──

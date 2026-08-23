@@ -130,17 +130,4 @@ describe('상점 (GDD §9.4)', () => {
     expect(result.save.artifacts[0]!.enhance).toBe(0);
   });
 
-  it('신속 완료 — 남은 시간이 가장 긴 원정을 즉시 귀환, 없으면 실패', () => {
-    const save = richSave();
-    const now = T0 + 1000;
-    save.expeditions.push(makeExpedition('misty-coast', 'scout', ['dune-pup'], [], 'rush-a'));
-    const long = makeExpedition('misty-coast', 'deep', [], [], 'rush-b');
-    save.expeditions.push(long);
-    const result = buyShopProduct(content, save, { productId: 'dia-rush' }, fixedCtx(now));
-    expect(result.granted.rushedExpeditionId).toBe(long.id); // deep이 더 오래 남음
-    expect(result.save.expeditions.find((e) => e.id === long.id)!.endsAt).toBe(now);
-
-    const idle = richSave();
-    expect(() => buyShopProduct(content, idle, { productId: 'dia-rush' }, fixedCtx(now))).toThrow(/진행 중 원정이 없/);
-  });
 });

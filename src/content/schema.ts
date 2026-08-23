@@ -277,7 +277,7 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('materialsAll'), countEach: z.number().int().positive(), gold: z.number().int().min(0).default(0) }),
   z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),
-  z.object({ kind: z.literal('rush') }), // 진행 중 원정 1건 즉시 귀환
+  // rush(즉시 귀환) 상품은 폐지 (2026-08-23) — 가속은 모래시계 아이템으로 일원화
   z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive().default(1) }),
 ]);
 export type ShopGoods = z.infer<typeof ShopGoodsSchema>;

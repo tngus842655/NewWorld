@@ -21,8 +21,6 @@
   { "id": "dia-monster-gacha-premium", "name": "고급 몬스터 뽑기", "icon": "🌟", "desc": "희귀 이상 확정, 전설 3%", "shop": "diamond", "price": 80, "limit": { "kind": "none" }, "goods": { "kind": "monsterGacha", "table": "premium" } },
   { "id": "dia-artifact-gacha", "name": "유물 발굴", "icon": "🏺", "desc": "랜덤 유물 1점", "shop": "diamond", "price": 40, "limit": { "kind": "none" }, "goods": { "kind": "artifactGacha", "table": "standard" } },
   { "id": "dia-artifact-gacha-premium", "name": "고급 유물 발굴", "icon": "🔮", "desc": "희귀 이상 확정, 전설 5%", "shop": "diamond", "price": 90, "limit": { "kind": "none" }, "goods": { "kind": "artifactGacha", "table": "premium" } },
-  { "id": "dia-rush", "name": "원정 신속 완료", "icon": "⏩", "desc": "진행 중 원정 1건을 즉시 귀환시킵니다", "shop": "diamond", "price": 30, "limit": { "kind": "none" }, "goods": { "kind": "rush" } },
-
   { "id": "dia-hourglass-15", "name": "모래시계 조각", "icon": "⏳", "desc": "원정 시간 15분 단축", "shop": "diamond", "price": 2, "limit": { "kind": "none" }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-15" } },
   { "id": "dia-hourglass-60", "name": "여행자의 모래시계", "icon": "⏳", "desc": "원정 시간 1시간 단축", "shop": "diamond", "price": 6, "limit": { "kind": "none" }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-60" } },
   { "id": "dia-hourglass-120", "name": "은빛 모래시계", "icon": "⏳", "desc": "원정 시간 2시간 단축", "shop": "diamond", "price": 10, "limit": { "kind": "none" }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-120" } },
