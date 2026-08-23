@@ -158,7 +158,7 @@ export function artifactFusionSheet(): HTMLElement {
         ? '재료 유물이 부족합니다'
         : `💠 합성 시작 — ${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회`),
     ),
-    el('div.center.muted.small', {}, '파견 중 장착한 유물은 재료가 되지 않습니다 · 재료의 강화·부옵션은 사라집니다'),
+    el('div.center.muted.small', {}, '파견 중 장착한 유물은 재료가 되지 않습니다 · 재료의 강화에 쓴 가루는 전액 돌려받습니다'),
   );
 }
 
@@ -204,6 +204,8 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
     return card;
   });
 
+  const totalRefund = results.reduce((sum, r) => sum + r.refundedDust, 0);
+
   return sheetShell('유물 합성',
     el('div.center.fusion-summary', {},
       el('div.fusion-summary-title', {}, `${ARTIFACT_RARITY_LABEL[rarity]} ${results.length}회 합성 완료`),
@@ -212,6 +214,7 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
         el('span.muted', {}, ' · '),
         el('span.jmiss', {}, `실패 ${fails}`),
       ),
+      totalRefund > 0 ? el('div.small.muted', {}, `✨ 재료의 강화 가루 ${totalRefund} 환급`) : null,
     ),
     el('div.fuse-grid', {}, ...cards),
     el('div.row-gap.fusion-actions', {},

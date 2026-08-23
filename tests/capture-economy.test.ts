@@ -11,7 +11,7 @@ import {
   salvageArtifact,
   unlockRegion,
 } from '../src/core/economy';
-import { levelUpCost } from '../src/core/formulas';
+import { investedEnhanceDust, levelUpCost } from '../src/core/formulas';
 import { canUnlockRegion, teamCount } from '../src/core/progression';
 import { streamRng } from '../src/core/rng';
 import { GameError, type CoreCtx } from '../src/core/types';
@@ -92,7 +92,8 @@ describe('경제 액션', () => {
     expect(salvaged.artifacts).toHaveLength(0);
     expect(salvaged.teams[0]!.artifactUids).toHaveLength(0);
     const saberRarity = content.artifacts.get('rusty-saber')!.rarity;
-    expect(salvaged.wallet.dust).toBe(90 + content.balance.artifacts.dustPerSalvage[saberRarity]!);
+    // 재화 보존 원칙: 분해 가루 + 강화에 쓴 가루(+1분 = 10) 전액 환급 → 시작 100으로 복원
+    expect(salvaged.wallet.dust).toBe(100 + content.balance.artifacts.dustPerSalvage[saberRarity]!);
   });
 
   it('원정 중인 유물은 강화·분해 불가', () => {
@@ -196,8 +197,9 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     expect(() => fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx('s'))).toThrow(/원정 중/);
   });
 
-  it('성공 — 다음 등급 유물 획득 (강화 0·부옵션 규칙 적용), 재료 2개 소멸', () => {
+  it('성공 — 다음 등급 유물 획득 (강화 0·부옵션 규칙 적용), 재료 2개 소멸 + 강화 가루 전액 환급', () => {
     const save = withArtifacts([{ uid: 'a', itemId: commonId, enhance: 2 }, { uid: 'b', itemId: commonId }]);
+    const dustBefore = save.wallet.dust;
     const okSeed = findSeed((s) => streamRng(s, 'fusion-artifact')() < content.balance.fusion.chance.common!);
     const result = fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx(okSeed));
     expect(result.success).toBe(true);
@@ -208,10 +210,14 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     const def = content.artifacts.get(got.itemId)!;
     expect(def.rarity).toBe('uncommon');
     expect(got.substats).toHaveLength(content.balance.artifacts.substatCount.uncommon!);
+    // 재화 보존 원칙: 소멸한 재료의 강화 투자(+2 = 0→1, 1→2 비용) 전액 환급
+    expect(result.refundedDust).toBe(investedEnhanceDust(2, content.balance));
+    expect(result.save.wallet.dust).toBe(dustBefore + result.refundedDust);
   });
 
-  it('실패 — 재료 중 1개는 강화 그대로 보존, 1개만 소멸', () => {
+  it('실패 — 재료 중 1개는 강화 그대로 보존, 소멸분의 강화 가루만 환급', () => {
     const save = withArtifacts([{ uid: 'a', itemId: commonId, enhance: 3 }, { uid: 'b', itemId: commonId, enhance: 1 }]);
+    const dustBefore = save.wallet.dust;
     const failSeed = findSeed((s) => streamRng(s, 'fusion-artifact')() >= content.balance.fusion.chance.common!);
     const result = fuseArtifacts(content, save, { materialUids: ['a', 'b'] }, fixedCtx(failSeed));
     expect(result.success).toBe(false);
@@ -220,6 +226,9 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     expect(kept.uid).toBe(result.returnedUid);
     expect(['a', 'b']).toContain(kept.uid);
     expect(kept.enhance).toBe(kept.uid === 'a' ? 3 : 1); // 보존분은 강화 유지
+    const destroyedEnhance = kept.uid === 'a' ? 1 : 3;
+    expect(result.refundedDust).toBe(investedEnhanceDust(destroyedEnhance, content.balance));
+    expect(result.save.wallet.dust).toBe(dustBefore + result.refundedDust);
   });
 });
 

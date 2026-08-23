@@ -54,6 +54,16 @@ export function enhanceCost(enhance: number, balance: Balance): number {
   return cost;
 }
 
+/**
+ * 현재 강화 단계까지 투자된 가루 총액 — 합성·분해 시 전액 환급.
+ * 재화 보존 원칙 (2026-08-23): 한번 수집한 골드·가루는 시스템이 소멸시키지 않는다.
+ */
+export function investedEnhanceDust(enhance: number, balance: Balance): number {
+  let total = 0;
+  for (let level = 0; level < enhance; level++) total += enhanceCost(level, balance);
+  return total;
+}
+
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }

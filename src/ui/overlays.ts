@@ -3,7 +3,7 @@
  */
 import { content } from '../content';
 import { ELEMENTS, type MonsterRarity, type Region } from '../content/schema';
-import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
+import { elementMult, enhanceCost, investedEnhanceDust, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
@@ -188,10 +188,11 @@ function artifactSheet(uid: string): HTMLElement | null {
       el('button.btn.btn-danger', {
         disabled: busy,
         onclick: () => {
-          const gain = balance.artifacts.dustPerSalvage[def.rarity];
+          const invested = investedEnhanceDust(owned.enhance, balance);
+          const gain = balance.artifacts.dustPerSalvage[def.rarity] + invested;
           void askConfirm({
             title: '유물 분해',
-            message: `${def.name}을(를) 분해해 가루 ${gain}을 얻습니다. 되돌릴 수 없습니다.`,
+            message: `${def.name}을(를) 분해해 가루 ${gain}을 얻습니다${invested > 0 ? ` (강화에 쓴 가루 ${invested} 전액 포함)` : ''}. 되돌릴 수 없습니다.`,
             confirmLabel: '분해',
             danger: true,
           }).then((ok) => {
