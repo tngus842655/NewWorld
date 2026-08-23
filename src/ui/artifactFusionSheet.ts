@@ -150,8 +150,8 @@ export function artifactFusionSheet(): HTMLElement {
     ritualCircle(nextRarity, preview, false),
     el('div.center.muted.small', {},
       total > 0
-        ? `${ARTIFACT_RARITY_LABEL[rarity]} 여분 ${total}개 — 최대 ${maxRounds}회 합성 가능`
-        : `${ARTIFACT_RARITY_LABEL[rarity]} 여분 유물이 없습니다 — 중복 획득으로 모아보세요`),
+        ? `${ARTIFACT_RARITY_LABEL[rarity]} 여분 ${total}개 [최대 ${maxRounds}회 합성 가능]`
+        : `${ARTIFACT_RARITY_LABEL[rarity]} 여분 유물이 없습니다 [중복 획득으로 모아보세요]`),
 
     el('div.card.stack-sm', {},
       el('div.list-row', {},
@@ -180,7 +180,7 @@ export function artifactFusionSheet(): HTMLElement {
         onclick: () => startRitual(rarity, rounds),
       }, maxRounds < 1
         ? '여분 유물이 부족합니다'
-        : `💠 합성 시작 — ${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회`),
+        : `💠 합성 시작 [${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회]`),
     ),
     el('div.center.muted.small', {}, '각 종의 마지막 1개는 재료로 쓰지 않습니다 (강화 보호)'),
   );

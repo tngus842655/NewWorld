@@ -38,10 +38,10 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
           if (!result) return;
           playSfx('confirm');
           if (result.finished) {
-            toast(`⏳ ${result.hourglass.name} 사용 — 원정대가 돌아왔습니다!`, 'ok');
+            toast(`⏳ ${result.hourglass.name} 사용 [원정대가 돌아왔습니다!]`, 'ok');
             closeOverlay(); // 홈 카드의 일지 열기 버튼이 보이게
           } else {
-            toast(`⏳ ${result.hourglass.name} 사용 — ${hourglassDuration(result.hourglass)} 단축!`, 'ok');
+            toast(`⏳ ${result.hourglass.name} 사용 [${hourglassDuration(result.hourglass)} 단축!]`, 'ok');
           }
         },
       }, '사용'),
@@ -61,7 +61,7 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
       el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'shop' }) }, '상점 열기'),
     ),
     import.meta.env.DEV
-      ? el('button.btn.btn-ghost', { onclick: devGrantHourglasses }, 'DEV — 모래시계 각 +1')
+      ? el('button.btn.btn-ghost', { onclick: devGrantHourglasses }, 'DEV [모래시계 각 +1]')
       : null,
   );
 }

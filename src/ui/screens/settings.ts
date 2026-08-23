@@ -19,7 +19,7 @@ export function renderSettings(): HTMLElement {
     el('h2.section-title', {}, '게임'),
     el('div.card', {},
       el('div.list-row', {},
-        el('span', {}, `👤 닉네임 — ${state.profile.nickname}`),
+        el('span', {}, `👤 닉네임 [${state.profile.nickname}]`),
         el('button.btn.btn-ghost', {
           onclick: () => {
             void askText({

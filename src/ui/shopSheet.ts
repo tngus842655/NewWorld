@@ -7,7 +7,7 @@ import { content } from '../content';
 import type { ShopProduct } from '../content/schema';
 import { onceBought, purchasesToday, todayKey } from '../core/shop';
 import { signal } from '../state/signal';
-import { buyShop, nowTick, save } from '../state/store';
+import { buyShop, devGrantDiamonds, nowTick, save } from '../state/store';
 import { hourglassIcon } from './components';
 import { askConfirm } from './dialog';
 import { MONSTER_RARITY_LABEL, ARTIFACT_RARITY_LABEL, el, fmtGold, toast } from './kit';
@@ -121,9 +121,14 @@ export function shopSheet(): HTMLElement {
   const shell = sheetShell('🏪 상점',
     el('div.card.list-row', {},
       el('span', {}, `💰 ${fmtGold(state.wallet.gold)}  ·  💎 ${state.wallet.diamonds}`),
-      el('button.btn.btn-ghost', {
-        onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 — 그 전엔 출석 이벤트로 모을 수 있어요 (준비 중)', 'ok'),
-      }, '충전'),
+      el('div.row-gap', {},
+        import.meta.env.DEV
+          ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, 'DEV [1000]')
+          : null,
+        el('button.btn.btn-ghost', {
+          onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 [그 전엔 출석 이벤트로 모을 수 있어요]', 'ok'),
+        }, '충전'),
+      ),
     ),
     el('div.chips-wrap', {},
       el(`button.chip${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),

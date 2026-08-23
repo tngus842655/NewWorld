@@ -79,7 +79,7 @@ export function attendanceSheet(): HTMLElement {
       },
     }, claimable
       ? reward
-        ? `출석하고 받기 — ${rewardText(reward)}`
+        ? `출석하고 받기 [${rewardText(reward)}]`
         : '출석 도장 찍기 (보상 완료)'
       : '오늘 출석 완료 ✓'),
     upcoming.length > 0 ? el('div.card.stack-sm', {}, ...upcoming) : null,

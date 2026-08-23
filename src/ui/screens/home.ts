@@ -98,7 +98,7 @@ function nextGoalCard(): HTMLElement | null {
     }
     return el('div.card.goal-card', { onclick: () => tab.set('expedition') },
       el('div.goal-head', {},
-        el('span', {}, `🎯 다음 목표 — ${lockedRegion.name} 해금`),
+        el('span', {}, `🎯 다음 목표 [${lockedRegion.name} 해금]`),
         check.ok ? el('span.tag.goal-ready', {}, '조건 달성!') : null,
       ),
       el('div.goal-items', {}, ...parts),
@@ -109,7 +109,7 @@ function nextGoalCard(): HTMLElement | null {
   const maxTeamUnlock = content.balance.teams.find((u) => u.count === 3);
   if (maxTeamUnlock?.totalCaptured !== undefined && teamCount(content, state) < 3) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
-      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 3번째 원정대')),
+      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [3번째 원정대]')),
       el('div.goal-items', {}, el('div.goal-item', {},
         `▫️ 도감 ${Math.min(counts.total, maxTeamUnlock.totalCaptured)}/${maxTeamUnlock.totalCaptured}종 포획`)),
     );
@@ -118,8 +118,8 @@ function nextGoalCard(): HTMLElement | null {
   const totalSpecies = content.monsterList.length;
   if (counts.total < totalSpecies) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
-      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 신대륙 도감의 완성')),
-      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 — 전설은 심층 탐사에서만`)),
+      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [신대륙 도감의 완성]')),
+      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 [전설은 심층 탐사에서만]`)),
     );
   }
   return null;
@@ -179,7 +179,7 @@ export function renderHome(): HTMLElement {
       // 반복 과업 진입 (GDD §9.3) — 랭킹은 상단바 🏆 아이콘으로 이동 (2026-08-23 사용자)
       const taskTimes = content.tasks.reduce((sum, task) => sum + (state.tasks[task.id] ?? 0), 0);
       return el('div.card.list-row', {},
-        el('span', {}, `📋 반복 과업 — 달성 ${taskTimes}회`),
+        el('span', {}, `📋 반복 과업 [달성 ${taskTimes}회]`),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
       );
     })(),

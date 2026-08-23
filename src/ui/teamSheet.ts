@@ -170,7 +170,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
               const auto = autoLoadout(content, save(), teamId);
               if (setTeam(teamId, auto.partyIds, auto.artifactIds)) {
                 playSfx('select');
-                toast('⚡ 자동 편성 — 몬스터 CP순 · 유물 등급순', 'ok');
+                toast('⚡ 자동 편성 [몬스터 CP순 · 유물 등급순]', 'ok');
               }
             },
           }, '⚡ 자동'),
@@ -205,12 +205,12 @@ export function teamSheet(teamId: string): HTMLElement | null {
               : null,
           ),
           monsterChips.length === 0
-            ? el('div.muted.small', {}, '편성할 수 있는 몬스터가 없습니다 — 다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요')
+            ? el('div.muted.small', {}, '편성할 수 있는 몬스터가 없습니다 [다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요]')
             : el('div.chips', {}, ...monsterChips),
         ]
       : [
           artifactRows.length === 0
-            ? el('div.muted.small', {}, '연결할 수 있는 유물이 없습니다 — 원정에서 발굴하거나 다른 군의 연결을 해제해 보세요')
+            ? el('div.muted.small', {}, '연결할 수 있는 유물이 없습니다 [원정에서 발굴하거나 다른 군의 연결을 해제해 보세요]')
             : el('div.stack-sm', {}, ...artifactRows),
         ]),
   );

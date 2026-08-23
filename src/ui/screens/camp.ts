@@ -162,7 +162,7 @@ export function renderCamp(): HTMLElement {
             el('span.muted.small', {}, `  ${region?.icon ?? ''} ${region?.name ?? ''} · 보유 ${state.wallet.materials[tipMaterial.id] ?? 0}`),
           ),
           el('div.small.muted', {}, tipMaterial.desc),
-          uses.length > 0 ? el('div.small.wallet-tip-use', {}, `쓰임 — ${uses.join(' · ')}`) : null,
+          uses.length > 0 ? el('div.small.wallet-tip-use', {}, `쓰임 [${uses.join(' · ')}]`) : null,
         );
       })()
     : null;
@@ -178,7 +178,7 @@ export function renderCamp(): HTMLElement {
     ),
 
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
-    ...(rosterCards.length > 0 ? rosterCards : [el('div.card', {}, el('span.muted', {}, '아직 몬스터가 없습니다 — 원정에서 포획해 보세요'))]),
+    ...(rosterCards.length > 0 ? rosterCards : [el('div.card', {}, el('span.muted', {}, '아직 몬스터가 없습니다 [원정에서 포획해 보세요]'))]),
     (() => {
       // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
       const spareTotal = state.roster.reduce((sum, m) => sum + Math.max(0, m.count - 1), 0);

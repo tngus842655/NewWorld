@@ -48,21 +48,21 @@ function entryCard(entry: JournalEntry): HTMLElement {
         return el('div.jcard.jcard-bad.jcard-mon', {},
           monsterIcon(entry.monsterId, { silhouette: true }),
           el('div.jbody', {},
-            el('div.jline', {}, `⚔️ ${name} 조우 — 패주…`),
+            el('div.jline', {}, `⚔️ ${name} 조우 [패주…]`),
             el('div.jsub', {}, `전투력 ${fmtGold(entry.partyPower)} vs ${fmtGold(entry.enemyPower)} · HP ${fmtPct(entry.hpAfter)} · 목격 기록`),
           ),
         );
       }
       const lines: HTMLElement[] = [
-        el('div.jline', {}, entry.result === 'autowin' ? `⚔️ ${name} 조우 — 기선 제압, 자동 승리!` : `⚔️ ${name} 조우 — 승리!`),
+        el('div.jline', {}, entry.result === 'autowin' ? `⚔️ ${name} 조우 [기선 제압, 자동 승리!]` : `⚔️ ${name} 조우 [승리!]`),
         el('div.jsub', {}, `골드 +${fmtGold(entry.gold)} · HP ${fmtPct(entry.hpAfter)}`),
       ];
       if (entry.capture) {
         const retry = entry.capture.retried ? ' (올가미 재시도)' : '';
         if (entry.capture.success && entry.capture.dupe) {
-          lines.push(el('div.jline.jcapture', {}, `🎯 포획 성공${retry} — 카드 +1`));
+          lines.push(el('div.jline.jcapture', {}, `🎯 포획 성공${retry} [카드 +1]`));
         } else if (entry.capture.success) {
-          lines.push(el('div.jline.jcapture.jnew', {}, `🎯 포획 성공${retry} — 도감 신규 등록!`));
+          lines.push(el('div.jline.jcapture.jnew', {}, `🎯 포획 성공${retry} [도감 신규 등록!]`));
         } else {
           lines.push(el('div.jline.jmiss', {}, `🎯 포획 시도${retry}… 놓쳤다`));
         }
@@ -74,19 +74,19 @@ function entryCard(entry: JournalEntry): HTMLElement {
       );
     }
     case 'treasure': {
-      const lines = [el('div.jline', {}, `💰 ${eventName('treasures', entry.eventId)} — 골드 +${fmtGold(entry.gold)}`)];
+      const lines = [el('div.jline', {}, `💰 ${eventName('treasures', entry.eventId)} [골드 +${fmtGold(entry.gold)}]`)];
       if (entry.artifact) lines.push(el('div.jline.jdrop', {}, `💎 유물 발굴! ${artifactLabel(entry.artifact.itemId)}`));
       return el('div.jcard', {}, ...lines);
     }
     case 'trap':
       return el(`div.jcard${entry.avoided ? '' : '.jcard-bad'}`, {},
         el('div.jline', {}, entry.avoided
-          ? `🕳️ ${eventName('traps', entry.eventId)} — 날렵하게 회피!`
-          : `🕳️ ${eventName('traps', entry.eventId)} — 당했다! HP ${fmtPct(entry.hpAfter)}`),
+          ? `🕳️ ${eventName('traps', entry.eventId)} [날렵하게 회피!]`
+          : `🕳️ ${eventName('traps', entry.eventId)} [당했다! HP ${fmtPct(entry.hpAfter)}]`),
       );
     case 'gather':
       return el('div.jcard', {},
-        el('div.jline', {}, `🌿 ${eventName('gathers', entry.eventId)} — ${content.materials.get(entry.materialId)?.name} ×${entry.count}`),
+        el('div.jline', {}, `🌿 ${eventName('gathers', entry.eventId)} [${content.materials.get(entry.materialId)?.name} ×${entry.count}]`),
       );
     case 'crossroad': {
       const name = eventName('crossroads', entry.eventId);
@@ -102,16 +102,16 @@ function entryCard(entry: JournalEntry): HTMLElement {
       }).join(' · ');
       const outcome = entry.success ? '성공!' : entry.salvaged ? '실패… 그러나 절반의 보상' : `실패… HP ${fmtPct(entry.hpAfter)}`;
       return el(`div.jcard${entry.success ? '' : '.jcard-bad'}`, {},
-        el('div.jline', {}, `🔀 ${name} → ${picked} — ${outcome}`),
+        el('div.jline', {}, `🔀 ${name} → ${picked} [${outcome}]`),
         rewardText ? el('div.jsub', {}, rewardText) : null,
       );
     }
     case 'wipe':
       return entry.revived
-        ? el('div.jcard.jrevive', {}, el('div.jline', {}, `✨ 전멸 위기 — 원정대가 다시 일어선다! HP ${fmtPct(entry.hpAfter)}`))
+        ? el('div.jcard.jrevive', {}, el('div.jline', {}, `✨ 전멸 위기 [원정대가 다시 일어선다! HP ${fmtPct(entry.hpAfter)}]`))
         : el('div.jcard.jcard-bad', {}, el('div.jline', {}, '💀 전멸… 원정대가 서둘러 철수한다 (전리품 일부 소실)'));
     case 'clearBox':
-      return el('div.jcard.jdrop-card', {}, el('div.jline.jdrop', {}, `🎁 심층 완주 상자 — ${artifactLabel(entry.artifact.itemId)}`));
+      return el('div.jcard.jdrop-card', {}, el('div.jline.jdrop', {}, `🎁 심층 완주 상자 ${artifactLabel(entry.artifact.itemId)}`));
   }
 }
 
@@ -143,7 +143,7 @@ export function journalView(journal: Journal, newMilestones: string[], opts: Jou
   ].filter(Boolean).join(' · ');
 
   const footer = el(`div.jfooter${opts.instant ? '' : '.jhidden'}`, {},
-    el('div.jline', {}, `🏕️ 귀환 — ${summaryBits}`),
+    el('div.jline', {}, `🏕️ 귀환 [${summaryBits}]`),
     totals.capturedMonsterIds.length > 0
       ? el('div.jsub', {}, `📖 도감 등록: ${totals.capturedMonsterIds.map(monsterName).join(', ')}`)
       : null,

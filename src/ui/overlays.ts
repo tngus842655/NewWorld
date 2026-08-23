@@ -145,8 +145,8 @@ function monsterSheet(monsterId: string): HTMLElement | null {
           el('span.tag', {}, TRIBE_LABEL[monster.tribe]),
         ),
         el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${[content.regions.get(monster.habitat)?.icon, content.regions.get(monster.habitat)?.name].filter(Boolean).join(' ')}`),
-        el('div.muted.small', {}, `보유 카드 ${owned.count}장 — 중복 포획으로 누적 (추후 합성 재료)`),
-        el('div.muted.small', {}, `🏆 랭킹 점수 ${monsterScore(content, owned)} — 레벨·성급을 올리면 커집니다`),
+        el('div.muted.small', {}, `보유 카드 ${owned.count}장 [중복 포획으로 누적 (추후 합성 재료)]`),
+        el('div.muted.small', {}, `🏆 랭킹 점수 ${monsterScore(content, owned)} [레벨·성급을 올리면 커집니다]`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중') : null,
       ),
     ),
@@ -190,8 +190,8 @@ function artifactSheet(itemId: string): HTMLElement | null {
           el('span.tag', {}, SLOT_LABEL[def.slot] ?? def.slot),
           setDef ? el('span.tag', {}, `${setDef.name} 세트`) : null,
         ),
-        el('div.muted.small', {}, `보유 ${owned.count}개 — 강화는 종 공통, 여분은 합성 재료`),
-        el('div.muted.small', {}, `🏆 랭킹 점수 ${artifactScore(content, owned)} — 강화하면 커집니다`),
+        el('div.muted.small', {}, `보유 ${owned.count}개 [강화는 종 공통, 여분은 합성 재료]`),
+        el('div.muted.small', {}, `🏆 랭킹 점수 ${artifactScore(content, owned)} [강화하면 커집니다]`),
       ),
     ),
     el('div.card.stack-sm', {},
@@ -297,7 +297,7 @@ function speciesSheet(monsterId: string): HTMLElement | null {
         : null,
       goodRegions.length > 0 ? el('div.small', {}, `⚔️ 유리한 지역: ${goodRegions.join(', ')}`) : null,
       badRegions.length > 0 ? el('div.small.muted', {}, `⚠️ 불리한 지역: ${badRegions.join(', ')}`) : null,
-      el('div.small.muted', {}, '중복 포획 시 카드가 쌓입니다 — 추후 합성(같은 등급 2장 → 상위 등급)에 사용 예정'),
+      el('div.small.muted', {}, '중복 포획 시 카드가 쌓입니다 [추후 합성(같은 등급 2장 → 상위 등급)에 사용 예정]'),
     ),
     el('p.flavor', {}, `“${monster.flavor}”`),
   );
@@ -308,13 +308,13 @@ function helpSheet(): HTMLElement {
   const row = (icon: string, name: string, gain: string, use: string) =>
     el('div.card.stack-sm', {},
       el('div', {}, `${icon} ${name}`),
-      el('div.small.muted', {}, `얻기 — ${gain}`),
-      el('div.small.muted', {}, `쓰기 — ${use}`),
+      el('div.small.muted', {}, `얻기 [${gain}]`),
+      el('div.small.muted', {}, `쓰기 [${use}]`),
     );
   return sheetShell('재화 안내',
     row('💰', '골드', '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작'),
     row('✨', '가루', '유물 분해', '유물 강화'),
-    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 — 희귀 이상 몬스터 포획률 ×2'),
+    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 [희귀 이상 몬스터 포획률 ×2]'),
     el('div.muted.small', {}, '지역 재료 보유량은 캠프 화면에서, 몬스터 카드 수는 도감·캠프 아이콘에서 볼 수 있습니다.'),
   );
 }
@@ -370,7 +370,7 @@ function oddsSheet(): HTMLElement {
     el('div.muted.small', {}, '조우에서 승리하면 등급별 기본 확률로 포획을 시도합니다.'),
     ...rarities.map((rarity) => pctBarRow(rarityTag(rarity), balance.capture.base[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
-      el('div.small.muted', {}, `· 미끼 적재 시 ×${balance.capture.lureMult} — 희귀 이상 조우에 자동 사용됩니다`),
+      el('div.small.muted', {}, `· 미끼 적재 시 ×${balance.capture.lureMult} [희귀 이상 조우에 자동 사용됩니다]`),
       el('div.small.muted', {}, `· 확률 배수 상한 ×${balance.capture.multCap} · 최종 확률 상한 ${pct1(balance.capture.chanceCap)}`),
       balance.capture.firstCaptureGuarantee ? el('div.small.muted', {}, '· 계정의 첫 포획은 100% 성공합니다') : null,
     ),
@@ -393,7 +393,7 @@ function oddsSheet(): HTMLElement {
       el('div.small.muted', {}, '· 성공: 해금한 지역의 다음 등급 몬스터 중 랜덤 1종 (미보유 종이면 도감 등록)'),
       el('div.small.muted', {}, '· 실패: 재료 2장 중 1장이 사라지고, 1장은 돌아옵니다'),
       el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
-      el('div.small.muted', {}, '· 유물 합성도 같은 확률입니다 — 같은 등급 유물 2개 → 다음 등급 랜덤 1개 (실패 시 1개 반환)'),
+      el('div.small.muted', {}, '· 유물 합성도 같은 확률입니다 [같은 등급 유물 2개 → 다음 등급 랜덤 1개 · 실패 시 1개 반환]'),
     ),
   );
 
@@ -416,7 +416,7 @@ function oddsSheet(): HTMLElement {
         ),
       ),
       el('div.small.muted', {},
-        `⭐ 전설 (${legendNames}) — ${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
+        `⭐ 전설 (${legendNames}) [${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
     );
   });
 
@@ -431,7 +431,7 @@ function oddsSheet(): HTMLElement {
       .map((rarity) =>
         pctBarRow(el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]), balance.artifacts.dropRarity[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
-      el('div.small.muted', {}, `· 발굴 기회 — 보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}`),
+      el('div.small.muted', {}, `· 발굴 기회 [보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}]`),
       sources.deepClearBox ? el('div.small.muted', {}, `· ${tierName('deep')} 완주 상자에서는 유물이 확정으로 나옵니다`) : null,
       balance.artifacts.firstTreasurePity ? el('div.small.muted', {}, '· 계정의 첫 보물 이벤트에서는 유물이 확정으로 나옵니다') : null,
     ),
@@ -471,7 +471,7 @@ function elementInfoSheet(): HTMLElement {
   const structureCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '⚔️ 상성 구조'),
     el('div.elem-flow', {}, '🔥 화염 → 🌿 자연 → ❄️ 냉기 → 🔥 화염'),
-    el('div.small.muted', {}, '화살표 방향으로 유리 — 화염은 자연에게, 자연은 냉기에게, 냉기는 화염에게 강합니다.'),
+    el('div.small.muted', {}, '화살표 방향으로 유리 [화염은 자연에게, 자연은 냉기에게, 냉기는 화염에게 강합니다]'),
     el('div.elem-flow', {}, '☀️ 빛 ↔ 🌑 어둠'),
     el('div.small.muted', {}, '빛과 어둠은 서로에게 유리합니다.'),
   );
@@ -510,7 +510,7 @@ function elementInfoSheet(): HTMLElement {
     el('div.odds-note', {},
       neutralEverywhere.length > 0
         ? el('div.small.muted', {},
-            `· ${neutralEverywhere.map((element) => ELEMENT_LABEL[element]).join(' · ')} — 현재 모든 지역에서 ×1: 보너스도 페널티도 없이 어디서나 안정적입니다`)
+            `· ${neutralEverywhere.map((element) => ELEMENT_LABEL[element]).join(' · ')} [현재 모든 지역에서 ×1 · 보너스도 페널티도 없이 어디서나 안정적입니다]`)
         : null,
       el('div.small.muted', {}, '· 이 배수는 원정 편성 화면의 유효 전투력에 자동 반영됩니다'),
     ),
@@ -639,7 +639,7 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
   });
 
   return sheetShell('갈림길 선택',
-    el('div.muted.small', {}, '🛡️ 안전 — 소소한 보상 확정 · ⚡ 위험 — 전투력 판정, 성공 시 희귀 보상·실패 시 HP 피해'),
+    el('div.muted.small', {}, '🛡️ 안전 [소소한 보상 확정] · ⚡ 위험 [전투력 판정, 성공 시 희귀 보상·실패 시 HP 피해]'),
     el('div.muted.small', {}, '선택하지 않으면 원정대는 안전한 길을 고릅니다.'),
     ...rows,
     done
@@ -648,7 +648,7 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
             const result = claim(expeditionId);
             if (result) overlay.set({ kind: 'journal', ...result });
           },
-        }, pendingCount > 0 ? `📜 일지 정산 — 남은 ${pendingCount}곳은 안전한 길로` : '📜 일지 정산')
+        }, pendingCount > 0 ? `📜 일지 정산 [남은 ${pendingCount}곳은 안전한 길로]` : '📜 일지 정산')
       : null,
   );
 }

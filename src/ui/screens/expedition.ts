@@ -247,7 +247,7 @@ export function renderExpedition(): HTMLElement {
           el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
           el('span.muted.small', {}, `/ 권장 ${fmtGold(region.recommendedCp)}`),
         ),
-        synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 — 같은 종족 2마리부터 발동'),
+        synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 [같은 종족 2마리부터 발동]'),
         info && info.synergyAmp > 0 ? el('div.muted.small', {}, `시너지 증폭 +${Math.round(info.synergyAmp * 100)}%`) : null,
         el('div.tier-row', {}, ...(['scout', 'standard', 'deep'] as const).map((t) =>
           el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
@@ -269,7 +269,7 @@ export function renderExpedition(): HTMLElement {
       }, teamsFull
         ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})`
         : party.length === 0
-          ? `${team.name} 편성이 비어 있습니다 — 카드를 눌러 편성하세요`
+          ? `${team.name} 편성이 비어 있습니다 [카드를 눌러 편성하세요]`
           : `🧭 ${region.name}으로 출발`),
     ),
   );

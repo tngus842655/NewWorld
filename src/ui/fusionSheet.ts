@@ -175,8 +175,8 @@ export function fusionSheet(): HTMLElement {
     ritualCircle(nextRarity, preview, false),
     el('div.center.muted.small', {},
       total > 0
-        ? `${MONSTER_RARITY_LABEL[rarity]} 여분 ${total}장 — 최대 ${maxRounds}회 합성 가능`
-        : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 — 중복 포획으로 모아보세요`),
+        ? `${MONSTER_RARITY_LABEL[rarity]} 여분 ${total}장 [최대 ${maxRounds}회 합성 가능]`
+        : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 [중복 포획으로 모아보세요]`),
 
     el('div.card.stack-sm', {},
       el('div.list-row', {},
@@ -205,7 +205,7 @@ export function fusionSheet(): HTMLElement {
         onclick: () => startRitual(rarity, rounds),
       }, maxRounds < 1
         ? '여분 카드가 부족합니다'
-        : `🧬 합성 시작 — ${MONSTER_RARITY_LABEL[rarity]} → ${MONSTER_RARITY_LABEL[nextRarity]} ${rounds}회`),
+        : `🧬 합성 시작 [${MONSTER_RARITY_LABEL[rarity]} → ${MONSTER_RARITY_LABEL[nextRarity]} ${rounds}회]`),
     ),
     el('div.center.muted.small', {}, '각 종의 마지막 1장은 재료로 쓰지 않습니다 (육성 보호)'),
   );
