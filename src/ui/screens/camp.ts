@@ -7,7 +7,7 @@ import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
-import { artifactCard, monsterChip, ownedCp } from '../components';
+import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from '../components';
 import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
 import { resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
@@ -35,10 +35,17 @@ export function renderCamp(): HTMLElement {
     .filter(({ owned }) => owned.length > 0)
     .map(({ region, owned }) => {
       const open = openRegions()[region.id] === true;
-      const chips = owned.map((o) => monsterChip(o, {
-        onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
-        onExpedition: busyIds.has(o.monsterId),
-      }));
+      // 접힘: 아이콘만 가로 슬라이드 · 펼침: 한 줄에 1마리 (2026-08-23 사용자)
+      const body = open
+        ? el('div.stack-sm', {}, ...owned.map((o) => monsterChip(o, {
+            onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
+            onExpedition: busyIds.has(o.monsterId),
+          })))
+        : el('div.roster-row', {}, ...owned.map((o) =>
+            el('button.roster-icon', {
+              title: content.monsters.get(o.monsterId)?.name ?? '',
+              onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
+            }, monsterIconBadged(o, { onExpedition: busyIds.has(o.monsterId) }))));
       return el('div.card.stack-sm', {},
         el('button.roster-head', {
           onclick: () => {
@@ -49,7 +56,7 @@ export function renderCamp(): HTMLElement {
           el('span', {}, `${region.icon} ${region.name} (${owned.length})`),
           el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
         ),
-        open ? el('div.chips', {}, ...chips) : el('div.roster-row', {}, ...chips),
+        body,
       );
     });
 
@@ -66,8 +73,18 @@ export function renderCamp(): HTMLElement {
     .filter(({ items }) => items.length > 0)
     .map(({ rarity, items }) => {
       const open = openArtifactGroups()[rarity] === true;
-      const cards = items.map(({ owned, def }) =>
-        artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) }));
+      // 접힘: 아이콘만 (+강화 뱃지) · 펼침: 기존 한 줄 카드 (2026-08-23 사용자)
+      const body = open
+        ? el('div.stack-sm', {}, ...items.map(({ owned, def }) =>
+            artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) })))
+        : el('div.roster-row', {}, ...items.map(({ owned, def }) => {
+            const icon = artifactIcon(def.id);
+            if (owned.enhance > 0) icon.append(el('span.micon-count', { title: `강화 +${owned.enhance}` }, `+${owned.enhance}`));
+            return el('button.roster-icon', {
+              title: `${def.name}${owned.enhance > 0 ? ` +${owned.enhance}` : ''}`,
+              onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }),
+            }, icon);
+          }));
       return el('div.card.stack-sm', {},
         el('button.roster-head', {
           onclick: () => {
@@ -81,7 +98,7 @@ export function renderCamp(): HTMLElement {
           ),
           el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
         ),
-        open ? el('div.stack-sm', {}, ...cards) : el('div.roster-row', {}, ...cards),
+        body,
       );
     });
 

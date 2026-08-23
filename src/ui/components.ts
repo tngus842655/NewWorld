@@ -49,10 +49,8 @@ export function ownedCp(owned: OwnedMonster): number {
   return Math.round(atk * balance.cp.atkWeight + hp * balance.cp.hpWeight);
 }
 
-export function monsterChip(
-  owned: OwnedMonster,
-  opts: { selected?: boolean; busy?: boolean; onclick?: () => void; onExpedition?: boolean } = {},
-): HTMLElement {
+/** 몬스터 아이콘 + 뱃지(출신 지역·원정 중·카드 수) — 칩과 캠프 접힘 목록이 공유 */
+export function monsterIconBadged(owned: OwnedMonster, opts: { onExpedition?: boolean } = {}): HTMLElement {
   const monster = content.monsters.get(owned.monsterId)!;
   const icon = monsterIcon(owned.monsterId);
   // 출신 지역 — 기본 CP가 지역 축으로 뛰기 때문에 등급만 보고 헷갈리지 않게 (2026-08-23)
@@ -60,8 +58,17 @@ export function monsterChip(
   if (habitat) icon.append(el('span.micon-region', { title: `서식지 ${habitat.name}` }, habitat.icon));
   // 캠프 등에서 파견 중임을 알리는 코너 뱃지 (클릭은 막지 않는다 — busy와 별개)
   if (opts.onExpedition) icon.append(el('span.micon-badge', { title: '원정 중' }, '🧭'));
-  // 보유 카드 수 (중복 포획 누적 — 추후 합성 재료)
+  // 보유 카드 수 (중복 포획 누적 — 합성 재료)
   if (owned.count > 1) icon.append(el('span.micon-count', { title: `보유 카드 ${owned.count}장` }, `×${owned.count}`));
+  return icon;
+}
+
+export function monsterChip(
+  owned: OwnedMonster,
+  opts: { selected?: boolean; busy?: boolean; onclick?: () => void; onExpedition?: boolean } = {},
+): HTMLElement {
+  const monster = content.monsters.get(owned.monsterId)!;
+  const icon = monsterIconBadged(owned, { onExpedition: opts.onExpedition });
   return el(
     `button.mchip${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`,
     { onclick: opts.onclick, disabled: opts.busy },
