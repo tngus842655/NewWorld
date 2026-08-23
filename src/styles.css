@@ -224,6 +224,14 @@ body.overlay-open .container { overflow: hidden; }
 .odds-grid span:nth-child(2), .odds-grid span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
 .odds-head { color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
 
+/* ── 데이터 뷰 (몬스터·유물 정보 — 추후 관리자 전용) ── */
+.info-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+.info-row + .info-row { border-top: 1px solid var(--line); }
+.info-row .micon { width: 40px; height: 40px; border-radius: 9px; }
+.info-body { flex: 1; min-width: 0; }
+.info-name { font-size: 13.5px; font-weight: 600; }
+.info-stats { text-align: right; flex: none; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; font-variant-numeric: tabular-nums; }
+
 /* ── 다이얼로그 (confirm/prompt 대체 — 오버레이 위 최상위) ── */
 .dialog-backdrop {
   position: fixed; inset: 0; background: rgba(6, 8, 14, 0.66); z-index: 55;

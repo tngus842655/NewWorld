@@ -29,6 +29,15 @@ export function renderSettings(): HTMLElement {
         el('span', {}, '확률 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'odds' }) }, '보기'),
       ),
+      // 전체 데이터 뷰 2종 — 추후 관리자 전용 메뉴로 전환 예정 (관리자 페이지 대체 전 임시 진입점)
+      el('div.list-row', {},
+        el('span', {}, '몬스터 정보'),
+        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'monsterInfo' }) }, '보기'),
+      ),
+      el('div.list-row', {},
+        el('span', {}, '유물 정보'),
+        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
+      ),
     ),
 
     el('h2.section-title', {}, '세이브'),

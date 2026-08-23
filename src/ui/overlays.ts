@@ -11,8 +11,8 @@ import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './comp
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
 import {
-  ARTIFACT_RARITY_LABEL, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TIER_LABEL, TRIBE_LABEL,
-  el, fmtGold, stars,
+  ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL,
+  TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
 import { closeOverlay, overlay, type Overlay } from './router';
@@ -33,7 +33,11 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? helpSheet()
               : current.kind === 'odds'
                 ? oddsSheet()
-                : crossroadsSheet(current.expeditionId);
+                : current.kind === 'monsterInfo'
+                  ? monsterInfoSheet()
+                  : current.kind === 'artifactInfo'
+                    ? artifactInfoSheet()
+                    : crossroadsSheet(current.expeditionId);
   if (!sheet) return null;
   return el('div.overlay', { onclick: (event) => { if (event.target === event.currentTarget) closeOverlay(); } }, sheet);
 }
@@ -364,6 +368,100 @@ function oddsSheet(): HTMLElement {
     captureCard,
     ...regionCards,
     artifactOddsCard,
+  );
+}
+
+/**
+ * 전체 몬스터 데이터 뷰 — 도감 진행과 무관하게 104종 전부, 등급·속성·종족·기본 스탯.
+ * 추후 관리자 전용 메뉴로 전환 예정 (지금은 설정에서 진입).
+ */
+function monsterInfoSheet(): HTMLElement {
+  const { balance } = content;
+  const regionCards = content.regionList.map((region) => {
+    const natives = content.monsterList.filter((monster) => monster.habitat === region.id);
+    const rows = natives.map((monster) =>
+      el('div.info-row', {},
+        monsterIcon(monster.id),
+        el('div.info-body', {},
+          el('div.info-name', {},
+            monster.name,
+            el('span.mchip-elems', { title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}` },
+              ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
+          ),
+          el('div.muted.small', {}, `“${monster.flavor}”`),
+        ),
+        el('div.info-stats', {},
+          el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity]),
+          el('div.small', {}, `공 ${monster.baseAtk} · 생 ${monster.baseHp}`),
+          el('div.small.muted', {}, `CP ${Math.round(monsterBaseCp(monster, balance))}`),
+        ),
+      ),
+    );
+    return el('div.card.stack-sm', {},
+      el('div.odds-title', {}, `${ELEMENT_EMOJI[region.element]} ${region.name} (${natives.length}종)`),
+      ...rows,
+    );
+  });
+
+  return sheetShell('몬스터 정보',
+    el('div.muted.small', {}, `전체 ${content.monsterList.length}종 · 기본 스탯 기준 (레벨·성급 보정 전) · 관리자용 데이터 뷰`),
+    ...regionCards,
+  );
+}
+
+/**
+ * 전체 유물 데이터 뷰 — 56점 전부, 등급·슬롯·주옵션·고유 능력·세트 효과.
+ * 추후 관리자 전용 메뉴로 전환 예정 (지금은 설정에서 진입).
+ */
+function artifactInfoSheet(): HTMLElement {
+  const { balance } = content;
+  const rarityCards = (['legendary', 'heroic', 'rare', 'common'] as const).map((rarity) => {
+    const defs = [...content.artifacts.values()].filter((def) => def.rarity === rarity);
+    const substats = balance.artifacts.substatCount[rarity] ?? 0;
+    const rows = defs.map((def) => {
+      const setDef = def.set ? content.sets.get(def.set) : null;
+      return el('div.info-row', {},
+        artifactIcon(def.id),
+        el('div.info-body', {},
+          el('div.info-name', {}, def.name),
+          el('div.small.muted', {},
+            `주옵션 · ${mainLabel(def.main.stat)} ${fmtEffect(def.main.stat, def.main.base)} (강화당 ${fmtEffect(def.main.stat, def.main.perEnhance)})`),
+          ...def.unique.map((effect) => el('div.small.unique-row', {}, `✦ ${describeEffect(effect)}`)),
+        ),
+        el('div.info-stats', {},
+          el('span.tag', {}, SLOT_LABEL[def.slot] ?? def.slot),
+          setDef ? el('div.small.muted', {}, `${setDef.name} 세트`) : null,
+        ),
+      );
+    });
+    return el('div.card.stack-sm', {},
+      el('div.odds-title', {},
+        el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
+        ` ${defs.length}점`,
+      ),
+      el('div.muted.small', {},
+        `부옵션 ${substats}개 · 분해 가루 ${balance.artifacts.dustPerSalvage[rarity]}`),
+      ...rows,
+    );
+  });
+
+  const setCards = [...content.sets.entries()].map(([setId, setDef]) => {
+    const members = [...content.artifacts.values()].filter((def) => def.set === setId);
+    return el('div', {},
+      el('div.small', {}, `◆ ${setDef.name}`),
+      el('div.small.muted', {}, `2세트: ${setDef.bonuses['2'].map(describeEffect).join(', ')}`),
+      el('div.small.muted', {}, `4세트: ${setDef.bonuses['4'].map(describeEffect).join(', ')}`),
+      el('div.small.muted', {}, `구성: ${members.map((m) => m.name).join(' · ')}`),
+    );
+  });
+
+  return sheetShell('유물 정보',
+    el('div.muted.small', {}, `전체 ${content.artifacts.size}점 · 주옵션은 +0 기준 · 관리자용 데이터 뷰`),
+    ...rarityCards,
+    el('div.card.stack-sm', {},
+      el('div.odds-title', {}, '세트 효과'),
+      ...setCards,
+    ),
   );
 }
 
