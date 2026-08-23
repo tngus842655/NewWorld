@@ -255,6 +255,19 @@ body {
 .setinfo { padding-top: 6px; border-top: 1px dashed var(--line); }
 body.overlay-open .container { overflow: hidden; }
 
+/* ── 랭킹 ── */
+.rank-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+  background: var(--bg3); border: 1px solid var(--line); border-radius: 10px; font-size: 13px;
+}
+.rank-row.rank-me { border-color: var(--accent); background: #2a2413; }
+.rank-no { width: 26px; text-align: center; font-weight: 700; color: var(--muted); flex: none; }
+.rank-row:nth-child(1) .rank-no { color: #ffd257; }
+.rank-row:nth-child(2) .rank-no { color: #c8d3e6; }
+.rank-row:nth-child(3) .rank-no { color: #d99a5b; }
+.rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-score { font-variant-numeric: tabular-nums; }
+
 /* ── 확률 정보 ── */
 .odds-title { font-weight: 700; font-size: 14px; }
 .elem-flow { font-weight: 600; font-size: 14px; letter-spacing: 0.2px; }

@@ -4,12 +4,14 @@
 import { content } from '../content';
 import { ELEMENTS, type MonsterRarity, type Region } from '../content/schema';
 import { elementMult, enhanceCost, investedEnhanceDust, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
+import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { artifactPickSheet, partyPickSheet } from './pickSheets';
+import { rankingSheet, tasksSheet } from './rankingSheets';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
@@ -34,6 +36,10 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
             ? speciesSheet(current.monsterId)
             : current.kind === 'help'
               ? helpSheet()
+            : current.kind === 'ranking'
+              ? rankingSheet()
+            : current.kind === 'tasks'
+              ? tasksSheet()
               : current.kind === 'fusion'
                 ? fusionSheet()
                 : current.kind === 'artifactFusion'
@@ -120,6 +126,7 @@ function monsterSheet(monsterId: string): HTMLElement | null {
         ),
         el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${[content.regions.get(monster.habitat)?.icon, content.regions.get(monster.habitat)?.name].filter(Boolean).join(' ')}`),
         el('div.muted.small', {}, `보유 카드 ${owned.count}장 — 중복 포획으로 누적 (추후 합성 재료)`),
+        el('div.muted.small', {}, `🏆 랭킹 점수 ${monsterScore(content, owned)} — 레벨·성급을 올리면 커집니다`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중') : null,
       ),
     ),
@@ -163,6 +170,7 @@ function artifactSheet(uid: string): HTMLElement | null {
           el('span.tag', {}, SLOT_LABEL[def.slot] ?? def.slot),
           setDef ? el('span.tag', {}, `${setDef.name} 세트`) : null,
         ),
+        el('div.muted.small', {}, `🏆 랭킹 점수 ${artifactScore(content, owned)} — 강화하면 커집니다`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중 (장착됨)') : null,
       ),
     ),
@@ -252,6 +260,8 @@ function speciesSheet(monsterId: string): HTMLElement | null {
           entry.awakened ? el('span.tag', {}, '✨ 각성') : null,
         ),
         el('div.muted.small', {}, `서식지 ${habitat}`),
+        el('div.muted.small', {},
+          `🏆 랭킹 점수 기본 ${monsterBaseScore(content, monster.id)}${owned ? ` · 보유 ${monsterScore(content, owned)}` : ''}`),
         owned ? el('div.tag.busy-tag', {}, `보유 중 · Lv.${owned.level} ${stars(owned.star)} · 카드 ${owned.count}장`) : null,
       ),
     ),

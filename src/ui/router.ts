@@ -13,6 +13,8 @@ export type Overlay =
   | { kind: 'crossroads'; expeditionId: string }
   | { kind: 'species'; monsterId: string } // 도감 종 정보 (성장 액션 없음 — 캠프 상세와 목적 분리)
   | { kind: 'help' }                       // 재화 안내
+  | { kind: 'ranking' }                    // 랭킹 — 내 점수 + 리더보드 (GDD §9.3)
+  | { kind: 'tasks' }                      // 반복 과업 진행 현황
   | { kind: 'fusion' }                     // 카드 합성 (GDD §4.5)
   | { kind: 'artifactFusion' }             // 유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)
   | { kind: 'partyPick' }                  // 원정 파티 슬롯 선택 팝업

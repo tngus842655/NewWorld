@@ -29,6 +29,7 @@ import { createInitialSave } from '../core/newgame';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
 import { toast } from '../ui/kit';
 import * as clock from './clock';
+import { submitScore } from './ranking';
 import { loadSave, persistSave } from './save';
 import { effect, signal } from './signal';
 
@@ -114,6 +115,7 @@ export function claim(expeditionId: string): { journal: Journal; newMilestones: 
     }
     save.set(next);
     notifyNewTasks(prev, next);
+    void submitScore(next); // 랭킹 갱신 — 실패는 조용히 무시 (오프라인 무관)
     return { journal: result.journal, newMilestones: result.newMilestones };
   });
 }
@@ -184,8 +186,10 @@ export function setNickname(raw: string): boolean {
     return false;
   }
   const state = save();
-  save.set({ ...state, profile: { ...state.profile, nickname } });
+  const next = { ...state, profile: { ...state.profile, nickname } };
+  save.set(next);
   toast('닉네임을 변경했습니다', 'ok');
+  void submitScore(next);
   return true;
 }
 export function enhance(uid: string): boolean {
