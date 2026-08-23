@@ -180,6 +180,19 @@ body {
 .region-row.locked { opacity: 0.75; cursor: default; }
 .region-name { font-weight: 600; }
 .region-elem { font-size: 12px; font-weight: 400; }
+/* ── 편성 슬롯 (원정 파티·유물) ── */
+.party-slots { display: flex; gap: 8px; }
+.party-slot {
+  flex: 1 1 0; max-width: 58px; aspect-ratio: 1 / 1; min-width: 0; border-radius: 12px; padding: 0;
+  background: var(--bg3); border: 1.5px dashed var(--line); color: var(--muted);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 22px; line-height: 1; font-weight: 300;
+}
+.party-slot.filled { border: none; background: none; }
+.party-slot.filled .micon { width: 100%; height: 100%; }
+.party-slot.locked { opacity: 0.45; cursor: default; font-size: 14px; }
+.pick-controls { display: flex; flex-direction: column; gap: 6px; }
+
 .dispatch-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; bottom: 8px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35); padding-top: 4px; }
 .dispatch-panel.collapsed { gap: 6px; }
 .panel-handle {

@@ -14,6 +14,8 @@ export type Overlay =
   | { kind: 'species'; monsterId: string } // 도감 종 정보 (성장 액션 없음 — 캠프 상세와 목적 분리)
   | { kind: 'help' }                       // 재화 안내
   | { kind: 'fusion' }                     // 카드 합성 (GDD §4.5)
+  | { kind: 'partyPick' }                  // 원정 파티 슬롯 선택 팝업
+  | { kind: 'artifactPick' }               // 원정 유물 슬롯 선택 팝업
   | { kind: 'odds' }                       // 확률 정보 (등급별 — 추후 관리자 페이지로 대체 예정)
   | { kind: 'monsterInfo' }                // 전체 몬스터 데이터 뷰 (추후 관리자 전용)
   | { kind: 'artifactInfo' }               // 전체 유물 데이터 뷰 (추후 관리자 전용)

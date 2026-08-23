@@ -10,20 +10,28 @@ import { canUnlockRegion, isRegionUnlocked, teamCount } from '../../core/progres
 import { GameError } from '../../core/types';
 import { signal } from '../../state/signal';
 import { dispatchExpedition, save, unlock } from '../../state/store';
-import { artifactCard, monsterChip } from '../components';
-import { ARTIFACT_RARITY_ORDER, ELEMENT_EMOJI, ELEMENT_LABEL, SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
-import { tab } from '../router';
+import { artifactIcon, monsterIcon } from '../components';
+import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { resetPicks } from '../pickSheets';
+import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
 const selRegion = signal<string>(content.regionList[0]!.id);
 const selParty = signal<string[]>([]);
 const selArtifacts = signal<string[]>([]);
 const selTier = signal<Tier>('scout');
-// 하단 파견 패널 접힘 상태 — 화면 절반을 가리는 패널을 핸들로 접었다 펼 수 있게 (탭을 오가도 유지)
-const panelOpen = signal(true);
+// 하단 파견 패널 접힘 상태 — 접은 채로 종료해도 다음 접속에 유지 (세이브와 무관한 기기 UI 취향이라 localStorage 별도 키)
+const PANEL_OPEN_KEY = 'newworld-ui-dispatch-open';
+const panelOpen = signal(localStorage.getItem(PANEL_OPEN_KEY) !== '0');
 let presetLoaded = false;
 
-function busyUids(): Set<string> {
+function setPanelOpen(next: boolean): void {
+  if (panelOpen() !== next) playSfx('tap');
+  panelOpen.set(next);
+  try { localStorage.setItem(PANEL_OPEN_KEY, next ? '1' : '0'); } catch { /* 저장 불가 환경이면 세션 한정 동작 */ }
+}
+
+export function busyUids(): Set<string> {
   const state = save();
   return new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => [...e.partyIds, ...e.artifactUids]));
 }
@@ -33,13 +41,13 @@ function busyUids(): Set<string> {
  * 파견·초기화·가져오기로 무효해진 선택이 화면·미리보기·출발에 끼어들지 않게 하는 단일 관문 —
  * 렌더 중 signal.set을 피하려고 저장값은 그대로 두고 읽는 쪽에서 거른다.
  */
-function effectiveParty(): string[] {
+export function effectiveParty(): string[] {
   const state = save();
   const busy = busyUids();
   return selParty().filter((monsterId) => state.roster.some((m) => m.monsterId === monsterId) && !busy.has(monsterId));
 }
 
-function effectiveArtifacts(): string[] {
+export function effectiveArtifacts(): string[] {
   const state = save();
   const busy = busyUids();
   return selArtifacts().filter((uid) => state.artifacts.some((a) => a.uid === uid) && !busy.has(uid));
@@ -57,33 +65,37 @@ function loadPresetOnce(): void {
   selArtifacts.set(team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid) && !busy.has(uid)));
 }
 
-function toggleParty(monsterId: string): void {
+/** 성공 여부 반환 — 선택 팝업이 효과음으로 결과를 알릴 수 있게 */
+export function toggleParty(monsterId: string): boolean {
   const state = save();
   const current = effectiveParty();
   if (current.includes(monsterId)) {
     selParty.set(current.filter((id) => id !== monsterId));
-  } else if (current.length < state.profile.partySlots) {
-    selParty.set([...current, monsterId]);
+    return true;
   }
+  if (current.length >= state.profile.partySlots) return false;
+  selParty.set([...current, monsterId]);
+  return true;
 }
 
-function toggleArtifact(uid: string): void {
+export function toggleArtifact(uid: string): boolean {
   const state = save();
   const current = effectiveArtifacts();
   if (current.includes(uid)) {
     selArtifacts.set(current.filter((u) => u !== uid));
-    return;
+    return true;
   }
   const owned = state.artifacts.find((a) => a.uid === uid);
   const def = owned ? content.artifacts.get(owned.itemId) : null;
-  if (!def) return;
+  if (!def) return false;
   // 같은 슬롯은 교체, 최대 4개
   const withoutSameSlot = current.filter((u) => {
     const other = state.artifacts.find((a) => a.uid === u);
     return other && content.artifacts.get(other.itemId)?.slot !== def.slot;
   });
-  if (withoutSameSlot.length >= 4) return;
+  if (withoutSameSlot.length >= 4) return false;
   selArtifacts.set([...withoutSameSlot, uid]);
+  return true;
 }
 
 interface Preview {
@@ -129,9 +141,7 @@ function panelHandle(open: boolean): HTMLElement {
     if (startY === null) return;
     const delta = e.clientY - startY;
     startY = null;
-    const next = delta > 16 ? false : delta < -16 ? true : !panelOpen();
-    if (next !== panelOpen()) playSfx('tap');
-    panelOpen.set(next);
+    setPanelOpen(delta > 16 ? false : delta < -16 ? true : !panelOpen());
   };
   handle.onpointercancel = () => { startY = null; };
   return handle;
@@ -162,7 +172,6 @@ function regionRow(regionId: string): HTMLElement {
 export function renderExpedition(): HTMLElement {
   loadPresetOnce();
   const state = save();
-  const busy = busyUids();
   const regionId = selRegion();
   const region = content.regions.get(regionId)!;
   const tier = selTier();
@@ -171,26 +180,33 @@ export function renderExpedition(): HTMLElement {
   const party = effectiveParty();
   const artifacts = effectiveArtifacts();
 
-  const partyChips = [...state.roster]
-    .sort((a, b) => (busy.has(a.monsterId) ? 1 : 0) - (busy.has(b.monsterId) ? 1 : 0))
-    .map((owned) =>
-      monsterChip(owned, {
-        selected: party.includes(owned.monsterId),
-        busy: busy.has(owned.monsterId),
-        onclick: () => toggleParty(owned.monsterId),
-      }),
-    );
+  // 편성 영역은 실제 편성분만 네모 슬롯으로 — 빈 슬롯의 +를 누르면 선택 팝업 (2026-08-23)
+  const openPartyPick = () => { resetPicks(); overlay.set({ kind: 'partyPick' }); };
+  const maxPartySlots = Math.max(slots, ...content.balance.party.slotUnlocks.map((u) => u.slots));
+  const partySlotCells = Array.from({ length: maxPartySlots }, (_, i) => {
+    const monsterId = party[i];
+    if (monsterId) {
+      return el('button.party-slot.filled', {
+        title: `${content.monsters.get(monsterId)?.name ?? ''} — 눌러서 편성 변경`,
+        onclick: openPartyPick,
+      }, monsterIcon(monsterId));
+    }
+    if (i < slots) return el('button.party-slot', { title: '몬스터 편성', onclick: openPartyPick }, '+');
+    return el('div.party-slot.locked', { title: '캠프에서 파티 슬롯을 확장할 수 있습니다' }, '🔒');
+  });
 
-  const artifactCards = [...state.artifacts]
-    .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
-    .sort((a, b) => a.def.slot.localeCompare(b.def.slot) || ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity])
-    .map(({ owned, def }) =>
-      artifactCard(owned, def, {
-        selected: artifacts.includes(owned.uid),
-        busy: busy.has(owned.uid),
-        onclick: () => toggleArtifact(owned.uid),
-      }),
-    );
+  const openArtifactPick = () => { resetPicks(); overlay.set({ kind: 'artifactPick' }); };
+  const artifactSlotCells = Array.from({ length: 4 }, (_, i) => {
+    const uid = artifacts[i];
+    const owned = uid ? state.artifacts.find((a) => a.uid === uid) : null;
+    if (owned) {
+      return el('button.party-slot.filled', {
+        title: `${content.artifacts.get(owned.itemId)?.name ?? ''} — 눌러서 편성 변경`,
+        onclick: openArtifactPick,
+      }, artifactIcon(owned.itemId));
+    }
+    return el('button.party-slot', { title: '유물 장착', onclick: openArtifactPick }, '+');
+  });
 
   const cpClass = info && info.power >= region.recommendedCp ? 'cp-ok' : 'cp-low';
   const synergyChips = (info?.tribes ?? [])
@@ -228,16 +244,15 @@ export function renderExpedition(): HTMLElement {
     el('div.card.stack-sm', {}, ...content.regionList.map((r) => regionRow(r.id))),
 
     el('h2.section-title', {}, `파티 편성 (${party.length}/${slots})`),
-    el('div.card', {},
-      el('div.chips', {}, ...partyChips),
-      state.roster.length === 0 ? el('span.muted', {}, '보유 몬스터가 없습니다') : null,
+    el('div.card.stack-sm', {},
+      el('div.party-slots', {}, ...partySlotCells),
+      state.roster.length === 0 ? el('span.muted.small', {}, '보유 몬스터가 없습니다') : null,
     ),
 
     el('h2.section-title', {}, `유물 (${artifacts.length}/4)`),
-    el('div.card', {},
-      state.artifacts.length === 0
-        ? el('span.muted', {}, '아직 유물이 없습니다 — 원정에서 발굴해 보세요')
-        : el('div.stack-sm', {}, ...artifactCards),
+    el('div.card.stack-sm', {},
+      el('div.party-slots', {}, ...artifactSlotCells),
+      state.artifacts.length === 0 ? el('span.muted.small', {}, '아직 유물이 없습니다 — 원정에서 발굴해 보세요') : null,
     ),
 
     el(`div.card.dispatch-panel${panelOpen() ? '' : '.collapsed'}`, {},

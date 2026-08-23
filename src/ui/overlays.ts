@@ -8,6 +8,7 @@ import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
+import { artifactPickSheet, partyPickSheet } from './pickSheets';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
@@ -34,6 +35,10 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? helpSheet()
               : current.kind === 'fusion'
                 ? fusionSheet()
+                : current.kind === 'partyPick'
+                  ? partyPickSheet()
+                : current.kind === 'artifactPick'
+                  ? artifactPickSheet()
                 : current.kind === 'odds'
                   ? oddsSheet()
                 : current.kind === 'monsterInfo'

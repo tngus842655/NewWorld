@@ -85,7 +85,18 @@ export function mountApp(root: HTMLElement): void {
   effect(() => {
     const current = overlay();
     const node = renderOverlay(current);
+    // 같은 시트의 재렌더(편성 탭·합성 등)는 스크롤을 유지하고 등장 애니메이션을 다시 틀지 않는다
+    const sameKind = current !== null && current.kind === prevOverlay?.kind;
+    const prevScroll = sameKind ? (overlayHost.querySelector('.sheet')?.scrollTop ?? 0) : 0;
+    if (sameKind) {
+      const sheet = node?.querySelector<HTMLElement>('.sheet');
+      if (sheet) sheet.style.animation = 'none';
+    }
     overlayHost.replaceChildren(...(node ? [node] : []));
+    if (sameKind && prevScroll > 0) {
+      const sheet = overlayHost.querySelector('.sheet');
+      if (sheet) sheet.scrollTop = prevScroll;
+    }
     document.body.classList.toggle('overlay-open', node !== null);
     // 열림·닫힘·전환(갈림길→일지) 시점 효과음 — 종류가 같은 재렌더는 무음
     if (current && current.kind !== prevOverlay?.kind) {
