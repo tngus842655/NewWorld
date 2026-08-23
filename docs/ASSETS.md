@@ -14,8 +14,10 @@
    **보조: IconScout Store — Mascot & Monster**(20, `mascot-monster-3d-icon-pack_159248`) 슬라임·눈알 계열.
    유물 후보: Saw Ind 오브젝트(마법서·수정구·솥 등) + Naufal Hudallah Adventure Game(35, `adventure-game-3d-icon-pack_273009`).
 2. **선(先)파일럿. [완료]** 후보 6작가 콜라주 비교로 결정 — 사용자 이견 시 대량 다운로드 전 교체.
-3. **저장소 미포함.** IconScout 라이선스상 원본 재배포 금지 — `public/assets/`는 .gitignore 유지
-   (구 NewWorld와 동일 원칙). 대신 이 문서의 매핑 대장이 "무엇을 어디서 받았나"의 진실.
+3. **변환본은 저장소 포함, 원본은 미포함.** *(2026-08-24 개정 — 사용자 확인: 256px WebP 변환본은
+   저장소에 넣어도 된다)* `public/assets/`의 WebP를 전부 커밋한다 — 클론 즉시 전 에셋 동작.
+   IconScout 원본 PNG는 여전히 재배포 금지로 BAK에만 보관, 매핑 대장(assets-manifest.json)이
+   "무엇을 어디서 받았나"의 진실.
 4. **즉시 다운로드.** MCP `download_asset`이 주는 URL은 만료됨 — 발급 즉시 curl로 저장.
 
 ## 2. 수급 목록 (v1)

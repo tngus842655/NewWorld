@@ -3,10 +3,8 @@ dist/
 .env.local
 .env.*.local
 
-# 아트 에셋은 저장소에 넣지 않는다 (IconScout 라이선스 — docs/ASSETS.md)
-public/assets/monsters/
-public/assets/artifacts/
-public/assets/regions/
+# 변환본 WebP는 저장소에 포함 (2026-08-24 사용자 확인 — docs/ASSETS.md §1).
+# IconScout 원본 PNG는 여전히 미포함 (BAK 보관)
 raw/
 
 # vitest
