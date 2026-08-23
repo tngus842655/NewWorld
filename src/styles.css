@@ -76,7 +76,9 @@ body {
 .btn {
   border: 1px solid var(--line); background: var(--bg3); color: var(--text);
   border-radius: 10px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+  white-space: nowrap; flex: none; /* 좁은 화면에서 "열기"류 버튼이 두 줄로 꺾이지 않게 */
 }
+.btn-big { white-space: normal; } /* 전체 폭 버튼은 긴 문구 줄바꿈 허용 */
 .btn:disabled { opacity: 0.45; cursor: default; }
 .btn-primary { background: linear-gradient(180deg, #b97f1e, #96650f); border-color: #c9922e; font-weight: 600; }
 .btn-primary:not(:disabled):active { transform: translateY(1px); }

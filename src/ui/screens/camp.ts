@@ -83,7 +83,7 @@ export function renderCamp(): HTMLElement {
       // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
       const spareTotal = state.roster.reduce((sum, m) => sum + Math.max(0, m.count - 1), 0);
       return el('div.card.list-row', {},
-        el('span.muted.small', {}, `🧬 카드 합성 — 여분 카드 ${spareTotal}장 (같은 등급 2장 → 상위 등급 도전)`),
+        el('span.muted.small', {}, `🧬 카드 합성 (여분 카드 ${spareTotal}장)`),
         el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
       );
     })(),
