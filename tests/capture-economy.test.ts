@@ -120,8 +120,9 @@ describe('경제 액션', () => {
     const next = unlockRegion(content, save, 'whispering-woods');
     expect(canUnlockRegion(content, next, 'whispering-woods').ok).toBe(false); // 이미 해금
 
-    // 늪은 재료도 필요
-    for (const monster of content.monsterList.filter((m) => m.habitat === 'whispering-woods').slice(0, 8)) {
+    // 늪은 재료도 필요 — 도감 조건 수는 콘텐츠에서 파생 (밸런스 변경에 흔들리지 않게)
+    const marshNeed = content.regions.get('sunken-marsh')!.unlock.codexCaptured!['whispering-woods']!;
+    for (const monster of content.monsterList.filter((m) => m.habitat === 'whispering-woods').slice(0, marshNeed)) {
       next.codex[monster.id] = { seen: true, captured: true, awakened: false };
     }
     expect(canUnlockRegion(content, next, 'sunken-marsh').reason).toMatch(/이슬가지/);
