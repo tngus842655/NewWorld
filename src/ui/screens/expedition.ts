@@ -176,11 +176,12 @@ function lockedTeamCards(state: SaveState): HTMLElement[] {
     .filter((u) => u.count > current && u.regionUnlocked)
     .map((u) => {
       const region = content.regions.get(u.regionUnlocked!);
-      return el('div.card.team-card.team-locked', {},
+      return el('div.card.team-card.team-locked', {
+        title: `${region?.name ?? ''} 해금 시 편성 가능`, // 설명은 툴팁으로만 (2026-08-23 사용자)
+      },
         el('div.team-row', {}, ...Array.from({ length: 4 }, () => el('div.team-cell.team-cell-empty', {}, ''))),
         el('div.team-info', {},
           el('div.team-name.muted', {}, `🔒 원정대 ${u.count}`),
-          el('div.muted.small', {}, `${region?.icon ?? ''} ${region?.name ?? ''} 해금 시`),
         ),
       );
     });
