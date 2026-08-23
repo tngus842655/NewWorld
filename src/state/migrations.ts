@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 8;
+export const CURRENT_SAVE_VERSION = 9;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -168,6 +168,13 @@ const migrateV7toV8: Migration = (raw) => {
   return data;
 };
 
+/** v8 → v9 (2026-08-23): 원정 가속 모래시계 — 빈 인벤토리로 시작 */
+const migrateV8toV9: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['wallet'] = { ...data['wallet'], hourglasses: {} };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
@@ -176,6 +183,7 @@ const MIGRATIONS: Record<number, Migration> = {
   5: migrateV5toV6,
   6: migrateV6toV7,
   7: migrateV7toV8,
+  8: migrateV8toV9,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

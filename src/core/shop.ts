@@ -45,6 +45,7 @@ export interface ShopBuyResult {
     isNewMonster?: boolean;
     artifactItemId?: string;
     rushedExpeditionId?: string;
+    hourglass?: { hourglassId: string; count: number };
   };
   newMilestones: string[]; // 뽑기 신규 등록으로 달성된 마일스톤
 }
@@ -146,6 +147,9 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     const drop = rollArtifactOfRarity(content, rng, rarity);
     grantArtifact(next, drop.itemId);
     granted.artifactItemId = drop.itemId;
+  } else if (goods.kind === 'hourglass') {
+    next.wallet.hourglasses[goods.hourglassId] = (next.wallet.hourglasses[goods.hourglassId] ?? 0) + goods.count;
+    granted.hourglass = { hourglassId: goods.hourglassId, count: goods.count };
   } else {
     // rush — 대상 미지정 시 남은 시간이 가장 긴 원정 (가치 최대 기본값)
     const running = next.expeditions.filter((e) => !e.claimed && e.endsAt > now);

@@ -3,7 +3,7 @@
  * 결정론: 같은 (seed, choices, save 상태)면 언제 어디서 계산해도 같은 일지가 나온다.
  */
 import type { Content } from '../content';
-import type { ArtifactRarity, CrossroadEvent, Region, Reward, Tier } from '../content/schema';
+import type { ArtifactRarity, CrossroadEvent, HourglassDef, Region, Reward, Tier } from '../content/schema';
 import { captureChance, shouldUseLure } from './capture';
 import { computePartyPower, enemyPower, partyDamageReduce, resolveClash } from './combat';
 import {
@@ -147,6 +147,51 @@ export function chooseCrossroad(save: SaveState, expeditionId: string, index: nu
   if (index < 0 || index >= expedition.choices.length) throw new GameError('crossroad-index', '잘못된 갈림길 번호입니다');
   expedition.choices[index] = choice;
   return next;
+}
+
+/**
+ * 원정 시간 가속 — 해당 원정의 시간축(startedAt·endsAt)만 ms만큼 과거로 민다.
+ * 전역 시계는 건드리지 않으므로 출석·일일 리셋 등 달력 시스템에 영향이 없다.
+ * DEV 가속 버튼과 (추후) 탐색시간 가속 아이템이 공용으로 쓴다.
+ * 남은 시간보다 크게 가속하면 정확히 지금 귀환하도록 클램프.
+ */
+export function accelerateExpedition(save: SaveState, expeditionId: string, ms: number, now: number): SaveState {
+  const next = structuredClone(save);
+  const expedition = next.expeditions.find((e) => e.id === expeditionId && !e.claimed);
+  if (!expedition) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  const shift = Math.min(ms, Math.max(0, expedition.endsAt - now));
+  expedition.startedAt -= shift;
+  expedition.endsAt -= shift;
+  return next;
+}
+
+export interface UseHourglassResult {
+  save: SaveState;
+  hourglass: HourglassDef;
+  finished: boolean; // 가속으로 원정이 지금 귀환했는가
+}
+
+/** 모래시계 사용 — 보유 1개 소모, 대상 원정의 남은 시간을 단축량만큼 당긴다 */
+export function useHourglass(
+  content: Content,
+  save: SaveState,
+  expeditionId: string,
+  hourglassId: string,
+  now: number,
+): UseHourglassResult {
+  const hourglass = content.hourglasses.get(hourglassId);
+  if (!hourglass) throw new GameError('hourglass-missing', `없는 모래시계: ${hourglassId}`);
+  if ((save.wallet.hourglasses[hourglassId] ?? 0) <= 0) {
+    throw new GameError('hourglass-short', `${hourglass.name}이(가) 없습니다`);
+  }
+  const target = save.expeditions.find((e) => e.id === expeditionId && !e.claimed);
+  if (!target) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  if (target.endsAt <= now) throw new GameError('expedition-done', '이미 돌아온 원정입니다');
+
+  const next = accelerateExpedition(save, expeditionId, hourglass.minutes * 60_000, now);
+  next.wallet.hourglasses[hourglassId] = save.wallet.hourglasses[hourglassId]! - 1;
+  const finished = next.expeditions.find((e) => e.id === expeditionId)!.endsAt <= now;
+  return { save: next, hourglass, finished };
 }
 
 // ── 조우 계획 (시드 → 타임라인) ──────────────────────────────────────────────
@@ -695,6 +740,7 @@ export function claimExpedition(
     capturedCount: journal.totals.capturedMonsterIds.length,
     artifactCount: journal.totals.artifacts.length,
     wiped: journal.wiped,
+    journal, // 재열람용 풀 일지 — 정산 후에는 세이브가 변해 시드로 재생성할 수 없다
   });
   next.journalArchive = next.journalArchive.slice(0, 20);
 

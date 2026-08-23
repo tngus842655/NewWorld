@@ -8,6 +8,9 @@ export type Tab = 'home' | 'expedition' | 'codex' | 'camp' | 'settings';
 
 export type Overlay =
   | { kind: 'journal'; journal: Journal; newMilestones: string[] }
+  | { kind: 'journalDetail'; expeditionId: string } // 최근 일지 재열람 — journalArchive에서 조회
+  | { kind: 'accelerate'; expeditionId: string }   // 원정 가속 — 모래시계 사용 팝업
+
   | { kind: 'monster'; monsterId: string } // 종 단위 (2026-08-23)
   | { kind: 'artifact'; itemId: string } // 종 단위 (v6, 2026-08-23)
   | { kind: 'crossroads'; expeditionId: string }

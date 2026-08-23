@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  accelerateExpedition,
   chooseCrossroad,
   claimExpedition,
   createExpedition,
   resolveExpedition,
   rollArtifact,
+  useHourglass,
 } from '../src/core/expedition';
 import { streamRng } from '../src/core/rng';
 import { GameError, type Journal, type SaveState } from '../src/core/types';
@@ -325,6 +327,75 @@ describe('파견 생성 검증', () => {
   });
 });
 
+describe('원정 시간 가속', () => {
+  it('시간축만 당기고 총 소요시간은 유지, 남은 시간 초과는 지금 귀환으로 클램프', () => {
+    const clock = makeCtx();
+    const { save, partyIds } = saveWithParty(clock, STARTERS);
+    const { save: dispatched, expedition } = createExpedition(
+      content,
+      save,
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactIds: [] },
+      clock.ctx,
+    );
+    const duration = expedition.endsAt - expedition.startedAt;
+
+    const after = accelerateExpedition(dispatched, expedition.id, 30 * 60_000, clock.ctx.now());
+    const accelerated = after.expeditions.find((e) => e.id === expedition.id)!;
+    expect(accelerated.endsAt).toBe(expedition.endsAt - 30 * 60_000);
+    expect(accelerated.endsAt - accelerated.startedAt).toBe(duration);
+
+    const rushed = accelerateExpedition(dispatched, expedition.id, duration * 10, clock.ctx.now());
+    expect(rushed.expeditions.find((e) => e.id === expedition.id)!.endsAt).toBe(clock.ctx.now());
+
+    // 가속해도 정산 결과는 가속 전과 동일하다 (시드 결정론)
+    clock.advance(1);
+    const { journal } = claimExpedition(content, rushed, expedition.id, clock.ctx);
+    expect(journal).toEqual(resolveExpedition(content, dispatched, expedition));
+  });
+
+  it('없는(또는 정산된) 원정 가속은 거부한다', () => {
+    const clock = makeCtx();
+    const { save } = saveWithParty(clock, STARTERS);
+    expect(() => accelerateExpedition(save, 'no-such', 60_000, clock.ctx.now())).toThrow(/진행 중인 원정/);
+  });
+});
+
+describe('모래시계 사용', () => {
+  function dispatchedWith(hourglasses: Record<string, number>) {
+    const clock = makeCtx();
+    const { save } = saveWithParty(clock, STARTERS);
+    save.wallet.hourglasses = hourglasses;
+    const { save: dispatched, expedition } = createExpedition(
+      content,
+      save,
+      { regionId: 'misty-coast', tier: 'standard', partyIds: STARTERS.map((s) => s.id), artifactIds: [] },
+      clock.ctx,
+    );
+    return { clock, dispatched, expedition };
+  }
+
+  it('1개 소모하고 단축량만큼 당긴다 — 남은 시간 초과면 finished', () => {
+    const { clock, dispatched, expedition } = dispatchedWith({ 'hourglass-15': 2, 'hourglass-480': 1 });
+    const result = useHourglass(content, dispatched, expedition.id, 'hourglass-15', clock.ctx.now());
+    expect(result.save.wallet.hourglasses['hourglass-15']).toBe(1);
+    expect(result.finished).toBe(false);
+    expect(result.save.expeditions[0]!.endsAt).toBe(expedition.endsAt - 15 * 60_000);
+
+    // 8시간짜리는 2시간 원정을 끝내버린다 (클램프 — 정확히 지금 귀환)
+    const big = useHourglass(content, dispatched, expedition.id, 'hourglass-480', clock.ctx.now());
+    expect(big.finished).toBe(true);
+    expect(big.save.expeditions[0]!.endsAt).toBe(clock.ctx.now());
+  });
+
+  it('없는 모래시계·미보유·끝난 원정은 거부한다', () => {
+    const { clock, dispatched, expedition } = dispatchedWith({ 'hourglass-15': 1 });
+    expect(() => useHourglass(content, dispatched, expedition.id, 'no-such', clock.ctx.now())).toThrow(/없는 모래시계/);
+    expect(() => useHourglass(content, dispatched, expedition.id, 'hourglass-60', clock.ctx.now())).toThrow(/없습니다/);
+    clock.set(expedition.endsAt + 1);
+    expect(() => useHourglass(content, dispatched, expedition.id, 'hourglass-15', clock.ctx.now())).toThrow(/이미 돌아온/);
+  });
+});
+
 describe('귀환 정산', () => {
   it('완료 전 정산은 거부, 완료 후 재화·도감·유물·미끼가 반영된다', () => {
     const clock = makeCtx();
@@ -345,6 +416,8 @@ describe('귀환 정산', () => {
     expect(after.wallet.gold).toBe(dispatched.wallet.gold + journal.totals.gold + milestoneGold);
     expect(after.expeditions).toHaveLength(0);
     expect(after.journalArchive[0]).toMatchObject({ expeditionId: expedition.id, wiped: journal.wiped });
+    // 풀 일지는 정산 시점 그대로 보관된다 (재열람 — 정산 후엔 시드로 재생성 불가)
+    expect(after.journalArchive[0]!.journal).toEqual(journal);
     expect(after.roster.length).toBe(dispatched.roster.length + journal.totals.capturedMonsterIds.length);
     for (const id of journal.totals.capturedMonsterIds) {
       expect(after.codex[id]).toMatchObject({ captured: true });

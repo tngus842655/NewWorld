@@ -23,7 +23,9 @@ import {
   claimExpedition,
   createExpedition,
   previewCrossroads,
+  useHourglass,
   type ExpeditionInput,
+  type UseHourglassResult,
 } from '../core/expedition';
 import { checkIn, type CheckInResult } from '../core/attendance';
 import { createInitialSave } from '../core/newgame';
@@ -130,6 +132,24 @@ export function claim(expeditionId: string): { journal: Journal; newMilestones: 
     void submitScore(next); // 랭킹 갱신 — 실패는 조용히 무시 (오프라인 무관)
     return { journal: result.journal, newMilestones: result.newMilestones };
   });
+}
+
+/** 모래시계 사용 — 결과(단축량·귀환 여부)는 UI가 연출용으로 사용 */
+export function useHourglassOn(expeditionId: string, hourglassId: string): UseHourglassResult | null {
+  return act(() => {
+    const result = useHourglass(content, save(), expeditionId, hourglassId, ctx.now());
+    save.set(result.save);
+    return result;
+  });
+}
+
+/** DEV: 모래시계 각 1개씩 지급 — 가속 기능 테스트용 (DEV 빌드에서만 UI 노출) */
+export function devGrantHourglasses(): void {
+  const state = save();
+  const hourglasses = { ...state.wallet.hourglasses };
+  for (const def of content.hourglassList) hourglasses[def.id] = (hourglasses[def.id] ?? 0) + 1;
+  save.set({ ...state, wallet: { ...state.wallet, hourglasses } });
+  toast('⏳ DEV — 모래시계 각 +1', 'ok');
 }
 
 export function choose(expeditionId: string, index: number, choice: CrossroadChoice): void {

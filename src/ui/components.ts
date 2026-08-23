@@ -2,7 +2,7 @@
  * 공용 컴포넌트 — 몬스터 아이콘(에셋 없으면 실루엣 폴백), 카드류.
  */
 import { content } from '../content';
-import type { ArtifactDef } from '../content/schema';
+import type { ArtifactDef, HourglassDef } from '../content/schema';
 import { monsterBaseCp, statAt } from '../core/formulas';
 import type { OwnedArtifact, OwnedMonster } from '../core/types';
 import { ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, stars } from './kit';
@@ -19,6 +19,21 @@ export function monsterIcon(monsterId: string, opts: { silhouette?: boolean } = 
   img.onerror = () => {
     img.remove();
     box.append(el('span.micon-fallback', {}, TRIBE_EMOJI[monster.tribe]));
+  };
+  box.append(img);
+  return box;
+}
+
+/** 모래시계 아이콘 — /assets/hourglasses/{asset}.webp, 없으면 ⏳ 폴백. 등급은 테두리 색으로만 */
+export function hourglassIcon(def: HourglassDef, opts: { small?: boolean } = {}): HTMLElement {
+  const box = el(`div.hg-icon.rar-${def.rarity}${opts.small ? '.hg-sm' : ''}`);
+  const img = el('img');
+  img.src = `/assets/hourglasses/${def.asset}.webp`;
+  img.alt = def.name;
+  img.loading = 'lazy';
+  img.onerror = () => {
+    img.remove();
+    box.append(el('span', {}, '⏳'));
   };
   box.append(img);
   return box;

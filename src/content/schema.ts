@@ -213,6 +213,17 @@ export const ItemsSchema = z.object({
   sets: z.array(SetDefSchema),
 });
 
+// ── 모래시계 (2026-08-23) — 진행 중 원정의 남은 시간을 줄이는 소모품 ──────────
+export const HourglassSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  minutes: z.number().int().positive(), // 단축량 (분)
+  rarity: z.enum(RARITIES), // 몬스터·유물과 같은 5등급 — 테두리 색 구분
+  asset: z.string(),
+  flavor: z.string(),
+});
+export type HourglassDef = z.infer<typeof HourglassSchema>;
+
 // ── 마일스톤 ─────────────────────────────────────────────────────────────────
 export const MilestoneConditionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('regionCaptured'), region: z.string(), count: z.number().int().positive() }),
@@ -267,6 +278,7 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),
   z.object({ kind: z.literal('rush') }), // 진행 중 원정 1건 즉시 귀환
+  z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive().default(1) }),
 ]);
 export type ShopGoods = z.infer<typeof ShopGoodsSchema>;
 

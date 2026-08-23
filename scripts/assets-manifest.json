@@ -1,5 +1,5 @@
 {
-  "note": "몬스터 id → IconScout 에셋 매핑 대장 (ASSETS.md §3). 원본 PNG는 BAK/NewWorld-assets-raw/, 변환본은 public/assets/monsters/{id}.webp (git 미포함).",
+  "note": "紐ъ뒪??id ??IconScout ?먯뀑 留ㅽ븨 ???(ASSETS.md 짠3). ?먮낯 PNG??BAK/NewWorld-assets-raw/, 蹂?섎낯? public/assets/monsters/{id}.webp (git 誘명룷??.",
   "monsters": {
     "bubble-crab": {
       "slug": "crab-9440561",
@@ -642,6 +642,28 @@
     "twin-lure-flute": {
       "slug": "pan-flute-8708891",
       "contributor": "Creasheeps Studio"
+    }
+    },
+  "hourglasses": {
+    "hourglass-15": {
+      "slug": "hourglass-15645067",
+      "contributor": "Icons Home"
+    },
+    "hourglass-60": {
+      "slug": "hourglass-12619676",
+      "contributor": "Broto Seno"
+    },
+    "hourglass-120": {
+      "slug": "hourglass-10008858",
+      "contributor": "Muhamad Taupik"
+    },
+    "hourglass-240": {
+      "slug": "hourglass-10708867",
+      "contributor": "Kerismaker"
+    },
+    "hourglass-480": {
+      "slug": "hourglass-11930754",
+      "contributor": "Didik Prasetio"
     }
   }
 }

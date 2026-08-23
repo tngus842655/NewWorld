@@ -39,6 +39,17 @@ describe('상점 (GDD §9.4)', () => {
     expect(purchasesToday(next.save, 'gold-lure', tomorrow)).toBe(1);
   });
 
+  it('모래시계 — 다이아 차감·인벤토리 적립', () => {
+    const save = richSave();
+    const result = buyShopProduct(content, save, { productId: 'dia-hourglass-60' }, fixedCtx());
+    expect(result.save.wallet.diamonds).toBe(1000 - 6);
+    expect(result.save.wallet.hourglasses['hourglass-60']).toBe(1);
+    expect(result.granted.hourglass).toEqual({ hourglassId: 'hourglass-60', count: 1 });
+
+    const again = buyShopProduct(content, result.save, { productId: 'dia-hourglass-60' }, fixedCtx());
+    expect(again.save.wallet.hourglasses['hourglass-60']).toBe(2);
+  });
+
   it('1회 한정 — 시작 패키지는 재구매 불가', () => {
     const save = richSave();
     const result = buyShopProduct(content, save, { productId: 'dia-starter' }, fixedCtx());

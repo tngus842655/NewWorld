@@ -156,6 +156,7 @@ interface SaveState {
   version: 1;
   profile: { createdAt: number; tutorialDone: boolean; cloudUserKey?: string };
   wallet: { gold: number; materials: Record<MaterialId, number>; essence: Record<MonsterId, number>; lures: number; dust: number };
+                                   //   v9: + hourglasses: Record<HourglassId, number> (원정 가속 소모품)
   roster: OwnedMonster[];          // { uid, monsterId, level, star } — HP는 원정 내 파티 풀 개념이라 저장 안 함
                                    //   "원정 중" 여부는 expeditions의 partyUids 스냅샷에서 파생
   artifacts: OwnedArtifact[];      // v6: { itemId, enhance, count } — 종 단위 (uid·부옵션 폐지)
@@ -165,7 +166,7 @@ interface SaveState {
   expeditions: ActiveExpedition[]; // { id, regionId, tier, partyUids, artifactUids, seed, startedAt,
                                    //   endsAt, choices: ('safe'|'risky')[], claimed: boolean }
                                    //   ※ 파티·유물은 파견 시점 스냅샷 (원정 중 교체 방지)
-  journalArchive: JournalSummary[]; // 최근 20건 요약 (풀 일지는 시드에서 재생성 가능하므로 미저장)
+  journalArchive: JournalSummary[]; // 최근 20건 — 요약 + 정산 시점 풀 일지(journal?, 재열람용)
   counters: { adUsedToday: Record<AdSlot, number>; day: string };  // 일일 제한
   settings: { sound: boolean; push: boolean };
   lastSavedAt: number;
@@ -174,7 +175,8 @@ interface SaveState {
 
 원칙:
 - **파생값은 저장하지 않는다** (마일스톤 버프, 도감 점수, 유효 CP → 로드 시 재계산)
-- 풀 일지도 저장하지 않는다 — `(seed, choices)`가 있으면 core가 언제든 재생성 (결정론의 배당)
+- 예외: 최근 20건의 풀 일지는 정산 시점 그대로 저장 (2026-08-23 재열람 기능) — 시드 재생성은
+  정산 후 세이브(로스터·마일스톤)가 변해 같은 일지를 돌려주지 못하므로 파생값이 아니다
 - 버전 필드는 정수 증가만. 마이그레이션은 TECH.md §8
 
 ## 3. 파생 데이터 흐름

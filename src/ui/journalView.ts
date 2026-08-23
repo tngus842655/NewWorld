@@ -115,13 +115,20 @@ function entryCard(entry: JournalEntry): HTMLElement {
   }
 }
 
-export function journalView(journal: Journal, newMilestones: string[]): HTMLElement {
+export interface JournalViewOpts {
+  /** 재열람 모드 — 순차 연출·효과음 없이 전체를 바로 보여준다 */
+  instant?: boolean;
+  /** 제목 아래 보조 줄 (예: '3시간 전 귀환') */
+  subtitle?: string;
+}
+
+export function journalView(journal: Journal, newMilestones: string[], opts: JournalViewOpts = {}): HTMLElement {
   const region = content.regions.get(journal.regionId);
   const totals = journal.totals;
 
   const cards = journal.entries.map((entry) => {
     const card = entryCard(entry);
-    card.classList.add('jhidden');
+    if (!opts.instant) card.classList.add('jhidden');
     return card;
   });
 
@@ -135,7 +142,7 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
     totals.artifacts.length > 0 ? `유물 ${totals.artifacts.length}점` : null,
   ].filter(Boolean).join(' · ');
 
-  const footer = el('div.jfooter.jhidden', {},
+  const footer = el(`div.jfooter${opts.instant ? '' : '.jhidden'}`, {},
     el('div.jline', {}, `🏕️ 귀환 — ${summaryBits}`),
     totals.capturedMonsterIds.length > 0
       ? el('div.jsub', {}, `📖 도감 등록: ${totals.capturedMonsterIds.map(monsterName).join(', ')}`)
@@ -149,6 +156,15 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
   );
 
   const timeline = el('div.jtimeline', {}, ...cards, footer);
+  const title = el('div', {},
+    el('div.jtitle', {}, `📜 ${region?.name ?? journal.regionId} · ${TIER_LABEL[journal.tier]}`),
+    opts.subtitle ? el('div.muted.small', {}, opts.subtitle) : null,
+  );
+
+  if (opts.instant) {
+    return el('div.journal', {}, el('div.jheader', {}, title), timeline);
+  }
+
   const all = [...cards, footer];
   const sfxIds: (SfxId | null)[] = [
     ...journal.entries.map(entrySfx),
@@ -181,10 +197,7 @@ export function journalView(journal: Journal, newMilestones: string[]): HTMLElem
   }, '한번에 보기');
 
   return el('div.journal', {},
-    el('div.jheader', {},
-      el('div.jtitle', {}, `📜 ${region?.name ?? journal.regionId} · ${TIER_LABEL[journal.tier]}`),
-      skip,
-    ),
+    el('div.jheader', {}, title, skip),
     timeline,
   );
 }

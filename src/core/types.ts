@@ -83,7 +83,7 @@ export interface AttendanceState {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 8; // v8 (2026-08-23): 월간 출석. v7: 유물 도감. v6: 유물 종 단위 통합. migrations.ts
+  version: 9; // v9 (2026-08-23): 모래시계 인벤토리. v8: 월간 출석. v7: 유물 도감. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -99,6 +99,7 @@ export interface SaveState {
     diamonds: number; // 충전 재화 (IAP는 M6 — 그 전 획득처는 출석 이벤트 예정)
     lures: number;
     materials: Record<string, number>;
+    hourglasses: Record<string, number>; // hourglassId → 보유 수 (원정 가속 소모품, v9)
   };
   roster: OwnedMonster[];
   artifacts: OwnedArtifact[];
@@ -111,7 +112,7 @@ export interface SaveState {
   shop: ShopState;
   attendance: AttendanceState; // 월간 출석 (v8)
   expeditions: ActiveExpedition[];
-  journalArchive: JournalSummary[]; // 최근 20건 요약 — 풀 일지는 시드에서 재생성
+  journalArchive: JournalSummary[]; // 최근 20건 — 요약 + 정산 시점 풀 일지 (재열람용)
   counters: { day: string; adUsed: Record<string, number> };
   settings: { sound: boolean; push: boolean };
   lastSavedAt: number;
@@ -187,6 +188,9 @@ export interface JournalSummary {
   capturedCount: number;
   artifactCount: number;
   wiped: boolean;
+  /** 정산 시점의 풀 일지 — 재열람용 (2026-08-23). 시드 재생성은 정산 후 세이브가 변해 불가능.
+   *  구 세이브 항목에는 없음 → UI는 상세 버튼을 숨긴다 */
+  journal?: Journal;
 }
 
 // ── 코어 호출 컨텍스트 ───────────────────────────────────────────────────────

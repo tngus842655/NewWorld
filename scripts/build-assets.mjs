@@ -26,6 +26,7 @@ const manifest = JSON.parse(readFileSync(join(here, 'assets-manifest.json'), 'ut
 const groups = [
   { name: 'monsters', ids: Object.keys(manifest.monsters) },
   { name: 'artifacts', ids: Object.keys(manifest.artifacts ?? {}) },
+  { name: 'hourglasses', ids: Object.keys(manifest.hourglasses ?? {}) },
 ];
 
 const missing = [];

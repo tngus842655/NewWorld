@@ -1,0 +1,7 @@
+[
+  { "id": "hourglass-15", "name": "모래시계 조각", "minutes": 15, "rarity": "common", "asset": "hourglass-15", "flavor": "금 간 유리 조각. 그래도 안의 모래는 아직 성실하게 떨어진다." },
+  { "id": "hourglass-60", "name": "여행자의 모래시계", "minutes": 60, "rarity": "uncommon", "asset": "hourglass-60", "flavor": "개척자들이 허리춤에 차고 다니던 물건. 한 시간이 눈 깜짝할 새 지나간다." },
+  { "id": "hourglass-120", "name": "은빛 모래시계", "minutes": 120, "rarity": "rare", "asset": "hourglass-120", "flavor": "달빛을 갈아 넣은 은모래. 뒤집으면 밤이 절반으로 줄어든다." },
+  { "id": "hourglass-240", "name": "황금 모래시계", "minutes": 240, "rarity": "heroic", "asset": "hourglass-240", "flavor": "왕가의 금고에서 나왔다는 소문. 시간마저 금값으로 사들인다." },
+  { "id": "hourglass-480", "name": "시간을 삼킨 모래시계", "minutes": 480, "rarity": "legendary", "asset": "hourglass-480", "flavor": "모래가 아니라 하루의 조각이 떨어진다. 뒤집은 자는 저녁을 아침처럼 맞는다." }
+]

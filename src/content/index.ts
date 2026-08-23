@@ -6,6 +6,7 @@ import {
   ARTIFACT_RARITIES,
   BalanceSchema,
   EventsSchema,
+  HourglassSchema,
   ItemsSchema,
   MaterialSchema,
   MilestoneSchema,
@@ -19,6 +20,7 @@ import {
   type ArtifactRarity,
   type Balance,
   type EventsContent,
+  type HourglassDef,
   type Material,
   type Milestone,
   type Monster,
@@ -33,6 +35,7 @@ import {
 
 import balanceRaw from './data/balance.json';
 import eventsRaw from './data/events.json';
+import hourglassesRaw from './data/hourglasses.json';
 import itemsRaw from './data/items.json';
 import materialsRaw from './data/materials.json';
 import milestonesRaw from './data/milestones.json';
@@ -58,6 +61,8 @@ export interface Content {
   milestones: readonly Milestone[];
   tasks: readonly TaskDef[]; // 반복 과업 (GDD §9.3)
   shopProducts: readonly ShopProduct[]; // 상점 상품 (GDD §9.4)
+  hourglasses: ReadonlyMap<string, HourglassDef>; // 원정 가속 소모품 (2026-08-23)
+  hourglassList: readonly HourglassDef[]; // 단축량 오름차순
   balance: Balance;
 }
 
@@ -85,9 +90,11 @@ export function loadContent(): Content {
   const milestones = MilestoneSchema.array().parse(milestonesRaw);
   const tasks = TaskSchema.array().parse(tasksRaw);
   const shopProducts = ShopProductSchema.array().parse(shopRaw);
+  const hourglassList = HourglassSchema.array().parse(hourglassesRaw).sort((a, b) => a.minutes - b.minutes);
   const balance = BalanceSchema.parse(balanceRaw);
   toMap(tasks as { id: string }[], 'task'); // id 중복 검증만
   toMap(shopProducts as { id: string }[], 'shopProduct');
+  const hourglasses = toMap(hourglassList, 'hourglass');
 
   const monsters = toMap(monsterList, 'monster');
   const regions = toMap(regionList, 'region');
@@ -155,6 +162,11 @@ export function loadContent(): Content {
   for (const id of balance.starter.monsters) {
     if (!monsters.has(id)) fail(`starter가 없는 몬스터 참조: ${id}`);
   }
+  for (const product of shopProducts) {
+    if (product.goods.kind === 'hourglass' && !hourglasses.has(product.goods.hourglassId)) {
+      fail(`상품 ${product.id}가 없는 모래시계 참조: ${product.goods.hourglassId}`);
+    }
+  }
 
   const artifactsByRarity = new Map<ArtifactRarity, ArtifactDef[]>();
   for (const rarity of ARTIFACT_RARITIES) artifactsByRarity.set(rarity, []);
@@ -175,6 +187,8 @@ export function loadContent(): Content {
     milestones,
     tasks,
     shopProducts,
+    hourglasses,
+    hourglassList,
     balance,
   };
 }

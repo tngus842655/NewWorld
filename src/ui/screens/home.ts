@@ -1,14 +1,19 @@
 /**
- * 홈 — 원정 현황 카드, 귀환 정산 진입, (DEV) 시간 가속.
+ * 홈 — 원정 현황 카드(가속·갈림길·정산 진입), 다음 목표, 최근 일지.
  * 카드 구조는 고정하고 시간 관련 표시만 scopedEffect로 갱신한다 (탭 안정성).
  */
 import { content } from '../../content';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
 import * as clock from '../../state/clock';
+import { signal } from '../../state/signal';
 import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
 import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
+
+/** 최근 일지 접힘 상태 — 탭 이동·재렌더에도 유지 (접힘 기본 5건, 펼치면 아카이브 전체) */
+const JOURNAL_COLLAPSED_COUNT = 5;
+const journalExpanded = signal(false);
 
 function expeditionCard(expeditionId: string): HTMLElement {
   const state = save();
@@ -19,6 +24,9 @@ function expeditionCard(expeditionId: string): HTMLElement {
 
   const fill = el('div.progress-fill');
   const remain = el('span.muted');
+  const accelBtn = el('button.btn.btn-ghost.exp-accel', {
+    onclick: () => overlay.set({ kind: 'accelerate', expeditionId: expedition.id }),
+  }, '⏳ 가속');
   const crossroadBtn =
     expedition.choices.length > 0
       ? el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'crossroads', expeditionId: expedition.id }) },
@@ -49,6 +57,7 @@ function expeditionCard(expeditionId: string): HTMLElement {
       : `귀환까지 ${fmtRemain(expedition.endsAt - now)} · ${fmtClock(expedition.endsAt)} 귀환`;
     claimBtn.classList.toggle('hidden', !done);
     crossroadBtn?.classList.toggle('hidden', done);
+    accelBtn.classList.toggle('hidden', done);
   });
 
   const teamName = expedition.teamId ? state.teams.find((t) => t.id === expedition.teamId)?.name : null;
@@ -62,7 +71,7 @@ function expeditionCard(expeditionId: string): HTMLElement {
     ),
     el('div.exp-party', {}, ...expedition.partyIds.map((monsterId) => monsterIcon(monsterId))),
     el('div.progress', {}, fill),
-    el('div.exp-foot', {}, remain, el('div.row-gap', {}, crossroadBtn, claimBtn)),
+    el('div.exp-foot', {}, remain, el('div.row-gap', {}, accelBtn, crossroadBtn, claimBtn)),
   );
 }
 
@@ -135,17 +144,27 @@ export function renderHome(): HTMLElement {
     : null;
 
   const now = clock.now();
-  const recent = state.journalArchive.slice(0, 5).map((summary) => {
+  const expanded = journalExpanded();
+  const archive = state.journalArchive; // 정산 시 최근 20건으로 유지된다
+  const recent = (expanded ? archive : archive.slice(0, JOURNAL_COLLAPSED_COUNT)).map((summary) => {
     const region = content.regions.get(summary.regionId);
     const tierName = TIER_LABEL[summary.tier].split(' ')[0];
-    return el('div.list-row', {},
-      el('div', {},
-        el('div', {}, `${summary.wiped ? '💀' : '🏕️'} ${region?.name ?? summary.regionId} · ${tierName}`),
-        el('div.muted.small', {}, fmtAgo(now - summary.endedAt)),
+    return el('div.list-row.journal-row', {},
+      el('div.journal-name', {},
+        `${summary.wiped ? '💀' : '🏕️'} ${region?.name ?? summary.regionId} · ${tierName}`,
+        el('span.muted.small.journal-ago', {}, fmtAgo(now - summary.endedAt)),
       ),
-      el('span.muted.small', {}, `골드 ${fmtGold(summary.gold)} · 신규 ${summary.capturedCount} · 유물 ${summary.artifactCount}`),
+      summary.journal // 구 세이브 항목에는 풀 일지가 없다 — 상세 버튼 숨김
+        ? el('button.btn.btn-ghost.journal-detail-btn', {
+            onclick: () => overlay.set({ kind: 'journalDetail', expeditionId: summary.expeditionId }),
+          }, '상세')
+        : null,
     );
   });
+  const journalToggle = archive.length > JOURNAL_COLLAPSED_COUNT
+    ? el('button.btn.btn-ghost.journal-toggle', { onclick: () => journalExpanded.set(!expanded) },
+        expanded ? '접기 ∧' : '펼치기 ∨')
+    : null;
 
   return el('div.screen', {},
     tutorialBanner,
@@ -165,16 +184,10 @@ export function renderHome(): HTMLElement {
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
       );
     })(),
-    el('h2.section-title', {}, '최근 일지'),
-    recent.length > 0 ? el('div.card', {}, ...recent) : el('div.card.empty', {}, el('span.muted', {}, '아직 기록이 없습니다')),
+    el('h2.section-title', {}, archive.length > 0 ? `최근 일지 (${archive.length})` : '최근 일지'),
+    recent.length > 0
+      ? el('div.card', {}, ...recent, journalToggle)
+      : el('div.card.empty', {}, el('span.muted', {}, '아직 기록이 없습니다')),
     el('button.codex-link', { onclick: () => tab.set('codex') }, `📖 도감 ${capturedCount}/${content.monsterList.length}`),
-    import.meta.env.DEV
-      ? el('div.card.devbar', {},
-          el('span.muted.small', {}, 'DEV 시간 가속'),
-          el('button.btn.btn-ghost', { onclick: () => clock.addDevSkew(30 * 60_000) }, '+30분'),
-          el('button.btn.btn-ghost', { onclick: () => clock.addDevSkew(2 * 3600_000) }, '+2시간'),
-          el('button.btn.btn-ghost', { onclick: () => clock.addDevSkew(8 * 3600_000) }, '+8시간'),
-        )
-      : null,
   );
 }

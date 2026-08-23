@@ -157,6 +157,9 @@ effect(() => { el.textContent = label(); }); // 의존 자동 추적, 파괴 시
     (앱인토스 트랙 보류로 당분간 offset=0 — Google Play 1차의 귀환 로컬 알림은 기기 시계 기준)
   - **되감기 클램프**: `now() < save.lastSavedAt`이면 `lastSavedAt`을 하한으로 사용
 - 파견 완료 판정·방치 보상은 전부 `clock.now()` 기준. core에는 `ctx.now`로 주입(직접 호출 금지)
+- 시간 가속(모래시계 아이템 `useHourglass` — 2026-08-23 구현)은 시계가 아니라 원정 시간축
+  (`startedAt`·`endsAt`)을 미는 `accelerateExpedition`으로 — 시계를 감으면 출석·일일 리셋 등
+  달력 시스템이 같이 밀리기 때문. DEV 빌드는 가속 시트의 지급 버튼으로 테스트
 - 한계 인정: v1 오프라인 단독 플레이는 시계 조작에 완전 방어 불가. 랭킹 없는 v1에서는 수용,
   랭킹(v2) 도입 시 서버 재검증(같은 core를 Edge Function에서 실행)으로 승격 — 이 경로가 있음이 중요
 

@@ -8,6 +8,7 @@ import { onceBought, purchasesToday, todayKey } from '../core/shop';
 import { isRegionUnlocked } from '../core/progression';
 import { signal } from '../state/signal';
 import { buyShop, nowTick, save } from '../state/store';
+import { hourglassIcon } from './components';
 import { askConfirm } from './dialog';
 import { MONSTER_RARITY_LABEL, ARTIFACT_RARITY_LABEL, el, fmtGold, fmtRemain, toast } from './kit';
 import { sheetShell } from './overlays';
@@ -56,6 +57,10 @@ function purchase(product: ShopProduct): void {
     } else if (granted.rushedExpeditionId) {
       playSfx('confirm');
       toast('⏩ 원정대가 즉시 귀환했습니다 — 홈에서 일지를 여세요', 'ok');
+    } else if (granted.hourglass) {
+      const def = content.hourglasses.get(granted.hourglass.hourglassId)!;
+      playSfx('treasure');
+      toast(`⏳ ${def.name} ×${granted.hourglass.count} 획득 — 원정 카드의 가속 버튼으로 사용`, 'ok');
     } else {
       const parts = [
         granted.gold ? `골드 ${fmtGold(granted.gold)}` : null,
@@ -102,6 +107,9 @@ function productCard(product: ShopProduct, unlockedRegions: Region[]): HTMLEleme
     : undefined;
   const rushUnavailable = product.goods.kind === 'rush' && !rushTarget;
 
+  // 모래시계 — 가속 시트와 동일하게 등급색 테두리 타일로 (라벨 없이 색으로만 구분)
+  const hourglass = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
+
   const needsRegion = product.goods.kind === 'materials' || product.goods.kind === 'regionPack';
   const regionChips = needsRegion
     ? el('div.chips-wrap', {}, ...unlockedRegions.map((region) => {
@@ -115,7 +123,10 @@ function productCard(product: ShopProduct, unlockedRegions: Region[]): HTMLEleme
   return el('div.card.stack-sm.shop-item', {},
     el('div.list-row', {},
       el('div', {},
-        el('div.shop-name', {}, `${product.icon} ${product.name}`),
+        // 모래시계는 이모지 대신 등급 테두리 미니 아이콘 — 다른 상품 이모지와 같은 줄 높이
+        hourglass
+          ? el('div.shop-name.hg-name', {}, hourglassIcon(hourglass, { small: true }), product.name)
+          : el('div.shop-name', {}, `${product.icon} ${product.name}`),
         el('div.muted.small', {}, product.desc),
         rushTarget
           ? el('div.muted.small', {}, `대상: ${content.regions.get(rushTarget.regionId)?.name} (남은 ${fmtRemain(rushTarget.endsAt - now)})`)

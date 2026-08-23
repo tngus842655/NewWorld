@@ -8,6 +8,7 @@ import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import { accelerateSheet } from './accelerateSheet';
 import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
@@ -19,7 +20,7 @@ import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
 import {
   ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL,
-  TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, stars,
+  TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
 import { closeOverlay, overlay, type Overlay } from './router';
@@ -30,6 +31,10 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
   const sheet =
     current.kind === 'journal'
       ? journalSheet(current)
+      : current.kind === 'journalDetail'
+        ? journalDetailSheet(current.expeditionId)
+      : current.kind === 'accelerate'
+        ? accelerateSheet(current.expeditionId)
       : current.kind === 'monster'
         ? monsterSheet(current.monsterId)
         : current.kind === 'artifact'
@@ -78,6 +83,16 @@ export function sheetShell(title: string, ...children: (HTMLElement | null)[]): 
 function journalSheet(data: Extract<NonNullable<Overlay>, { kind: 'journal' }>): HTMLElement {
   return el('div.sheet.sheet-journal', {},
     journalView(data.journal, data.newMilestones),
+    el('button.btn.btn-primary.btn-big', { onclick: closeOverlay }, '확인'),
+  );
+}
+
+/** 최근 일지 재열람 — 아카이브에 보관된 풀 일지를 연출 없이 바로 보여준다 */
+function journalDetailSheet(expeditionId: string): HTMLElement | null {
+  const summary = save().journalArchive.find((s) => s.expeditionId === expeditionId);
+  if (!summary?.journal) return null; // 구 세이브 항목 — 풀 일지 없음 (UI가 상세 버튼을 숨기지만 방어)
+  return el('div.sheet.sheet-journal', {},
+    journalView(summary.journal, [], { instant: true, subtitle: `${fmtAgo(clock.now() - summary.endedAt)} 귀환` }),
     el('button.btn.btn-primary.btn-big', { onclick: closeOverlay }, '확인'),
   );
 }
