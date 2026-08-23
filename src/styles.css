@@ -239,11 +239,75 @@ body.overlay-open .container { overflow: hidden; }
 .pct-value { flex: none; width: 52px; text-align: right; font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .fusion-step { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; }
 
-/* ── 카드 합성 시트 ── */
-.fusion-result { display: flex; gap: 10px; align-items: center; }
-.fusion-result-title { font-weight: 700; font-size: 15px; }
-.fusion-ok { border-color: var(--accent); animation: jpop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.fusion-bad { border-color: #4a2e2b; background: #241a1c; color: var(--muted); }
+/* ── 카드 합성 시트 — 마법진 의식 + ?카드 공개 ── */
+.ritual { position: relative; height: 210px; display: flex; align-items: center; justify-content: center; }
+.ritual-ring {
+  position: absolute; width: 172px; height: 172px; border-radius: 50%;
+  border: 2px dashed var(--accent); opacity: 0.55;
+  animation: ritual-spin 14s linear infinite;
+}
+.ritual-ring2 {
+  width: 132px; height: 132px; border-style: dotted; border-color: var(--accent-2);
+  animation-direction: reverse; animation-duration: 9s; opacity: 0.4;
+}
+.ritual-orbit { position: absolute; width: 196px; height: 196px; animation: ritual-spin 18s linear infinite; }
+.ritual-star { position: absolute; top: -4px; left: 50%; color: var(--accent-2); font-size: 14px; opacity: 0.8; }
+.ritual-star.s2 { top: auto; bottom: -4px; font-size: 11px; }
+.ritual-core {
+  width: 76px; height: 96px; border-radius: 12px; background: radial-gradient(circle at 50% 35%, #2c3147, #171a26);
+  border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center;
+  animation: ritual-pulse 2.4s ease-in-out infinite;
+}
+.ritual-core .micon { width: 40px; height: 40px; }
+.ritual-preview { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ritual-preview .micon { width: 30px; height: 30px; border-radius: 8px; }
+.ritual-q { font-size: 34px; font-weight: 800; color: var(--accent-2); text-shadow: 0 0 14px rgba(240, 192, 96, 0.8); }
+.ritual-caption { color: var(--accent-2); animation: jglow 1.4s ease-in-out infinite; }
+/* 의식 중 — 강회전 + 코어 요동 + 섬광 */
+.ritual-fast .ritual-ring { animation-duration: 0.9s; opacity: 0.9; }
+.ritual-fast .ritual-ring2 { animation-duration: 0.6s; opacity: 0.8; }
+.ritual-fast .ritual-orbit { animation-duration: 1.2s; }
+.ritual-fast .ritual-core { animation: ritual-shake 0.35s ease-in-out infinite; }
+.ritual-flash {
+  position: absolute; inset: 0; border-radius: 14px; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 236, 190, 0.9), transparent 65%);
+  opacity: 0; animation: ritual-flash 1.5s ease-in forwards;
+}
+@keyframes ritual-spin { to { transform: rotate(360deg); } }
+@keyframes ritual-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes ritual-shake {
+  0%, 100% { transform: rotate(0) scale(1.04); }
+  25% { transform: rotate(-3deg) scale(1.07); }
+  75% { transform: rotate(3deg) scale(1.07); }
+}
+@keyframes ritual-flash { 0%, 72% { opacity: 0; } 88% { opacity: 1; } 100% { opacity: 0.9; } }
+
+/* 결과 카드 그리드 */
+.fusion-summary-title { font-weight: 700; font-size: 16px; }
+.fuse-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.fuse-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 108px; padding: 9px 6px; border-radius: 12px;
+  background: var(--bg3); border: 1.5px solid var(--line); color: var(--text);
+}
+.fuse-card .micon { width: 46px; height: 46px; }
+.fuse-card-name { font-size: 12px; font-weight: 600; text-align: center; }
+.fuse-card-sub { font-size: 10.5px; color: var(--muted); text-align: center; }
+.fuse-back { cursor: pointer; animation: fuse-throb 1.6s ease-in-out infinite; }
+.fuse-q { font-size: 30px; font-weight: 800; color: var(--accent-2); text-shadow: 0 0 12px rgba(240, 192, 96, 0.7); }
+.fuse-open { animation: fuse-flip 0.5s cubic-bezier(0.34, 1.4, 0.64, 1); }
+.fuse-new { color: var(--accent-2); font-weight: 700; }
+.fuse-fail { opacity: 0.65; }
+.fuse-fail-mark { font-size: 26px; }
+.fusion-actions { justify-content: center; }
+@keyframes fuse-throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@keyframes fuse-flip {
+  0% { transform: rotateY(90deg) scale(0.85); opacity: 0.4; }
+  100% { transform: rotateY(0) scale(1); opacity: 1; }
+}
 
 /* ── 데이터 뷰 (몬스터·유물 정보 — 추후 관리자 전용) ── */
 .info-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }

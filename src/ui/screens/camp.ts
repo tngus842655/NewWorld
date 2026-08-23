@@ -7,7 +7,7 @@ import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { buySlot, craft, save } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
 import { ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
-import { resetFusion } from '../overlays';
+import { resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 

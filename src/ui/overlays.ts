@@ -3,12 +3,11 @@
  */
 import { content } from '../content';
 import type { MonsterRarity, Region } from '../content/schema';
-import type { FusionResult } from '../core/economy';
 import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
-import { signal } from '../state/signal';
-import { awaken, choose, claim, crossroadsOf, enhance, fuse, levelUp, salvage, save } from '../state/store';
+import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import { FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
@@ -46,7 +45,7 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
   return el('div.overlay', { onclick: (event) => { if (event.target === event.currentTarget) closeOverlay(); } }, sheet);
 }
 
-function sheetShell(title: string, ...children: (HTMLElement | null)[]): HTMLElement {
+export function sheetShell(title: string, ...children: (HTMLElement | null)[]): HTMLElement {
   return el('div.sheet', {},
     el('div.sheet-head', {},
       el('div.sheet-title', {}, title),
@@ -281,142 +280,8 @@ function helpSheet(): HTMLElement {
   );
 }
 
-// ── 카드 합성 (GDD §4.5) ─────────────────────────────────────────────────────
-
-const FUSION_NEXT: Record<MonsterRarity, MonsterRarity | null> = {
-  common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
-};
-const fuseRarity = signal<MonsterRarity>('common');
-const fuseSel = signal<Record<string, number>>({}); // monsterId → 사용 장수
-const fuseOutcome = signal<FusionResult | null>(null);
-
-/** 합성 시트를 초기 상태로 — 진입 버튼에서 호출 */
-export function resetFusion(): void {
-  fuseSel.set({});
-  fuseOutcome.set(null);
-}
-
-function fusionSheet(): HTMLElement {
-  const state = save();
-  const { fusion } = content.balance;
-  const rarity = fuseRarity();
-  const sel = fuseSel();
-  const outcome = fuseOutcome();
-  const nextRarity = FUSION_NEXT[rarity]!;
-  const chance = fusion.chance[rarity] ?? 0;
-
-  const spareOf = (count: number) => Math.max(0, count - 1);
-  const spareByRarity = (r: MonsterRarity) =>
-    state.roster.reduce((sum, m) => (content.monsters.get(m.monsterId)!.rarity === r ? sum + spareOf(m.count) : sum), 0);
-
-  const tabs = (['common', 'uncommon', 'rare', 'heroic'] as const).map((r) =>
-    el(`button.chip${rarity === r ? '.active' : ''}`, {
-      onclick: () => {
-        fuseRarity.set(r);
-        fuseSel.set({});
-        fuseOutcome.set(null);
-      },
-    }, `${MONSTER_RARITY_LABEL[r]} ${spareByRarity(r)}`),
-  );
-
-  const candidates = state.roster
-    .map((m) => ({ owned: m, def: content.monsters.get(m.monsterId)! }))
-    .filter(({ owned, def }) => def.rarity === rarity && spareOf(owned.count) > 0)
-    .sort((a, b) => spareOf(b.owned.count) - spareOf(a.owned.count));
-  const totalSel = Object.values(sel).reduce((a, b) => a + b, 0);
-
-  const chips = candidates.map(({ owned, def }) => {
-    const used = sel[owned.monsterId] ?? 0;
-    const spare = spareOf(owned.count);
-    return el(`button.mchip${used > 0 ? '.selected' : ''}`, {
-      onclick: () => {
-        // 탭할 때마다 사용 장수 순환: 0 → 1 → 2(가능하면) → 0
-        const cur = fuseSel()[owned.monsterId] ?? 0;
-        const others = Object.entries(fuseSel()).reduce((a, [id, n]) => (id === owned.monsterId ? a : a + n), 0);
-        let next = cur + 1;
-        if (next > spare || others + next > fusion.materials) next = 0;
-        fuseOutcome.set(null);
-        fuseSel.set({ ...fuseSel(), [owned.monsterId]: next });
-      },
-    },
-      monsterIcon(owned.monsterId),
-      el('div.mchip-body', {},
-        el('div.mchip-name', {}, def.name),
-        el('div.mchip-sub', {}, used > 0 ? `여분 ${spare}장 · 사용 ${used}장` : `여분 ${spare}장`),
-      ),
-    );
-  });
-
-  let banner: HTMLElement | null = null;
-  if (outcome) {
-    if (outcome.success && outcome.resultMonsterId) {
-      const def = content.monsters.get(outcome.resultMonsterId)!;
-      banner = el('div.card.fusion-result.fusion-ok', {},
-        monsterIcon(def.id),
-        el('div', {},
-          el('div.fusion-result-title', {}, `✨ 합성 성공 — ${def.name}`),
-          el('div.small', {},
-            el(`span.tag.rar-${def.rarity}`, {}, MONSTER_RARITY_LABEL[def.rarity]),
-            outcome.isNew ? ' 📖 도감 신규 등록!' : ' 보유 종 — 카드 +1',
-          ),
-          ...outcome.newMilestones.map((id) => {
-            const milestone = content.milestones.find((m) => m.id === id);
-            return milestone ? el('div.small.jmilestone', {}, `🏅 마일스톤 달성: ${milestone.name}`) : null;
-          }),
-        ),
-      );
-    } else {
-      banner = el('div.card.fusion-result.fusion-bad', {},
-        el('div', {}, `💨 합성 실패… 재료 ${fusion.materials}장이 사라졌습니다`));
-    }
-  }
-
-  let resultPool = content.monsterList.filter(
-    (m) => m.rarity === nextRarity && isRegionUnlocked(content, state, m.habitat),
-  ).length;
-  if (resultPool === 0) resultPool = content.monsterList.filter((m) => m.rarity === nextRarity).length;
-
-  return sheetShell('카드 합성',
-    el('div.muted.small', {},
-      `같은 등급 여분 카드 ${fusion.materials}장 → 다음 등급 랜덤 1종에 도전합니다. 실패하면 재료가 사라집니다.`),
-    el('div.muted.small', {}, '각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호).'),
-    banner,
-    el('div.chips-wrap', {}, ...tabs),
-    candidates.length > 0
-      ? el('div.card', {}, el('div.chips', {}, ...chips))
-      : el('div.card.empty', {}, el('span.muted', {}, '이 등급의 여분 카드가 없습니다 — 중복 포획으로 모아보세요')),
-    el('div.card.stack-sm', {},
-      el('div.list-row', {},
-        el('span', {}, '성공 확률'),
-        el('strong', {}, pct1(chance)),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '성공 시'),
-        el('span.small.muted', {}, `${MONSTER_RARITY_LABEL[nextRarity]} ${resultPool}종 중 랜덤 1종 (해금 지역 기준)`),
-      ),
-      el('button.btn.btn-primary.btn-big', {
-        disabled: totalSel !== fusion.materials,
-        onclick: () => {
-          const materials = Object.entries(fuseSel())
-            .filter(([, n]) => n > 0)
-            .map(([monsterId, count]) => ({ monsterId, count }));
-          const result = fuse({ materials });
-          if (!result) return;
-          fuseSel.set({});
-          fuseOutcome.set(result);
-          playSfx(result.success
-            ? (result.newMilestones.length > 0 ? 'milestone' : result.isNew ? 'capture-new' : 'awaken')
-            : 'capture-miss');
-        },
-      }, totalSel === fusion.materials
-        ? `🧬 합성 — ${MONSTER_RARITY_LABEL[rarity]} ${fusion.materials}장 → ${MONSTER_RARITY_LABEL[nextRarity]} 도전`
-        : `재료를 선택하세요 (${totalSel}/${fusion.materials})`),
-    ),
-  );
-}
-
 /** % 표기 — 소수 2자리까지 필요한 만큼만 (0.55 → "55%", 0.125 → "12.5%", 0.0625 → "6.25%") */
-function pct1(ratio: number): string {
+export function pct1(ratio: number): string {
   const value = Math.round(ratio * 10000) / 100;
   return `${value}%`;
 }
@@ -487,7 +352,7 @@ function oddsSheet(): HTMLElement {
     }),
     el('div.odds-note', {},
       el('div.small.muted', {}, '· 성공: 해금한 지역의 다음 등급 몬스터 중 랜덤 1종 (미보유 종이면 도감 등록)'),
-      el('div.small.muted', {}, '· 실패: 재료 카드가 사라집니다'),
+      el('div.small.muted', {}, '· 실패: 재료 2장 중 1장이 사라지고, 1장은 돌아옵니다'),
       el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
     ),
   );

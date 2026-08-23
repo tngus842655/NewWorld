@@ -153,14 +153,15 @@ describe('카드 합성 (GDD §4.5)', () => {
     expect(result.save.roster.find((m) => m.monsterId === got.id)!.count).toBe(1);
   });
 
-  it('실패 — 재료만 소실, 로스터·도감 불변', () => {
+  it('실패 — 재료 2장 중 1장 반환 (실소모 1장), 로스터·도감 불변', () => {
     const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
     save.roster[0]!.count = 3;
     const failSeed = findSeed((s) => streamRng(s, 'fusion')() >= content.balance.fusion.chance.common!);
     const result = fuseMonsters(content, save, fuseInput('dune-pup', 2), fixedCtx(failSeed));
     expect(result.success).toBe(false);
+    expect(result.returnedMonsterId).toBe('dune-pup');
     expect(result.save.roster).toHaveLength(1);
-    expect(result.save.roster[0]!.count).toBe(1);
+    expect(result.save.roster[0]!.count).toBe(2); // 3 - 2(재료) + 1(반환)
   });
 });
 

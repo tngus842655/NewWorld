@@ -63,12 +63,14 @@ export interface FusionResult {
   materialRarity: string;
   resultMonsterId?: string; // 성공 시 획득 종
   isNew?: boolean; // 도감 신규 등록 여부
+  returnedMonsterId?: string; // 실패 시 반환된 카드 1장의 종
   newMilestones: string[];
 }
 
 /**
  * 같은 등급 여분 카드 N장 → 다음 등급 랜덤 1종 도전.
- * 각 종의 마지막 1장은 재료 불가 (여분 = count - 1). 실패 시 재료 소실.
+ * 각 종의 마지막 1장은 재료 불가 (여분 = count - 1).
+ * 실패 시 재료 중 1장은 돌려받는다 (실소모 1장 — 도전 문턱 완화).
  * 결과 풀은 해금 지역의 다음 등급 전 종 (미보유면 도감 신규 등록 + 마일스톤 평가).
  */
 export function fuseMonsters(content: Content, save: SaveState, input: FusionInput, ctx: CoreCtx): FusionResult {
@@ -105,7 +107,11 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
   const rng = streamRng(ctx.newSeed(), 'fusion');
   const success = rng() < chance;
   if (!success) {
-    return { save: next, success: false, materialRarity: rarity!, newMilestones: [] };
+    // 실패 — 재료 중 1장을 랜덤으로 돌려준다 (시드 결정론)
+    const usedPool: string[] = input.materials.flatMap((m) => Array.from({ length: m.count }, () => m.monsterId));
+    const returnedMonsterId = usedPool[Math.floor(rng() * usedPool.length)]!;
+    findMonster(next, returnedMonsterId).count += 1;
+    return { save: next, success: false, materialRarity: rarity!, returnedMonsterId, newMilestones: [] };
   }
 
   // 결과 풀: 해금 지역의 다음 등급 전 종 (전 지역 미해금 케이스 방어로 전체 폴백)
