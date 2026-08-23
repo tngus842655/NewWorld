@@ -41,8 +41,6 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
           ? artifactSheet(current.itemId)
           : current.kind === 'species'
             ? speciesSheet(current.monsterId)
-            : current.kind === 'help'
-              ? helpSheet()
             : current.kind === 'ranking'
               ? rankingSheet()
             : current.kind === 'shop'
@@ -300,22 +298,6 @@ function speciesSheet(monsterId: string): HTMLElement | null {
       el('div.small.muted', {}, '중복 포획 시 카드가 쌓입니다 [추후 합성(같은 등급 2장 → 상위 등급)에 사용 예정]'),
     ),
     el('p.flavor', {}, `“${monster.flavor}”`),
-  );
-}
-
-/** 재화 안내 — 상단 지갑 아이콘이 무엇인지 (신규 유저용) */
-function helpSheet(): HTMLElement {
-  const row = (icon: string, name: string, gain: string, use: string) =>
-    el('div.card.stack-sm', {},
-      el('div', {}, `${icon} ${name}`),
-      el('div.small.muted', {}, `얻기 [${gain}]`),
-      el('div.small.muted', {}, `쓰기 [${use}]`),
-    );
-  return sheetShell('재화 안내',
-    row('💰', '골드', '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작'),
-    row('✨', '가루', '유물 분해', '유물 강화'),
-    row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 [희귀 이상 몬스터 포획률 ×2]'),
-    el('div.muted.small', {}, '지역 재료 보유량은 캠프 화면에서, 몬스터 카드 수는 도감·캠프 아이콘에서 볼 수 있습니다.'),
   );
 }
 
