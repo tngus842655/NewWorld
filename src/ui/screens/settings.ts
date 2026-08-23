@@ -9,6 +9,9 @@ import { el, toast } from '../kit';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
+// 이 번들이 브라우저에 로드된 시각 — 옛 번들을 실행 중인 창을 판별하는 용도 (새로고침 시 갱신)
+const CODE_LOADED_AT = new Date();
+
 export function renderSettings(): HTMLElement {
   const state = save();
 
@@ -106,5 +109,7 @@ export function renderSettings(): HTMLElement {
         }, '초기화'),
       ),
     ),
+    el('div.center.small.muted', {},
+      `코드 로드 ${CODE_LOADED_AT.toLocaleTimeString('ko-KR')} · 세이브 v${state.version}`),
   );
 }
