@@ -141,6 +141,7 @@ interface DayRow {
   wipes: number;
   runs: number;
   unlocked: string;
+  byRegion: Record<string, number>; // 지역별 도감 수 (업적 계단 도달 측정)
 }
 
 interface SimResult {
