@@ -81,7 +81,8 @@ export function sheetShell(title: string, ...children: (HTMLElement | null)[]): 
 }
 
 function journalSheet(data: Extract<NonNullable<Overlay>, { kind: 'journal' }>): HTMLElement {
-  return el('div.sheet.sheet-journal', {},
+  // sheet-journal-live: 순차 공개 동안 시트가 자라며 출렁이지 않게 처음부터 최대 높이 고정 (2026-08-23 사용자)
+  return el('div.sheet.sheet-journal.sheet-journal-live', {},
     journalView(data.journal, data.newMilestones),
     el('button.btn.btn-primary.btn-big', { onclick: closeOverlay }, '확인'),
   );

@@ -142,11 +142,6 @@ body {
 .goal-item { font-size: 12.5px; color: var(--text); }
 .goal-item.goal-done { color: var(--good); }
 .tag.goal-ready { color: var(--good); border-color: #3d5a3a; background: #22301f; font-weight: 700; }
-.codex-link {
-  background: none; border: none; color: var(--muted); font-size: 12px;
-  text-align: center; cursor: pointer; padding: 4px;
-}
-
 /* ── 아이콘·칩 ── */
 .micon {
   width: 52px; height: 52px; border-radius: 12px; flex: none; position: relative;
@@ -483,6 +478,8 @@ body.overlay-open .container { overflow: hidden; }
 .hg-icon.hg-sm { width: 24px; height: 24px; border-width: 1.5px; border-radius: 7px; font-size: 13px; }
 .hg-icon.hg-sm img { padding: 2px; }
 .hg-name { display: flex; align-items: center; gap: 7px; }
+.shop-limit { font-weight: 400; }
+.auto-btn { padding: 4px 10px; font-size: 12px; }
 .hg-icon.rar-uncommon { border-color: var(--rar-uncommon); }
 .hg-icon.rar-rare { border-color: var(--rar-rare); }
 .hg-icon.rar-heroic { border-color: var(--rar-heroic); }
@@ -492,6 +489,10 @@ body.overlay-open .container { overflow: hidden; }
 
 /* ── 일지 ── */
 .sheet-journal { max-height: 92dvh; }
+/* 정산(순차 공개) 일지 — 처음부터 최대 높이로 열어 카드가 늘어나도 팝업·버튼이 안 움직인다 */
+.sheet-journal-live { height: 92dvh; }
+.sheet-journal-live .journal { flex: 1 1 auto; min-height: 0; }
+.sheet-journal-live .jtimeline { flex: 1 1 auto; min-height: 0; max-height: none; }
 .journal { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .jheader { display: flex; justify-content: space-between; align-items: center; }
 .jtitle { font-weight: 700; }

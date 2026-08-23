@@ -5,12 +5,12 @@
  */
 import { content } from '../content';
 import type { Tribe } from '../content/schema';
-import { artifactsUsedByTeams, speciesUsedByTeams } from '../core/teams';
+import { artifactsUsedByTeams, autoLoadout, speciesUsedByTeams } from '../core/teams';
 import type { OwnedArtifact } from '../core/types';
 import { signal } from '../state/signal';
 import { save, setTeam } from '../state/store';
 import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
-import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from './kit';
+import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -161,7 +161,21 @@ export function teamSheet(teamId: string): HTMLElement | null {
     el('div.card.stack-sm', {},
       el('div.list-row', {},
         el('span.small', {}, `몬스터 (${party.length}/${slots})`),
-        el('strong.title-cp', {}, party.length > 0 ? `CP ${fmtGold(totalCp)}` : '—'),
+        el('div.row-gap', {},
+          el('button.btn.btn-ghost.auto-btn', {
+            disabled: busy,
+            title: '몬스터는 CP 높은 순, 유물은 등급·강화 순으로 자동 편성',
+            onclick: () => {
+              if (guard()) return;
+              const auto = autoLoadout(content, save(), teamId);
+              if (setTeam(teamId, auto.partyIds, auto.artifactIds)) {
+                playSfx('select');
+                toast('⚡ 자동 편성 — 몬스터 CP순 · 유물 등급순', 'ok');
+              }
+            },
+          }, '⚡ 자동'),
+          el('strong.title-cp', {}, party.length > 0 ? `CP ${fmtGold(totalCp)}` : '—'),
+        ),
       ),
       el('div.party-slots', {}, ...partyCells),
       el('div.list-row', {}, el('span.small', {}, `유물 (${artifacts.length}/4)`)),

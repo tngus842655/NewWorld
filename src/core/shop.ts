@@ -29,7 +29,7 @@ export function onceBought(save: SaveState, product: ShopProduct, regionId?: str
 
 export interface ShopBuyInput {
   productId: string;
-  regionId?: string; // materials·regionPack — 해금 지역 선택
+  regionId?: string; // regionPack — 해금 지역 선택
   expeditionId?: string; // rush — 생략 시 남은 시간이 가장 긴 원정
 }
 
@@ -65,7 +65,7 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   }
 
   // ── 지역 인자 검증 ──
-  const needsRegion = product.goods.kind === 'materials' || product.goods.kind === 'regionPack' || product.limit.kind === 'oncePerRegion';
+  const needsRegion = product.goods.kind === 'regionPack' || product.limit.kind === 'oncePerRegion';
   const region = needsRegion ? content.regions.get(input.regionId ?? '') : undefined;
   if (needsRegion) {
     if (!region) throw new GameError('shop-region', '지역을 선택해 주세요');
@@ -96,13 +96,22 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     if (goods.gold > 0) granted.gold = goods.gold;
     if (goods.dust > 0) granted.dust = goods.dust;
     if (goods.lures > 0) granted.lures = goods.lures;
-  } else if (goods.kind === 'materials' || goods.kind === 'regionPack') {
-    const each = goods.kind === 'materials' ? goods.countEach : goods.materialsEach;
+  } else if (goods.kind === 'materialsAll') {
+    // 해금한 모든 지역의 재료를 각 n개 — 지역 선택 없음 (2026-08-23)
+    granted.materials = [];
+    for (const unlockedRegion of content.regionList) {
+      if (!isRegionUnlocked(content, next, unlockedRegion.id)) continue;
+      for (const materialId of unlockedRegion.materials) {
+        next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + goods.countEach;
+        granted.materials.push({ materialId, count: goods.countEach });
+      }
+    }
+  } else if (goods.kind === 'regionPack') {
     granted.materials = region!.materials.map((materialId) => {
-      next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + each;
-      return { materialId, count: each };
+      next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + goods.materialsEach;
+      return { materialId, count: goods.materialsEach };
     });
-    if (goods.kind === 'regionPack' && goods.gold > 0) {
+    if (goods.gold > 0) {
       next.wallet.gold += goods.gold;
       granted.gold = goods.gold;
     }

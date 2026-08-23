@@ -1,17 +1,17 @@
 [
-  { "id": "gold-lure", "name": "미끼", "icon": "🪤", "desc": "재료 없이 골드로 바로 구합니다 (제작보다 비쌈)", "shop": "gold", "price": 350, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "bundle", "lures": 1 } },
-  { "id": "gold-materials", "name": "지역 재료 꾸러미", "icon": "🌿", "desc": "선택한 해금 지역의 재료 2종을 각 2개씩", "shop": "gold", "price": 500, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "materials", "countEach": 2 } },
+  { "id": "gold-lure", "name": "미끼", "icon": "🪤", "desc": "골드로 바로 구매", "shop": "gold", "price": 350, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "bundle", "lures": 1 } },
+  { "id": "gold-materials", "name": "지역 재료 꾸러미", "icon": "🌿", "desc": "해금 지역 재료를 각 2개씩", "shop": "gold", "price": 500, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "materialsAll", "countEach": 2 } },
   { "id": "gold-dust", "name": "가루 주머니", "icon": "✨", "desc": "유물 강화용 가루 40", "shop": "gold", "price": 400, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "bundle", "dust": 40 } },
-  { "id": "gold-monster-gacha", "name": "몬스터 뽑기", "icon": "🃏", "desc": "해금 지역 몬스터 카드 1장 (낮은 등급 위주)", "shop": "gold", "price": 1000, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "monsterGacha", "table": "goldNormal" } },
+  { "id": "gold-monster-gacha", "name": "몬스터 뽑기", "icon": "🃏", "desc": "몬스터 카드 1장 (낮은 등급 위주)", "shop": "gold", "price": 1000, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "monsterGacha", "table": "goldNormal" } },
   { "id": "gold-artifact-gacha", "name": "유물 발굴", "icon": "🏺", "desc": "랜덤 유물 1점 (등급은 발굴 확률표)", "shop": "gold", "price": 1200, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "artifactGacha", "table": "standard" } },
   { "id": "gold-hourglass-15", "name": "모래시계 조각", "icon": "⏳", "desc": "원정 시간 15분 단축", "shop": "gold", "price": 100, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-15" } },
   { "id": "gold-hourglass-60", "name": "여행자의 모래시계", "icon": "⏳", "desc": "원정 시간 1시간 단축", "shop": "gold", "price": 300, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-60" } },
   { "id": "gold-hourglass-120", "name": "은빛 모래시계", "icon": "⏳", "desc": "원정 시간 2시간 단축", "shop": "gold", "price": 550, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-120" } },
-  { "id": "gold-hourglass-240", "name": "황금 모래시계", "icon": "⏳", "desc": "원정 시간 4시간 단축", "shop": "gold", "price": 900, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-240" } },
-  { "id": "gold-hourglass-480", "name": "시간을 삼킨 모래시계", "icon": "⏳", "desc": "원정 시간 8시간 단축", "shop": "gold", "price": 1500, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-480" } },
+  { "id": "gold-hourglass-240", "name": "금빛 모래시계", "icon": "⏳", "desc": "원정 시간 4시간 단축", "shop": "gold", "price": 900, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-240" } },
+  { "id": "gold-hourglass-480", "name": "황금 모래시계", "icon": "⏳", "desc": "원정 시간 8시간 단축", "shop": "gold", "price": 1500, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-480" } },
 
-  { "id": "dia-starter", "name": "개척자의 시작 패키지", "icon": "🎁", "desc": "골드 8,000 + 가루 300 + 미끼 5 — 계정당 1회", "shop": "diamond", "price": 120, "limit": { "kind": "once" }, "goods": { "kind": "bundle", "gold": 8000, "dust": 300, "lures": 5 } },
-  { "id": "dia-region-pack", "name": "지역 개척 패키지", "icon": "🗺️", "desc": "선택 지역 재료 2종 각 10개 + 골드 2,000 — 지역당 1회", "shop": "diamond", "price": 60, "limit": { "kind": "oncePerRegion" }, "goods": { "kind": "regionPack", "materialsEach": 10, "gold": 2000 } },
+  { "id": "dia-starter", "name": "개척자의 시작 패키지", "icon": "🎁", "desc": "골드 8,000 + 가루 300 + 미끼 5", "shop": "diamond", "price": 120, "limit": { "kind": "once" }, "goods": { "kind": "bundle", "gold": 8000, "dust": 300, "lures": 5 } },
+  { "id": "dia-region-pack", "name": "지역 개척 패키지", "icon": "🗺️", "desc": "재료 2종 각 10개 + 골드 2,000", "shop": "diamond", "price": 60, "limit": { "kind": "oncePerRegion" }, "goods": { "kind": "regionPack", "materialsEach": 10, "gold": 2000 } },
   { "id": "dia-gold-s", "name": "골드 꾸러미 (소)", "icon": "💰", "desc": "골드 1,000", "shop": "diamond", "price": 20, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "bundle", "gold": 1000 } },
   { "id": "dia-gold-m", "name": "골드 꾸러미 (중)", "icon": "💰", "desc": "골드 3,000", "shop": "diamond", "price": 50, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "bundle", "gold": 3000 } },
   { "id": "dia-gold-l", "name": "골드 꾸러미 (대)", "icon": "💰", "desc": "골드 8,000", "shop": "diamond", "price": 110, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "bundle", "gold": 8000 } },
@@ -26,6 +26,6 @@
   { "id": "dia-hourglass-15", "name": "모래시계 조각", "icon": "⏳", "desc": "원정 시간 15분 단축", "shop": "diamond", "price": 2, "limit": { "kind": "daily", "count": 5 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-15" } },
   { "id": "dia-hourglass-60", "name": "여행자의 모래시계", "icon": "⏳", "desc": "원정 시간 1시간 단축", "shop": "diamond", "price": 6, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-60" } },
   { "id": "dia-hourglass-120", "name": "은빛 모래시계", "icon": "⏳", "desc": "원정 시간 2시간 단축", "shop": "diamond", "price": 10, "limit": { "kind": "daily", "count": 3 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-120" } },
-  { "id": "dia-hourglass-240", "name": "황금 모래시계", "icon": "⏳", "desc": "원정 시간 4시간 단축", "shop": "diamond", "price": 16, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-240" } },
-  { "id": "dia-hourglass-480", "name": "시간을 삼킨 모래시계", "icon": "⏳", "desc": "원정 시간 8시간 단축", "shop": "diamond", "price": 25, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-480" } }
+  { "id": "dia-hourglass-240", "name": "금빛 모래시계", "icon": "⏳", "desc": "원정 시간 4시간 단축", "shop": "diamond", "price": 16, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-240" } },
+  { "id": "dia-hourglass-480", "name": "황금 모래시계", "icon": "⏳", "desc": "원정 시간 8시간 단축", "shop": "diamond", "price": 25, "limit": { "kind": "daily", "count": 2 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-480" } }
 ]

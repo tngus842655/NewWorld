@@ -273,7 +273,7 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
     dust: z.number().int().min(0).default(0),
     lures: z.number().int().min(0).default(0),
   }),
-  z.object({ kind: z.literal('materials'), countEach: z.number().int().positive() }), // 선택한 해금 지역의 재료 2종 각 n개
+  z.object({ kind: z.literal('materialsAll'), countEach: z.number().int().positive() }), // 해금한 모든 지역의 재료를 각 n개 (2026-08-23 — 지역 선택형에서 변경)
   z.object({ kind: z.literal('regionPack'), materialsEach: z.number().int().positive(), gold: z.number().int().min(0) }),
   z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),

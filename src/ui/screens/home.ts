@@ -128,7 +128,6 @@ function nextGoalCard(): HTMLElement | null {
 export function renderHome(): HTMLElement {
   const state = save();
   const running = state.expeditions.filter((e) => !e.claimed);
-  const capturedCount = Object.values(state.codex).filter((c) => c.captured).length;
 
   const tutorialBanner = !state.profile.tutorialDone
     ? running.length > 0
@@ -188,6 +187,5 @@ export function renderHome(): HTMLElement {
     recent.length > 0
       ? el('div.card', {}, ...recent, journalToggle)
       : el('div.card.empty', {}, el('span.muted', {}, '아직 기록이 없습니다')),
-    el('button.codex-link', { onclick: () => tab.set('codex') }, `📖 도감 ${capturedCount}/${content.monsterList.length}`),
   );
 }

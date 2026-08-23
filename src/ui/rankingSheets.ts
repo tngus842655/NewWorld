@@ -124,7 +124,7 @@ export function tasksSheet(): HTMLElement {
   });
 
   return sheetShell('반복 과업',
-    el('div.muted.small', {}, '과업은 몇 번이고 반복 달성할 수 있습니다. 조건을 채우면 보상이 자동 지급됩니다.'),
+    el('div.muted.small', {}, '조건을 채우면 보상이 자동 지급됩니다 · 무한 반복'),
     ...rows,
   );
 }

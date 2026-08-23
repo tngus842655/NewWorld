@@ -109,7 +109,8 @@ export function renderCamp(): HTMLElement {
       ...Object.entries(recipe.cost.materials).map(([id, n]) => {
         const material = content.materials.get(id);
         const have = state.wallet.materials[id] ?? 0;
-        return `${material?.icon ?? ''}${material?.name} ×${n}${have < n ? ` (보유 ${have})` : ''}`;
+        // 부족분은 '보유/필요'로 압축 — "(보유 n)" 병기는 좁은 화면에서 줄바꿈됨 (2026-08-23)
+        return have < n ? `${material?.icon ?? ''}${material?.name} ${have}/${n}` : `${material?.icon ?? ''}${material?.name} ×${n}`;
       }),
     ].filter(Boolean).join(' + ');
     return el('div.list-row', {},

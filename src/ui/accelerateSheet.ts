@@ -57,7 +57,7 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
     ),
     el('div.card.stack-sm', {}, ...rows),
     el('div.card.list-row', {},
-      el('span.muted.small', {}, '모래시계는 다이아 상점에서 구할 수 있습니다'),
+      el('span.muted.small', {}, '모래시계는 상점에서 판매합니다'),
       el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'shop' }) }, '상점 열기'),
     ),
     import.meta.env.DEV

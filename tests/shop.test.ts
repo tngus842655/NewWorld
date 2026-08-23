@@ -75,14 +75,22 @@ describe('상점 (GDD §9.4)', () => {
     ).toThrow(/해금한 지역만/);
   });
 
-  it('재료 꾸러미 — 선택 지역 재료 2종 각 n개', () => {
+  it('재료 꾸러미 — 해금한 모든 지역의 재료를 각 n개 (지역 선택 없음)', () => {
+    const goods = content.shopProducts.find((p) => p.id === 'gold-materials')!.goods as { kind: 'materialsAll'; countEach: number };
+
+    // 첫 지역만 해금 — 그 지역 재료 2종만
     const save = richSave();
-    const goods = content.shopProducts.find((p) => p.id === 'gold-materials')!.goods as { kind: 'materials'; countEach: number };
-    const result = buyShopProduct(content, save, { productId: 'gold-materials', regionId: 'misty-coast' }, fixedCtx());
-    expect(result.granted.materials).toHaveLength(2);
-    for (const { materialId, count } of result.granted.materials!) {
+    const one = buyShopProduct(content, save, { productId: 'gold-materials' }, fixedCtx());
+    expect(one.granted.materials!.map((m) => m.materialId).sort())
+      .toEqual([...content.regions.get('misty-coast')!.materials].sort());
+
+    // 전 지역 해금 — 모든 지역 재료가 각 n개씩
+    const { save: unlockedSave } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }], { gold: 50_000, unlockAll: true });
+    const all = buyShopProduct(content, unlockedSave, { productId: 'gold-materials' }, fixedCtx());
+    expect(all.granted.materials).toHaveLength(content.regionList.length * 2);
+    for (const { materialId, count } of all.granted.materials!) {
       expect(count).toBe(goods.countEach);
-      expect(result.save.wallet.materials[materialId]).toBe(goods.countEach);
+      expect(all.save.wallet.materials[materialId]).toBe(goods.countEach);
     }
   });
 

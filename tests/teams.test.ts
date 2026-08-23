@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createExpedition } from '../src/core/expedition';
-import { ensureTeams, setTeamLoadout, speciesUsedByTeams } from '../src/core/teams';
+import { autoLoadout, ensureTeams, setTeamLoadout, speciesUsedByTeams } from '../src/core/teams';
 import { regionFlagKey } from '../src/core/progression';
 import { content, makeCtx, saveWithParty } from './helpers';
 
@@ -50,6 +50,40 @@ describe('군 프리셋 (2026-08-23 군 시스템)', () => {
     ];
     const one = setTeamLoadout(content, save, 'team-1', [], artifactUids);
     expect(() => setTeamLoadout(content, one, 'team-2', [], artifactUids)).toThrow(/다른 군/);
+  });
+
+  it('자동 편성 — 몬스터는 CP 높은 순으로 슬롯만큼, 다른 군 사용분은 제외', () => {
+    const { save } = saveWithParty(makeCtx(), [
+      { id: 'dune-pup', level: 1 },
+      { id: 'bubble-crab', level: 30, star: 3 },
+      { id: 'gull-imp', level: 10 },
+      { id: 'tide-snail', level: 20, star: 2 },
+    ], { partySlots: 3 });
+    save.teams = [
+      { id: 'team-1', name: '원정대 1', partyIds: [], artifactIds: [] },
+      { id: 'team-2', name: '원정대 2', partyIds: [], artifactIds: [] },
+    ];
+    const auto = autoLoadout(content, save, 'team-1');
+    expect(auto.partyIds).toHaveLength(3);
+    expect(auto.partyIds[0]).toBe('bubble-crab'); // 최고 CP 선두
+    expect(auto.partyIds).not.toContain('dune-pup'); // 최저 CP 탈락
+
+    // 다른 군이 최고 CP 종의 카드를 다 쓰면 후보에서 빠진다
+    save.teams[1]!.partyIds = ['bubble-crab'];
+    const excluded = autoLoadout(content, save, 'team-1');
+    expect(excluded.partyIds).not.toContain('bubble-crab');
+    expect(excluded.partyIds).toContain('dune-pup'); // 남은 3종이 전부 편성
+  });
+
+  it('자동 편성 — 유물은 등급 순·슬롯당 1개, 결과가 저장 검증을 통과한다', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }], {
+      artifacts: ['rusty-saber', 'keen-cutlass', 'worn-buckler', 'moss-charm', 'hourglass-flask'],
+    });
+    save.teams = [{ id: 'team-1', name: '원정대 1', partyIds: [], artifactIds: [] }];
+    const auto = autoLoadout(content, save, 'team-1');
+    // 부적: 전설 호리병 > 영웅 이끼부적, 무기: 희귀 커틀러스 > 고급 세이버, 방어구: 원형방패 — 등급 내림차순
+    expect(auto.artifactIds).toEqual(['hourglass-flask', 'keen-cutlass', 'worn-buckler']);
+    expect(() => setTeamLoadout(content, save, 'team-1', auto.partyIds, auto.artifactIds)).not.toThrow();
   });
 
   it('파견 — 카드 수 기반 동시 파견, 군 재파견 잠금', () => {

@@ -35,7 +35,7 @@ function purchase(product: ShopProduct): void {
   const state = save();
   const regionId = shopRegion();
   const regionName = content.regions.get(regionId)?.name ?? '';
-  const needsRegion = product.goods.kind === 'materials' || product.goods.kind === 'regionPack';
+  const needsRegion = product.goods.kind === 'regionPack';
   void askConfirm({
     title: `${product.icon} ${product.name}`,
     message: `${priceTag(product)}로 구매합니다.\n${needsRegion ? `대상 지역: ${regionName}\n` : ''}${product.desc}`,
@@ -57,6 +57,10 @@ function purchase(product: ShopProduct): void {
     } else if (granted.rushedExpeditionId) {
       playSfx('confirm');
       toast('⏩ 원정대가 즉시 귀환했습니다 — 홈에서 일지를 여세요', 'ok');
+    } else if (product.goods.kind === 'materialsAll') {
+      // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약
+      playSfx('treasure');
+      toast(`${product.icon} 해금 지역 재료 ${granted.materials?.length ?? 0}종을 각 ${product.goods.countEach}개씩 획득!`, 'ok');
     } else if (granted.hourglass) {
       const def = content.hourglasses.get(granted.hourglass.hourglassId)!;
       playSfx('treasure');
@@ -83,19 +87,19 @@ function productCard(product: ShopProduct, unlockedRegions: Region[]): HTMLEleme
   const now = nowTick();
   const regionId = shopRegion();
 
-  // 한도 상태
-  let limitText = '';
+  // 한도 상태 — 이름 옆 (n/m)으로 표시, 버튼 영역은 버튼만 (2026-08-23 사용자)
+  let limitLabel = '';
   let exhausted = false;
   if (product.limit.kind === 'daily') {
     const used = purchasesToday(state, product.id, now);
-    limitText = `오늘 ${used}/${product.limit.count}`;
+    limitLabel = `${used}/${product.limit.count}`;
     exhausted = used >= product.limit.count;
   } else if (product.limit.kind === 'once') {
     exhausted = onceBought(state, product);
-    limitText = exhausted ? '구매 완료' : '계정 1회';
+    limitLabel = `${exhausted ? 1 : 0}/1`;
   } else {
     exhausted = onceBought(state, product, regionId);
-    limitText = exhausted ? '이 지역 구매 완료' : '지역당 1회';
+    limitLabel = `${exhausted ? 1 : 0}/1`; // 선택된 지역 기준
   }
 
   const shortFunds = product.shop === 'gold' ? state.wallet.gold < product.price : state.wallet.diamonds < product.price;
@@ -110,7 +114,7 @@ function productCard(product: ShopProduct, unlockedRegions: Region[]): HTMLEleme
   // 모래시계 — 가속 시트와 동일하게 등급색 테두리 타일로 (라벨 없이 색으로만 구분)
   const hourglass = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
 
-  const needsRegion = product.goods.kind === 'materials' || product.goods.kind === 'regionPack';
+  const needsRegion = product.goods.kind === 'regionPack';
   const regionChips = needsRegion
     ? el('div.chips-wrap', {}, ...unlockedRegions.map((region) => {
         const bought = product.limit.kind === 'oncePerRegion' && onceBought(state, product, region.id);
@@ -125,15 +129,16 @@ function productCard(product: ShopProduct, unlockedRegions: Region[]): HTMLEleme
       el('div', {},
         // 모래시계는 이모지 대신 등급 테두리 미니 아이콘 — 다른 상품 이모지와 같은 줄 높이
         hourglass
-          ? el('div.shop-name.hg-name', {}, hourglassIcon(hourglass, { small: true }), product.name)
-          : el('div.shop-name', {}, `${product.icon} ${product.name}`),
+          ? el('div.shop-name.hg-name', {}, hourglassIcon(hourglass, { small: true }), product.name,
+              el('span.muted.small.shop-limit', {}, `(${limitLabel})`))
+          : el('div.shop-name', {}, `${product.icon} ${product.name} `,
+              el('span.muted.small.shop-limit', {}, `(${limitLabel})`)),
         el('div.muted.small', {}, product.desc),
         rushTarget
           ? el('div.muted.small', {}, `대상: ${content.regions.get(rushTarget.regionId)?.name} (남은 ${fmtRemain(rushTarget.endsAt - now)})`)
           : null,
       ),
       el('div.shop-buy', {},
-        el(`span.small${exhausted ? '.muted' : ''}`, {}, limitText),
         el('button.btn.btn-primary', {
           disabled: exhausted || shortFunds || rushUnavailable,
           onclick: () => purchase(product),

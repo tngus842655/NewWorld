@@ -4,8 +4,10 @@
  * 유물은 uid 개체 단위로 한 군에만 연결된다.
  */
 import type { Content } from '../content';
+import { RARITIES, type ArtifactDef } from '../content/schema';
+import { statAt } from './formulas';
 import { teamCount } from './progression';
-import { GameError, type SaveState, type TeamLoadout } from './types';
+import { GameError, type OwnedArtifact, type OwnedMonster, type SaveState, type TeamLoadout } from './types';
 
 export function teamName(index: number): string {
   return `원정대 ${index + 1}`; // 용어 확정 (2026-08-23 사용자) — ensureTeams가 로드 시 기존 세이브도 재명명
@@ -48,6 +50,52 @@ export function artifactsUsedByTeams(save: SaveState, excludeTeamId?: string): M
     }
   }
   return used;
+}
+
+/**
+ * 자동 편성 (2026-08-23) — 몬스터는 CP 높은 순으로 파티 슬롯을 채우고,
+ * 유물은 등급 → 강화 → 주옵션 값 순으로 슬롯당 1개씩 최대 4개를 고른다.
+ * 군 간 배타(다른 군이 카드·유물을 다 쓰면 후보 제외)는 setTeamLoadout과 같은 규칙.
+ */
+export function autoLoadout(
+  content: Content,
+  save: SaveState,
+  teamId: string,
+): { partyIds: string[]; artifactIds: string[] } {
+  const { balance } = content;
+  const otherUse = speciesUsedByTeams(save, teamId);
+  const cpOf = (owned: OwnedMonster): number => {
+    const monster = content.monsters.get(owned.monsterId);
+    if (!monster) return 0;
+    return (
+      statAt(monster.baseAtk, owned.level, owned.star, balance) * balance.cp.atkWeight +
+      statAt(monster.baseHp, owned.level, owned.star, balance) * balance.cp.hpWeight
+    );
+  };
+  const partyIds = [...save.roster]
+    .filter((owned) => owned.count - (otherUse.get(owned.monsterId) ?? 0) > 0)
+    .sort((a, b) => cpOf(b) - cpOf(a))
+    .slice(0, save.profile.partySlots)
+    .map((owned) => owned.monsterId);
+
+  const otherArtifactUse = artifactsUsedByTeams(save, teamId);
+  const rank = (def: ArtifactDef): number => RARITIES.indexOf(def.rarity);
+  const mainValue = (c: { owned: OwnedArtifact; def: ArtifactDef }): number =>
+    c.def.main.base + c.def.main.perEnhance * c.owned.enhance;
+  const candidates = save.artifacts
+    .filter((owned) => owned.count - (otherArtifactUse.get(owned.itemId) ?? 0) > 0)
+    .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId) }))
+    .filter((c): c is { owned: OwnedArtifact; def: ArtifactDef } => c.def !== undefined)
+    .sort((a, b) => rank(b.def) - rank(a.def) || b.owned.enhance - a.owned.enhance || mainValue(b) - mainValue(a));
+  const artifactIds: string[] = [];
+  const usedSlots = new Set<string>();
+  for (const { owned, def } of candidates) {
+    if (artifactIds.length >= 4) break;
+    if (usedSlots.has(def.slot)) continue;
+    usedSlots.add(def.slot);
+    artifactIds.push(owned.itemId);
+  }
+  return { partyIds, artifactIds };
 }
 
 /** 군 편성 저장 — 슬롯·중복·군 간 배타 검증 후 프리셋 갱신 */
