@@ -19,6 +19,8 @@ const selRegion = signal<string>(content.regionList[0]!.id);
 const selParty = signal<string[]>([]);
 const selArtifacts = signal<string[]>([]);
 const selTier = signal<Tier>('scout');
+// 하단 파견 패널 접힘 상태 — 화면 절반을 가리는 패널을 핸들로 접었다 펼 수 있게 (탭을 오가도 유지)
+const panelOpen = signal(true);
 let presetLoaded = false;
 
 function busyUids(): Set<string> {
@@ -107,6 +109,32 @@ function preview(regionId: string, tier: Tier): Preview | null {
     if (error instanceof GameError) return null;
     throw error;
   }
+}
+
+/**
+ * 파견 패널 상단 핸들 — 짧게 누르면 토글, 아래로 끌면 접기, 위로 끌면 펼치기.
+ * 펼침 상태에선 바(═), 접힘 상태에선 펼침 화살표를 보여준다.
+ */
+function panelHandle(open: boolean): HTMLElement {
+  const handle = el('div.panel-handle', { title: open ? '내리거나 눌러서 접기' : '올리거나 눌러서 펼치기' },
+    open ? el('span.handle-bar', {}) : el('span.handle-open', {}, '∧'),
+  );
+  let startY: number | null = null;
+  handle.onpointerdown = (e) => {
+    startY = e.clientY;
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  handle.onpointerup = (e) => {
+    if (startY === null) return;
+    const delta = e.clientY - startY;
+    startY = null;
+    const next = delta > 16 ? false : delta < -16 ? true : !panelOpen();
+    if (next !== panelOpen()) playSfx('tap');
+    panelOpen.set(next);
+  };
+  handle.onpointercancel = () => { startY = null; };
+  return handle;
 }
 
 function regionRow(regionId: string): HTMLElement {
@@ -212,23 +240,26 @@ export function renderExpedition(): HTMLElement {
         : el('div.stack-sm', {}, ...artifactCards),
     ),
 
-    el('div.card.dispatch-panel', {},
-      el('div.cp-row', {},
-        el('span', {}, '유효 전투력'),
-        el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
-        el('span.muted.small', {}, `/ 권장 ${fmtGold(region.recommendedCp)}`),
-      ),
-      synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 — 같은 종족 2마리부터 발동'),
-      info && info.synergyAmp > 0 ? el('div.muted.small', {}, `시너지 증폭 +${Math.round(info.synergyAmp * 100)}%`) : null,
-      el('div.tier-row', {}, ...(['scout', 'standard', 'deep'] as const).map((t) =>
-        el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
-      )),
-      el('div.muted.small', {}, tierInfo),
-      el('div.muted.small', {}, `미끼 자동 적재: ${lureLoad}개 (보유 ${state.wallet.lures})`),
-      maxTeams > 1 || teamsFull
-        ? el('div.muted.small', {},
-            `원정대 ${runningCount}/${maxTeams} 파견 중${nextTeamHint ? ` · ${nextTeamHint}` : ''}`)
-        : null,
+    el(`div.card.dispatch-panel${panelOpen() ? '' : '.collapsed'}`, {},
+      panelHandle(panelOpen()),
+      ...(panelOpen() ? [
+        el('div.cp-row', {},
+          el('span', {}, '유효 전투력'),
+          el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
+          el('span.muted.small', {}, `/ 권장 ${fmtGold(region.recommendedCp)}`),
+        ),
+        synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 — 같은 종족 2마리부터 발동'),
+        info && info.synergyAmp > 0 ? el('div.muted.small', {}, `시너지 증폭 +${Math.round(info.synergyAmp * 100)}%`) : null,
+        el('div.tier-row', {}, ...(['scout', 'standard', 'deep'] as const).map((t) =>
+          el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
+        )),
+        el('div.muted.small', {}, tierInfo),
+        el('div.muted.small', {}, `미끼 자동 적재: ${lureLoad}개 (보유 ${state.wallet.lures})`),
+        maxTeams > 1 || teamsFull
+          ? el('div.muted.small', {},
+              `원정대 ${runningCount}/${maxTeams} 파견 중${nextTeamHint ? ` · ${nextTeamHint}` : ''}`)
+          : null,
+      ] : []),
       el('button.btn.btn-primary.btn-big', {
         disabled: party.length === 0 || teamsFull,
         onclick: () => {

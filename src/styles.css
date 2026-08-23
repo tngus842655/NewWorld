@@ -180,7 +180,17 @@ body {
 .region-row.locked { opacity: 0.75; cursor: default; }
 .region-name { font-weight: 600; }
 .region-elem { font-size: 12px; font-weight: 400; }
-.dispatch-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; bottom: 8px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35); }
+.dispatch-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; bottom: 8px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35); padding-top: 4px; }
+.dispatch-panel.collapsed { gap: 6px; }
+.panel-handle {
+  display: flex; justify-content: center; align-items: center;
+  margin: 0 -14px -6px; padding: 5px 0 6px; /* 카드 폭 전체가 잡는 영역이 되게 */
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.panel-handle:active { cursor: grabbing; }
+.handle-bar { width: 46px; height: 5px; border-radius: 99px; background: var(--line); }
+.panel-handle:hover .handle-bar, .panel-handle:active .handle-bar { background: var(--muted); }
+.handle-open { font-size: 13px; line-height: 1; color: var(--muted); font-weight: 700; }
 .cp-row { display: flex; align-items: baseline; gap: 8px; }
 .cp-row strong { font-size: 22px; }
 .cp-ok { color: var(--good); }
