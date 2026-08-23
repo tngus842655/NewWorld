@@ -234,12 +234,13 @@ export function renderExpedition(): HTMLElement {
 
     el(`div.card.dispatch-panel${panelOpen() ? '' : '.collapsed'}`, {},
       panelHandle(panelOpen()),
+      // 원정대 선택은 접힘 상태에서도 항상 (2026-08-23 사용자)
+      el('div.chips-wrap', {}, ...state.teams.map((t) =>
+        el(`button.chip${team.id === t.id ? '.active' : ''}`, {
+          disabled: busy.has(t.id),
+          onclick: () => selTeamId.set(t.id),
+        }, busy.has(t.id) ? `🧭 ${t.name}` : t.name))),
       ...(panelOpen() ? [
-        el('div.chips-wrap', {}, ...state.teams.map((t) =>
-          el(`button.chip${team.id === t.id ? '.active' : ''}`, {
-            disabled: busy.has(t.id),
-            onclick: () => selTeamId.set(t.id),
-          }, busy.has(t.id) ? `🧭 ${t.name}` : t.name))),
         el('div.cp-row', {},
           el('span', {}, `${team.name} 유효 전투력`),
           el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
@@ -268,7 +269,7 @@ export function renderExpedition(): HTMLElement {
         ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})`
         : party.length === 0
           ? `${team.name} 편성이 비어 있습니다 — 카드를 눌러 편성하세요`
-          : `🧭 ${team.name} — ${region.name}으로 출발`),
+          : `🧭 ${region.name}으로 출발`),
     ),
   );
 }
