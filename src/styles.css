@@ -223,6 +223,8 @@ body {
 .big-tabs {
   display: flex; border: 1px solid var(--line); border-radius: 13px; overflow: hidden;
   background: var(--bg3); margin-top: 4px;
+  /* flex: none 필수 — overflow:hidden인 flex 자식은 시트 내용이 넘칠 때 높이 0까지 눌린다 (2026-08-23 버그) */
+  flex: none;
 }
 .big-tab {
   flex: 1; padding: 12px 0; text-align: center; font-size: 14px; font-weight: 700;
@@ -292,6 +294,8 @@ body {
   padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px;
   animation: sheet-up 0.22s ease-out;
 }
+/* 시트 내용이 넘치면 스크롤로만 처리 — flex 수축으로 자식(특히 overflow:hidden 요소)이 찌그러지지 않게 */
+.sheet > * { flex-shrink: 0; }
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
 .sheet-title { font-size: 17px; font-weight: 700; }
