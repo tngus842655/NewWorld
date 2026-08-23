@@ -2,6 +2,7 @@
   {
     "id": "misty-coast",
     "name": "물안개 해안",
+    "icon": "🌊",
     "order": 1,
     "element": "nature",
     "recommendedCp": 100,
@@ -123,6 +124,7 @@
   {
     "id": "whispering-woods",
     "name": "속삭이는 숲",
+    "icon": "🌲",
     "order": 2,
     "element": "nature",
     "recommendedCp": 400,
@@ -248,6 +250,7 @@
   {
     "id": "sunken-marsh",
     "name": "가라앉은 늪",
+    "icon": "🪷",
     "order": 3,
     "element": "frost",
     "recommendedCp": 1200,
@@ -377,6 +380,7 @@
   {
     "id": "ashen-volcano",
     "name": "잿빛 화산",
+    "icon": "🌋",
     "order": 4,
     "element": "fire",
     "recommendedCp": 3000,

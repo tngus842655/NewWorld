@@ -53,7 +53,7 @@ function expeditionCard(expeditionId: string): HTMLElement {
 
   return el('div.card.exp-card', {},
     el('div.exp-head', {},
-      el('div.exp-title', {}, region.name),
+      el('div.exp-title', {}, `${region.icon} ${region.name}`),
       el('span.tag', {}, TIER_LABEL[expedition.tier]),
     ),
     el('div.exp-party', {}, ...expedition.partyIds.map((monsterId) => monsterIcon(monsterId))),

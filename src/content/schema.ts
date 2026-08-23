@@ -106,6 +106,7 @@ export type Monster = z.infer<typeof MonsterSchema>;
 export const RegionSchema = z.object({
   id: z.string(),
   name: z.string(),
+  icon: z.string().min(1), // 지역 고유 아이콘 — 몬스터 출신 표기·지역 목록에 사용 (속성 이모지와 별개)
   order: z.number().int().positive(),
   element: ElementSchema,
   recommendedCp: z.number().positive(),

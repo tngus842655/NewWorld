@@ -73,7 +73,7 @@ export function renderCodex(): HTMLElement {
       return el('div.codex-cell.unknown', {}, el('div.codex-q', {}, '?'), el('div.codex-name.muted', {}, '???'));
     });
     return el('section', {},
-      el('h3.codex-region', {}, `${region.name} (${regionCaptured}/${allNatives.length})`),
+      el('h3.codex-region', {}, `${region.icon} ${region.name} (${regionCaptured}/${allNatives.length})`),
       el('div.codex-grid', {}, ...cells),
     );
   });

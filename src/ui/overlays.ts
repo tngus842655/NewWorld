@@ -113,7 +113,7 @@ function monsterSheet(monsterId: string): HTMLElement | null {
           el('span.tag', {}, ELEMENT_LABEL[monster.element]),
           el('span.tag', {}, TRIBE_LABEL[monster.tribe]),
         ),
-        el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${content.regions.get(monster.habitat)?.name}`),
+        el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${[content.regions.get(monster.habitat)?.icon, content.regions.get(monster.habitat)?.name].filter(Boolean).join(' ')}`),
         el('div.muted.small', {}, `보유 카드 ${owned.count}장 — 중복 포획으로 누적 (추후 합성 재료)`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중') : null,
       ),
@@ -208,7 +208,8 @@ function speciesSheet(monsterId: string): HTMLElement | null {
   const entry = state.codex[monsterId];
   const captured = entry?.captured === true;
   if (!captured && entry?.seen !== true) return null; // 미지 종은 진입 차단 (도감 셀에서도 막지만 방어)
-  const habitat = content.regions.get(monster.habitat)?.name ?? monster.habitat;
+  const habitatRegion = content.regions.get(monster.habitat);
+  const habitat = habitatRegion ? `${habitatRegion.icon} ${habitatRegion.name}` : monster.habitat;
 
   // 목격만 한 종: 실루엣 + 서식지 힌트 (GDD §7.2)
   if (!captured) {
@@ -369,7 +370,7 @@ function oddsSheet(): HTMLElement {
     const deep = spawnOddsByRarity(region, deepMult);
     const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
     return el('div.card.stack-sm', {},
-      el('div.odds-title', {}, `${unlocked ? '' : '🔒 '}${region.name}`),
+      el('div.odds-title', {}, `${unlocked ? '' : '🔒 '}${region.icon} ${region.name}`),
       el('div.odds-grid.odds-head', {},
         el('span', {}, '등급'), el('span', {}, `${tierName('scout')}·${tierName('standard')}`), el('span', {}, tierName('deep')),
       ),
@@ -438,7 +439,7 @@ function monsterInfoSheet(): HTMLElement {
       ),
     );
     return el('div.card.stack-sm', {},
-      el('div.odds-title', {}, `${ELEMENT_EMOJI[region.element]} ${region.name} (${natives.length}종)`),
+      el('div.odds-title', {}, `${region.icon} ${region.name} (${natives.length}종)`),
       ...rows,
     );
   });

@@ -155,7 +155,7 @@ function regionRow(regionId: string): HTMLElement {
   if (unlocked) {
     return el(`button.region-row${selected ? '.selected' : ''}`, { onclick: () => selRegion.set(regionId) },
       el('div.region-name', {},
-        region.name,
+        `${region.icon} ${region.name}`,
         el('span.region-elem', { title: `우세 속성 ${ELEMENT_LABEL[region.element]} — 같거나 이기는 속성이 유리` }, ` ${ELEMENT_EMOJI[region.element]}`),
       ),
       el('div.muted.small', {}, `권장 CP ${fmtGold(region.recommendedCp)}`),
@@ -163,7 +163,7 @@ function regionRow(regionId: string): HTMLElement {
   }
   const check = canUnlockRegion(content, state, regionId);
   return el('div.region-row.locked', {},
-    el('div.region-name', {}, `🔒 ${region.name}`),
+    el('div.region-name', {}, `🔒 ${region.icon} ${region.name}`),
     el('div.muted.small', {}, check.ok ? '해금 조건 달성!' : (check.reason ?? '')),
     check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => unlock(regionId) }, '해금') : null,
   );

@@ -37,6 +37,7 @@
 {
   "id": "whispering-woods",
   "name": "속삭이는 숲",
+  "icon": "🌲",                           // 지역 고유 아이콘 (몬스터 출신 배지·지역 목록 — 속성 이모지와 별개)
   "order": 2,
   "element": "nature",                    // 지역 우세 속성 (파티 상성 보정)
   "recommendedCp": 400,
