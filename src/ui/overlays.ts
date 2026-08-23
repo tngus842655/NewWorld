@@ -2,7 +2,7 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
-import type { MonsterRarity, Region } from '../content/schema';
+import { ELEMENTS, type MonsterRarity, type Region } from '../content/schema';
 import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
@@ -41,6 +41,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
                   ? artifactPickSheet()
                 : current.kind === 'odds'
                   ? oddsSheet()
+                : current.kind === 'elementInfo'
+                  ? elementInfoSheet()
                 : current.kind === 'monsterInfo'
                   ? monsterInfoSheet()
                   : current.kind === 'artifactInfo'
@@ -409,6 +411,66 @@ function oddsSheet(): HTMLElement {
     fusionCard,
     ...regionCards,
     artifactOddsCard,
+  );
+}
+
+/** 속성 정보 — 상성 구조·전투력 배수·지역별 유불리. 확률 정보처럼 유저 공개용 (2026-08-23) */
+function elementInfoSheet(): HTMLElement {
+  const { balance } = content;
+
+  const structureCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '⚔️ 상성 구조'),
+    el('div.elem-flow', {}, '🔥 화염 → 🌿 자연 → ❄️ 냉기 → 🔥 화염'),
+    el('div.small.muted', {}, '화살표 방향으로 유리 — 화염은 자연에게, 자연은 냉기에게, 냉기는 화염에게 강합니다.'),
+    el('div.elem-flow', {}, '☀️ 빛 ↔ 🌑 어둠'),
+    el('div.small.muted', {}, '빛과 어둠은 서로에게 유리합니다.'),
+  );
+
+  const multRow = (label: string, mult: number) =>
+    el('div.list-row', {},
+      el('span.small', {}, label),
+      el(`strong${mult > 1 ? '.cp-ok' : mult < 1 ? '.cp-low' : ''}`, {}, `×${mult}`),
+    );
+  const multCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '✨ 전투력 배수'),
+    el('div.muted.small', {}, '몬스터끼리 겨루는 것이 아니라, 파티 몬스터의 속성과 지역의 우세 속성으로 판정됩니다.'),
+    multRow('지역과 같은 속성', balance.element.same),
+    multRow('지역 속성을 이기는 속성', balance.element.advantage),
+    multRow('지역 속성에게 지는 속성', balance.element.disadvantage),
+    multRow('무관한 속성', 1),
+  );
+
+  // 지역별 유·불리 — elementMult 실제 계산값으로 도출해 밸런스 수치와 어긋나지 않게
+  const neutralEverywhere = ELEMENTS.filter((element) =>
+    content.regionList.every((region) => elementMult(element, region.element, balance) === 1));
+  const regionCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🗺️ 지역별 유리·불리'),
+    el('div.odds-grid.odds-head', {},
+      el('span', {}, '지역 (우세 속성)'), el('span', {}, '유리'), el('span', {}, '불리'),
+    ),
+    ...content.regionList.map((region) => {
+      const good = ELEMENTS.filter((element) => elementMult(element, region.element, balance) > 1);
+      const bad = ELEMENTS.filter((element) => elementMult(element, region.element, balance) < 1);
+      return el('div.odds-grid', {},
+        el('span', {}, `${region.icon} ${region.name} ${ELEMENT_EMOJI[region.element]}`),
+        el('span.cp-ok', {}, good.map((element) => ELEMENT_EMOJI[element]).join(' ')),
+        el('span.cp-low', {}, bad.map((element) => ELEMENT_EMOJI[element]).join(' ')),
+      );
+    }),
+    el('div.odds-note', {},
+      neutralEverywhere.length > 0
+        ? el('div.small.muted', {},
+            `· ${neutralEverywhere.map((element) => ELEMENT_LABEL[element]).join(' · ')} — 현재 모든 지역에서 ×1: 보너스도 페널티도 없이 어디서나 안정적입니다`)
+        : null,
+      el('div.small.muted', {}, '· 이 배수는 원정 편성 화면의 유효 전투력에 자동 반영됩니다'),
+    ),
+  );
+
+  return sheetShell('속성 정보',
+    el('div.muted.small', {}, '속성은 파티 몬스터와 지역의 우세 속성 사이에서 판정되어, 각 몬스터의 전투력에 배수로 곱해집니다.'),
+    structureCard,
+    multCard,
+    regionCard,
   );
 }
 

@@ -17,6 +17,7 @@ export type Overlay =
   | { kind: 'partyPick' }                  // 원정 파티 슬롯 선택 팝업
   | { kind: 'artifactPick' }               // 원정 유물 슬롯 선택 팝업
   | { kind: 'odds' }                       // 확률 정보 (등급별 — 추후 관리자 페이지로 대체 예정)
+  | { kind: 'elementInfo' }                // 속성 정보 (상성 구조·배수·지역별 유불리 — 유저 공개)
   | { kind: 'monsterInfo' }                // 전체 몬스터 데이터 뷰 (추후 관리자 전용)
   | { kind: 'artifactInfo' }               // 전체 유물 데이터 뷰 (추후 관리자 전용)
   | null;

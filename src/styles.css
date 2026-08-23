@@ -257,6 +257,7 @@ body.overlay-open .container { overflow: hidden; }
 
 /* ── 확률 정보 ── */
 .odds-title { font-weight: 700; font-size: 14px; }
+.elem-flow { font-weight: 600; font-size: 14px; letter-spacing: 0.2px; }
 .odds-grid { display: grid; grid-template-columns: 1fr 90px 90px; align-items: center; gap: 6px; padding: 3px 0; }
 .odds-grid span:nth-child(2), .odds-grid span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
 .odds-head { color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
