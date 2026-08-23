@@ -17,7 +17,7 @@ import {
   levelUpMonster,
   unlockRegion,
 } from '../src/core/economy';
-import { levelUpCost, starUpCost } from '../src/core/formulas';
+import { monsterLevelUpCost, monsterStarUpCost } from '../src/core/formulas';
 import { chooseCrossroad, claimExpedition, createExpedition } from '../src/core/expedition';
 import { createInitialSave } from '../src/core/newgame';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, teamCount } from '../src/core/progression';
@@ -216,7 +216,7 @@ function simulate(strategy: Strategy): SimResult {
           const current = save.roster.find((m) => m.monsterId === main.monsterId)!;
           if (current.star >= content.balance.star.max) break;
           if (current.level < 10) break; // 초반엔 레벨업이 골드 효율이 좋다 — 각성은 주전이 성장한 뒤
-          const cost = starUpCost(current.star, content.balance);
+          const cost = monsterStarUpCost(content, main.monsterId, current.star);
           if (spent + cost > budget) break;
           const next = safely(() => awakenMonster(content, save, main.monsterId));
           if (!next) break;
@@ -243,12 +243,12 @@ function simulate(strategy: Strategy): SimResult {
         .map((m) => {
           const def = content.monsters.get(m.monsterId)!;
           const baseCp = def.baseAtk * 2 + def.baseHp * 0.5;
-          return { uid: m.monsterId, level: m.level, gain: baseCp / levelUpCost(m.level, content.balance) };
+          return { uid: m.monsterId, level: m.level, gain: baseCp / monsterLevelUpCost(content, m.monsterId, m.level) };
         })
         .sort((a, b) => b.gain - a.gain);
       const best = candidates[0];
       if (!best) break;
-      const cost = levelUpCost(best.level, content.balance);
+      const cost = monsterLevelUpCost(content, best.uid, best.level);
       if (spent + cost > budget) break;
       const next = safely(() => levelUpMonster(content, save, best.uid));
       if (!next) break;

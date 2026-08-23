@@ -3,7 +3,7 @@
  */
 import { content } from '../content';
 import { ELEMENTS, type MonsterRarity, type Region } from '../content/schema';
-import { elementMult, enhanceCost, investedEnhanceDust, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
+import { artifactEnhanceCost, elementMult, investedEnhanceDust, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
@@ -99,8 +99,8 @@ function monsterSheet(monsterId: string): HTMLElement | null {
   const cp = ownedCp(owned);
   const maxLevel = owned.level >= balance.level.max;
   const maxStar = owned.star >= balance.star.max;
-  const upCost = maxLevel ? 0 : levelUpCost(owned.level, balance);
-  const starCost = maxStar ? 0 : starUpCost(owned.star, balance);
+  const upCost = maxLevel ? 0 : monsterLevelUpCost(content, monsterId, owned.level);
+  const starCost = maxStar ? 0 : monsterStarUpCost(content, monsterId, owned.star);
   const busy = state.expeditions.some((e) => !e.claimed && e.partyIds.includes(monsterId));
 
   // 다음 레벨 미리보기 — "레벨업하면 얼마나 오르나"가 버튼 옆에 바로 보이게
@@ -160,7 +160,7 @@ function artifactSheet(uid: string): HTMLElement | null {
   const { balance } = content;
   const mainValue = def.main.base + def.main.perEnhance * owned.enhance;
   const maxEnhance = owned.enhance >= balance.artifacts.enhance.max;
-  const cost = maxEnhance ? 0 : enhanceCost(owned.enhance, balance);
+  const cost = maxEnhance ? 0 : artifactEnhanceCost(content, def.id, owned.enhance);
   const busy = state.expeditions.some((e) => !e.claimed && e.artifactUids.includes(uid));
   const setDef = def.set ? content.sets.get(def.set) : null;
 
@@ -199,7 +199,7 @@ function artifactSheet(uid: string): HTMLElement | null {
       el('button.btn.btn-danger', {
         disabled: busy,
         onclick: () => {
-          const invested = investedEnhanceDust(owned.enhance, balance);
+          const invested = investedEnhanceDust(content, def.id, owned.enhance);
           const gain = balance.artifacts.dustPerSalvage[def.rarity] + invested;
           void askConfirm({
             title: '유물 분해',

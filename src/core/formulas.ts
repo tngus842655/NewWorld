@@ -1,6 +1,7 @@
 /**
  * 순수 계산식 — 모든 계수는 balance.json에서 온다 (코드에 매직넘버 금지).
  */
+import type { Content } from '../content';
 import type { Balance, Element, Monster } from '../content/schema';
 
 /** 레벨·성급 반영 스탯 */
@@ -54,13 +55,39 @@ export function enhanceCost(enhance: number, balance: Balance): number {
   return cost;
 }
 
+// ── 지역·등급 차등 비용 (2026-08-23) — 원정 단계가 깊을수록 성장도 비싸진다 ──
+
+/** 몬스터 성장 비용 배수 = 출신 지역 growthCostMult × 등급 배수 (레벨·성급 공용) */
+export function monsterCostMult(content: Content, monsterId: string): number {
+  const monster = content.monsters.get(monsterId);
+  if (!monster) return 1;
+  const regionMult = content.regions.get(monster.habitat)?.growthCostMult ?? 1;
+  const rarityMult = content.balance.level.rarityCostMult[monster.rarity] ?? 1;
+  return regionMult * rarityMult;
+}
+
+export function monsterLevelUpCost(content: Content, monsterId: string, level: number): number {
+  return Math.round(levelUpCost(level, content.balance) * monsterCostMult(content, monsterId));
+}
+
+export function monsterStarUpCost(content: Content, monsterId: string, star: number): number {
+  return Math.round(starUpCost(star, content.balance) * monsterCostMult(content, monsterId));
+}
+
+/** 유물 강화 비용 = 단계 기본 가루 × 등급 배수 */
+export function artifactEnhanceCost(content: Content, itemId: string, enhance: number): number {
+  const rarity = content.artifacts.get(itemId)?.rarity;
+  const mult = rarity ? (content.balance.artifacts.enhance.rarityCostMult[rarity] ?? 1) : 1;
+  return Math.round(enhanceCost(enhance, content.balance) * mult);
+}
+
 /**
  * 현재 강화 단계까지 투자된 가루 총액 — 합성·분해 시 전액 환급.
  * 재화 보존 원칙 (2026-08-23): 한번 수집한 골드·가루는 시스템이 소멸시키지 않는다.
  */
-export function investedEnhanceDust(enhance: number, balance: Balance): number {
+export function investedEnhanceDust(content: Content, itemId: string, enhance: number): number {
   let total = 0;
-  for (let level = 0; level < enhance; level++) total += enhanceCost(level, balance);
+  for (let level = 0; level < enhance; level++) total += artifactEnhanceCost(content, itemId, level);
   return total;
 }
 

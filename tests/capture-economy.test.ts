@@ -11,7 +11,7 @@ import {
   salvageArtifact,
   unlockRegion,
 } from '../src/core/economy';
-import { investedEnhanceDust, levelUpCost } from '../src/core/formulas';
+import { artifactEnhanceCost, investedEnhanceDust, levelUpCost, monsterCostMult, monsterLevelUpCost, monsterStarUpCost, starUpCost } from '../src/core/formulas';
 import { canUnlockRegion, teamCount } from '../src/core/progression';
 import { streamRng } from '../src/core/rng';
 import { GameError, type CoreCtx } from '../src/core/types';
@@ -68,6 +68,24 @@ describe('경제 액션', () => {
     expect(() => awakenMonster(content, next, partyIds[0]!)).toThrow(/골드/); // ★4 비용 부족
   });
 
+  it('성장 비용 지역·등급 차등 (2026-08-23) — 깊은 지역·높은 등급일수록 비싸다', () => {
+    // dune-pup: 해안(×1) 일반(×1) → 배수 1 (초반 곡선 불변)
+    expect(monsterCostMult(content, 'dune-pup')).toBe(1);
+    expect(monsterLevelUpCost(content, 'dune-pup', 1)).toBe(levelUpCost(1, content.balance));
+
+    // 화산 전설: 지역 ×12 × 등급 ×3 = ×36
+    const volcanoLegend = content.monsterList.find((m) => m.habitat === 'ashen-volcano' && m.rarity === 'legendary')!;
+    const mult = content.regions.get('ashen-volcano')!.growthCostMult * content.balance.level.rarityCostMult.legendary!;
+    expect(monsterCostMult(content, volcanoLegend.id)).toBe(mult);
+    expect(monsterLevelUpCost(content, volcanoLegend.id, 5)).toBe(Math.round(levelUpCost(5, content.balance) * mult));
+    expect(monsterStarUpCost(content, volcanoLegend.id, 1)).toBe(Math.round(starUpCost(1, content.balance) * mult));
+
+    // 유물: 전설 강화 = 기본 × 3.5
+    const legendArtifact = content.artifactsByRarity.get('legendary')![0]!;
+    expect(artifactEnhanceCost(content, legendArtifact.id, 0)).toBe(
+      Math.round(content.balance.artifacts.enhance.dustCost[0]! * content.balance.artifacts.enhance.rarityCostMult.legendary!));
+  });
+
   it('미끼 제작 — 재료·골드 차감', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 1000, lures: 0 });
@@ -85,7 +103,9 @@ describe('경제 액션', () => {
     const uid = artifactUids[0]!;
     const enhanced = enhanceArtifact(content, save, uid);
     expect(enhanced.artifacts[0]!.enhance).toBe(1);
-    expect(enhanced.wallet.dust).toBe(90);
+    // 등급 차등 (2026-08-23): 고급 유물은 기본 10 × 1.3 = 13
+    const enhance0Cost = artifactEnhanceCost(content, 'rusty-saber', 0);
+    expect(enhanced.wallet.dust).toBe(100 - enhance0Cost);
 
     enhanced.teams = [{ id: 't', name: 't', partyIds: [], artifactUids: [uid] }];
     const salvaged = salvageArtifact(content, enhanced, uid);
@@ -211,7 +231,7 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     expect(def.rarity).toBe('uncommon');
     expect(got.substats).toHaveLength(content.balance.artifacts.substatCount.uncommon!);
     // 재화 보존 원칙: 소멸한 재료의 강화 투자(+2 = 0→1, 1→2 비용) 전액 환급
-    expect(result.refundedDust).toBe(investedEnhanceDust(2, content.balance));
+    expect(result.refundedDust).toBe(investedEnhanceDust(content, commonId, 2));
     expect(result.save.wallet.dust).toBe(dustBefore + result.refundedDust);
   });
 
@@ -227,7 +247,7 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     expect(['a', 'b']).toContain(kept.uid);
     expect(kept.enhance).toBe(kept.uid === 'a' ? 3 : 1); // 보존분은 강화 유지
     const destroyedEnhance = kept.uid === 'a' ? 1 : 3;
-    expect(result.refundedDust).toBe(investedEnhanceDust(destroyedEnhance, content.balance));
+    expect(result.refundedDust).toBe(investedEnhanceDust(content, commonId, destroyedEnhance));
     expect(result.save.wallet.dust).toBe(dustBefore + result.refundedDust);
   });
 });

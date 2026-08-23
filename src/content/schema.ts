@@ -108,6 +108,7 @@ export const RegionSchema = z.object({
   name: z.string(),
   icon: z.string().min(1), // 지역 고유 아이콘 — 몬스터 출신 표기·지역 목록에 사용 (속성 이모지와 별개)
   order: z.number().int().positive(),
+  growthCostMult: z.number().positive(), // 출신 몬스터의 레벨업·각성 골드 배수 (원정 단계 비례 — rewardScale과 같은 계단)
   element: ElementSchema,
   recommendedCp: z.number().positive(),
   rewardScale: z.number().positive(),
@@ -293,7 +294,13 @@ export type ShopProduct = z.infer<typeof ShopProductSchema>;
 export const BalanceSchema = z.object({
   element: z.object({ same: z.number(), advantage: z.number(), disadvantage: z.number() }),
   cp: z.object({ atkWeight: z.number(), hpWeight: z.number() }),
-  level: z.object({ statGrowth: z.number(), goldBase: z.number(), goldExp: z.number(), max: z.number().int() }),
+  level: z.object({
+    statGrowth: z.number(),
+    goldBase: z.number(),
+    goldExp: z.number(),
+    max: z.number().int(),
+    rarityCostMult: z.record(MonsterRaritySchema, z.number()), // 등급별 성장 비용 배수 (레벨·성급 공용)
+  }),
   star: z.object({ mult: z.number(), max: z.number().int(), goldCost: z.array(z.number().int()) }),
   fusion: z.object({
     materials: z.number().int().min(2), // 재료 카드 수 (같은 등급, 여분만)
@@ -361,7 +368,11 @@ export const BalanceSchema = z.object({
       crossroadCrit: z.number(),
     }),
     firstTreasurePity: z.boolean(),
-    enhance: z.object({ max: z.number().int(), dustCost: z.array(z.number().int()) }),
+    enhance: z.object({
+      max: z.number().int(),
+      dustCost: z.array(z.number().int()),
+      rarityCostMult: z.record(ArtifactRaritySchema, z.number()), // 등급별 강화 가루 배수
+    }),
     dustPerSalvage: z.record(ArtifactRaritySchema, z.number().int()),
     substatCount: z.record(ArtifactRaritySchema, z.number().int()),
     substatPool: z.array(z.object({ stat: SubstatSchema, min: z.number(), max: z.number(), weight: z.number() })),

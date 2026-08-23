@@ -5,7 +5,7 @@ import type { Content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
 import { findArtifact, findMonster } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
-import { enhanceCost, investedEnhanceDust, levelUpCost, starUpCost } from './formulas';
+import { artifactEnhanceCost, investedEnhanceDust, monsterLevelUpCost, monsterStarUpCost } from './formulas';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
 import { streamRng } from './rng';
 import { settleTasks } from './tasks';
@@ -33,7 +33,7 @@ export function levelUpMonster(content: Content, save: SaveState, monsterId: str
   const next = structuredClone(save);
   const monster = findMonster(next, monsterId);
   if (monster.level >= content.balance.level.max) throw new GameError('level-max', '이미 최대 레벨입니다');
-  spendGold(next, levelUpCost(monster.level, content.balance));
+  spendGold(next, monsterLevelUpCost(content, monsterId, monster.level)); // 지역·등급 차등 (2026-08-23)
   monster.level++;
   return next;
 }
@@ -43,7 +43,7 @@ export function awakenMonster(content: Content, save: SaveState, monsterId: stri
   const next = structuredClone(save);
   const owned = findMonster(next, monsterId);
   if (owned.star >= content.balance.star.max) throw new GameError('star-max', '이미 최대 성급입니다');
-  spendGold(next, starUpCost(owned.star, content.balance));
+  spendGold(next, monsterStarUpCost(content, monsterId, owned.star)); // 지역·등급 차등 (2026-08-23)
   owned.star++;
   if (owned.star >= 3) {
     const entry = next.codex[owned.monsterId];
@@ -208,7 +208,10 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   };
 
   // 소멸분의 강화 투자 가루는 전액 환급 (재화 보존 원칙 — 보존된 재료는 강화가 그대로라 환급 없음)
-  const investedOf = (uid: string) => investedEnhanceDust(findArtifact(save, uid).enhance, content.balance);
+  const investedOf = (uid: string) => {
+    const owned = findArtifact(save, uid);
+    return investedEnhanceDust(content, owned.itemId, owned.enhance);
+  };
 
   next.stats.fusions += 1;
   const rng = streamRng(ctx.newSeed(), 'fusion-artifact');
@@ -265,7 +268,7 @@ export function enhanceArtifact(content: Content, save: SaveState, uid: string):
   assertArtifactFree(next, uid);
   const artifact = findArtifact(next, uid);
   if (artifact.enhance >= content.balance.artifacts.enhance.max) throw new GameError('enhance-max', '이미 최대 강화입니다');
-  const cost = enhanceCost(artifact.enhance, content.balance);
+  const cost = artifactEnhanceCost(content, artifact.itemId, artifact.enhance); // 등급 차등 (2026-08-23)
   if (next.wallet.dust < cost) throw new GameError('dust-short', `가루가 부족합니다 (필요: ${cost})`);
   next.wallet.dust -= cost;
   artifact.enhance++;
@@ -279,7 +282,7 @@ export function salvageArtifact(content: Content, save: SaveState, uid: string):
   const def = content.artifacts.get(artifact.itemId);
   if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${artifact.itemId}`);
   // 분해 가루 + 강화에 쓴 가루 전액 환급 (재화 보존 원칙, 2026-08-23)
-  next.wallet.dust += content.balance.artifacts.dustPerSalvage[def.rarity] + investedEnhanceDust(artifact.enhance, content.balance);
+  next.wallet.dust += content.balance.artifacts.dustPerSalvage[def.rarity] + investedEnhanceDust(content, artifact.itemId, artifact.enhance);
   next.artifacts = next.artifacts.filter((a) => a.uid !== uid);
   for (const team of next.teams) {
     team.artifactUids = team.artifactUids.filter((id) => id !== uid);
