@@ -1,12 +1,12 @@
 /**
- * 캠프 — 몬스터 관리(레벨·각성), 유물 인벤토리(강화·분해), 미끼 제작, 지갑, 설정.
+ * 캠프 — 몬스터 관리(레벨·각성), 유물 인벤토리(강화·분해), 미끼 제작, 지갑.
+ * 설정·세이브 관리는 설정 탭으로 분리 (2026-08-23).
  */
 import { content } from '../../content';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
-import { exportSave, importSave } from '../../state/save';
-import { buySlot, craft, resetSave, save, toggleSound } from '../../state/store';
+import { buySlot, craft, save } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
-import { ARTIFACT_RARITY_ORDER, el, fmtGold, toast } from '../kit';
+import { ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
@@ -106,54 +106,5 @@ export function renderCamp(): HTMLElement {
 
     el('h2.section-title', {}, '미끼 제작'),
     el('div.card', {}, ...recipes),
-
-    el('h2.section-title', {}, '설정'),
-    el('div.card', {},
-      el('div.list-row', {},
-        el('span', {}, '효과음'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            toggleSound();
-            // 켠 직후에만 확인음 (끄면 즉시 무음이 곧 피드백)
-            if (save().settings.sound) playSfx('tap');
-          },
-        }, state.settings.sound ? '🔊 켬' : '🔇 끔'),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '세이브 내보내기'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            void navigator.clipboard?.writeText(exportSave(save())).then(
-              () => toast('세이브를 클립보드에 복사했습니다', 'ok'),
-              () => toast('클립보드 복사 실패', 'error'),
-            );
-          },
-        }, '복사'),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '세이브 가져오기'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            const text = prompt('세이브 JSON을 붙여넣으세요');
-            if (!text) return;
-            const imported = importSave(text);
-            if (imported) {
-              save.set(imported);
-              toast('세이브를 불러왔습니다', 'ok');
-            } else {
-              toast('올바른 세이브가 아닙니다', 'error');
-            }
-          },
-        }, '붙여넣기'),
-      ),
-      el('div.list-row', {},
-        el('span.muted', {}, '처음부터 (되돌릴 수 없음)'),
-        el('button.btn.btn-danger', {
-          onclick: () => {
-            if (confirm('정말 새 게임을 시작할까요? 현재 진행이 사라집니다.')) resetSave();
-          },
-        }, '초기화'),
-      ),
-    ),
   );
 }

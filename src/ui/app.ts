@@ -11,12 +11,14 @@ import { renderCamp } from './screens/camp';
 import { renderCodex } from './screens/codex';
 import { renderExpedition } from './screens/expedition';
 import { renderHome } from './screens/home';
+import { renderSettings } from './screens/settings';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: '홈', icon: '🏕️' },
   { id: 'expedition', label: '원정', icon: '🧭' },
   { id: 'codex', label: '도감', icon: '📖' },
   { id: 'camp', label: '캠프', icon: '🎒' },
+  { id: 'settings', label: '설정', icon: '⚙️' },
 ];
 
 function renderScreen(current: Tab): HTMLElement {
@@ -25,6 +27,7 @@ function renderScreen(current: Tab): HTMLElement {
     case 'expedition': return renderExpedition();
     case 'codex': return renderCodex();
     case 'camp': return renderCamp();
+    case 'settings': return renderSettings();
   }
 }
 

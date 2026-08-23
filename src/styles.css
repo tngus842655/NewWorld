@@ -213,9 +213,37 @@ body {
 .detail-head .micon { width: 64px; height: 64px; }
 .stat-row { display: flex; gap: 8px; }
 .stat { flex: 1; background: var(--bg3); border-radius: 10px; padding: 8px; text-align: center; }
+.stat-next { font-size: 11px; color: var(--good); margin-top: 1px; }
 .unique-row { color: var(--accent-2); }
 .setinfo { padding-top: 6px; border-top: 1px dashed var(--line); }
 body.overlay-open .container { overflow: hidden; }
+
+/* ── 확률 정보 ── */
+.odds-title { font-weight: 700; font-size: 14px; }
+.odds-grid { display: grid; grid-template-columns: 1fr 90px 90px; align-items: center; gap: 6px; padding: 3px 0; }
+.odds-grid span:nth-child(2), .odds-grid span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+.odds-head { color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
+
+/* ── 다이얼로그 (confirm/prompt 대체 — 오버레이 위 최상위) ── */
+.dialog-backdrop {
+  position: fixed; inset: 0; background: rgba(6, 8, 14, 0.66); z-index: 55;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.dialog {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 16px;
+  width: min(340px, 100%); padding: 16px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  animation: sheet-up 0.18s ease-out;
+}
+.dialog-title { font-size: 16px; font-weight: 700; }
+.dialog-message { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+.dialog-actions .btn { min-width: 84px; }
+.dialog-input {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; color: var(--text);
+  padding: 9px 11px; font-size: 13px; min-height: 96px; resize: vertical; width: 100%;
+}
+.dialog-input:focus { outline: none; border-color: var(--accent); }
 
 /* ── 일지 ── */
 .sheet-journal { max-height: 92dvh; }

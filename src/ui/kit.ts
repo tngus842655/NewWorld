@@ -128,6 +128,12 @@ export function fmtPct(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }
 
+/** 타임스탬프 → "21:05" (24시간제) */
+export function fmtClock(ts: number): string {
+  const date = new Date(ts);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 /** 지난 시각 → "방금 전 · 3분 전 · 2시간 전 · 어제 · 3일 전" */
 export function fmtAgo(ms: number): string {
   if (ms < 60_000) return '방금 전';

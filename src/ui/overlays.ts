@@ -2,13 +2,16 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
+import type { MonsterRarity, Region } from '../content/schema';
 import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
+import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
+import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
 import {
-  ARTIFACT_RARITY_LABEL, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TRIBE_LABEL,
+  ARTIFACT_RARITY_LABEL, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TIER_LABEL, TRIBE_LABEL,
   el, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
@@ -28,7 +31,9 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
             ? speciesSheet(current.monsterId)
             : current.kind === 'help'
               ? helpSheet()
-              : crossroadsSheet(current.expeditionId);
+              : current.kind === 'odds'
+                ? oddsSheet()
+                : crossroadsSheet(current.expeditionId);
   if (!sheet) return null;
   return el('div.overlay', { onclick: (event) => { if (event.target === event.currentTarget) closeOverlay(); } }, sheet);
 }
@@ -65,12 +70,28 @@ function monsterSheet(uid: string): HTMLElement | null {
   const { balance } = content;
   const atk = Math.round(statAt(monster.baseAtk, owned.level, owned.star, balance));
   const hp = Math.round(statAt(monster.baseHp, owned.level, owned.star, balance));
+  const cp = ownedCp(owned);
   const maxLevel = owned.level >= balance.level.max;
   const maxStar = owned.star >= balance.star.max;
   const upCost = maxLevel ? 0 : levelUpCost(owned.level, balance);
   const starCost = maxStar ? 0 : starUpCost(owned.star, balance);
   const essenceHave = state.wallet.essence[owned.monsterId] ?? 0;
   const busy = state.expeditions.some((e) => !e.claimed && e.partyUids.includes(uid));
+
+  // 다음 레벨 미리보기 — "레벨업하면 얼마나 오르나"가 버튼 옆에 바로 보이게
+  const nextAtkStat = statAt(monster.baseAtk, owned.level + 1, owned.star, balance);
+  const nextHpStat = statAt(monster.baseHp, owned.level + 1, owned.star, balance);
+  const gains = maxLevel ? null : {
+    atk: Math.round(nextAtkStat) - atk,
+    hp: Math.round(nextHpStat) - hp,
+    cp: Math.round(nextAtkStat * balance.cp.atkWeight + nextHpStat * balance.cp.hpWeight) - cp,
+  };
+  const statCell = (label: string, value: number, gain: number | undefined) =>
+    el('div.stat', {},
+      el('div.muted.small', {}, label),
+      el(`strong${grew ? '.stat-pop' : ''}`, {}, `${value}`),
+      gain ? el('div.stat-next', {}, `+${gain}`) : null,
+    );
 
   return sheetShell(monster.name,
     el('div.detail-head', {},
@@ -86,9 +107,9 @@ function monsterSheet(uid: string): HTMLElement | null {
       ),
     ),
     el('div.stat-row', {},
-      el('div.stat', {}, el('div.muted.small', {}, '공격'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${atk}`)),
-      el('div.stat', {}, el('div.muted.small', {}, '생명'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${hp}`)),
-      el('div.stat', {}, el('div.muted.small', {}, '전투력'), el(`strong${grew ? '.stat-pop' : ''}`, {}, `${ownedCp(owned)}`)),
+      statCell('공격', atk, gains?.atk),
+      statCell('생명', hp, gains?.hp),
+      statCell('전투력', cp, gains?.cp),
     ),
     el('p.flavor', {}, `“${monster.flavor}”`),
     el('div.row-gap', {},
@@ -151,10 +172,16 @@ function artifactSheet(uid: string): HTMLElement | null {
         disabled: busy,
         onclick: () => {
           const gain = balance.artifacts.dustPerSalvage[def.rarity];
-          if (confirm(`${def.name}을(를) 분해해 가루 ${gain}을 얻을까요? 되돌릴 수 없습니다.`)) {
+          void askConfirm({
+            title: '유물 분해',
+            message: `${def.name}을(를) 분해해 가루 ${gain}을 얻습니다. 되돌릴 수 없습니다.`,
+            confirmLabel: '분해',
+            danger: true,
+          }).then((ok) => {
+            if (!ok) return;
             if (salvage(uid)) playSfx('salvage');
             closeOverlay();
-          }
+          });
         },
       }, '분해'),
     ),
@@ -244,6 +271,99 @@ function helpSheet(): HTMLElement {
     row('✨', '가루', '유물 분해', '유물 강화'),
     row('🪤', '미끼', '캠프에서 제작 (지역 재료 + 골드)', '파견에 자동 적재 — 레어 이상 몬스터 포획률 ×2'),
     el('div.muted.small', {}, '지역 재료·정수 보유량은 캠프 화면에서 볼 수 있습니다.'),
+  );
+}
+
+/** % 표기 — 소수 1자리, .0은 정수로 (0.315 → "31.5%", 0.55 → "55%") */
+function pct1(ratio: number): string {
+  const value = Math.round(ratio * 1000) / 10;
+  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+}
+
+/** 지역 출현 테이블을 등급별로 집계 (core buildPlan의 spawnWeightOf와 같은 규칙) */
+function spawnOddsByRarity(region: Region, rareWeightMult: number): Map<MonsterRarity, number> {
+  const weights = new Map<MonsterRarity, number>();
+  let total = 0;
+  for (const spawn of region.spawns) {
+    const monster = content.monsters.get(spawn.monster)!;
+    const weight = spawn.weight * (monster.rarity === 'rare' || monster.rarity === 'epic' ? rareWeightMult : 1);
+    weights.set(monster.rarity, (weights.get(monster.rarity) ?? 0) + weight);
+    total += weight;
+  }
+  const odds = new Map<MonsterRarity, number>();
+  for (const [rarity, weight] of weights) odds.set(rarity, weight / total);
+  return odds;
+}
+
+/**
+ * 확률 정보 — 등급별 집계표 (밸런스 데이터에서 파생, 확률 고지 대비).
+ * 추후 관리자 페이지로 대체 예정 (M6 확률 고지 페이지의 원본 데이터).
+ */
+function oddsSheet(): HTMLElement {
+  const { balance } = content;
+  const state = save();
+  const rarities = Object.keys(MONSTER_RARITY_LABEL) as MonsterRarity[];
+  const deepMult = balance.tiers.deep.rareWeightMult;
+  const tierName = (tier: 'scout' | 'standard' | 'deep') => TIER_LABEL[tier].split(' ')[0];
+
+  // 1) 포획 확률 (등급별 기본) + 보정 규칙
+  const captureCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🎯 포획 확률 (등급별 기본)'),
+    ...rarities.map((rarity) =>
+      el('div.list-row', {},
+        el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
+        el('strong', {}, pct1(balance.capture.base[rarity])),
+      ),
+    ),
+    el('div.muted.small', {},
+      `미끼 적재 시 ×${balance.capture.lureMult} (레어 이상 조우에 자동 사용) · 배수 상한 ×${balance.capture.multCap} · 최종 상한 ${pct1(balance.capture.chanceCap)}`),
+    balance.capture.firstCaptureGuarantee ? el('div.muted.small', {}, '계정 첫 포획은 100% 성공합니다.') : null,
+  );
+
+  // 2) 지역별 몬스터 등급 출현 확률 (기본 / 심층)
+  const regionCards = content.regionList.map((region) => {
+    const unlocked = isRegionUnlocked(content, state, region.id);
+    const base = spawnOddsByRarity(region, 1);
+    const deep = spawnOddsByRarity(region, deepMult);
+    const legend = content.monsters.get(region.legendary);
+    return el('div.card.stack-sm', {},
+      el('div.odds-title', {}, `${unlocked ? '' : '🔒 '}${region.name}`),
+      el('div.odds-grid.odds-head', {},
+        el('span', {}, '등급'), el('span', {}, `${tierName('scout')}·${tierName('standard')}`), el('span', {}, tierName('deep')),
+      ),
+      ...rarities.filter((rarity) => base.has(rarity)).map((rarity) =>
+        el('div.odds-grid', {},
+          el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
+          el('span', {}, pct1(base.get(rarity) ?? 0)),
+          el('span', {}, pct1(deep.get(rarity) ?? 0)),
+        ),
+      ),
+      el('div.muted.small', {},
+        `⭐ 전설 (${legend?.name ?? region.legendary}) — ${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
+    );
+  });
+
+  // 3) 유물 등급 확률 + 드랍 소스
+  const artifactRarities = Object.keys(ARTIFACT_RARITY_LABEL) as (keyof typeof ARTIFACT_RARITY_LABEL)[];
+  const { sources } = balance.artifacts;
+  const artifactOddsCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '💎 유물 등급 확률 (발굴 시)'),
+    ...artifactRarities.map((rarity) =>
+      el('div.list-row', {},
+        el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
+        el('strong', {}, pct1(balance.artifacts.dropRarity[rarity])),
+      ),
+    ),
+    el('div.muted.small', {},
+      `발굴 기회 — 보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}${sources.deepClearBox ? ` · ${tierName('deep')} 완주 상자는 확정` : ''}`),
+    balance.artifacts.firstTreasurePity ? el('div.muted.small', {}, '계정 첫 보물 이벤트에서는 유물이 확정으로 나옵니다.') : null,
+  );
+
+  return sheetShell('확률 정보',
+    el('div.muted.small', {}, '모든 판정은 파견 시 확정된 시드에서 결정됩니다. 표기 확률은 밸런스 데이터 기준입니다.'),
+    captureCard,
+    ...regionCards,
+    artifactOddsCard,
   );
 }
 

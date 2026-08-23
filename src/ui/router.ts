@@ -4,7 +4,7 @@
 import type { Journal } from '../core/types';
 import { signal } from '../state/signal';
 
-export type Tab = 'home' | 'expedition' | 'codex' | 'camp';
+export type Tab = 'home' | 'expedition' | 'codex' | 'camp' | 'settings';
 
 export type Overlay =
   | { kind: 'journal'; journal: Journal; newMilestones: string[] }
@@ -13,6 +13,7 @@ export type Overlay =
   | { kind: 'crossroads'; expeditionId: string }
   | { kind: 'species'; monsterId: string } // 도감 종 정보 (성장 액션 없음 — 캠프 상세와 목적 분리)
   | { kind: 'help' }                       // 재화 안내
+  | { kind: 'odds' }                       // 확률 정보 (등급별 — 추후 관리자 페이지로 대체 예정)
   | null;
 
 export const tab = signal<Tab>('home');

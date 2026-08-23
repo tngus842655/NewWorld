@@ -7,7 +7,7 @@ import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '..
 import * as clock from '../../state/clock';
 import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
-import { TIER_LABEL, el, fmtAgo, fmtGold, fmtRemain, scopedEffect } from '../kit';
+import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 
 function expeditionCard(expeditionId: string): HTMLElement {
@@ -44,7 +44,9 @@ function expeditionCard(expeditionId: string): HTMLElement {
     const progress = Math.min(1, (now - expedition.startedAt) / total);
     fill.style.width = `${Math.round(progress * 100)}%`;
     const done = now >= expedition.endsAt;
-    remain.textContent = done ? '원정대가 돌아왔습니다!' : `귀환까지 ${fmtRemain(expedition.endsAt - now)}`;
+    remain.textContent = done
+      ? '원정대가 돌아왔습니다!'
+      : `귀환까지 ${fmtRemain(expedition.endsAt - now)} · ${fmtClock(expedition.endsAt)} 귀환`;
     claimBtn.classList.toggle('hidden', !done);
     crossroadBtn?.classList.toggle('hidden', done);
   });
