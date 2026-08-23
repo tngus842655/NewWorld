@@ -94,6 +94,19 @@ describe('상점 (GDD §9.4)', () => {
     }
   });
 
+  it('골드 몬스터 뽑기 — 전설까지 등장하되 항상 해금 지역 출신 (2026-08-23)', () => {
+    const table = content.balance.shop.monsterGacha.goldNormal!;
+    expect(table.legendary ?? 0).toBeGreaterThan(0);
+    let legendaryId: string | null = null;
+    for (let i = 0; i < 2000 && legendaryId === null; i++) {
+      const result = buyShopProduct(content, richSave(), { productId: 'gold-monster-gacha' }, fixedCtx(T0, `g${i}`));
+      const monster = content.monsters.get(result.granted.monsterId!)!;
+      expect(monster.habitat).toBe('misty-coast'); // 해금 지역(첫 지역) 한정
+      if (monster.rarity === 'legendary') legendaryId = monster.id;
+    }
+    expect(legendaryId).not.toBeNull(); // 낮은 확률이어도 실제로 뽑힌다 (시드 결정론이라 항상 같은 결과)
+  });
+
   it('몬스터 뽑기 — 해금 지역·확률표 등급의 카드 지급, 신규면 도감 등록', () => {
     const save = richSave();
     const table = content.balance.shop.monsterGacha.goldNormal!;

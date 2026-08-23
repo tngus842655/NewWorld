@@ -219,11 +219,11 @@
         "legendary": 0.03
       },
       "goldNormal": {
-        "common": 0.7,
-        "uncommon": 0.22,
-        "rare": 0.08,
-        "heroic": 0,
-        "legendary": 0
+        "common": 0.62,
+        "uncommon": 0.24,
+        "rare": 0.1,
+        "heroic": 0.035,
+        "legendary": 0.005
       }
     },
     "artifactGacha": {
