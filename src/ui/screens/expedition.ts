@@ -131,14 +131,15 @@ function teamCard(team: TeamLoadout): HTMLElement {
   const party = teamParty(state, team);
   const artifacts = teamArtifacts(state, team);
 
-  const gridCells: HTMLElement[] = [];
+  // 아이콘 한 줄 4마리 + CP만 — 상세는 카드·편성 시트에 있으니 요약 최소화 (2026-08-23 사용자)
+  const iconCells: HTMLElement[] = [];
   for (let i = 0; i < 4; i++) {
     const monsterId = party[i];
     if (monsterId) {
       const owned = state.roster.find((m) => m.monsterId === monsterId)!;
-      gridCells.push(el('div.team-cell', {}, monsterIconBadged(owned)));
+      iconCells.push(el('div.team-cell', {}, monsterIconBadged(owned)));
     } else {
-      gridCells.push(el('div.team-cell.team-cell-empty', {}, '+'));
+      iconCells.push(el('div.team-cell.team-cell-empty', {}, '+'));
     }
   }
 
@@ -147,34 +148,23 @@ function teamCard(team: TeamLoadout): HTMLElement {
     return sum + (owned ? ownedCp(owned) : 0);
   }, 0);
 
-  const elementCounts = new Map<string, number>();
-  for (const id of party) {
-    const element = content.monsters.get(id)?.element;
-    if (element) elementCounts.set(element, (elementCounts.get(element) ?? 0) + 1);
-  }
-  const elementSummary = [...elementCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([element, count]) => `${ELEMENT_EMOJI[element as keyof typeof ELEMENT_EMOJI]}${count > 1 ? count : ''}`)
-    .join(' ');
-
   return el(`button.card.team-card${busy ? '.team-busy' : ''}`, {
+    title: `${team.name} 편성 열기${artifacts.length > 0 ? ` · 유물 ${artifacts.length}/4` : ''}`,
     onclick: () => {
       playSfx('tap');
       resetTeamSheet();
       overlay.set({ kind: 'teamEdit', teamId: team.id });
     },
   },
-    el('div.team-grid', {},
-      ...gridCells,
+    el('div.team-row', {},
+      ...iconCells,
       party.length > 4 ? el('span.team-more', {}, `+${party.length - 4}`) : null,
     ),
     el('div.team-info', {},
-      el('div.team-name', {},
-        team.name,
-        busy ? el('span.tag.busy-tag', {}, '🧭 원정 중') : null,
-      ),
-      el('div.small', {}, party.length > 0 ? `CP ${fmtGold(totalCp)}` : el('span.muted', {}, '편성이 비어 있습니다')),
-      party.length > 0 ? el('div.muted.small', {}, `속성 ${elementSummary} · 몬스터 ${party.length}/${state.profile.partySlots} · 유물 ${artifacts.length}/4`) : null,
+      busy ? el('span.tag.busy-tag', {}, '🧭 원정 중') : null,
+      party.length > 0
+        ? el('div.team-cp', {}, `CP ${fmtGold(totalCp)}`)
+        : el('div.muted.small', {}, '편성 비어 있음'),
     ),
   );
 }
@@ -238,7 +228,7 @@ export function renderExpedition(): HTMLElement {
     el('h2.section-title', {}, '지역'),
     el('div.card.stack-sm', {}, ...content.regionList.map((r) => regionRow(r.id))),
 
-    el('h2.section-title', {}, `원정대 (${state.teams.length}군)`),
+    el('h2.section-title', {}, '원정대'),
     ...state.teams.map((t) => teamCard(t)),
     ...lockedTeamCards(state),
 

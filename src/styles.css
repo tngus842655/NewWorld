@@ -202,22 +202,20 @@ body {
 }
 .team-card.team-busy { border-color: var(--accent); }
 .team-card.team-locked { opacity: 0.55; cursor: default; }
-.team-grid {
-  display: grid; grid-template-columns: repeat(2, 44px); grid-auto-rows: 44px; gap: 4px;
-  flex: none; position: relative;
-}
-.team-cell { display: flex; align-items: center; justify-content: center; }
+.team-row { display: flex; gap: 4px; flex: none; position: relative; align-items: center; }
+.team-cell { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
 .team-cell .micon { width: 44px; height: 44px; }
 .team-cell-empty {
   border: 1.5px dashed var(--line); border-radius: 11px; color: var(--muted);
   font-size: 16px;
 }
 .team-more {
-  position: absolute; right: -6px; bottom: -4px; font-size: 10px; font-weight: 700;
+  position: absolute; right: -8px; bottom: -4px; font-size: 10px; font-weight: 700;
   background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 1px 5px; color: var(--accent-2);
 }
-.team-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.team-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin-left: auto; align-items: flex-end; }
 .team-name { font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.team-cp { font-weight: 700; color: var(--accent-2); font-size: 15px; }
 
 /* ── 큰 탭 (편성 시트 몬스터/유물 등 목록 전환) ── */
 .big-tabs {
