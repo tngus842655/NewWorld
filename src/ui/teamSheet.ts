@@ -129,6 +129,10 @@ export function teamSheet(teamId: string): HTMLElement | null {
     (artifacts.includes(owned.uid) ? group.equipped : group.free).push(owned);
     groups.set(owned.itemId, group);
   }
+  // 탭 숫자는 "지금 새로 배정 가능한" 수만 — 이미 이 군에 편성/장착된 것은 제외 (2026-08-23 사용자)
+  const assignableMonsters = monsterList.filter((owned) => !party.includes(owned.monsterId)).length;
+  const assignableArtifacts = [...groups.values()].filter((group) => group.equipped.length === 0).length;
+
   const artifactRows = [...groups.entries()]
     .map(([itemId, group]) => ({ itemId, group, def: content.artifacts.get(itemId)! }))
     .sort((a, b) => ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity] || a.def.slot.localeCompare(b.def.slot))
@@ -182,10 +186,10 @@ export function teamSheet(teamId: string): HTMLElement | null {
     el('div.big-tabs', {},
       el(`button.big-tab${listTab() === 'monster' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('monster'); },
-      }, `몬스터 (${monsterList.length})`),
+      }, `몬스터 (${assignableMonsters})`),
       el(`button.big-tab${listTab() === 'artifact' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('artifact'); },
-      }, `유물 (${artifactRows.length})`),
+      }, `유물 (${assignableArtifacts})`),
     ),
     ...(listTab() === 'monster'
       ? [
