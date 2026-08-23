@@ -18,11 +18,13 @@ type SortMode = 'cp' | 'level' | 'rarity';
 const SORT_LABEL: Record<SortMode, string> = { cp: 'CP순', level: '레벨순', rarity: '등급순' };
 const sortMode = signal<SortMode>('cp');
 const tribeFilter = signal<Tribe | null>(null);
+const listTab = signal<'monster' | 'artifact'>('monster'); // 하단 목록 탭 (2026-08-23 사용자)
 
 /** 편성 시트를 열 때 정렬·필터 초기화 */
 export function resetTeamSheet(): void {
   sortMode.set('cp');
   tribeFilter.set(null);
+  listTab.set('monster');
 }
 
 export function teamSheet(teamId: string): HTMLElement | null {
@@ -45,7 +47,12 @@ export function teamSheet(teamId: string): HTMLElement | null {
   // ── 상단 편성 슬롯 ──
   const partyCells = Array.from({ length: slots }, (_, i) => {
     const monsterId = party[i];
-    if (!monsterId) return el('div.party-slot', { title: '아래 목록에서 몬스터를 눌러 편성' }, '+');
+    if (!monsterId) {
+      return el('button.party-slot', {
+        title: '아래 목록에서 몬스터를 눌러 편성',
+        onclick: () => listTab.set('monster'), // 빈 슬롯 탭 → 해당 목록으로
+      }, '+');
+    }
     const owned = state.roster.find((m) => m.monsterId === monsterId)!;
     return el('button.party-slot.filled', {
       title: `${content.monsters.get(monsterId)?.name ?? ''} — 눌러서 해제`,
@@ -56,7 +63,12 @@ export function teamSheet(teamId: string): HTMLElement | null {
   const artifactCells = Array.from({ length: 4 }, (_, i) => {
     const uid = artifacts[i];
     const owned = uid ? state.artifacts.find((a) => a.uid === uid) : null;
-    if (!owned) return el('div.party-slot', { title: '아래 목록에서 유물을 눌러 연결' }, '+');
+    if (!owned) {
+      return el('button.party-slot', {
+        title: '아래 목록에서 유물을 눌러 연결',
+        onclick: () => listTab.set('artifact'),
+      }, '+');
+    }
     const def = content.artifacts.get(owned.itemId);
     const icon = artifactIcon(owned.itemId);
     if (owned.enhance > 0) icon.append(el('span.micon-count', {}, `+${owned.enhance}`));
@@ -166,26 +178,37 @@ export function teamSheet(teamId: string): HTMLElement | null {
       el('div.party-slots', {}, ...artifactCells),
     ),
 
-    el('h2.section-title', {}, '보유 몬스터'),
-    el('div.pick-controls', {},
-      el('div.chips-wrap', {},
-        ...(['cp', 'level', 'rarity'] as const).map((s) =>
-          el(`button.chip${sort === s ? '.active' : ''}`, { onclick: () => sortMode.set(s) }, SORT_LABEL[s]))),
-      tribesOwned.length > 1
-        ? el('div.chips-wrap', {},
-            el(`button.chip${tribe === null ? '.active' : ''}`, { onclick: () => tribeFilter.set(null) }, '전체'),
-            ...tribesOwned.map((t) =>
-              el(`button.chip${tribe === t ? '.active' : ''}`, { onclick: () => tribeFilter.set(t) }, `${TRIBE_EMOJI[t]} ${TRIBE_LABEL[t]}`)))
-        : null,
+    // 하단 목록 — 몬스터/유물 탭 분리 (2026-08-23 사용자)
+    el('div.chips-wrap.list-tabs', {},
+      el(`button.chip${listTab() === 'monster' ? '.active' : ''}`, {
+        onclick: () => { playSfx('tap'); listTab.set('monster'); },
+      }, `🐾 몬스터 ${monsterList.length}`),
+      el(`button.chip${listTab() === 'artifact' ? '.active' : ''}`, {
+        onclick: () => { playSfx('tap'); listTab.set('artifact'); },
+      }, `💎 유물 ${artifactRows.length}`),
     ),
-    monsterChips.length === 0
-      ? el('div.muted.small', {}, '편성할 수 있는 몬스터가 없습니다 — 다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요')
-      : el('div.chips', {}, ...monsterChips),
-
-    el('h2.section-title', {}, '보유 유물'),
-    artifactRows.length === 0
-      ? el('div.muted.small', {}, '연결할 수 있는 유물이 없습니다')
-      : el('div.stack-sm', {}, ...artifactRows),
+    ...(listTab() === 'monster'
+      ? [
+          el('div.pick-controls', {},
+            el('div.chips-wrap', {},
+              ...(['cp', 'level', 'rarity'] as const).map((s) =>
+                el(`button.chip${sort === s ? '.active' : ''}`, { onclick: () => sortMode.set(s) }, SORT_LABEL[s]))),
+            tribesOwned.length > 1
+              ? el('div.chips-wrap', {},
+                  el(`button.chip${tribe === null ? '.active' : ''}`, { onclick: () => tribeFilter.set(null) }, '전체'),
+                  ...tribesOwned.map((t) =>
+                    el(`button.chip${tribe === t ? '.active' : ''}`, { onclick: () => tribeFilter.set(t) }, `${TRIBE_EMOJI[t]} ${TRIBE_LABEL[t]}`)))
+              : null,
+          ),
+          monsterChips.length === 0
+            ? el('div.muted.small', {}, '편성할 수 있는 몬스터가 없습니다 — 다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요')
+            : el('div.chips', {}, ...monsterChips),
+        ]
+      : [
+          artifactRows.length === 0
+            ? el('div.muted.small', {}, '연결할 수 있는 유물이 없습니다 — 원정에서 발굴하거나 다른 군의 연결을 해제해 보세요')
+            : el('div.stack-sm', {}, ...artifactRows),
+        ]),
   );
   shell.classList.add('sheet-full');
   return shell;
