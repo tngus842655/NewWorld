@@ -195,6 +195,30 @@ body {
 .region-name { font-weight: 600; white-space: nowrap; }
 .region-req { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .region-elem { font-size: 12px; font-weight: 400; }
+/* ── 군 카드 (원정대 — 2×2 미리보기 + 요약) ── */
+.team-card {
+  display: flex; gap: 12px; align-items: center; text-align: left; width: 100%;
+  cursor: pointer; color: var(--text); font: inherit;
+}
+.team-card.team-busy { border-color: var(--accent); }
+.team-card.team-locked { opacity: 0.55; cursor: default; }
+.team-grid {
+  display: grid; grid-template-columns: repeat(2, 44px); grid-auto-rows: 44px; gap: 4px;
+  flex: none; position: relative;
+}
+.team-cell { display: flex; align-items: center; justify-content: center; }
+.team-cell .micon { width: 44px; height: 44px; }
+.team-cell-empty {
+  border: 1.5px dashed var(--line); border-radius: 11px; color: var(--muted);
+  font-size: 16px;
+}
+.team-more {
+  position: absolute; right: -6px; bottom: -4px; font-size: 10px; font-weight: 700;
+  background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 1px 5px; color: var(--accent-2);
+}
+.team-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.team-name { font-weight: 700; display: flex; gap: 8px; align-items: center; }
+
 /* ── 편성 슬롯 (원정 파티·유물) ── */
 .party-slots { display: flex; gap: 8px; }
 .party-slot {

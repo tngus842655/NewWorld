@@ -275,6 +275,6 @@ describe('지역 해금', () => {
     next.wallet.materials['spirit-moss'] = cost['spirit-moss']!;
     const marsh = unlockRegion(content, next, 'sunken-marsh');
     expect(marsh.wallet.materials['dew-branch']).toBe(0);
-    expect(teamCount(content, marsh)).toBe(2); // 늪 해금 → 2팀
+    expect(teamCount(content, marsh)).toBe(3); // 군 시스템 (2026-08-23): 숲 2군 → 늪 3군
   });
 });

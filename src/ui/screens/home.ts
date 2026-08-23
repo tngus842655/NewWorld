@@ -51,10 +51,14 @@ function expeditionCard(expeditionId: string): HTMLElement {
     crossroadBtn?.classList.toggle('hidden', done);
   });
 
+  const teamName = expedition.teamId ? state.teams.find((t) => t.id === expedition.teamId)?.name : null;
   return el('div.card.exp-card', {},
     el('div.exp-head', {},
       el('div.exp-title', {}, `${region.icon} ${region.name}`),
-      el('span.tag', {}, TIER_LABEL[expedition.tier]),
+      el('div.row-gap', {},
+        teamName ? el('span.tag', {}, teamName) : null,
+        el('span.tag', {}, TIER_LABEL[expedition.tier]),
+      ),
     ),
     el('div.exp-party', {}, ...expedition.partyIds.map((monsterId) => monsterIcon(monsterId))),
     el('div.progress', {}, fill),

@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 4;
+export const CURRENT_SAVE_VERSION = 5;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -94,10 +94,25 @@ const migrateV3toV4: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v4 → v5 (2026-08-23): 군 프리셋 개편 — 팀 이름을 1군/2군…으로, 원정 teamId는 optional이라 그대로.
+ * 해금 수만큼의 팀 생성은 로드·해금 시 ensureTeams가 보장한다 (content 의존이라 마이그레이션 밖).
+ */
+const migrateV4toV5: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  const teams: any[] = data['teams'] ?? [];
+  teams.forEach((team, i) => {
+    team.name = `${i + 1}군`;
+  });
+  data['teams'] = teams;
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
   3: migrateV3toV4,
+  4: migrateV4toV5,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

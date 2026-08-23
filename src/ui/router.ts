@@ -18,8 +18,7 @@ export type Overlay =
   | { kind: 'tasks' }                      // 반복 과업 진행 현황
   | { kind: 'fusion' }                     // 카드 합성 (GDD §4.5)
   | { kind: 'artifactFusion' }             // 유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)
-  | { kind: 'partyPick' }                  // 원정 파티 슬롯 선택 팝업
-  | { kind: 'artifactPick' }               // 원정 유물 슬롯 선택 팝업
+  | { kind: 'teamEdit'; teamId: string }   // 군 편성 시트 (2026-08-23 군 시스템)
   | { kind: 'odds' }                       // 확률 정보 (등급별 — 추후 관리자 페이지로 대체 예정)
   | { kind: 'elementInfo' }                // 속성 정보 (상성 구조·배수·지역별 유불리 — 유저 공개)
   | { kind: 'monsterInfo' }                // 전체 몬스터 데이터 뷰 (추후 관리자 전용)

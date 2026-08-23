@@ -27,6 +27,7 @@ import {
 } from '../core/expedition';
 import { createInitialSave } from '../core/newgame';
 import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
+import { ensureTeams, setTeamLoadout } from '../core/teams';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
 import { toast } from '../ui/kit';
 import * as clock from './clock';
@@ -47,7 +48,8 @@ export const ctx: CoreCtx = {
 };
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
-export const save = signal<SaveState>(loadSave() ?? createInitialSave(content, ctx));
+// ensureTeams: 해금된 군 수만큼 프리셋 보장 (v5 군 시스템)
+export const save = signal<SaveState>(ensureTeams(content, loadSave() ?? createInitialSave(content, ctx)));
 export const nowTick = signal(clock.now());
 
 setInterval(() => nowTick.set(clock.now()), 1000);
@@ -83,27 +85,35 @@ function notifyNewTasks(prev: SaveState, next: SaveState): void {
   }
 }
 
-export function dispatchExpedition(input: ExpeditionInput): boolean {
+/** 군 프리셋으로 파견 (2026-08-23) — 편성은 원정대 카드에서, 파견은 군 단위 */
+export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionInput['tier']): boolean {
   return (
     act(() => {
-      const result = createExpedition(content, save(), input, ctx);
+      const state = save();
+      const team = state.teams.find((t) => t.id === teamId);
+      if (!team) throw new GameError('team-missing', '없는 원정대입니다');
+      const partyIds = team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
+      const artifactUids = team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid));
+      const result = createExpedition(content, state, { regionId, tier, partyIds, artifactUids, teamId }, ctx);
       const next = result.save;
       // 튜토리얼: 첫 파견은 30초 만에 돌아온다
       if (!next.profile.tutorialDone) {
         const expedition = next.expeditions.find((e) => e.id === result.expedition.id)!;
         expedition.endsAt = expedition.startedAt + TUTORIAL_SCOUT_MS;
       }
-      // 마지막 편성을 팀 프리셋으로 기억
-      const team = next.teams[0];
-      if (team) {
-        team.partyIds = [...input.partyIds];
-        team.artifactUids = [...input.artifactUids];
-      }
       save.set(next);
-      toast('원정대가 출발했습니다!', 'ok');
+      toast(`${team.name} 원정대가 출발했습니다!`, 'ok');
       return true;
     }) ?? false
   );
+}
+
+/** 군 편성 저장 — 검증 실패는 토스트 */
+export function setTeam(teamId: string, partyIds: string[], artifactUids: string[]): boolean {
+  return act(() => {
+    save.set(setTeamLoadout(content, save(), teamId, partyIds, artifactUids));
+    return true;
+  }) !== null;
 }
 
 export function claim(expeditionId: string): { journal: Journal; newMilestones: string[] } | null {
@@ -217,7 +227,8 @@ export function salvage(uid: string): boolean {
 }
 export function unlock(regionId: string): void {
   act(() => {
-    save.set(unlockRegion(content, save(), regionId));
+    // 지역 해금은 군 확장으로 이어질 수 있다 — ensureTeams로 프리셋 즉시 생성
+    save.set(ensureTeams(content, unlockRegion(content, save(), regionId)));
     const name = content.regions.get(regionId)?.name ?? regionId;
     toast(`${name} 해금!`, 'ok');
   });

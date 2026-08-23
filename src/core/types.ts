@@ -39,6 +39,7 @@ export interface ActiveExpedition {
   id: string;
   regionId: string;
   tier: Tier;
+  teamId?: string; // 파견한 군 (v5 — 표시·재파견 잠금, 구 세이브는 없음)
   partyIds: string[]; // monsterId 스냅샷 — 원정 중 교체 방지
   artifactUids: string[];
   seed: string;
@@ -76,7 +77,7 @@ export interface ShopState {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 4; // v4 (2026-08-23): 상점 — 다이아 지갑·구매 기록. migrations.ts
+  version: 5; // v5 (2026-08-23): 군 프리셋 — 팀 1~4군 개편·원정 teamId. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;

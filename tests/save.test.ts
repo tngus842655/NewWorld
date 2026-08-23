@@ -42,7 +42,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(4); // v1 → … → v4 체인 끝까지
+    expect(migrated.version).toBe(5); // v1 → … → v5 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -96,5 +96,14 @@ describe('세이브 마이그레이션 v3 → v4 (상점)', () => {
     const migrated = migrateSave(v1Save())!;
     expect(migrated.wallet.diamonds).toBe(0);
     expect(migrated.shop).toEqual({ day: '', bought: {}, once: [] });
+  });
+});
+
+describe('세이브 마이그레이션 v4 → v5 (군 시스템)', () => {
+  it('팀 이름을 1군/2군 형식으로 재명명, 진행 원정은 그대로', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.teams[0]!.name).toBe('1군');
+    expect(migrated.expeditions).toHaveLength(1);
+    expect(migrated.expeditions[0]!.teamId).toBeUndefined(); // 구 원정은 teamId 없음 (optional)
   });
 });

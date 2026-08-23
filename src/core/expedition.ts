@@ -41,6 +41,7 @@ export interface ExpeditionInput {
   tier: Tier;
   partyIds: string[]; // monsterId — 종 단위 편성
   artifactUids: string[];
+  teamId?: string; // 파견한 군 (표시·재파견 잠금용 — 2026-08-23)
 }
 
 export function createExpedition(
@@ -57,6 +58,9 @@ export function createExpedition(
   if (running.length >= teamCount(content, save)) {
     throw new GameError('team-limit', '동시에 보낼 수 있는 원정대가 가득 찼습니다');
   }
+  if (input.teamId && running.some((e) => e.teamId === input.teamId)) {
+    throw new GameError('team-busy', '이 군은 이미 원정 중입니다');
+  }
 
   if (input.partyIds.length < 1) throw new GameError('party-empty', '파티가 비어 있습니다');
   if (input.partyIds.length > save.profile.partySlots) {
@@ -65,10 +69,16 @@ export function createExpedition(
   if (new Set(input.partyIds).size !== input.partyIds.length) {
     throw new GameError('party-dup', '같은 몬스터를 두 번 편성할 수 없습니다');
   }
-  const lockedIds = new Set(running.flatMap((e) => e.partyIds));
+  // 종 카드 수 기반 배타 (2026-08-23 군 시스템) — 카드 2장이면 두 원정에 동시 파견 가능
+  const runningUse = new Map<string, number>();
+  for (const monsterId of running.flatMap((e) => e.partyIds)) {
+    runningUse.set(monsterId, (runningUse.get(monsterId) ?? 0) + 1);
+  }
   for (const monsterId of input.partyIds) {
-    findMonster(save, monsterId);
-    if (lockedIds.has(monsterId)) throw new GameError('monster-busy', '이미 원정 중인 몬스터입니다');
+    const owned = findMonster(save, monsterId);
+    if ((runningUse.get(monsterId) ?? 0) + 1 > owned.count) {
+      throw new GameError('monster-busy', '이미 원정 중인 몬스터입니다 (카드가 더 있으면 동시 파견 가능)');
+    }
   }
 
   if (input.artifactUids.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 장착할 수 있습니다');
@@ -101,6 +111,7 @@ export function createExpedition(
     id: ctx.newUid(),
     regionId: region.id,
     tier: input.tier,
+    teamId: input.teamId,
     partyIds: [...input.partyIds],
     artifactUids: [...input.artifactUids],
     seed: ctx.newSeed(),

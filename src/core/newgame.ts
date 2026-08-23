@@ -31,7 +31,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
 
   const playerId = ctx.newUid() + ctx.newUid(); // 랭킹용 익명 신원 (추후 구글 로그인 연동 전까지)
   return {
-    version: 4,
+    version: 5,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -53,7 +53,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     teams: [
       {
         id: 'team-1',
-        name: '1번 원정대',
+        name: '1군',
         partyIds: starters.map((s) => s.monsterId),
         artifactUids: [],
       },

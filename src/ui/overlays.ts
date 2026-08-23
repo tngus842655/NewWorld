@@ -10,8 +10,8 @@ import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSION_NEXT, fusionSheet } from './fusionSheet';
-import { artifactPickSheet, partyPickSheet } from './pickSheets';
 import { rankingSheet, tasksSheet } from './rankingSheets';
+import { teamSheet } from './teamSheet';
 import { shopSheet } from './shopSheet';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
@@ -47,10 +47,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
                 ? fusionSheet()
                 : current.kind === 'artifactFusion'
                   ? artifactFusionSheet()
-                : current.kind === 'partyPick'
-                  ? partyPickSheet()
-                : current.kind === 'artifactPick'
-                  ? artifactPickSheet()
+                : current.kind === 'teamEdit'
+                  ? teamSheet(current.teamId)
                 : current.kind === 'odds'
                   ? oddsSheet()
                 : current.kind === 'elementInfo'

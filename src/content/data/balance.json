@@ -116,11 +116,15 @@
   "teams": [
     {
       "count": 2,
-      "regionUnlocked": "sunken-marsh"
+      "regionUnlocked": "whispering-woods"
     },
     {
       "count": 3,
-      "totalCaptured": 60
+      "regionUnlocked": "sunken-marsh"
+    },
+    {
+      "count": 4,
+      "regionUnlocked": "ashen-volcano"
     }
   ],
   "ads": {
