@@ -65,10 +65,10 @@ export function saveWithParty(clock: TestClock, party: PartySpec[], opts: SaveOp
     partyIds.push(spec.id);
   }
 
-  const artifactUids: string[] = [];
+  const artifactUids: string[] = []; // v6: itemId 목록 (이름은 기존 테스트 호환용)
   for (const itemId of opts.artifacts ?? []) {
     if (!content.artifacts.has(itemId)) throw new Error(`테스트에 없는 유물: ${itemId}`);
-    save.artifacts.push({ uid: itemId, itemId, enhance: 0, substats: [] });
+    save.artifacts.push({ itemId, enhance: 0, count: 1 });
     artifactUids.push(itemId);
   }
 
@@ -90,7 +90,7 @@ export function makeExpedition(
   regionId: string,
   tier: Tier,
   partyIds: string[],
-  artifactUids: string[],
+  artifactIds: string[],
   seed: string,
   opts: { choices?: (CrossroadChoice | null)[]; luresLoaded?: number } = {},
 ): ActiveExpedition {
@@ -100,7 +100,7 @@ export function makeExpedition(
     regionId,
     tier,
     partyIds,
-    artifactUids,
+    artifactIds,
     seed,
     startedAt: T0,
     endsAt: T0 + tierDef.minutes * 60_000,

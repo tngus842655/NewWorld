@@ -1,11 +1,11 @@
 /**
- * 유물 합성 시트 (GDD §4.5) — 카드 합성과 동일한 흐름·확률: setup → ritual → result.
- * 재료는 강화 안 한 유물부터 자동 선택, 실패 시 1개는 그대로 보존.
+ * 유물 합성 시트 (GDD §4.5) — 카드 합성과 완전 동일한 흐름·규칙 (v6 종 단위):
+ * setup(등급·횟수) → ritual(마법진) → result(?카드 공개). 재료는 여분(count-1)에서 자동 선택.
  */
 import { content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
 import type { ArtifactFusionInput, ArtifactFusionResult } from '../core/economy';
-import type { OwnedArtifact, SaveState } from '../core/types';
+import type { SaveState } from '../core/types';
 import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';
@@ -36,23 +36,45 @@ export function resetArtifactFusion(): void {
   afRevealed.set([]);
 }
 
-// ── 재료 후보·자동 계획 ──────────────────────────────────────────────────────
+// ── 여분 계산·자동 재료 계획 (카드 합성과 동일) ──────────────────────────────
 
-/** 해당 등급의 재료 후보 — 파견 중 장착분 제외, 아깝지 않은 것(강화 낮음·부옵션 적음)부터 */
-function materialsOf(state: SaveState, rarity: ArtifactRarity): OwnedArtifact[] {
-  const busy = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactUids));
-  return state.artifacts
-    .filter((a) => !busy.has(a.uid) && content.artifacts.get(a.itemId)?.rarity === rarity)
-    .sort((a, b) => a.enhance - b.enhance || a.substats.length - b.substats.length);
+function spareMap(state: SaveState, rarity: ArtifactRarity): Map<string, number> {
+  const spares = new Map<string, number>();
+  for (const owned of state.artifacts) {
+    if (content.artifacts.get(owned.itemId)?.rarity !== rarity) continue;
+    if (owned.count > 1) spares.set(owned.itemId, owned.count - 1);
+  }
+  return spares;
 }
 
+const sumOf = (map: Map<string, number>) => [...map.values()].reduce((a, b) => a + b, 0);
+
+/** 회당 2개를 여분 최다 종부터 균등하게 뽑는 자동 계획 */
 function planBatches(state: SaveState, rarity: ArtifactRarity, rounds: number): ArtifactFusionInput[] {
-  const pool = materialsOf(state, rarity);
+  const spares = spareMap(state, rarity);
+  const take = (): string | null => {
+    let best: string | null = null;
+    let bestN = 0;
+    for (const [itemId, n] of spares) {
+      if (n > bestN) {
+        best = itemId;
+        bestN = n;
+      }
+    }
+    if (!best) return null;
+    spares.set(best, bestN - 1);
+    return best;
+  };
   const batches: ArtifactFusionInput[] = [];
   for (let i = 0; i < rounds; i++) {
-    const pair = pool.slice(i * 2, i * 2 + 2);
-    if (pair.length < 2) break;
-    batches.push({ materialUids: pair.map((a) => a.uid) });
+    const a = take();
+    const b = take();
+    if (!a || !b) break;
+    batches.push({
+      materials: a === b
+        ? [{ itemId: a, count: 2 }]
+        : [{ itemId: a, count: 1 }, { itemId: b, count: 1 }],
+    });
   }
   return batches;
 }
@@ -99,23 +121,25 @@ export function artifactFusionSheet(): HTMLElement {
   if (phase === 'result') return resultView(rarity, nextRarity);
 
   // ── setup ──
-  const pool = materialsOf(state, rarity);
-  const maxRounds = Math.floor(pool.length / fusion.materials);
+  const spares = spareMap(state, rarity);
+  const total = sumOf(spares);
+  const maxRounds = Math.floor(total / fusion.materials);
   const rounds = Math.min(Math.max(1, afRounds()), Math.max(1, maxRounds));
 
-  const countOf = (r: ArtifactRarity) => materialsOf(state, r).length;
+  const spareByRarity = (r: ArtifactRarity) => sumOf(spareMap(state, r));
   const tabs = (['common', 'uncommon', 'rare', 'heroic'] as const).map((r) =>
     el(`button.chip${rarity === r ? '.active' : ''}`, {
       onclick: () => {
         afRarity.set(r);
         afRounds.set(1);
       },
-    }, `${ARTIFACT_RARITY_LABEL[r]} ${countOf(r)}`),
+    }, `${ARTIFACT_RARITY_LABEL[r]} ${spareByRarity(r)}`),
   );
 
-  // 마법진 코어: 이번에 재료가 될 상위 3개 미리보기
-  const preview = pool.length > 0
-    ? el('div.ritual-preview', {}, ...pool.slice(0, 3).map((a) => artifactIcon(a.itemId)))
+  // 마법진 코어: 여분 상위 3종 미리보기
+  const topSpares = [...spares.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const preview = topSpares.length > 0
+    ? el('div.ritual-preview', {}, ...topSpares.map(([itemId]) => artifactIcon(itemId)))
     : el('span.ritual-q', {}, '?');
 
   const resultPool = (content.artifactsByRarity.get(nextRarity) ?? []).length;
@@ -125,9 +149,9 @@ export function artifactFusionSheet(): HTMLElement {
     el('div.chips-wrap', {}, ...tabs),
     ritualCircle(nextRarity, preview, false),
     el('div.center.muted.small', {},
-      pool.length > 0
-        ? `${ARTIFACT_RARITY_LABEL[rarity]} 유물 ${pool.length}개 — 최대 ${maxRounds}회 합성 가능`
-        : `${ARTIFACT_RARITY_LABEL[rarity]} 유물이 없습니다 — 원정에서 발굴해 보세요`),
+      total > 0
+        ? `${ARTIFACT_RARITY_LABEL[rarity]} 여분 ${total}개 — 최대 ${maxRounds}회 합성 가능`
+        : `${ARTIFACT_RARITY_LABEL[rarity]} 여분 유물이 없습니다 — 중복 획득으로 모아보세요`),
 
     el('div.card.stack-sm', {},
       el('div.list-row', {},
@@ -141,7 +165,7 @@ export function artifactFusionSheet(): HTMLElement {
       ),
       el('div.list-row', {},
         el('span', {}, '소모 유물'),
-        el('span.small', {}, maxRounds > 0 ? `${rounds * fusion.materials}개 (강화 안 한 유물부터 자동 선택)` : '—'),
+        el('span.small', {}, maxRounds > 0 ? `여분 ${rounds * fusion.materials}개 (여분이 많은 종부터 자동 선택)` : '—'),
       ),
       el('div.list-row', {},
         el('span', {}, '성공 확률'),
@@ -155,10 +179,10 @@ export function artifactFusionSheet(): HTMLElement {
         disabled: maxRounds < 1,
         onclick: () => startRitual(rarity, rounds),
       }, maxRounds < 1
-        ? '재료 유물이 부족합니다'
+        ? '여분 유물이 부족합니다'
         : `💠 합성 시작 — ${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회`),
     ),
-    el('div.center.muted.small', {}, '파견 중 장착한 유물은 재료가 되지 않습니다 · 재료의 강화에 쓴 가루는 전액 돌려받습니다'),
+    el('div.center.muted.small', {}, '각 종의 마지막 1개는 재료로 쓰지 않습니다 (강화 보호)'),
   );
 }
 
@@ -172,17 +196,17 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
   const reveal = (index: number) => {
     if (afRevealed().includes(index)) return;
     afRevealed.set([...afRevealed(), index]);
-    playSfx('artifact');
+    const result = afResults()[index]!;
+    playSfx(result.isNew ? 'capture-new' : 'artifact');
   };
 
   const cards = results.map((result, index) => {
     if (!result.success) {
-      const kept = result.returnedUid ? save().artifacts.find((a) => a.uid === result.returnedUid) : null;
-      const keptName = kept ? content.artifacts.get(kept.itemId)?.name : null;
+      const returned = result.returnedItemId ? content.artifacts.get(result.returnedItemId)?.name : null;
       return el('div.fuse-card.fuse-fail', {},
         el('div.fuse-fail-mark', {}, '💨'),
         el('div.fuse-card-name.muted', {}, '실패'),
-        keptName ? el('div.fuse-card-sub', {}, `${keptName} 반환`) : null,
+        returned ? el('div.fuse-card-sub', {}, `${returned} 1개 반환`) : null,
       );
     }
     if (!revealed.includes(index)) {
@@ -198,13 +222,15 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
     const card = el('div.fuse-card.fuse-open', {},
       artifactIcon(def.id),
       el('div.fuse-card-name', {}, def.name),
-      el('div.fuse-card-sub', {}, `[${ARTIFACT_RARITY_LABEL[def.rarity]} ${SLOT_LABEL[def.slot]}]`),
+      el('div.fuse-card-sub', {},
+        result.isNew
+          ? el('span.fuse-new', {}, '✨ 신규 유물!')
+          : el('span.muted', {}, `[${ARTIFACT_RARITY_LABEL[def.rarity]} ${SLOT_LABEL[def.slot]}] +1`),
+      ),
     );
     card.style.borderColor = `var(--rar-${def.rarity})`;
     return card;
   });
-
-  const totalRefund = results.reduce((sum, r) => sum + r.refundedDust, 0);
 
   return sheetShell('유물 합성',
     el('div.center.fusion-summary', {},
@@ -214,7 +240,6 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
         el('span.muted', {}, ' · '),
         el('span.jmiss', {}, `실패 ${fails}`),
       ),
-      totalRefund > 0 ? el('div.small.muted', {}, `✨ 재료의 강화 가루 ${totalRefund} 환급`) : null,
     ),
     el('div.fuse-grid', {}, ...cards),
     el('div.row-gap.fusion-actions', {},
@@ -222,7 +247,7 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
         ? el('button.btn.btn-primary', {
             onclick: () => {
               afRevealed.set(afResults().map((_, i) => i).filter((i) => afResults()[i]!.success));
-              playSfx('artifact');
+              playSfx(afResults().some((r) => r.isNew) ? 'capture-new' : 'artifact');
             },
           }, `모두 공개 (${unrevealed})`)
         : null,

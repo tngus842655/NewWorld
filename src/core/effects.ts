@@ -6,14 +6,12 @@
 import type { Content } from '../content';
 import type {
   Action,
-  ArtifactDef,
   Condition,
   Effect,
   Hook,
   MainStat,
   Monster,
   MonsterRarity,
-  Substat,
   Tier,
   Tribe,
 } from '../content/schema';
@@ -119,23 +117,6 @@ function mainStatEffect(stat: MainStat, value: number, source: string): ActiveEf
   }
 }
 
-function substatEffect(stat: Substat, value: number, source: string): ActiveEffect {
-  switch (stat) {
-    case 'atkMult':
-      return { hook: 'computeParty', do: { kind: 'statMult', stat: 'atk', value }, source };
-    case 'hpMult':
-      return { hook: 'computeParty', do: { kind: 'statMult', stat: 'hp', value }, source };
-    case 'captureAdd':
-      return { hook: 'captureRoll', do: { kind: 'captureAdd', value }, source };
-    case 'goldMult':
-      return { hook: 'journalEnd', do: { kind: 'rewardMult', target: 'gold', value }, source };
-    case 'materialMult':
-      return { hook: 'journalEnd', do: { kind: 'rewardMult', target: 'materials', value }, source };
-    case 'damageReduce':
-      return { hook: 'computeParty', do: { kind: 'damageReduce', value }, source };
-  }
-}
-
 /** 시너지 증폭 — 수치형 payload에 (1+amp) 곱. 정수형(count)·구조형은 그대로 둔다. */
 function amplifyAction(action: Action, mult: number): Action {
   switch (action.kind) {
@@ -178,9 +159,9 @@ export interface TeamEffects {
   synergyAmp: number;
 }
 
-export function findArtifact(save: SaveState, uid: string): OwnedArtifact {
-  const owned = save.artifacts.find((a) => a.uid === uid);
-  if (!owned) throw new GameError('artifact-not-found', `보유하지 않은 유물: ${uid}`);
+export function findArtifact(save: SaveState, itemId: string): OwnedArtifact {
+  const owned = save.artifacts.find((a) => a.itemId === itemId);
+  if (!owned) throw new GameError('artifact-not-found', `보유하지 않은 유물: ${itemId}`);
   return owned;
 }
 
@@ -194,19 +175,18 @@ export function findMonster(save: SaveState, monsterId: string): OwnedMonster {
  * 파티 + 유물 + 마일스톤에서 활성 효과 전체를 수집한다.
  * 순서: ① 유물(주/부옵션·고유)·세트·마일스톤 → ② synergyAmp 합산 → ③ 시너지 효과(증폭 적용)
  */
-export function collectTeamEffects(content: Content, save: SaveState, partyIds: string[], artifactUids: string[]): TeamEffects {
+export function collectTeamEffects(content: Content, save: SaveState, partyIds: string[], artifactIds: string[]): TeamEffects {
   const effects: ActiveEffect[] = [];
 
-  // 유물
+  // 유물 (v6 종 단위 — 강화는 종 공통, 부옵션 없음)
   const setCounts = new Map<string, number>();
-  for (const uid of artifactUids) {
-    const owned = findArtifact(save, uid);
+  for (const itemId of artifactIds) {
+    const owned = findArtifact(save, itemId);
     const def = content.artifacts.get(owned.itemId);
     if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${owned.itemId}`);
     const source = `artifact:${def.id}`;
     const mainValue = def.main.base + def.main.perEnhance * owned.enhance;
     effects.push(mainStatEffect(def.main.stat, mainValue, source));
-    for (const sub of owned.substats) effects.push(substatEffect(sub.stat, sub.value, source));
     for (const unique of def.unique) effects.push({ ...unique, source });
     if (def.set) setCounts.set(def.set, (setCounts.get(def.set) ?? 0) + 1);
   }

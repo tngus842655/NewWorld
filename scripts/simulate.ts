@@ -78,19 +78,22 @@ function safely(fn: () => SaveState): SaveState | null {
   }
 }
 
-/** 슬롯별 최고 유물 선택 (등급 → 강화 순) */
+/** 슬롯별 최고 유물 선택 (등급 → 강화 순) — v6 종 단위: 진행 원정 사용분은 개수에서 차감 */
 function pickArtifacts(save: SaveState): string[] {
   const rank: Record<string, number> = { common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4 };
-  const busy = new Set(save.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactUids));
-  const bySlot = new Map<string, { uid: string; score: number }>();
+  const used = new Map<string, number>();
+  for (const itemId of save.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactIds)) {
+    used.set(itemId, (used.get(itemId) ?? 0) + 1);
+  }
+  const bySlot = new Map<string, { itemId: string; score: number }>();
   for (const owned of save.artifacts) {
-    if (busy.has(owned.uid)) continue;
+    if (owned.count - (used.get(owned.itemId) ?? 0) <= 0) continue;
     const def = content.artifacts.get(owned.itemId)!;
     const score = rank[def.rarity]! * 10 + owned.enhance;
     const cur = bySlot.get(def.slot);
-    if (!cur || score > cur.score) bySlot.set(def.slot, { uid: owned.uid, score });
+    if (!cur || score > cur.score) bySlot.set(def.slot, { itemId: owned.itemId, score });
   }
-  return [...bySlot.values()].map((v) => v.uid);
+  return [...bySlot.values()].map((v) => v.itemId);
 }
 
 /** CP 상위 + 같은 종족 뭉치기 휴리스틱으로 파티 선택 */
@@ -303,7 +306,7 @@ function simulate(strategy: Strategy): SimResult {
 
       const result = (() => {
         try {
-          return createExpedition(content, save, { regionId: region.id, tier, partyIds: party, artifactUids: artifacts }, ctx);
+          return createExpedition(content, save, { regionId: region.id, tier, partyIds: party, artifactIds: artifacts }, ctx);
         } catch (error) {
           if (error instanceof GameError) return null;
           throw error;

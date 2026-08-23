@@ -81,15 +81,8 @@ export function artifactEnhanceCost(content: Content, itemId: string, enhance: n
   return Math.round(enhanceCost(enhance, content.balance) * mult);
 }
 
-/**
- * 현재 강화 단계까지 투자된 가루 총액 — 합성·분해 시 전액 환급.
- * 재화 보존 원칙 (2026-08-23): 한번 수집한 골드·가루는 시스템이 소멸시키지 않는다.
- */
-export function investedEnhanceDust(content: Content, itemId: string, enhance: number): number {
-  let total = 0;
-  for (let level = 0; level < enhance; level++) total += artifactEnhanceCost(content, itemId, level);
-  return total;
-}
+// (v6) investedEnhanceDust 폐지 — 유물이 종 단위가 되며 강화는 종에 영구히 남는 소모로 재분류
+// (여분만 합성 재료 + 분해는 개수 차감이라 강화 종이 사라지는 시스템 경로가 없다)
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

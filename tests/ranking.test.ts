@@ -62,8 +62,8 @@ describe('랭킹 점수 (GDD §9.3)', () => {
 
   it('유물 점수 — 등급점 + 강화 20%/단계', () => {
     const uncommonId = content.artifactsByRarity.get('uncommon')![0]!.id;
-    expect(artifactScore(content, { uid: 'a', itemId: uncommonId, enhance: 0, substats: [] })).toBe(20);
-    expect(artifactScore(content, { uid: 'a', itemId: uncommonId, enhance: 3, substats: [] })).toBe(32);
+    expect(artifactScore(content, { itemId: uncommonId, enhance: 0, count: 1 })).toBe(20);
+    expect(artifactScore(content, { itemId: uncommonId, enhance: 3, count: 2 })).toBe(32); // 종당 1회 — 개수 무관
   });
 
   it('종합 점수 — 원정(전멸 절반)·과업 가중·전투력 반영', () => {

@@ -93,8 +93,8 @@ export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionI
       const team = state.teams.find((t) => t.id === teamId);
       if (!team) throw new GameError('team-missing', '없는 원정대입니다');
       const partyIds = team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
-      const artifactUids = team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid));
-      const result = createExpedition(content, state, { regionId, tier, partyIds, artifactUids, teamId }, ctx);
+      const artifactIds = team.artifactIds.filter((itemId) => state.artifacts.some((a) => a.itemId === itemId));
+      const result = createExpedition(content, state, { regionId, tier, partyIds, artifactIds, teamId }, ctx);
       const next = result.save;
       // 튜토리얼: 첫 파견은 30초 만에 돌아온다
       if (!next.profile.tutorialDone) {
@@ -109,9 +109,9 @@ export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionI
 }
 
 /** 군 편성 저장 — 검증 실패는 토스트 */
-export function setTeam(teamId: string, partyIds: string[], artifactUids: string[]): boolean {
+export function setTeam(teamId: string, partyIds: string[], artifactIds: string[]): boolean {
   return act(() => {
-    save.set(setTeamLoadout(content, save(), teamId, partyIds, artifactUids));
+    save.set(setTeamLoadout(content, save(), teamId, partyIds, artifactIds));
     return true;
   }) !== null;
 }

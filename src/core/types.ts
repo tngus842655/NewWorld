@@ -2,7 +2,7 @@
  * 세이브·일지 등 코어 상태 타입 (DATA.md §2).
  * 원칙: 파생값(마일스톤 버프, 유효 CP, 풀 일지)은 저장하지 않는다.
  */
-import type { Substat, Tier } from '../content/schema';
+import type { Tier } from '../content/schema';
 
 // ── 소유물 ───────────────────────────────────────────────────────────────────
 /** 몬스터는 종 단위로 소유한다 (2026-08-23) — 카드가 몇 장이든 레벨·성급은 종당 하나 */
@@ -13,23 +13,18 @@ export interface OwnedMonster {
   count: number; // 보유 카드 수 (중복 포획 누적, 최소 1 — 추후 합성 재료)
 }
 
-export interface RolledSubstat {
-  stat: Substat;
-  value: number;
-}
-
+/** 유물도 종 단위로 소유한다 (v6, 2026-08-23) — 몬스터와 동일: 개수 누적, 강화는 종당 하나 */
 export interface OwnedArtifact {
-  uid: string;
   itemId: string;
-  enhance: number; // 0~5
-  substats: RolledSubstat[];
+  enhance: number; // 0~5 — 종 공통
+  count: number; // 보유 개수 (최소 1 — 합성 재료는 여분 count-1)
 }
 
 export interface TeamLoadout {
   id: string;
   name: string;
   partyIds: string[]; // monsterId 목록 (종 단위 — 같은 종은 한 파티에 하나)
-  artifactUids: string[]; // 슬롯당 1개, 최대 4
+  artifactIds: string[]; // itemId 목록 (종 단위, v6) — 슬롯당 1개, 최대 4
 }
 
 // ── 파견 ─────────────────────────────────────────────────────────────────────
@@ -41,7 +36,7 @@ export interface ActiveExpedition {
   tier: Tier;
   teamId?: string; // 파견한 군 (v5 — 표시·재파견 잠금, 구 세이브는 없음)
   partyIds: string[]; // monsterId 스냅샷 — 원정 중 교체 방지
-  artifactUids: string[];
+  artifactIds: string[]; // itemId 스냅샷 (v6 종 단위)
   seed: string;
   startedAt: number;
   endsAt: number;
@@ -77,7 +72,7 @@ export interface ShopState {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 5; // v5 (2026-08-23): 군 프리셋 — 팀 1~4군 개편·원정 teamId. migrations.ts
+  version: 6; // v6 (2026-08-23): 유물 종 단위 통합 (개수·공통 강화·부옵션 폐지). migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -111,8 +106,7 @@ export interface SaveState {
 
 // ── 일지 ─────────────────────────────────────────────────────────────────────
 export interface DroppedArtifact {
-  itemId: string;
-  substats: RolledSubstat[];
+  itemId: string; // v6: 부옵션 폐지 — 종만 결정
 }
 
 export type GrantedReward =

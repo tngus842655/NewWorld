@@ -40,7 +40,7 @@ export interface ExpeditionInput {
   regionId: string;
   tier: Tier;
   partyIds: string[]; // monsterId — 종 단위 편성
-  artifactUids: string[];
+  artifactIds: string[]; // itemId — 종 단위 (v6)
   teamId?: string; // 파견한 군 (표시·재파견 잠금용 — 2026-08-23)
 }
 
@@ -81,15 +81,21 @@ export function createExpedition(
     }
   }
 
-  if (input.artifactUids.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 장착할 수 있습니다');
-  if (new Set(input.artifactUids).size !== input.artifactUids.length) {
+  if (input.artifactIds.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 장착할 수 있습니다');
+  if (new Set(input.artifactIds).size !== input.artifactIds.length) {
     throw new GameError('artifact-dup', '같은 유물을 두 번 장착할 수 없습니다');
   }
-  const lockedArtifacts = new Set(running.flatMap((e) => e.artifactUids));
+  // 유물도 종 개수 기반 배타 (v6) — 2개 보유면 두 원정에 동시 장착 가능
+  const runningArtifactUse = new Map<string, number>();
+  for (const itemId of running.flatMap((e) => e.artifactIds)) {
+    runningArtifactUse.set(itemId, (runningArtifactUse.get(itemId) ?? 0) + 1);
+  }
   const usedSlots = new Set<string>();
-  for (const uid of input.artifactUids) {
-    const owned = findArtifact(save, uid);
-    if (lockedArtifacts.has(uid)) throw new GameError('artifact-busy', '이미 원정 중인 팀이 장착한 유물입니다');
+  for (const itemId of input.artifactIds) {
+    const owned = findArtifact(save, itemId);
+    if ((runningArtifactUse.get(itemId) ?? 0) + 1 > owned.count) {
+      throw new GameError('artifact-busy', '이미 원정 중인 유물입니다 (개수가 더 있으면 동시 장착 가능)');
+    }
     const def = content.artifacts.get(owned.itemId);
     if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${owned.itemId}`);
     if (usedSlots.has(def.slot)) throw new GameError('artifact-slot-dup', '같은 슬롯의 유물을 두 개 장착할 수 없습니다');
@@ -97,7 +103,7 @@ export function createExpedition(
   }
 
   const tierDef = content.balance.tiers[input.tier];
-  const { effects } = collectTeamEffects(content, save, input.partyIds, input.artifactUids);
+  const { effects } = collectTeamEffects(content, save, input.partyIds, input.artifactIds);
   const setupActions = query(effects, 'expeditionSetup', { regionId: region.id, tier: input.tier });
   let timeMult = 1;
   for (const action of setupActions) {
@@ -113,7 +119,7 @@ export function createExpedition(
     tier: input.tier,
     teamId: input.teamId,
     partyIds: [...input.partyIds],
-    artifactUids: [...input.artifactUids],
+    artifactIds: [...input.artifactIds],
     seed: ctx.newSeed(),
     startedAt: now,
     endsAt: now + Math.round(tierDef.minutes * 60_000 * timeMult),
@@ -225,12 +231,17 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
 export function previewCrossroads(content: Content, save: SaveState, expedition: ActiveExpedition): CrossroadEvent[] {
   const region = content.regions.get(expedition.regionId);
   if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
-  const { effects } = collectTeamEffects(content, save, expedition.partyIds, expedition.artifactUids);
+  const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
   const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
   return plan
     .filter((item): item is Extract<PlanItem, { type: 'crossroad' }> => item.type === 'crossroad')
     .sort((a, b) => a.index - b.index)
     .map((item) => item.event);
+}
+
+/** 파견 스냅샷의 유물 중 아직 보유 중인 종만 — 파견 중 분해로 종이 사라졌을 때의 방어 (v6) */
+function liveArtifactIds(save: SaveState, expedition: ActiveExpedition): string[] {
+  return expedition.artifactIds.filter((itemId) => save.artifacts.some((a) => a.itemId === itemId));
 }
 
 // ── 유물 드랍 ────────────────────────────────────────────────────────────────
@@ -249,22 +260,12 @@ export function rollArtifact(content: Content, rng: Rng, rarityBonus = 0): Dropp
   return rollArtifactOfRarity(content, rng, rarity);
 }
 
-/** 지정 등급의 랜덤 유물 1개 (부옵션 포함) — 드랍·유물 합성이 공유 */
+/** 지정 등급의 랜덤 유물 1종 — 드랍·유물 합성·상점 뽑기가 공유 */
 export function rollArtifactOfRarity(content: Content, rng: Rng, rarity: ArtifactRarity): DroppedArtifact {
-  const { artifacts } = content.balance;
   const defs = content.artifactsByRarity.get(rarity)!;
   const def = defs[Math.floor(rng() * defs.length)]!;
 
-  const substats: DroppedArtifact['substats'] = [];
-  const pool = [...artifacts.substatPool];
-  const substatCount = artifacts.substatCount[rarity];
-  for (let i = 0; i < substatCount && pool.length > 0; i++) {
-    const picked = pickWeighted(rng, pool, (s) => s.weight);
-    pool.splice(pool.indexOf(picked), 1);
-    const value = Math.round((picked.min + rng() * (picked.max - picked.min)) * 1000) / 1000;
-    substats.push({ stat: picked.stat, value });
-  }
-  return { itemId: def.id, substats };
+  return { itemId: def.id }; // v6: 부옵션 폐지 — 종만 결정
 }
 
 // ── 정산 (시드 → 일지) ───────────────────────────────────────────────────────
@@ -276,7 +277,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   const { combat, rewards: rewardBalance, crossroad: crossroadBalance, artifacts: artifactBalance } = content.balance;
 
   const party = expedition.partyIds.map((monsterId) => findMonster(save, monsterId));
-  const { effects } = collectTeamEffects(content, save, expedition.partyIds, expedition.artifactUids);
+  const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
   const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
 
   const captureRng = streamRng(expedition.seed, 'capture');
@@ -675,9 +676,11 @@ export function claimExpedition(
     if (owned) owned.count += count;
   }
 
-  // 유물
+  // 유물 — 종 단위 누적 (v6): 보유 종이면 개수 +1, 신규면 등록
   for (const drop of journal.totals.artifacts) {
-    next.artifacts.push({ uid: ctx.newUid(), itemId: drop.itemId, enhance: 0, substats: [...drop.substats] });
+    const ownedArtifact = next.artifacts.find((a) => a.itemId === drop.itemId);
+    if (ownedArtifact) ownedArtifact.count += 1;
+    else next.artifacts.push({ itemId: drop.itemId, enhance: 0, count: 1 });
   }
   if (journal.totals.artifacts.length > 0) next.profile.flags['firstArtifactDropped'] = true;
   if (journal.entries.some((entry) => entry.type === 'encounter' && entry.capture?.success)) {

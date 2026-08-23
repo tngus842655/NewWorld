@@ -5,7 +5,7 @@ import type { Content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
 import { findArtifact, findMonster } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
-import { artifactEnhanceCost, investedEnhanceDust, monsterLevelUpCost, monsterStarUpCost } from './formulas';
+import { artifactEnhanceCost, monsterLevelUpCost, monsterStarUpCost } from './formulas';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
 import { streamRng } from './rng';
 import { settleTasks } from './tasks';
@@ -16,17 +16,6 @@ function spendGold(save: SaveState, amount: number): void {
   save.wallet.gold -= amount;
 }
 
-/** 원정 중인 팀이 데려간 몬스터/유물은 잠금 (GDD §8.1) */
-function assertMonsterFree(save: SaveState, monsterId: string): void {
-  if (save.expeditions.some((e) => !e.claimed && e.partyIds.includes(monsterId))) {
-    throw new GameError('monster-busy', '원정 중인 몬스터입니다');
-  }
-}
-function assertArtifactFree(save: SaveState, uid: string): void {
-  if (save.expeditions.some((e) => !e.claimed && e.artifactUids.includes(uid))) {
-    throw new GameError('artifact-busy', '원정 중인 팀이 장착한 유물입니다');
-  }
-}
 
 /** 레벨업 — 종 단위 (카드가 몇 장이든 종당 레벨 하나, 골드 소모) */
 export function levelUpMonster(content: Content, save: SaveState, monsterId: string): SaveState {
@@ -152,46 +141,46 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
   return { save: next, success: true, materialRarity: rarity!, resultMonsterId: result.id, isNew, newMilestones };
 }
 
-// ── 유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙, 2026-08-23) ─────────────────
+// ── 유물 합성 (GDD §4.5 — 카드 합성과 완전 동일 규칙, v6 종 단위) ────────────
 
-/** 재료: 같은 등급 유물 uid 정확히 balance.fusion.materials개 (파견 중 장착분 불가) */
+/** 재료: 종별 사용 개수 (합계 = balance.fusion.materials, 전부 같은 등급의 여분) */
 export interface ArtifactFusionInput {
-  materialUids: string[];
+  materials: { itemId: string; count: number }[];
 }
 
 export interface ArtifactFusionResult {
   save: SaveState;
   success: boolean;
   materialRarity: string;
-  resultUid?: string; // 성공 시 생성된 유물 (강화 0, 부옵션 새로 굴림)
-  resultItemId?: string;
-  returnedUid?: string; // 실패 시 보존된 유물 1개 (강화·부옵션 그대로)
-  refundedDust: number; // 소멸한 재료의 강화 투자 가루 전액 환급 (재화 보존 원칙)
+  resultItemId?: string; // 성공 시 획득 종
+  isNew?: boolean; // 신규 종 여부
+  returnedItemId?: string; // 실패 시 반환된 1개의 종
 }
 
 /**
- * 같은 등급 유물 N개 → 다음 등급 랜덤 유물 1개 도전. 확률은 카드 합성과 공유.
- * 실패 시 재료 중 1개는 그대로 돌려받는다 (실소모 1개).
- * 성공 결과는 다음 등급 전체 유물 풀에서 랜덤 — 부옵션은 드랍과 동일 규칙으로 새로 굴린다.
+ * 같은 등급 여분 유물 N개 → 다음 등급 유물 1종(랜덤) 도전. 확률은 카드 합성과 공유.
+ * 각 종의 마지막 1개는 재료 불가 (여분 = count - 1) — 강화한 종이 합성으로 사라지는 사고 방지.
+ * 실패 시 재료 중 1개는 돌려받는다.
  */
 export function fuseArtifacts(content: Content, save: SaveState, input: ArtifactFusionInput, ctx: CoreCtx): ArtifactFusionResult {
   const { fusion } = content.balance;
-  if (input.materialUids.length !== fusion.materials) {
+  const totalUsed = input.materials.reduce((sum, m) => sum + m.count, 0);
+  if (totalUsed !== fusion.materials) {
     throw new GameError('fusion-materials', `재료 유물은 정확히 ${fusion.materials}개여야 합니다`);
-  }
-  if (new Set(input.materialUids).size !== input.materialUids.length) {
-    throw new GameError('fusion-materials', '같은 유물을 중복 지정할 수 없습니다');
   }
 
   const RARITY_NEXT: Record<string, ArtifactRarity | null> = {
     common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
   };
   let rarity: string | null = null;
-  for (const uid of input.materialUids) {
-    assertArtifactFree(save, uid);
-    const owned = findArtifact(save, uid);
-    const def = content.artifacts.get(owned.itemId);
-    if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${owned.itemId}`);
+  for (const material of input.materials) {
+    if (material.count < 1) throw new GameError('fusion-materials', '재료 수량이 잘못되었습니다');
+    const owned = findArtifact(save, material.itemId);
+    const def = content.artifacts.get(material.itemId);
+    if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${material.itemId}`);
+    if (owned.count - 1 < material.count) {
+      throw new GameError('fusion-spare', `${def.name}의 여분이 부족합니다 (마지막 1개는 재료가 될 수 없습니다)`);
+    }
     if (rarity === null) rarity = def.rarity;
     else if (rarity !== def.rarity) throw new GameError('fusion-rarity', '재료는 같은 등급이어야 합니다');
   }
@@ -200,48 +189,32 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   const chance = fusion.chance[rarity as keyof typeof fusion.chance] ?? 0;
 
   const next = structuredClone(save);
-  const removeUid = (uid: string) => {
-    next.artifacts = next.artifacts.filter((a) => a.uid !== uid);
-    for (const team of next.teams) {
-      team.artifactUids = team.artifactUids.filter((id) => id !== uid); // 분해와 동일 — 프리셋 정리
-    }
-  };
-
-  // 소멸분의 강화 투자 가루는 전액 환급 (재화 보존 원칙 — 보존된 재료는 강화가 그대로라 환급 없음)
-  const investedOf = (uid: string) => {
-    const owned = findArtifact(save, uid);
-    return investedEnhanceDust(content, owned.itemId, owned.enhance);
-  };
+  for (const material of input.materials) {
+    findArtifact(next, material.itemId).count -= material.count;
+  }
 
   next.stats.fusions += 1;
   const rng = streamRng(ctx.newSeed(), 'fusion-artifact');
   const success = rng() < chance;
   if (!success) {
-    // 실패 — 재료 중 1개를 랜덤으로 보존 (강화·부옵션 그대로)
-    const returnedUid = input.materialUids[Math.floor(rng() * input.materialUids.length)]!;
-    let refundedDust = 0;
-    for (const uid of input.materialUids) {
-      if (uid !== returnedUid) {
-        refundedDust += investedOf(uid);
-        removeUid(uid);
-      }
-    }
-    next.wallet.dust += refundedDust;
+    // 실패 — 재료 중 1개를 랜덤으로 돌려준다 (시드 결정론)
+    const usedPool: string[] = input.materials.flatMap((m) => Array.from({ length: m.count }, () => m.itemId));
+    const returnedItemId = usedPool[Math.floor(rng() * usedPool.length)]!;
+    findArtifact(next, returnedItemId).count += 1;
     settleTasks(content, next);
-    return { save: next, success: false, materialRarity: rarity!, returnedUid, refundedDust };
+    return { save: next, success: false, materialRarity: rarity!, returnedItemId };
   }
 
-  let refundedDust = 0;
-  for (const uid of input.materialUids) {
-    refundedDust += investedOf(uid);
-    removeUid(uid);
-  }
-  next.wallet.dust += refundedDust;
   const drop = rollArtifactOfRarity(content, rng, nextRarity);
-  const resultUid = ctx.newUid();
-  next.artifacts.push({ uid: resultUid, itemId: drop.itemId, enhance: 0, substats: [...drop.substats] });
+  const owned = next.artifacts.find((a) => a.itemId === drop.itemId);
+  const isNew = !owned;
+  if (owned) {
+    owned.count += 1;
+  } else {
+    next.artifacts.push({ itemId: drop.itemId, enhance: 0, count: 1 });
+  }
   settleTasks(content, next);
-  return { save: next, success: true, materialRarity: rarity!, resultUid, resultItemId: drop.itemId, refundedDust };
+  return { save: next, success: true, materialRarity: rarity!, resultItemId: drop.itemId, isNew };
 }
 
 export function craftRecipe(content: Content, save: SaveState, recipeId: string): SaveState {
@@ -263,10 +236,10 @@ export function craftRecipe(content: Content, save: SaveState, recipeId: string)
   return next;
 }
 
-export function enhanceArtifact(content: Content, save: SaveState, uid: string): SaveState {
+/** 강화 — 종 단위 (개수가 몇이든 강화는 종당 하나, 몬스터 레벨과 동일하게 파견 중에도 허용) */
+export function enhanceArtifact(content: Content, save: SaveState, itemId: string): SaveState {
   const next = structuredClone(save);
-  assertArtifactFree(next, uid);
-  const artifact = findArtifact(next, uid);
+  const artifact = findArtifact(next, itemId);
   if (artifact.enhance >= content.balance.artifacts.enhance.max) throw new GameError('enhance-max', '이미 최대 강화입니다');
   const cost = artifactEnhanceCost(content, artifact.itemId, artifact.enhance); // 등급 차등 (2026-08-23)
   if (next.wallet.dust < cost) throw new GameError('dust-short', `가루가 부족합니다 (필요: ${cost})`);
@@ -275,17 +248,19 @@ export function enhanceArtifact(content: Content, save: SaveState, uid: string):
   return next;
 }
 
-export function salvageArtifact(content: Content, save: SaveState, uid: string): SaveState {
+/** 분해 — 개수 1 차감. 마지막 개를 분해하면 종이 사라진다 (강화 투자는 환급 없음 — 2026-08-23 사용자 결정) */
+export function salvageArtifact(content: Content, save: SaveState, itemId: string): SaveState {
   const next = structuredClone(save);
-  assertArtifactFree(next, uid);
-  const artifact = findArtifact(next, uid);
+  const artifact = findArtifact(next, itemId);
   const def = content.artifacts.get(artifact.itemId);
   if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${artifact.itemId}`);
-  // 분해 가루 + 강화에 쓴 가루 전액 환급 (재화 보존 원칙, 2026-08-23)
-  next.wallet.dust += content.balance.artifacts.dustPerSalvage[def.rarity] + investedEnhanceDust(content, artifact.itemId, artifact.enhance);
-  next.artifacts = next.artifacts.filter((a) => a.uid !== uid);
-  for (const team of next.teams) {
-    team.artifactUids = team.artifactUids.filter((id) => id !== uid);
+  next.wallet.dust += content.balance.artifacts.dustPerSalvage[def.rarity];
+  artifact.count -= 1;
+  if (artifact.count <= 0) {
+    next.artifacts = next.artifacts.filter((a) => a.itemId !== itemId);
+    for (const team of next.teams) {
+      team.artifactIds = team.artifactIds.filter((id) => id !== itemId); // 종 소멸 시 프리셋 정리
+    }
   }
   return next;
 }
@@ -316,4 +291,3 @@ export function unlockRegion(content: Content, save: SaveState, regionId: string
 }
 
 /** 몬스터 편성 잠금 검사 — UI에서 사용 */
-export { assertMonsterFree, assertArtifactFree };

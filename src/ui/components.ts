@@ -85,21 +85,26 @@ export function monsterChip(
   );
 }
 
+/** 유물 아이콘 + 뱃지(개수·강화) — v6 종 단위 */
+export function artifactIconBadged(owned: OwnedArtifact): HTMLElement {
+  const icon = artifactIcon(owned.itemId);
+  if (owned.enhance > 0) icon.append(el('span.micon-badge', { title: `강화 +${owned.enhance}` }, `+${owned.enhance}`));
+  if (owned.count > 1) icon.append(el('span.micon-count', { title: `보유 ${owned.count}개` }, `×${owned.count}`));
+  return icon;
+}
+
 export function artifactCard(owned: OwnedArtifact, def: ArtifactDef, opts: { selected?: boolean; busy?: boolean; onclick?: () => void } = {}): HTMLElement {
   const mainValue = def.main.base + def.main.perEnhance * owned.enhance;
   const setName = def.set ? content.sets.get(def.set)?.name : null;
   return el(
     `button.acard.rar-${def.rarity}${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`,
     { onclick: opts.onclick, disabled: opts.busy },
-    artifactIcon(def.id),
+    artifactIconBadged(owned),
     el('div.acard-body', {},
       el('div.acard-name', {}, `${def.name}${owned.enhance > 0 ? ` +${owned.enhance}` : ''}`),
       el('div.acard-sub', {},
         `[${ARTIFACT_RARITY_LABEL[def.rarity]} ${SLOT_LABEL[def.slot]}] ${mainLabel(def.main.stat)} ${fmtEffect(def.main.stat, mainValue)}${setName ? ` · ${setName} 세트` : ''}`,
       ),
-      owned.substats.length > 0
-        ? el('div.acard-subs', {}, owned.substats.map((s) => `${mainLabel(s.stat)} ${fmtEffect(s.stat, s.value)}`).join(' · '))
-        : null,
     ),
   );
 }

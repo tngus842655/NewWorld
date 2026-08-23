@@ -7,7 +7,7 @@ import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
-import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from '../components';
+import { artifactCard, artifactIconBadged, monsterChip, monsterIconBadged, ownedCp } from '../components';
 import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
 import { resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
@@ -60,8 +60,7 @@ export function renderCamp(): HTMLElement {
       );
     });
 
-  // 유물도 몬스터처럼 등급별 카드 — 기본 접힘(가로 슬라이드 1줄), 펼치면 세로 목록
-  const busyArtifactUids = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.artifactUids));
+  // 유물도 몬스터처럼 등급별 카드 — 종 단위(개수·공통 강화, v6), 기본 접힘(아이콘 슬라이드)
   const artifactGroupCards = (['legendary', 'heroic', 'rare', 'uncommon', 'common'] as const)
     .map((rarity) => ({
       rarity,
@@ -73,18 +72,15 @@ export function renderCamp(): HTMLElement {
     .filter(({ items }) => items.length > 0)
     .map(({ rarity, items }) => {
       const open = openArtifactGroups()[rarity] === true;
-      // 접힘: 아이콘만 (+강화 뱃지) · 펼침: 기존 한 줄 카드 (2026-08-23 사용자)
+      // 접힘: 아이콘만 (개수·강화 뱃지) · 펼침: 한 줄 카드
       const body = open
         ? el('div.stack-sm', {}, ...items.map(({ owned, def }) =>
-            artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) })))
-        : el('div.roster-row', {}, ...items.map(({ owned, def }) => {
-            const icon = artifactIcon(def.id);
-            if (owned.enhance > 0) icon.append(el('span.micon-count', { title: `강화 +${owned.enhance}` }, `+${owned.enhance}`));
-            return el('button.roster-icon', {
+            artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }) })))
+        : el('div.roster-row', {}, ...items.map(({ owned, def }) =>
+            el('button.roster-icon', {
               title: `${def.name}${owned.enhance > 0 ? ` +${owned.enhance}` : ''}`,
-              onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }),
-            }, icon);
-          }));
+              onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }),
+            }, artifactIconBadged(owned))));
       return el('div.card.stack-sm', {},
         el('button.roster-head', {
           onclick: () => {
@@ -210,11 +206,11 @@ export function renderCamp(): HTMLElement {
       ? artifactGroupCards
       : [el('div.card', {}, el('span.muted', {}, '원정에서 발굴한 유물이 여기 모입니다'))]),
     (() => {
-      // 유물 합성 진입 — 파견 중 장착분 제외한 재료 후보 수 (전설은 합성 불가)
-      const fusable = state.artifacts.filter((a) =>
-        !busyArtifactUids.has(a.uid) && content.artifacts.get(a.itemId)?.rarity !== 'legendary').length;
+      // 유물 합성 진입 — 여분(각 종 count-1) 총량 (몬스터와 동일 규칙, v6)
+      const spareArtifacts = state.artifacts.reduce((sum, a) =>
+        sum + (content.artifacts.get(a.itemId)?.rarity !== 'legendary' ? Math.max(0, a.count - 1) : 0), 0);
       return el('div.card.list-row', {},
-        el('span.muted.small', {}, `💠 유물 합성 (재료 ${fusable}개)`),
+        el('span.muted.small', {}, `💠 유물 합성 (여분 ${spareArtifacts}개)`),
         el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),
       );
     })(),

@@ -39,7 +39,7 @@ function teamParty(state: SaveState, team: TeamLoadout): string[] {
   return team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
 }
 function teamArtifacts(state: SaveState, team: TeamLoadout): string[] {
-  return team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid));
+  return team.artifactIds.filter((itemId) => state.artifacts.some((a) => a.itemId === itemId));
 }
 
 interface Preview {

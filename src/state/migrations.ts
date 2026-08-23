@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 5;
+export const CURRENT_SAVE_VERSION = 6;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -108,11 +108,54 @@ const migrateV4toV5: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v5 → v6 (2026-08-23): 유물을 개체(uid)에서 종 단위로 통합 (몬스터 v2와 동일한 개편).
+ * - artifacts: 같은 itemId 병합 — enhance는 최대값(관대한 쪽), count = 개체 수, 부옵션 폐기
+ * - teams.artifactUids / expeditions.artifactUids → artifactIds (uid → itemId, 중복 제거)
+ */
+const migrateV5toV6: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  const oldArtifacts: { uid: string; itemId: string; enhance: number }[] = data['artifacts'] ?? [];
+  const uidToItem = new Map<string, string>();
+  const merged = new Map<string, { itemId: string; enhance: number; count: number }>();
+  for (const owned of oldArtifacts) {
+    uidToItem.set(owned.uid, owned.itemId);
+    const entry = merged.get(owned.itemId);
+    if (entry) {
+      entry.enhance = Math.max(entry.enhance, owned.enhance);
+      entry.count += 1;
+    } else {
+      merged.set(owned.itemId, { itemId: owned.itemId, enhance: owned.enhance, count: 1 });
+    }
+  }
+  data['artifacts'] = [...merged.values()];
+
+  const uidsToIds = (uids: unknown): string[] => {
+    if (!Array.isArray(uids)) return [];
+    const ids: string[] = [];
+    for (const uid of uids) {
+      const itemId = uidToItem.get(String(uid));
+      if (itemId && !ids.includes(itemId)) ids.push(itemId);
+    }
+    return ids;
+  };
+  for (const team of data['teams'] ?? []) {
+    team.artifactIds = uidsToIds(team.artifactUids);
+    delete team.artifactUids;
+  }
+  for (const expedition of data['expeditions'] ?? []) {
+    expedition.artifactIds = uidsToIds(expedition.artifactUids);
+    delete expedition.artifactUids;
+  }
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
   3: migrateV3toV4,
   4: migrateV4toV5,
+  5: migrateV5toV6,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

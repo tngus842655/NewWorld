@@ -57,10 +57,9 @@ describe('팀 효과 수집', () => {
     expect(synergyAtk).toBeDefined();
   });
 
-  it('유물 주옵션·부옵션·고유 능력이 효과로 정규화된다', () => {
+  it('유물 주옵션·고유 능력이 효과로 정규화된다 (v6: 부옵션 폐지)', () => {
     const clock = makeCtx();
     const { save, partyIds, artifactUids } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['moss-charm'] });
-    save.artifacts[0]!.substats = [{ stat: 'goldMult', value: 0.07 }];
     save.artifacts[0]!.enhance = 2;
     const fx = collectTeamEffects(content, save, partyIds, artifactUids);
 
@@ -69,9 +68,6 @@ describe('팀 효과 수집', () => {
     expect(sumOf(query(fx.effects, 'captureRoll', capCtx), 'captureAdd')).toBeCloseTo(0.07 + 0.04); // 고유(자연 조건) 포함
     // 자연이 아니면 고유 효과 제외
     expect(sumOf(query(fx.effects, 'captureRoll', { ...base, element: 'fire' }), 'captureAdd')).toBeCloseTo(0.07);
-    // 부옵션 goldMult → journalEnd rewardMult
-    const end = query(fx.effects, 'journalEnd', base);
-    expect(end.some((a) => a.kind === 'rewardMult' && a.target === 'gold' && Math.abs(a.value - 0.07) < 1e-9)).toBe(true);
   });
 
   it('세트 2·4개 보너스가 단계적으로 붙는다 (잊힌 개척단)', () => {

@@ -93,7 +93,6 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
         {
           "drop": {
             "itemId": "patched-banner",
-            "substats": [],
           },
           "kind": "artifact",
         },
@@ -266,7 +265,6 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     {
       "artifact": {
         "itemId": "cork-vest",
-        "substats": [],
       },
       "type": "clearBox",
     },
@@ -279,11 +277,9 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     "artifacts": [
       {
         "itemId": "patched-banner",
-        "substats": [],
       },
       {
         "itemId": "cork-vest",
-        "substats": [],
       },
     ],
     "capturedMonsterIds": [
@@ -340,12 +336,6 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
     {
       "artifact": {
         "itemId": "guard-plate",
-        "substats": [
-          {
-            "stat": "atkMult",
-            "value": 0.058,
-          },
-        ],
       },
       "eventId": "glowing-geode",
       "gold": 110,
@@ -375,12 +365,6 @@ exports[`결정론 > 일지 스냅샷 — 정찰(해안·스타터) 1`] = `
     "artifacts": [
       {
         "itemId": "guard-plate",
-        "substats": [
-          {
-            "stat": "atkMult",
-            "value": 0.058,
-          },
-        ],
       },
     ],
     "capturedMonsterIds": [

@@ -20,7 +20,7 @@ export function ensureTeams(content: Content, save: SaveState): SaveState {
     if (next.teams[i]) {
       next.teams[i]!.name = teamName(i);
     } else {
-      next.teams.push({ id: `team-${i + 1}`, name: teamName(i), partyIds: [], artifactUids: [] });
+      next.teams.push({ id: `team-${i + 1}`, name: teamName(i), partyIds: [], artifactIds: [] });
     }
   }
   return next;
@@ -38,12 +38,14 @@ export function speciesUsedByTeams(save: SaveState, excludeTeamId?: string): Map
   return used;
 }
 
-/** 다른 군이 장착 중인 유물 uid 집합 (excludeTeamId 제외) */
-export function artifactsUsedByTeams(save: SaveState, excludeTeamId?: string): Set<string> {
-  const used = new Set<string>();
+/** 군 프리셋들의 유물 종별 사용 수 (excludeTeamId 제외) — v6 개수 배타 */
+export function artifactsUsedByTeams(save: SaveState, excludeTeamId?: string): Map<string, number> {
+  const used = new Map<string, number>();
   for (const team of save.teams) {
     if (team.id === excludeTeamId) continue;
-    for (const uid of team.artifactUids) used.add(uid);
+    for (const itemId of team.artifactIds) {
+      used.set(itemId, (used.get(itemId) ?? 0) + 1);
+    }
   }
   return used;
 }
@@ -54,7 +56,7 @@ export function setTeamLoadout(
   save: SaveState,
   teamId: string,
   partyIds: string[],
-  artifactUids: string[],
+  artifactIds: string[],
 ): SaveState {
   const team = save.teams.find((t) => t.id === teamId);
   if (!team) throw new GameError('team-missing', '없는 원정대입니다');
@@ -75,16 +77,19 @@ export function setTeamLoadout(
     }
   }
 
-  if (artifactUids.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 연결할 수 있습니다');
-  if (new Set(artifactUids).size !== artifactUids.length) {
+  if (artifactIds.length > 4) throw new GameError('artifact-too-many', '유물은 4개까지 연결할 수 있습니다');
+  if (new Set(artifactIds).size !== artifactIds.length) {
     throw new GameError('artifact-dup', '같은 유물을 두 번 연결할 수 없습니다');
   }
-  const otherArtifacts = artifactsUsedByTeams(save, teamId);
+  const otherArtifactUse = artifactsUsedByTeams(save, teamId);
   const usedSlots = new Set<string>();
-  for (const uid of artifactUids) {
-    const owned = save.artifacts.find((a) => a.uid === uid);
+  for (const itemId of artifactIds) {
+    const owned = save.artifacts.find((a) => a.itemId === itemId);
     if (!owned) throw new GameError('artifact-missing', '보유하지 않은 유물입니다');
-    if (otherArtifacts.has(uid)) throw new GameError('artifact-taken', '다른 군이 연결한 유물입니다');
+    if ((otherArtifactUse.get(itemId) ?? 0) + 1 > owned.count) {
+      const def = content.artifacts.get(itemId);
+      throw new GameError('team-artifact-short', `${def?.name ?? itemId}이(가) 부족합니다 — 다른 군이 사용 중입니다`);
+    }
     const def = content.artifacts.get(owned.itemId);
     if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${owned.itemId}`);
     if (usedSlots.has(def.slot)) throw new GameError('artifact-slot-dup', '같은 슬롯의 유물을 두 개 연결할 수 없습니다');
@@ -94,6 +99,6 @@ export function setTeamLoadout(
   const next = structuredClone(save);
   const target = next.teams.find((t) => t.id === teamId)!;
   target.partyIds = [...partyIds];
-  target.artifactUids = [...artifactUids];
+  target.artifactIds = [...artifactIds];
   return next;
 }

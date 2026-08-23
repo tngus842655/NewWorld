@@ -185,8 +185,7 @@ export type Recipe = z.infer<typeof RecipeSchema>;
 // ── 유물 ─────────────────────────────────────────────────────────────────────
 export const MainStatSchema = z.enum(['atkMult', 'hpMult', 'captureAdd', 'synergyAmp', 'goldMult']);
 export type MainStat = z.infer<typeof MainStatSchema>;
-export const SubstatSchema = z.enum(['atkMult', 'hpMult', 'captureAdd', 'goldMult', 'materialMult', 'damageReduce']);
-export type Substat = z.infer<typeof SubstatSchema>;
+// (2026-08-23) 부옵션 시스템 폐지 — 유물이 종 단위(개수·공통 강화)로 통합되며 개체 차이 개념 제거
 
 export const ArtifactDefSchema = z.object({
   id: z.string(),
@@ -374,8 +373,6 @@ export const BalanceSchema = z.object({
       rarityCostMult: z.record(ArtifactRaritySchema, z.number()), // 등급별 강화 가루 배수
     }),
     dustPerSalvage: z.record(ArtifactRaritySchema, z.number().int()),
-    substatCount: z.record(ArtifactRaritySchema, z.number().int()),
-    substatPool: z.array(z.object({ stat: SubstatSchema, min: z.number(), max: z.number(), weight: z.number() })),
     effectCaps: z.object({
       rewardMult: z.number(),
       timeMultMin: z.number(),

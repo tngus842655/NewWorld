@@ -19,8 +19,12 @@ function v1Save() {
       { uid: 'u3', monsterId: 'dune-pup', level: 1, star: 1 },
       { uid: 'u4', monsterId: 'bubble-crab', level: 2, star: 1 },
     ],
-    artifacts: [],
-    teams: [{ id: 't1', name: '1번', partyUids: ['u1', 'u2', 'u4'], artifactUids: [] }],
+    artifacts: [
+      { uid: 'a1', itemId: 'rusty-saber', enhance: 2, substats: [{ stat: 'goldMult', value: 0.05 }] },
+      { uid: 'a2', itemId: 'rusty-saber', enhance: 1, substats: [] },
+      { uid: 'a3', itemId: 'moss-charm', enhance: 0, substats: [] },
+    ],
+    teams: [{ id: 't1', name: '1번', partyUids: ['u1', 'u2', 'u4'], artifactUids: ['a1', 'a2', 'a3'] }],
     codex: {
       'dune-pup': { seen: true, captured: true, awakened: false },
       'bubble-crab': { seen: true, captured: true, awakened: false },
@@ -28,7 +32,7 @@ function v1Save() {
     milestones: [],
     expeditions: [
       {
-        id: 'e1', regionId: 'misty-coast', tier: 'scout', partyUids: ['u1', 'u4'], artifactUids: [],
+        id: 'e1', regionId: 'misty-coast', tier: 'scout', partyUids: ['u1', 'u4'], artifactUids: ['a2'],
         seed: 's', startedAt: 0, endsAt: 1, luresLoaded: 0, choices: [], claimed: false,
       },
     ],
@@ -42,7 +46,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(5); // v1 → … → v5 체인 끝까지
+    expect(migrated.version).toBe(6); // v1 → … → v6 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -105,5 +109,23 @@ describe('세이브 마이그레이션 v4 → v5 (군 시스템)', () => {
     expect(migrated.teams[0]!.name).toBe('원정대 1');
     expect(migrated.expeditions).toHaveLength(1);
     expect(migrated.expeditions[0]!.teamId).toBeUndefined(); // 구 원정은 teamId 없음 (optional)
+  });
+});
+
+describe('세이브 마이그레이션 v5 → v6 (유물 종 단위)', () => {
+  it('같은 itemId를 병합한다 — enhance는 최대값, count는 개체 수, 부옵션 폐기', () => {
+    const migrated = migrateSave(v1Save())!;
+    const saber = migrated.artifacts.find((a) => a.itemId === 'rusty-saber')!;
+    expect(saber).toMatchObject({ enhance: 2, count: 2 });
+    expect((saber as unknown as Record<string, unknown>)['uid']).toBeUndefined();
+    expect((saber as unknown as Record<string, unknown>)['substats']).toBeUndefined();
+    expect(migrated.artifacts.find((a) => a.itemId === 'moss-charm')).toMatchObject({ enhance: 0, count: 1 });
+  });
+
+  it('팀·진행 원정의 유물 uid 참조를 itemId로 바꾼다 (중복 제거)', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.teams[0]!.artifactIds).toEqual(['rusty-saber', 'moss-charm']); // a1·a2 → rusty-saber 하나로
+    expect((migrated.teams[0] as unknown as Record<string, unknown>)['artifactUids']).toBeUndefined();
+    expect(migrated.expeditions[0]!.artifactIds).toEqual(['rusty-saber']);
   });
 });

@@ -35,7 +35,7 @@ for (const region of content.regionList) save.profile.flags[`region:${region.id}
 save.wallet.lures = 3;
 
 const partyIds = save.teams[0]!.partyIds;
-const created = createExpedition(content, save, { regionId, tier, partyIds, artifactUids: [] }, ctx);
+const created = createExpedition(content, save, { regionId, tier, partyIds, artifactIds: [] }, ctx);
 save = created.save;
 const expedition = created.expedition;
 for (let i = 0; i < expedition.choices.length; i++) {

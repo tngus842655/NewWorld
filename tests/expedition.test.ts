@@ -102,7 +102,7 @@ describe('유물 고유 능력 (훅 통합)', () => {
     const { expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactUids },
+      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactIds: artifactUids },
       clock.ctx,
     );
     expect(expedition.endsAt - expedition.startedAt).toBe(Math.round(15 * 60_000 * 0.75));
@@ -279,19 +279,16 @@ describe('드랍과 연민(pity)', () => {
     }
   });
 
-  it('rollArtifact — 등급별 부옵션 개수, 중복 스탯 없음', () => {
+  it('rollArtifact — 모든 등급이 추첨 목록에 포함된다 (uncommon 누락 회귀 방지)', () => {
     const rng = streamRng('roll-test', 'loot');
-    for (let i = 0; i < 200; i++) {
+    const seen = new Set<string>();
+    for (let i = 0; i < 400; i++) {
       const drop = rollArtifact(content, rng);
       const def = content.artifacts.get(drop.itemId)!;
-      expect(drop.substats).toHaveLength(content.balance.artifacts.substatCount[def.rarity]);
-      const stats = drop.substats.map((s) => s.stat);
-      expect(new Set(stats).size).toBe(stats.length);
-      for (const sub of drop.substats) {
-        const pool = content.balance.artifacts.substatPool.find((p) => p.stat === sub.stat)!;
-        expect(sub.value).toBeGreaterThanOrEqual(pool.min);
-        expect(sub.value).toBeLessThanOrEqual(pool.max);
-      }
+      seen.add(def.rarity);
+    }
+    for (const rarity of ['common', 'uncommon', 'rare', 'heroic'] as const) {
+      if (content.balance.artifacts.dropRarity[rarity] > 0) expect(seen).toContain(rarity);
     }
   });
 });
@@ -302,12 +299,12 @@ describe('파견 생성 검증', () => {
     const { save, partyIds, artifactUids } = saveWithParty(clock, STARTERS, {
       artifacts: ['rusty-saber', 'keen-cutlass'],
     });
-    const input = { regionId: 'misty-coast', tier: 'scout' as const, partyIds, artifactUids: [] };
+    const input = { regionId: 'misty-coast', tier: 'scout' as const, partyIds, artifactIds: [] };
 
     expect(() => createExpedition(content, save, { ...input, regionId: 'ashen-volcano' }, clock.ctx)).toThrow(/잠겨/);
     expect(() => createExpedition(content, save, { ...input, partyIds: [partyIds[0]!, partyIds[0]!] }, clock.ctx)).toThrow(/두 번/);
     // 무기 슬롯 중복 (녹슨 세이버 + 예리한 커틀러스)
-    expect(() => createExpedition(content, save, { ...input, artifactUids }, clock.ctx)).toThrow(/같은 슬롯/);
+    expect(() => createExpedition(content, save, { ...input, artifactIds: artifactUids }, clock.ctx)).toThrow(/같은 슬롯/);
 
     const { save: dispatched } = createExpedition(content, save, input, clock.ctx);
     // 같은 몬스터 재파견 불가 + 1팀 한도
@@ -320,7 +317,7 @@ describe('파견 생성 검증', () => {
     const { save: next, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactIds: [] },
       clock.ctx,
     );
     expect(expedition.luresLoaded).toBe(3);
@@ -335,7 +332,7 @@ describe('귀환 정산', () => {
     const { save: dispatched, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactIds: [] },
       clock.ctx,
     );
     expect(() => claimExpedition(content, dispatched, expedition.id, clock.ctx)).toThrow(/돌아오지/);
@@ -365,7 +362,7 @@ describe('귀환 정산', () => {
     const { save: dispatched, expedition } = createExpedition(
       content,
       save,
-      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactUids: [] },
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactIds: [] },
       clock.ctx,
     );
     const chosen = chooseCrossroad(dispatched, expedition.id, 0, 'risky');

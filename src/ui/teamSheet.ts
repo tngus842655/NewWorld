@@ -9,7 +9,7 @@ import { artifactsUsedByTeams, speciesUsedByTeams } from '../core/teams';
 import type { OwnedArtifact } from '../core/types';
 import { signal } from '../state/signal';
 import { save, setTeam } from '../state/store';
-import { artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
+import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
 import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
@@ -34,7 +34,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
   const busy = state.expeditions.some((e) => !e.claimed && e.teamId === teamId);
   const slots = state.profile.partySlots;
   const party = team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
-  const artifacts = team.artifactUids.filter((uid) => state.artifacts.some((a) => a.uid === uid));
+  const artifacts = team.artifactIds.filter((itemId) => state.artifacts.some((a) => a.itemId === itemId));
 
   const guard = (): boolean => {
     if (busy) playSfx('error');
@@ -61,8 +61,8 @@ export function teamSheet(teamId: string): HTMLElement | null {
   });
 
   const artifactCells = Array.from({ length: 4 }, (_, i) => {
-    const uid = artifacts[i];
-    const owned = uid ? state.artifacts.find((a) => a.uid === uid) : null;
+    const itemId = artifacts[i];
+    const owned = itemId ? state.artifacts.find((a) => a.itemId === itemId) : null;
     if (!owned) {
       return el('button.party-slot', {
         title: '아래 목록에서 유물을 눌러 연결',
@@ -74,7 +74,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
     if (owned.enhance > 0) icon.append(el('span.micon-count', {}, `+${owned.enhance}`));
     return el('button.party-slot.filled', {
       title: `${def?.name ?? ''}${owned.enhance > 0 ? ` +${owned.enhance}` : ''} — 눌러서 해제`,
-      onclick: () => { if (!guard()) commit(party, artifacts.filter((u) => u !== owned.uid), 'tap'); },
+      onclick: () => { if (!guard()) commit(party, artifacts.filter((id) => id !== owned.itemId), 'tap'); },
     }, icon);
   });
 
@@ -120,55 +120,41 @@ export function teamSheet(teamId: string): HTMLElement | null {
     }),
   );
 
-  // ── 유물 목록 — itemId로 묶어 ×n 표시 (다른 군 연결분 제외) ──
-  const otherArtifacts = artifactsUsedByTeams(state, teamId);
-  const groups = new Map<string, { free: OwnedArtifact[]; equipped: OwnedArtifact[] }>();
-  for (const owned of state.artifacts) {
-    if (otherArtifacts.has(owned.uid)) continue;
-    const group = groups.get(owned.itemId) ?? { free: [], equipped: [] };
-    (artifacts.includes(owned.uid) ? group.equipped : group.free).push(owned);
-    groups.set(owned.itemId, group);
-  }
+  // ── 유물 목록 — 종 단위 (v6): 개수 배타, 다른 군이 다 쓰면 숨김 ──
+  const otherArtifactUse = artifactsUsedByTeams(state, teamId);
+  const artifactList = [...state.artifacts]
+    .filter((owned) => {
+      const available = owned.count - (otherArtifactUse.get(owned.itemId) ?? 0);
+      return artifacts.includes(owned.itemId) || available > 0;
+    })
+    .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
+    .sort((a, b) => ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity] || a.def.slot.localeCompare(b.def.slot));
+
   // 탭 숫자는 "지금 새로 배정 가능한" 수만 — 이미 이 군에 편성/장착된 것은 제외 (2026-08-23 사용자)
   const assignableMonsters = monsterList.filter((owned) => !party.includes(owned.monsterId)).length;
-  const assignableArtifacts = [...groups.values()].filter((group) => group.equipped.length === 0).length;
+  const assignableArtifacts = artifactList.filter(({ owned }) => !artifacts.includes(owned.itemId)).length;
 
-  const artifactRows = [...groups.entries()]
-    .map(([itemId, group]) => ({ itemId, group, def: content.artifacts.get(itemId)! }))
-    .sort((a, b) => ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity] || a.def.slot.localeCompare(b.def.slot))
-    .map(({ itemId, group, def }) => {
-      const equipped = group.equipped.length > 0;
-      const total = group.free.length + group.equipped.length;
-      const best = [...(equipped ? group.equipped : group.free)].sort((a, b) => b.enhance - a.enhance)[0]!;
-      const icon = artifactIcon(itemId);
-      if (total > 1) icon.append(el('span.micon-count', { title: `보유 ${total}개` }, `×${total}`));
-      return el(`button.acard.rar-${def.rarity}${equipped ? '.selected' : ''}`, {
-        onclick: () => {
-          if (guard()) return;
-          if (equipped) {
-            commit(party, artifacts.filter((uid) => uid !== group.equipped[0]!.uid), 'tap');
-            return;
-          }
-          // 연결 — 강화 높은 개체 자동, 같은 슬롯은 교체
-          const pick = [...group.free].sort((a, b) => b.enhance - a.enhance)[0]!;
-          const withoutSameSlot = artifacts.filter((uid) => {
-            const other = state.artifacts.find((a) => a.uid === uid);
-            return other && content.artifacts.get(other.itemId)?.slot !== def.slot;
-          });
-          if (withoutSameSlot.length >= 4) {
-            playSfx('error');
-            return;
-          }
-          commit(party, [...withoutSameSlot, pick.uid], 'select');
-        },
+  const artifactRows = artifactList.map(({ owned, def }) =>
+    artifactCard(owned, def, {
+      selected: artifacts.includes(owned.itemId),
+      onclick: () => {
+        if (guard()) return;
+        if (artifacts.includes(owned.itemId)) {
+          commit(party, artifacts.filter((id) => id !== owned.itemId), 'tap');
+          return;
+        }
+        // 연결 — 같은 슬롯은 교체
+        const withoutSameSlot = artifacts.filter((id) => {
+          const other = state.artifacts.find((a) => a.itemId === id);
+          return other && content.artifacts.get(other.itemId)?.slot !== def.slot;
+        });
+        if (withoutSameSlot.length >= 4) {
+          playSfx('error');
+          return;
+        }
+        commit(party, [...withoutSameSlot, owned.itemId], 'select');
       },
-        icon,
-        el('div.acard-body', {},
-          el('div.acard-name', {}, `${def.name}${best.enhance > 0 ? ` +${best.enhance}` : ''}`),
-          el('div.acard-sub', {}, `[${ARTIFACT_RARITY_LABEL[def.rarity]} ${SLOT_LABEL[def.slot]}]`),
-        ),
-      );
-    });
+    }));
 
   const shell = sheetShell(`${team.name} 편성`,
     busy ? el('div.card.banner', {}, el('span.small', {}, '🧭 원정에서 돌아오면 편성을 바꿀 수 있습니다')) : null,
