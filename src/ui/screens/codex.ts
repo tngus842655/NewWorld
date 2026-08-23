@@ -14,6 +14,9 @@ import { overlay } from '../router';
 // 탭을 오가도 유지되는 화면 로컬 필터 (GDD §11)
 const tribeFilter = signal<Monster['tribe'] | null>(null);
 const rarityFilter = signal<Monster['rarity'] | null>(null);
+// 지역 접힘 상태 (기본 접힘 — 캠프와 동일 패턴) + 업적 지역 탭 (2026-08-23)
+const openCodexRegions = signal<Record<string, boolean>>({});
+const achieveTab = signal<string>(content.regionList[0]!.id); // 지역 id 또는 'common'
 
 function filterChips<T extends string>(
   current: T | null,
@@ -42,6 +45,18 @@ export function renderCodex(): HTMLElement {
     return sum;
   }, 0);
 
+  // 포획 셀의 아이콘 — 카드 수 대신 레벨·각성 뱃지 (2026-08-23 사용자)
+  const capturedIcon = (monster: Monster): HTMLElement => {
+    const icon = monsterIcon(monster.id);
+    const owned = state.roster.find((m) => m.monsterId === monster.id);
+    if (owned) {
+      const awakened = state.codex[monster.id]?.awakened;
+      icon.append(el('span.micon-count', { title: awakened ? `각성 · Lv.${owned.level}` : `Lv.${owned.level}` },
+        `${awakened ? '✨' : ''}Lv.${owned.level}`));
+    }
+    return icon;
+  };
+
   const sections = content.regionList.map((region) => {
     const allNatives = content.monsterList.filter((m) => m.habitat === region.id);
     const regionCaptured = allNatives.filter((m) => state.codex[m.id]?.captured).length;
@@ -49,18 +64,17 @@ export function renderCodex(): HTMLElement {
       (m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
     );
     if (natives.length === 0) return null;
+    const open = openCodexRegions()[region.id] === true;
+
     const cells = natives.map((monster) => {
       const entry = state.codex[monster.id];
       const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
       if (entry?.captured) {
-        const icon = monsterIcon(monster.id);
-        const count = state.roster.find((m) => m.monsterId === monster.id)?.count ?? 0;
-        if (count > 1) icon.append(el('span.micon-count', { title: `보유 카드 ${count}장` }, `×${count}`));
         return el(`div.codex-cell${entry.awakened ? '.awakened' : ''}`, {
           title: `${monster.name} · ${MONSTER_RARITY_LABEL[monster.rarity]}`,
           onclick: openSpecies,
         },
-          icon,
+          capturedIcon(monster),
           el('div.codex-name', {}, monster.name),
         );
       }
@@ -72,15 +86,56 @@ export function renderCodex(): HTMLElement {
       }
       return el('div.codex-cell.unknown', {}, el('div.codex-q', {}, '?'), el('div.codex-name.muted', {}, '???'));
     });
-    return el('section', {},
-      el('h3.codex-region', {}, `${region.icon} ${region.name} (${regionCaptured}/${allNatives.length})`),
-      el('div.codex-grid', {}, ...cells),
+
+    // 접힘: 아이콘만 가로 슬라이드 (캠프와 동일 패턴)
+    const iconRow = el('div.roster-row', {}, ...natives.map((monster) => {
+      const entry = state.codex[monster.id];
+      const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
+      if (entry?.captured) {
+        return el('button.roster-icon', { title: monster.name, onclick: openSpecies }, capturedIcon(monster));
+      }
+      if (entry?.seen) {
+        return el('button.roster-icon', { title: '목격', onclick: openSpecies }, monsterIcon(monster.id, { silhouette: true }));
+      }
+      return el('div.micon.roster-unknown', { title: '???' }, el('span.micon-fallback', {}, '?'));
+    }));
+
+    return el('div.card.stack-sm', {},
+      el('button.roster-head', {
+        onclick: () => openCodexRegions.set({ ...openCodexRegions(), [region.id]: !open }),
+      },
+        el('span', {}, `${region.icon} ${region.name} (${regionCaptured}/${allNatives.length})`),
+        el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
+      ),
+      open ? el('div.codex-grid', {}, ...cells) : iconRow,
     );
   });
   const visibleSections = sections.filter((s): s is HTMLElement => s !== null);
 
+  // 업적(구 마일스톤) — 지역 4탭 + 공통, 달성 수 표시 (2026-08-23 사용자)
   const counts = capturedCounts(content, state);
-  const milestones = content.milestones.map((milestone) => {
+  const achievementGroups = [
+    ...content.regionList.map((region) => ({
+      key: region.id,
+      label: `${region.icon} ${region.name.split(' ').pop()}`,
+      items: content.milestones.filter((m) => m.condition.kind === 'regionCaptured' && m.condition.region === region.id),
+    })),
+    {
+      key: 'common',
+      label: '🏅 공통',
+      items: content.milestones.filter((m) => m.condition.kind !== 'regionCaptured'),
+    },
+  ];
+  const currentGroup = achievementGroups.find((g) => g.key === achieveTab()) ?? achievementGroups[0]!;
+  const doneCount = (items: typeof content.milestones) => items.filter((m) => state.milestones.includes(m.id)).length;
+  const totalDone = doneCount(content.milestones);
+
+  const achievementTabs = el('div.chips-wrap', {}, ...achievementGroups.map((group) =>
+    el(`button.chip${currentGroup.key === group.key ? '.active' : ''}`, {
+      onclick: () => achieveTab.set(group.key),
+    }, `${group.label} ${doneCount(group.items)}/${group.items.length}`)));
+
+  const achievementRows = currentGroup.items.map((milestone) => {
     const done = state.milestones.includes(milestone.id);
     const { need, have } = milestoneProgress(milestone.condition, counts);
     const rewardBits = [
@@ -88,14 +143,15 @@ export function renderCodex(): HTMLElement {
       milestone.reward.dust ? `가루 ${milestone.reward.dust}` : null,
       ...(milestone.reward.effects ?? []).map((effect) => `영구 ${describeEffect(effect)}`),
     ].filter(Boolean).join(' · ');
+    // 왼쪽 = 이름 + 달성 내용(진행), 오른쪽 = 보상 (2026-08-23 위치 교환)
     return el(`div.list-row${done ? '.done' : ''}`, {},
       el('div', {},
         el('div', {}, `${done ? '🏅' : '⬜'} ${milestone.name}`),
-        rewardBits ? el('div.muted.small.milestone-reward', {}, `보상: ${rewardBits}`) : null,
+        el('div.muted.small', {}, done
+          ? describeCondition(milestone.condition)
+          : `${describeCondition(milestone.condition)} (${have}/${need})`),
       ),
-      el('span.muted.small', {}, done
-        ? describeCondition(milestone.condition)
-        : `${describeCondition(milestone.condition)} (${have}/${need})`),
+      rewardBits ? el('span.muted.small.milestone-reward', {}, rewardBits) : null,
     );
   });
 
@@ -109,10 +165,13 @@ export function renderCodex(): HTMLElement {
       filterChips(rarity, Object.entries(MONSTER_RARITY_LABEL) as [Monster['rarity'], string][], (v) => rarityFilter.set(v)),
     ),
     visibleSections.length > 0
-      ? el('div', {}, ...visibleSections)
+      ? el('div.stack-sm', {}, ...visibleSections)
       : el('div.card.empty', {}, el('span.muted', {}, '조건에 맞는 몬스터가 없습니다')),
-    el('h2.section-title', {}, '마일스톤'),
-    el('div.card', {}, ...milestones),
+    el('h2.section-title', {}, `업적 (${totalDone}/${content.milestones.length})`),
+    el('div.card.stack-sm', {},
+      achievementTabs,
+      ...achievementRows,
+    ),
   );
 }
 
