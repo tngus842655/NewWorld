@@ -118,13 +118,13 @@ export function tasksSheet(): HTMLElement {
       el('div.progress', {}, fill),
       el('div.list-row', {},
         el('span.muted.small', {}, `${COUNTER_LABEL[task.counter]} ${into}/${task.every}회`),
-        el('span.small', {}, `${rewards} · 점수 +${task.score}`),
+        el('span.small', {}, rewards), // 점수는 내부 관리만 — 표시 안 함 (2026-08-23 사용자)
       ),
     );
   });
 
   return sheetShell('반복 과업',
-    el('div.muted.small', {}, '과업은 몇 번이고 반복 달성할 수 있습니다. 조건을 채우면 보상이 자동 지급되고, 달성 횟수가 랭킹 과업 점수가 됩니다.'),
+    el('div.muted.small', {}, '과업은 몇 번이고 반복 달성할 수 있습니다. 조건을 채우면 보상이 자동 지급됩니다.'),
     ...rows,
   );
 }
