@@ -42,7 +42,7 @@
   },
   "teams": [
     { "count": 2, "regionUnlocked": "sunken-marsh" },
-    { "count": 3, "totalCaptured": 40 }
+    { "count": 3, "totalCaptured": 60 }
   ],
   "ads": { "daily": { "instantReturn": 3, "scentBuff": 3 } },
   "lures": { "maxLoad": 3 },
