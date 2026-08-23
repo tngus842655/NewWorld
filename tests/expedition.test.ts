@@ -341,8 +341,11 @@ describe('귀환 정산', () => {
     expect(() => claimExpedition(content, dispatched, expedition.id, clock.ctx)).toThrow(/돌아오지/);
 
     clock.set(expedition.endsAt + 1);
-    const { save: after, journal } = claimExpedition(content, dispatched, expedition.id, clock.ctx);
-    expect(after.wallet.gold).toBe(dispatched.wallet.gold + journal.totals.gold);
+    const { save: after, journal, newMilestones } = claimExpedition(content, dispatched, expedition.id, clock.ctx);
+    // 정산 중 달성된 업적 보상(골드)도 함께 지급된다 (지역별 10계단 확장 후 초반 계단이 자주 걸림)
+    const milestoneGold = newMilestones.reduce(
+      (sum, id) => sum + (content.milestones.find((m) => m.id === id)?.reward.gold ?? 0), 0);
+    expect(after.wallet.gold).toBe(dispatched.wallet.gold + journal.totals.gold + milestoneGold);
     expect(after.expeditions).toHaveLength(0);
     expect(after.journalArchive[0]).toMatchObject({ expeditionId: expedition.id, wiped: journal.wiped });
     expect(after.roster.length).toBe(dispatched.roster.length + journal.totals.capturedMonsterIds.length);
@@ -397,8 +400,10 @@ describe('귀환 정산', () => {
     const { save: after, journal, newMilestones } = claimExpedition(content, save, expedition.id, clock.ctx);
 
     expect(newMilestones).toContain('coast-6');
-    const milestone = content.milestones.find((m) => m.id === 'coast-6')!;
-    expect(after.wallet.gold).toBe(goldBefore + journal.totals.gold + (milestone.reward.gold ?? 0));
+    // 5종 사전 포획 상태라 coast-2·coast-4도 함께 달성된다 — 새로 달성된 전체 보상 합으로 검증
+    const rewardGold = newMilestones.reduce(
+      (sum, id) => sum + (content.milestones.find((m) => m.id === id)?.reward.gold ?? 0), 0);
+    expect(after.wallet.gold).toBe(goldBefore + journal.totals.gold + rewardGold);
     expect(after.milestones).toContain('coast-6');
   });
 });
