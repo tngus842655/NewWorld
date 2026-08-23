@@ -6,7 +6,7 @@ import { content } from '../../content';
 import type { Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects } from '../../core/effects';
-import { canUnlockRegion, isRegionUnlocked, teamCount } from '../../core/progression';
+import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError } from '../../core/types';
 import { signal } from '../../state/signal';
 import { dispatchExpedition, save, unlock } from '../../state/store';
@@ -104,6 +104,22 @@ interface Preview {
   synergyAmp: number;
 }
 
+/** 유물 없이 파티만의 유효 전투력 — 유물 헤더의 "추가 CP"는 전체와의 차이로 구한다 */
+function partyOnlyPower(regionId: string, tier: Tier): number | null {
+  const state = save();
+  const region = content.regions.get(regionId);
+  const partyIds = effectiveParty();
+  if (!region || partyIds.length === 0) return null;
+  try {
+    const fx = collectTeamEffects(content, state, partyIds, []);
+    const party = partyIds.map((monsterId) => state.roster.find((m) => m.monsterId === monsterId)!).filter(Boolean);
+    return Math.round(computePartyPower(content, fx.effects, party, region, tier).total);
+  } catch (error) {
+    if (error instanceof GameError) return null;
+    throw error;
+  }
+}
+
 function preview(regionId: string, tier: Tier): Preview | null {
   const state = save();
   const region = content.regions.get(regionId);
@@ -162,9 +178,20 @@ function regionRow(regionId: string): HTMLElement {
     );
   }
   const check = canUnlockRegion(content, state, regionId);
-  return el('div.region-row.locked', {},
+  // 해금 조건은 아이콘 + 수치만 간략히 — "필요합니다" 문구 없이 한 줄 유지 (2026-08-23 사용자)
+  const counts = capturedCounts(content, state);
+  const requirements: string[] = [];
+  for (const [requiredRegion, need] of Object.entries(region.unlock.codexCaptured ?? {})) {
+    const have = Math.min(counts.byRegion.get(requiredRegion) ?? 0, need);
+    requirements.push(`${content.regions.get(requiredRegion)?.icon ?? ''}${have}/${need}`); // 지역 아이콘 = 그 지역 도감
+  }
+  for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
+    const have = Math.min(state.wallet.materials[materialId] ?? 0, need);
+    requirements.push(`${content.materials.get(materialId)?.icon ?? ''}${have}/${need}`);
+  }
+  return el('div.region-row.locked', { title: check.reason ?? '' },
     el('div.region-name', {}, `🔒 ${region.icon} ${region.name}`),
-    el('div.muted.small', {}, check.ok ? '해금 조건 달성!' : (check.reason ?? '')),
+    el('div.muted.small.region-req', {}, check.ok ? '해금 조건 달성!' : requirements.join(' ')),
     check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => unlock(regionId) }, '해금') : null,
   );
 }
@@ -179,6 +206,9 @@ export function renderExpedition(): HTMLElement {
   const slots = state.profile.partySlots;
   const party = effectiveParty();
   const artifacts = effectiveArtifacts();
+  // 헤더용 CP — 파티만의 유효 전투력 + 유물이 얹는 추가분 (합 = 패널의 유효 전투력)
+  const partyPower = partyOnlyPower(regionId, tier);
+  const artifactBonus = info && partyPower !== null && artifacts.length > 0 ? info.power - partyPower : null;
 
   // 편성 영역은 실제 편성분만 네모 슬롯으로 — 빈 슬롯의 +를 누르면 선택 팝업 (2026-08-23)
   const openPartyPick = () => { resetPicks(); overlay.set({ kind: 'partyPick' }); };
@@ -243,13 +273,19 @@ export function renderExpedition(): HTMLElement {
     el('h2.section-title', {}, '지역'),
     el('div.card.stack-sm', {}, ...content.regionList.map((r) => regionRow(r.id))),
 
-    el('h2.section-title', {}, `파티 편성 (${party.length}/${slots})`),
+    el('h2.section-title', {},
+      `파티 편성 (${party.length}/${slots})`,
+      partyPower !== null ? el('span.title-cp', {}, ` · CP ${fmtGold(partyPower)}`) : null,
+    ),
     el('div.card.stack-sm', {},
       el('div.party-slots', {}, ...partySlotCells),
       state.roster.length === 0 ? el('span.muted.small', {}, '보유 몬스터가 없습니다') : null,
     ),
 
-    el('h2.section-title', {}, `유물 (${artifacts.length}/4)`),
+    el('h2.section-title', {},
+      `유물 (${artifacts.length}/4)`,
+      artifactBonus !== null ? el('span.title-cp', {}, ` · CP +${fmtGold(artifactBonus)}`) : null,
+    ),
     el('div.card.stack-sm', {},
       el('div.party-slots', {}, ...artifactSlotCells),
       state.artifacts.length === 0 ? el('span.muted.small', {}, '아직 유물이 없습니다 — 원정에서 발굴해 보세요') : null,

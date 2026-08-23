@@ -64,6 +64,7 @@ body {
 /* ── 공용 ── */
 .screen { display: flex; flex-direction: column; gap: 10px; }
 .section-title { font-size: 14px; color: var(--muted); margin: 8px 2px 0; font-weight: 600; }
+.title-cp { color: var(--accent-2); font-weight: 700; }
 .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
 .card.empty { text-align: center; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: center; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
@@ -191,7 +192,8 @@ body {
 }
 .region-row.selected { border-color: var(--accent); background: #2a2413; }
 .region-row.locked { opacity: 0.75; cursor: default; }
-.region-name { font-weight: 600; }
+.region-name { font-weight: 600; white-space: nowrap; }
+.region-req { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .region-elem { font-size: 12px; font-weight: 400; }
 /* ── 편성 슬롯 (원정 파티·유물) ── */
 .party-slots { display: flex; gap: 8px; }
