@@ -20,6 +20,11 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 .hidden { display: none !important; }
 html, body { margin: 0; height: 100%; }
+/* 게임 UI: 길게 눌러 텍스트·이미지 선택/저장 방지, 더블탭 줌 방지 (입력칸은 예외) */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+button, input, textarea, select { font: inherit; touch-action: manipulation; }
+img { -webkit-user-drag: none; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -90,12 +95,26 @@ body {
 .progress { height: 8px; border-radius: 99px; background: var(--bg3); overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #b97f1e, #f0c060); border-radius: 99px; transition: width 0.6s; }
 .devbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-style: dashed; }
+.goal-card { display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
+.goal-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; }
+.goal-items { display: flex; flex-direction: column; gap: 3px; }
+.goal-item { font-size: 12.5px; color: var(--text); }
+.goal-item.goal-done { color: var(--good); }
+.tag.goal-ready { color: var(--good); border-color: #3d5a3a; background: #22301f; font-weight: 700; }
+.codex-link {
+  background: none; border: none; color: var(--muted); font-size: 12px;
+  text-align: center; cursor: pointer; padding: 4px;
+}
 
 /* ── 아이콘·칩 ── */
 .micon {
-  width: 52px; height: 52px; border-radius: 12px; flex: none;
+  width: 52px; height: 52px; border-radius: 12px; flex: none; position: relative;
   background: radial-gradient(circle at 50% 40%, #262b3d, #181b26);
   border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.micon-badge {
+  position: absolute; right: 1px; bottom: 0; font-size: 11px; line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
 }
 .micon img { width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4)); }
 .micon-fallback { font-size: 24px; }
@@ -119,6 +138,7 @@ body {
 .mchip.busy { opacity: 0.4; }
 .mchip .micon { width: 42px; height: 42px; }
 .mchip-name { font-size: 13px; font-weight: 600; }
+.mchip-elems { font-size: 10px; font-weight: 400; white-space: nowrap; }
 .mchip-sub { font-size: 11px; color: var(--muted); }
 
 .acard {
@@ -150,6 +170,7 @@ body {
 .region-row.selected { border-color: var(--accent); background: #2a2413; }
 .region-row.locked { opacity: 0.75; cursor: default; }
 .region-name { font-weight: 600; }
+.region-elem { font-size: 12px; font-weight: 400; }
 .dispatch-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; bottom: 8px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35); }
 .cp-row { display: flex; align-items: baseline; gap: 8px; }
 .cp-row strong { font-size: 22px; }
@@ -203,6 +224,9 @@ body.overlay-open .container { overflow: hidden; }
 .jtitle { font-weight: 700; }
 .jtimeline { overflow-y: auto; display: flex; flex-direction: column; gap: 7px; max-height: 62dvh; padding: 2px; }
 .jcard { background: var(--bg3); border: 1px solid var(--line); border-radius: 10px; padding: 8px 11px; }
+.jcard-mon { display: flex; gap: 9px; align-items: flex-start; }
+.jcard-mon .micon { width: 40px; height: 40px; border-radius: 9px; }
+.jbody { flex: 1; min-width: 0; }
 .jcard-bad { border-color: #4a2e2b; background: #241a1c; }
 .jrevive { border-color: #5a5426; background: #26240f; }
 .jdrop-card { border-color: var(--rar-legendary); }
@@ -251,6 +275,7 @@ body.overlay-open .container { overflow: hidden; }
 
 /* ── 기타 ── */
 .wallet { display: flex; gap: 14px; font-size: 14px; }
+.cost-short { color: var(--bad); }
 #toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 6px; width: min(400px, 92vw); }
 .toast {
   background: var(--bg3); border: 1px solid var(--line); color: var(--text);

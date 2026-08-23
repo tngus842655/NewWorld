@@ -12,10 +12,14 @@ import { playSfx } from '../sfx';
 
 export function renderCamp(): HTMLElement {
   const state = save();
+  const busyUids = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyUids));
 
   const roster = [...state.roster]
     .sort((a, b) => ownedCp(b) - ownedCp(a))
-    .map((owned) => monsterChip(owned, { onclick: () => overlay.set({ kind: 'monster', uid: owned.uid }) }));
+    .map((owned) => monsterChip(owned, {
+      onclick: () => overlay.set({ kind: 'monster', uid: owned.uid }),
+      onExpedition: busyUids.has(owned.uid),
+    }));
 
   const artifacts = [...state.artifacts]
     .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
@@ -23,16 +27,27 @@ export function renderCamp(): HTMLElement {
     .map(({ owned, def }) => artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', uid: owned.uid }) }));
 
   const recipes = [...content.recipes.values()].map((recipe) => {
+    // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
+    const goldShort = state.wallet.gold < recipe.cost.gold;
+    const materialShorts = Object.entries(recipe.cost.materials)
+      .filter(([id, n]) => (state.wallet.materials[id] ?? 0) < n);
+    const affordable = !goldShort && materialShorts.length === 0;
     const costText = [
       recipe.cost.gold > 0 ? `골드 ${fmtGold(recipe.cost.gold)}` : null,
-      ...Object.entries(recipe.cost.materials).map(([id, n]) => `${content.materials.get(id)?.name} ×${n}`),
+      ...Object.entries(recipe.cost.materials).map(([id, n]) => {
+        const have = state.wallet.materials[id] ?? 0;
+        return `${content.materials.get(id)?.name} ×${n}${have < n ? ` (보유 ${have})` : ''}`;
+      }),
     ].filter(Boolean).join(' + ');
     return el('div.list-row', {},
       el('div', {},
         el('div', {}, `${recipe.name} → 미끼 ${recipe.output.lures}개`),
-        el('div.muted.small', {}, costText),
+        el(`div.muted.small${affordable ? '' : '.cost-short'}`, {}, costText),
       ),
-      el('button.btn.btn-ghost', { onclick: () => { if (craft(recipe.id)) playSfx('craft'); } }, '제작'),
+      el('button.btn.btn-ghost', {
+        disabled: !affordable,
+        onclick: () => { if (craft(recipe.id)) playSfx('craft'); },
+      }, '제작'),
     );
   });
 
@@ -70,10 +85,18 @@ export function renderCamp(): HTMLElement {
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
     el('div.card', {}, el('div.chips', {}, ...roster)),
     slotUnlock
-      ? el('div.card.list-row', {},
-          el('span.muted.small', {}, `파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots} (도감 ${slotUnlock.totalCaptured}종 + 골드 ${fmtGold(slotUnlock.gold)})`),
-          el('button.btn.btn-ghost', { onclick: () => { if (buySlot()) playSfx('confirm'); } }, '확장'),
-        )
+      ? (() => {
+          const captured = Object.values(state.codex).filter((c) => c.captured).length;
+          const canBuy = captured >= slotUnlock.totalCaptured && state.wallet.gold >= slotUnlock.gold;
+          return el('div.card.list-row', {},
+            el('span.muted.small', {},
+              `파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots} (도감 ${Math.min(captured, slotUnlock.totalCaptured)}/${slotUnlock.totalCaptured}종 + 골드 ${fmtGold(slotUnlock.gold)})`),
+            el('button.btn.btn-ghost', {
+              disabled: !canBuy,
+              onclick: () => { if (buySlot()) playSfx('confirm'); },
+            }, '확장'),
+          );
+        })()
       : null,
 
     el('h2.section-title', {}, `유물 (${state.artifacts.length})`),

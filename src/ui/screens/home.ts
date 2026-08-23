@@ -3,10 +3,11 @@
  * 카드 구조는 고정하고 시간 관련 표시만 scopedEffect로 갱신한다 (탭 안정성).
  */
 import { content } from '../../content';
+import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
 import * as clock from '../../state/clock';
 import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
-import { TIER_LABEL, el, fmtGold, fmtRemain, scopedEffect } from '../kit';
+import { TIER_LABEL, el, fmtAgo, fmtGold, fmtRemain, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 
 function expeditionCard(expeditionId: string): HTMLElement {
@@ -62,6 +63,53 @@ function expeditionCard(expeditionId: string): HTMLElement {
   );
 }
 
+/** 다음 목표 카드 — 지역 해금 → 3번째 원정대 → 도감 완성 순으로 지금 좇을 목표 하나만 (GDD 필러 3) */
+function nextGoalCard(): HTMLElement | null {
+  const state = save();
+  const counts = capturedCounts(content, state);
+
+  const lockedRegion = content.regionList.find((region) => !isRegionUnlocked(content, state, region.id));
+  if (lockedRegion) {
+    const check = canUnlockRegion(content, state, lockedRegion.id);
+    const parts: HTMLElement[] = [];
+    for (const [requiredRegion, need] of Object.entries(lockedRegion.unlock.codexCaptured ?? {})) {
+      const have = Math.min(counts.byRegion.get(requiredRegion) ?? 0, need);
+      const name = content.regions.get(requiredRegion)?.name ?? requiredRegion;
+      parts.push(el(`div.goal-item${have >= need ? '.goal-done' : ''}`, {},
+        `${have >= need ? '✅' : '▫️'} ${name} 도감 ${have}/${need}`));
+    }
+    for (const [materialId, need] of Object.entries(lockedRegion.unlock.materials ?? {})) {
+      const have = Math.min(state.wallet.materials[materialId] ?? 0, need);
+      const name = content.materials.get(materialId)?.name ?? materialId;
+      parts.push(el(`div.goal-item${have >= need ? '.goal-done' : ''}`, {},
+        `${have >= need ? '✅' : '▫️'} ${name} ${have}/${need}`));
+    }
+    return el('div.card.goal-card', { onclick: () => tab.set('expedition') },
+      el('div.goal-head', {},
+        el('span', {}, `🎯 다음 목표 — ${lockedRegion.name} 해금`),
+        check.ok ? el('span.tag.goal-ready', {}, '조건 달성!') : null,
+      ),
+      el('div.goal-items', {}, ...parts),
+      el('div.muted.small', {}, check.ok ? '원정 화면에서 해금할 수 있습니다' : '깊은 지역일수록 보상이 커집니다'),
+    );
+  }
+
+  if (teamCount(content, state) < 3) {
+    return el('div.card.goal-card', { onclick: () => tab.set('codex') },
+      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 3번째 원정대')),
+      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${Math.min(counts.total, 40)}/40종 포획`)),
+    );
+  }
+
+  if (counts.total < 52) {
+    return el('div.card.goal-card', { onclick: () => tab.set('codex') },
+      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 — 신대륙 도감의 완성')),
+      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/52종 포획 — 전설은 심층 탐사에서만`)),
+    );
+  }
+  return null;
+}
+
 export function renderHome(): HTMLElement {
   const state = save();
   const running = state.expeditions.filter((e) => !e.claimed);
@@ -80,11 +128,16 @@ export function renderHome(): HTMLElement {
         )
     : null;
 
+  const now = clock.now();
   const recent = state.journalArchive.slice(0, 5).map((summary) => {
     const region = content.regions.get(summary.regionId);
+    const tierName = TIER_LABEL[summary.tier].split(' ')[0];
     return el('div.list-row', {},
-      el('span', {}, `${region?.name ?? summary.regionId} ${summary.wiped ? '💀' : '🏕️'}`),
-      el('span.muted', {}, `골드 ${fmtGold(summary.gold)} · 신규 ${summary.capturedCount} · 유물 ${summary.artifactCount}`),
+      el('div', {},
+        el('div', {}, `${summary.wiped ? '💀' : '🏕️'} ${region?.name ?? summary.regionId} · ${tierName}`),
+        el('div.muted.small', {}, fmtAgo(now - summary.endedAt)),
+      ),
+      el('span.muted.small', {}, `골드 ${fmtGold(summary.gold)} · 신규 ${summary.capturedCount} · 유물 ${summary.artifactCount}`),
     );
   });
 
@@ -97,9 +150,10 @@ export function renderHome(): HTMLElement {
           el('button.btn.btn-primary', { onclick: () => tab.set('expedition') }, '원정 보내기'),
         )
       : el('div.stack', {}, ...running.map((e) => expeditionCard(e.id))),
+    nextGoalCard(),
     el('h2.section-title', {}, '최근 일지'),
     recent.length > 0 ? el('div.card', {}, ...recent) : el('div.card.empty', {}, el('span.muted', {}, '아직 기록이 없습니다')),
-    el('div.muted.small.center', {}, `도감 ${capturedCount}/52`),
+    el('button.codex-link', { onclick: () => tab.set('codex') }, `📖 도감 ${capturedCount}/52`),
     import.meta.env.DEV
       ? el('div.card.devbar', {},
           el('span.muted.small', {}, 'DEV 시간 가속'),

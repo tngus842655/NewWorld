@@ -3,6 +3,7 @@
  */
 import { content } from '../content';
 import type { Journal, JournalEntry } from '../core/types';
+import { monsterIcon } from './components';
 import { ARTIFACT_RARITY_LABEL, TIER_LABEL, el, fmtGold, fmtPct } from './kit';
 import { playSfx, type SfxId } from './sfx';
 
@@ -42,10 +43,14 @@ function entryCard(entry: JournalEntry): HTMLElement {
   switch (entry.type) {
     case 'encounter': {
       const name = monsterName(entry.monsterId);
+      // 조우 카드엔 몬스터 얼굴을 — 패주(목격만)는 실루엣으로 (GDD §5.5)
       if (entry.result === 'flee') {
-        return el('div.jcard.jcard-bad', {},
-          el('div.jline', {}, `⚔️ ${name} 조우 — 패주…`),
-          el('div.jsub', {}, `전투력 ${fmtGold(entry.partyPower)} vs ${fmtGold(entry.enemyPower)} · HP ${fmtPct(entry.hpAfter)} · 목격 기록`),
+        return el('div.jcard.jcard-bad.jcard-mon', {},
+          monsterIcon(entry.monsterId, { silhouette: true }),
+          el('div.jbody', {},
+            el('div.jline', {}, `⚔️ ${name} 조우 — 패주…`),
+            el('div.jsub', {}, `전투력 ${fmtGold(entry.partyPower)} vs ${fmtGold(entry.enemyPower)} · HP ${fmtPct(entry.hpAfter)} · 목격 기록`),
+          ),
         );
       }
       const lines: HTMLElement[] = [
@@ -63,7 +68,10 @@ function entryCard(entry: JournalEntry): HTMLElement {
         }
       }
       if (entry.artifact) lines.push(el('div.jline.jdrop', {}, `💎 전설의 전리품! ${artifactLabel(entry.artifact.itemId)}`));
-      return el('div.jcard', {}, ...lines);
+      return el('div.jcard.jcard-mon', {},
+        monsterIcon(entry.monsterId),
+        el('div.jbody', {}, ...lines),
+      );
     }
     case 'treasure': {
       const lines = [el('div.jline', {}, `💰 ${eventName('treasures', entry.eventId)} — 골드 +${fmtGold(entry.gold)}`)];

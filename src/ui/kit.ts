@@ -128,6 +128,17 @@ export function fmtPct(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }
 
+/** 지난 시각 → "방금 전 · 3분 전 · 2시간 전 · 어제 · 3일 전" */
+export function fmtAgo(ms: number): string {
+  if (ms < 60_000) return '방금 전';
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return `${min}분 전`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? '어제' : `${days}일 전`;
+}
+
 export function stars(count: number): string {
   return '★'.repeat(count);
 }

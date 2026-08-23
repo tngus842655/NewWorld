@@ -5,7 +5,7 @@ import { content } from '../content';
 import type { ArtifactDef } from '../content/schema';
 import { monsterBaseCp, statAt } from '../core/formulas';
 import type { OwnedArtifact, OwnedMonster } from '../core/types';
-import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TRIBE_EMOJI, el, stars } from './kit';
+import { ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, stars } from './kit';
 
 /** 몬스터 아이콘 — /assets/monsters/{id}.webp, 없으면 종족 이모지 실루엣 (DATA.md §6) */
 export function monsterIcon(monsterId: string, opts: { silhouette?: boolean } = {}): HTMLElement {
@@ -49,14 +49,25 @@ export function ownedCp(owned: OwnedMonster): number {
   return Math.round(atk * balance.cp.atkWeight + hp * balance.cp.hpWeight);
 }
 
-export function monsterChip(owned: OwnedMonster, opts: { selected?: boolean; busy?: boolean; onclick?: () => void } = {}): HTMLElement {
+export function monsterChip(
+  owned: OwnedMonster,
+  opts: { selected?: boolean; busy?: boolean; onclick?: () => void; onExpedition?: boolean } = {},
+): HTMLElement {
   const monster = content.monsters.get(owned.monsterId)!;
+  const icon = monsterIcon(owned.monsterId);
+  // 캠프 등에서 파견 중임을 알리는 코너 뱃지 (클릭은 막지 않는다 — busy와 별개)
+  if (opts.onExpedition) icon.append(el('span.micon-badge', { title: '원정 중' }, '🧭'));
   return el(
     `button.mchip${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`,
     { onclick: opts.onclick, disabled: opts.busy },
-    monsterIcon(owned.monsterId),
+    icon,
     el('div.mchip-body', {},
-      el('div.mchip-name', {}, monster.name),
+      el('div.mchip-name', {},
+        monster.name,
+        el('span.mchip-elems', {
+          title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}`,
+        }, ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
+      ),
       el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)} · CP ${ownedCp(owned)}`),
     ),
   );

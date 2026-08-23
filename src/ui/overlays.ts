@@ -270,6 +270,7 @@ function crossroadsSheet(expeditionId: string): HTMLElement | null {
   });
 
   return sheetShell('갈림길 선택',
+    el('div.muted.small', {}, '🛡️ 안전 — 소소한 보상 확정 · ⚡ 위험 — 전투력 판정, 성공 시 희귀 보상·실패 시 HP 피해'),
     el('div.muted.small', {}, '선택하지 않으면 원정대는 안전한 길을 고릅니다.'),
     ...rows,
     done

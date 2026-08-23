@@ -3,10 +3,12 @@
  */
 import { content } from '../../content';
 import type { Monster } from '../../content/schema';
+import { capturedCounts, type CapturedCounts } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { monsterIcon } from '../components';
-import { MONSTER_RARITY_LABEL, TRIBE_LABEL, el } from '../kit';
+import { describeEffect } from '../effectText';
+import { MONSTER_RARITY_LABEL, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 필터 (GDD §11)
@@ -74,11 +76,23 @@ export function renderCodex(): HTMLElement {
   });
   const visibleSections = sections.filter((s): s is HTMLElement => s !== null);
 
+  const counts = capturedCounts(content, state);
   const milestones = content.milestones.map((milestone) => {
     const done = state.milestones.includes(milestone.id);
+    const { need, have } = milestoneProgress(milestone.condition, counts);
+    const rewardBits = [
+      milestone.reward.gold ? `골드 ${fmtGold(milestone.reward.gold)}` : null,
+      milestone.reward.dust ? `가루 ${milestone.reward.dust}` : null,
+      ...(milestone.reward.effects ?? []).map((effect) => `영구 ${describeEffect(effect)}`),
+    ].filter(Boolean).join(' · ');
     return el(`div.list-row${done ? '.done' : ''}`, {},
-      el('span', {}, `${done ? '🏅' : '⬜'} ${milestone.name}`),
-      el('span.muted.small', {}, describeCondition(milestone.condition)),
+      el('div', {},
+        el('div', {}, `${done ? '🏅' : '⬜'} ${milestone.name}`),
+        rewardBits ? el('div.muted.small.milestone-reward', {}, `보상: ${rewardBits}`) : null,
+      ),
+      el('span.muted.small', {}, done
+        ? describeCondition(milestone.condition)
+        : `${describeCondition(milestone.condition)} (${have}/${need})`),
     );
   });
 
@@ -97,6 +111,20 @@ export function renderCodex(): HTMLElement {
     el('h2.section-title', {}, '마일스톤'),
     el('div.card', {}, ...milestones),
   );
+}
+
+function milestoneProgress(
+  condition: (typeof content.milestones)[number]['condition'],
+  counts: CapturedCounts,
+): { have: number; need: number } {
+  switch (condition.kind) {
+    case 'regionCaptured':
+      return { have: Math.min(counts.byRegion.get(condition.region) ?? 0, condition.count), need: condition.count };
+    case 'tribeCaptured':
+      return { have: Math.min(counts.byTribe.get(condition.tribe) ?? 0, condition.count), need: condition.count };
+    case 'totalCaptured':
+      return { have: Math.min(counts.total, condition.count), need: condition.count };
+  }
 }
 
 function describeCondition(condition: (typeof content.milestones)[number]['condition']): string {

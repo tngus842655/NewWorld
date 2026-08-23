@@ -6,12 +6,12 @@ import { content } from '../../content';
 import type { Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects } from '../../core/effects';
-import { canUnlockRegion, isRegionUnlocked } from '../../core/progression';
+import { canUnlockRegion, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError } from '../../core/types';
 import { signal } from '../../state/signal';
 import { dispatchExpedition, save, unlock } from '../../state/store';
 import { artifactCard, monsterChip } from '../components';
-import { ARTIFACT_RARITY_ORDER, SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_ORDER, ELEMENT_EMOJI, ELEMENT_LABEL, SLOT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -24,6 +24,23 @@ let presetLoaded = false;
 function busyUids(): Set<string> {
   const state = save();
   return new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => [...e.partyUids, ...e.artifactUids]));
+}
+
+/**
+ * 신호에 남은 uid 중 지금 실제로 편성 가능한 것만.
+ * 파견·초기화·가져오기로 무효해진 선택이 화면·미리보기·출발에 끼어들지 않게 하는 단일 관문 —
+ * 렌더 중 signal.set을 피하려고 저장값은 그대로 두고 읽는 쪽에서 거른다.
+ */
+function effectiveParty(): string[] {
+  const state = save();
+  const busy = busyUids();
+  return selParty().filter((uid) => state.roster.some((m) => m.uid === uid) && !busy.has(uid));
+}
+
+function effectiveArtifacts(): string[] {
+  const state = save();
+  const busy = busyUids();
+  return selArtifacts().filter((uid) => state.artifacts.some((a) => a.uid === uid) && !busy.has(uid));
 }
 
 /** 팀 프리셋(마지막 편성)을 최초 1회 불러온다 — 파견 중이거나 사라진 대상은 제외 */
@@ -40,7 +57,7 @@ function loadPresetOnce(): void {
 
 function toggleParty(uid: string): void {
   const state = save();
-  const current = selParty();
+  const current = effectiveParty();
   if (current.includes(uid)) {
     selParty.set(current.filter((u) => u !== uid));
   } else if (current.length < state.profile.partySlots) {
@@ -50,7 +67,7 @@ function toggleParty(uid: string): void {
 
 function toggleArtifact(uid: string): void {
   const state = save();
-  const current = selArtifacts();
+  const current = effectiveArtifacts();
   if (current.includes(uid)) {
     selArtifacts.set(current.filter((u) => u !== uid));
     return;
@@ -76,10 +93,11 @@ interface Preview {
 function preview(regionId: string, tier: Tier): Preview | null {
   const state = save();
   const region = content.regions.get(regionId);
-  if (!region || selParty().length === 0) return null;
+  const partyUids = effectiveParty();
+  if (!region || partyUids.length === 0) return null;
   try {
-    const fx = collectTeamEffects(content, state, selParty(), selArtifacts());
-    const party = selParty().map((uid) => state.roster.find((m) => m.uid === uid)!).filter(Boolean);
+    const fx = collectTeamEffects(content, state, partyUids, effectiveArtifacts());
+    const party = partyUids.map((uid) => state.roster.find((m) => m.uid === uid)!).filter(Boolean);
     const power = computePartyPower(content, fx.effects, party, region, tier).total;
     const tribes = [...fx.tribeCounts.entries()]
       .map(([tribe, count]) => ({ tribe, count }))
@@ -98,7 +116,10 @@ function regionRow(regionId: string): HTMLElement {
   const selected = selRegion() === regionId;
   if (unlocked) {
     return el(`button.region-row${selected ? '.selected' : ''}`, { onclick: () => selRegion.set(regionId) },
-      el('div.region-name', {}, region.name),
+      el('div.region-name', {},
+        region.name,
+        el('span.region-elem', { title: `우세 속성 ${ELEMENT_LABEL[region.element]} — 같거나 이기는 속성이 유리` }, ` ${ELEMENT_EMOJI[region.element]}`),
+      ),
       el('div.muted.small', {}, `권장 CP ${fmtGold(region.recommendedCp)}`),
     );
   }
@@ -119,12 +140,14 @@ export function renderExpedition(): HTMLElement {
   const tier = selTier();
   const info = preview(regionId, tier);
   const slots = state.profile.partySlots;
+  const party = effectiveParty();
+  const artifacts = effectiveArtifacts();
 
   const partyChips = [...state.roster]
     .sort((a, b) => (busy.has(a.uid) ? 1 : 0) - (busy.has(b.uid) ? 1 : 0))
     .map((owned) =>
       monsterChip(owned, {
-        selected: selParty().includes(owned.uid),
+        selected: party.includes(owned.uid),
         busy: busy.has(owned.uid),
         onclick: () => toggleParty(owned.uid),
       }),
@@ -135,7 +158,7 @@ export function renderExpedition(): HTMLElement {
     .sort((a, b) => a.def.slot.localeCompare(b.def.slot) || ARTIFACT_RARITY_ORDER[b.def.rarity] - ARTIFACT_RARITY_ORDER[a.def.rarity])
     .map(({ owned, def }) =>
       artifactCard(owned, def, {
-        selected: selArtifacts().includes(owned.uid),
+        selected: artifacts.includes(owned.uid),
         busy: busy.has(owned.uid),
         onclick: () => toggleArtifact(owned.uid),
       }),
@@ -151,17 +174,38 @@ export function renderExpedition(): HTMLElement {
 
   const lureLoad = Math.min(content.balance.lures.maxLoad, state.wallet.lures);
 
+  // 동시 파견 한도 — 가득 차면 출발을 막고 이유를 보여준다
+  const runningCount = state.expeditions.filter((e) => !e.claimed).length;
+  const maxTeams = teamCount(content, state);
+  const teamsFull = runningCount >= maxTeams;
+  const nextTeam = content.balance.teams.find((u) => u.count === maxTeams + 1);
+  const nextTeamHint = nextTeam
+    ? nextTeam.regionUnlocked
+      ? `${content.regions.get(nextTeam.regionUnlocked)?.name ?? nextTeam.regionUnlocked} 해금 시 ${nextTeam.count}팀`
+      : `도감 ${nextTeam.totalCaptured}종 포획 시 ${nextTeam.count}팀`
+    : null;
+
+  // 선택한 파견 길이의 정보 (GDD §5.1)
+  const tierDef = content.balance.tiers[tier];
+  const tierInfo = [
+    `조우 ${tierDef.encounters}회`,
+    tierDef.crossroads > 0 ? `갈림길 ${tierDef.crossroads}회` : null,
+    tierDef.yieldMult > 1 ? `보상 ×${tierDef.yieldMult}` : null,
+    tierDef.rareWeightMult > 1 ? `희귀 출현 ×${tierDef.rareWeightMult}` : null,
+    tierDef.legendaryChance > 0 ? '⭐ 전설과 만날 수 있다' : null,
+  ].filter(Boolean).join(' · ');
+
   return el('div.screen', {},
     el('h2.section-title', {}, '지역'),
     el('div.card.stack-sm', {}, ...content.regionList.map((r) => regionRow(r.id))),
 
-    el('h2.section-title', {}, `파티 편성 (${selParty().length}/${slots})`),
+    el('h2.section-title', {}, `파티 편성 (${party.length}/${slots})`),
     el('div.card', {},
       el('div.chips', {}, ...partyChips),
       state.roster.length === 0 ? el('span.muted', {}, '보유 몬스터가 없습니다') : null,
     ),
 
-    el('h2.section-title', {}, `유물 (${selArtifacts().length}/4)`),
+    el('h2.section-title', {}, `유물 (${artifacts.length}/4)`),
     el('div.card', {},
       state.artifacts.length === 0
         ? el('span.muted', {}, '아직 유물이 없습니다 — 원정에서 발굴해 보세요')
@@ -179,17 +223,22 @@ export function renderExpedition(): HTMLElement {
       el('div.tier-row', {}, ...(['scout', 'standard', 'deep'] as const).map((t) =>
         el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
       )),
+      el('div.muted.small', {}, tierInfo),
       el('div.muted.small', {}, `미끼 자동 적재: ${lureLoad}개 (보유 ${state.wallet.lures})`),
+      maxTeams > 1 || teamsFull
+        ? el('div.muted.small', {},
+            `원정대 ${runningCount}/${maxTeams} 파견 중${nextTeamHint ? ` · ${nextTeamHint}` : ''}`)
+        : null,
       el('button.btn.btn-primary.btn-big', {
-        disabled: selParty().length === 0,
+        disabled: party.length === 0 || teamsFull,
         onclick: () => {
-          const ok = dispatchExpedition({ regionId, tier, partyUids: selParty(), artifactUids: selArtifacts() });
+          const ok = dispatchExpedition({ regionId, tier, partyUids: effectiveParty(), artifactUids: effectiveArtifacts() });
           if (ok) {
             playSfx('confirm');
             tab.set('home');
           }
         },
-      }, `🧭 ${region.name}으로 출발`),
+      }, teamsFull ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})` : `🧭 ${region.name}으로 출발`),
     ),
   );
 }
