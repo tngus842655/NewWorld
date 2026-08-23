@@ -219,6 +219,18 @@ body {
 .team-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .team-name { font-weight: 700; display: flex; gap: 8px; align-items: center; }
 
+/* ── 큰 탭 (편성 시트 몬스터/유물 등 목록 전환) ── */
+.big-tabs {
+  display: flex; border: 1px solid var(--line); border-radius: 13px; overflow: hidden;
+  background: var(--bg3); margin-top: 4px;
+}
+.big-tab {
+  flex: 1; padding: 12px 0; text-align: center; font-size: 14px; font-weight: 700;
+  background: none; border: none; color: var(--muted); cursor: pointer;
+}
+.big-tab + .big-tab { border-left: 1px solid var(--line); }
+.big-tab.active { background: #2a2413; color: var(--accent-2); box-shadow: inset 0 -2px 0 var(--accent); }
+
 /* ── 편성 슬롯 (원정 파티·유물) ── */
 .party-slots { display: flex; gap: 8px; }
 .party-slot {

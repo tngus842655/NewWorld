@@ -178,12 +178,12 @@ export function teamSheet(teamId: string): HTMLElement | null {
       el('div.party-slots', {}, ...artifactCells),
     ),
 
-    // 하단 목록 — 몬스터/유물 탭 분리 (2026-08-23 사용자)
-    el('div.chips-wrap.list-tabs', {},
-      el(`button.chip${listTab() === 'monster' ? '.active' : ''}`, {
+    // 하단 목록 — 몬스터/유물 큰 탭 분리 (2026-08-23 사용자)
+    el('div.big-tabs', {},
+      el(`button.big-tab${listTab() === 'monster' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('monster'); },
       }, `🐾 몬스터 ${monsterList.length}`),
-      el(`button.chip${listTab() === 'artifact' ? '.active' : ''}`, {
+      el(`button.big-tab${listTab() === 'artifact' ? '.active' : ''}`, {
         onclick: () => { playSfx('tap'); listTab.set('artifact'); },
       }, `💎 유물 ${artifactRows.length}`),
     ),
