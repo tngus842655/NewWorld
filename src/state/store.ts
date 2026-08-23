@@ -8,9 +8,12 @@ import {
   buyPartySlot,
   craftRecipe,
   enhanceArtifact,
+  fuseMonsters,
   levelUpMonster,
   salvageArtifact,
   unlockRegion,
+  type FusionInput,
+  type FusionResult,
 } from '../core/economy';
 import {
   chooseCrossroad,
@@ -123,6 +126,15 @@ export function awaken(monsterId: string): boolean {
     return true;
   }) !== null;
 }
+/** 카드 합성 — 결과를 UI 연출용으로 그대로 돌려준다 (실패도 정상 결과) */
+export function fuse(input: FusionInput): FusionResult | null {
+  return act(() => {
+    const result = fuseMonsters(content, save(), input, ctx);
+    save.set(result.save);
+    return result;
+  });
+}
+
 export function craft(recipeId: string): boolean {
   return act(() => {
     save.set(craftRecipe(content, save(), recipeId));

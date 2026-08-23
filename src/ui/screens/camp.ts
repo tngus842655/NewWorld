@@ -7,6 +7,7 @@ import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { buySlot, craft, save } from '../../state/store';
 import { artifactCard, monsterChip, ownedCp } from '../components';
 import { ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
+import { resetFusion } from '../overlays';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
@@ -84,6 +85,14 @@ export function renderCamp(): HTMLElement {
 
     el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
     el('div.card', {}, el('div.chips', {}, ...roster)),
+    (() => {
+      // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
+      const spareTotal = state.roster.reduce((sum, m) => sum + Math.max(0, m.count - 1), 0);
+      return el('div.card.list-row', {},
+        el('span.muted.small', {}, `🧬 카드 합성 — 여분 카드 ${spareTotal}장 (같은 등급 2장 → 상위 등급 도전)`),
+        el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
+      );
+    })(),
     slotUnlock
       ? (() => {
           const captured = Object.values(state.codex).filter((c) => c.captured).length;

@@ -3,10 +3,12 @@
  */
 import { content } from '../content';
 import type { MonsterRarity, Region } from '../content/schema';
+import type { FusionResult } from '../core/economy';
 import { elementMult, enhanceCost, levelUpCost, monsterBaseCp, starUpCost, statAt } from '../core/formulas';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
-import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import { signal } from '../state/signal';
+import { awaken, choose, claim, crossroadsOf, enhance, fuse, levelUp, salvage, save } from '../state/store';
 import { artifactIcon, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
@@ -31,8 +33,10 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
             ? speciesSheet(current.monsterId)
             : current.kind === 'help'
               ? helpSheet()
-              : current.kind === 'odds'
-                ? oddsSheet()
+              : current.kind === 'fusion'
+                ? fusionSheet()
+                : current.kind === 'odds'
+                  ? oddsSheet()
                 : current.kind === 'monsterInfo'
                   ? monsterInfoSheet()
                   : current.kind === 'artifactInfo'
@@ -277,10 +281,144 @@ function helpSheet(): HTMLElement {
   );
 }
 
-/** % 표기 — 소수 1자리, .0은 정수로 (0.315 → "31.5%", 0.55 → "55%") */
+// ── 카드 합성 (GDD §4.5) ─────────────────────────────────────────────────────
+
+const FUSION_NEXT: Record<MonsterRarity, MonsterRarity | null> = {
+  common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
+};
+const fuseRarity = signal<MonsterRarity>('common');
+const fuseSel = signal<Record<string, number>>({}); // monsterId → 사용 장수
+const fuseOutcome = signal<FusionResult | null>(null);
+
+/** 합성 시트를 초기 상태로 — 진입 버튼에서 호출 */
+export function resetFusion(): void {
+  fuseSel.set({});
+  fuseOutcome.set(null);
+}
+
+function fusionSheet(): HTMLElement {
+  const state = save();
+  const { fusion } = content.balance;
+  const rarity = fuseRarity();
+  const sel = fuseSel();
+  const outcome = fuseOutcome();
+  const nextRarity = FUSION_NEXT[rarity]!;
+  const chance = fusion.chance[rarity] ?? 0;
+
+  const spareOf = (count: number) => Math.max(0, count - 1);
+  const spareByRarity = (r: MonsterRarity) =>
+    state.roster.reduce((sum, m) => (content.monsters.get(m.monsterId)!.rarity === r ? sum + spareOf(m.count) : sum), 0);
+
+  const tabs = (['common', 'uncommon', 'rare', 'heroic'] as const).map((r) =>
+    el(`button.chip${rarity === r ? '.active' : ''}`, {
+      onclick: () => {
+        fuseRarity.set(r);
+        fuseSel.set({});
+        fuseOutcome.set(null);
+      },
+    }, `${MONSTER_RARITY_LABEL[r]} ${spareByRarity(r)}`),
+  );
+
+  const candidates = state.roster
+    .map((m) => ({ owned: m, def: content.monsters.get(m.monsterId)! }))
+    .filter(({ owned, def }) => def.rarity === rarity && spareOf(owned.count) > 0)
+    .sort((a, b) => spareOf(b.owned.count) - spareOf(a.owned.count));
+  const totalSel = Object.values(sel).reduce((a, b) => a + b, 0);
+
+  const chips = candidates.map(({ owned, def }) => {
+    const used = sel[owned.monsterId] ?? 0;
+    const spare = spareOf(owned.count);
+    return el(`button.mchip${used > 0 ? '.selected' : ''}`, {
+      onclick: () => {
+        // 탭할 때마다 사용 장수 순환: 0 → 1 → 2(가능하면) → 0
+        const cur = fuseSel()[owned.monsterId] ?? 0;
+        const others = Object.entries(fuseSel()).reduce((a, [id, n]) => (id === owned.monsterId ? a : a + n), 0);
+        let next = cur + 1;
+        if (next > spare || others + next > fusion.materials) next = 0;
+        fuseOutcome.set(null);
+        fuseSel.set({ ...fuseSel(), [owned.monsterId]: next });
+      },
+    },
+      monsterIcon(owned.monsterId),
+      el('div.mchip-body', {},
+        el('div.mchip-name', {}, def.name),
+        el('div.mchip-sub', {}, used > 0 ? `여분 ${spare}장 · 사용 ${used}장` : `여분 ${spare}장`),
+      ),
+    );
+  });
+
+  let banner: HTMLElement | null = null;
+  if (outcome) {
+    if (outcome.success && outcome.resultMonsterId) {
+      const def = content.monsters.get(outcome.resultMonsterId)!;
+      banner = el('div.card.fusion-result.fusion-ok', {},
+        monsterIcon(def.id),
+        el('div', {},
+          el('div.fusion-result-title', {}, `✨ 합성 성공 — ${def.name}`),
+          el('div.small', {},
+            el(`span.tag.rar-${def.rarity}`, {}, MONSTER_RARITY_LABEL[def.rarity]),
+            outcome.isNew ? ' 📖 도감 신규 등록!' : ' 보유 종 — 카드 +1',
+          ),
+          ...outcome.newMilestones.map((id) => {
+            const milestone = content.milestones.find((m) => m.id === id);
+            return milestone ? el('div.small.jmilestone', {}, `🏅 마일스톤 달성: ${milestone.name}`) : null;
+          }),
+        ),
+      );
+    } else {
+      banner = el('div.card.fusion-result.fusion-bad', {},
+        el('div', {}, `💨 합성 실패… 재료 ${fusion.materials}장이 사라졌습니다`));
+    }
+  }
+
+  let resultPool = content.monsterList.filter(
+    (m) => m.rarity === nextRarity && isRegionUnlocked(content, state, m.habitat),
+  ).length;
+  if (resultPool === 0) resultPool = content.monsterList.filter((m) => m.rarity === nextRarity).length;
+
+  return sheetShell('카드 합성',
+    el('div.muted.small', {},
+      `같은 등급 여분 카드 ${fusion.materials}장 → 다음 등급 랜덤 1종에 도전합니다. 실패하면 재료가 사라집니다.`),
+    el('div.muted.small', {}, '각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호).'),
+    banner,
+    el('div.chips-wrap', {}, ...tabs),
+    candidates.length > 0
+      ? el('div.card', {}, el('div.chips', {}, ...chips))
+      : el('div.card.empty', {}, el('span.muted', {}, '이 등급의 여분 카드가 없습니다 — 중복 포획으로 모아보세요')),
+    el('div.card.stack-sm', {},
+      el('div.list-row', {},
+        el('span', {}, '성공 확률'),
+        el('strong', {}, pct1(chance)),
+      ),
+      el('div.list-row', {},
+        el('span', {}, '성공 시'),
+        el('span.small.muted', {}, `${MONSTER_RARITY_LABEL[nextRarity]} ${resultPool}종 중 랜덤 1종 (해금 지역 기준)`),
+      ),
+      el('button.btn.btn-primary.btn-big', {
+        disabled: totalSel !== fusion.materials,
+        onclick: () => {
+          const materials = Object.entries(fuseSel())
+            .filter(([, n]) => n > 0)
+            .map(([monsterId, count]) => ({ monsterId, count }));
+          const result = fuse({ materials });
+          if (!result) return;
+          fuseSel.set({});
+          fuseOutcome.set(result);
+          playSfx(result.success
+            ? (result.newMilestones.length > 0 ? 'milestone' : result.isNew ? 'capture-new' : 'awaken')
+            : 'capture-miss');
+        },
+      }, totalSel === fusion.materials
+        ? `🧬 합성 — ${MONSTER_RARITY_LABEL[rarity]} ${fusion.materials}장 → ${MONSTER_RARITY_LABEL[nextRarity]} 도전`
+        : `재료를 선택하세요 (${totalSel}/${fusion.materials})`),
+    ),
+  );
+}
+
+/** % 표기 — 소수 2자리까지 필요한 만큼만 (0.55 → "55%", 0.125 → "12.5%", 0.0625 → "6.25%") */
 function pct1(ratio: number): string {
-  const value = Math.round(ratio * 1000) / 10;
-  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+  const value = Math.round(ratio * 10000) / 100;
+  return `${value}%`;
 }
 
 /** 지역 출현 테이블을 등급별로 집계 (core buildPlan의 spawnWeightOf와 같은 규칙) */
@@ -298,8 +436,20 @@ function spawnOddsByRarity(region: Region, rareWeightMult: number): Map<MonsterR
   return odds;
 }
 
+/** 등급색 게이지 바 — 확률을 한눈에 비교할 수 있게 (유저 공개용 가독성) */
+function pctBarRow(label: HTMLElement | string, ratio: number, colorVar: string): HTMLElement {
+  const fill = el('div.pct-fill');
+  fill.style.width = `${Math.max(2, Math.min(100, ratio * 100))}%`;
+  fill.style.background = `var(${colorVar})`;
+  return el('div.pct-row', {},
+    el('div.pct-label', {}, label),
+    el('div.pct-track', {}, fill),
+    el('strong.pct-value', {}, pct1(ratio)),
+  );
+}
+
 /**
- * 확률 정보 — 등급별 집계표 (밸런스 데이터에서 파생, 확률 고지 대비).
+ * 확률 정보 — 유저에게 공개되는 확률 고지 (밸런스 데이터에서 파생, 하드코딩 없음).
  * 추후 관리자 페이지로 대체 예정 (M6 확률 고지 페이지의 원본 데이터).
  */
 function oddsSheet(): HTMLElement {
@@ -308,22 +458,41 @@ function oddsSheet(): HTMLElement {
   const rarities = Object.keys(MONSTER_RARITY_LABEL) as MonsterRarity[];
   const deepMult = balance.tiers.deep.rareWeightMult;
   const tierName = (tier: 'scout' | 'standard' | 'deep') => TIER_LABEL[tier].split(' ')[0];
+  const rarityTag = (rarity: MonsterRarity) => el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]);
 
-  // 1) 포획 확률 (등급별 기본) + 보정 규칙
+  // 1) 포획 확률 — 등급별 게이지
   const captureCard = el('div.card.stack-sm', {},
-    el('div.odds-title', {}, '🎯 포획 확률 (등급별 기본)'),
-    ...rarities.map((rarity) =>
-      el('div.list-row', {},
-        el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
-        el('strong', {}, pct1(balance.capture.base[rarity])),
-      ),
+    el('div.odds-title', {}, '🎯 몬스터 포획 확률'),
+    el('div.muted.small', {}, '조우에서 승리하면 등급별 기본 확률로 포획을 시도합니다.'),
+    ...rarities.map((rarity) => pctBarRow(rarityTag(rarity), balance.capture.base[rarity] ?? 0, `--rar-${rarity}`)),
+    el('div.odds-note', {},
+      el('div.small.muted', {}, `· 미끼 적재 시 ×${balance.capture.lureMult} — 희귀 이상 조우에 자동 사용됩니다`),
+      el('div.small.muted', {}, `· 확률 배수 상한 ×${balance.capture.multCap} · 최종 확률 상한 ${pct1(balance.capture.chanceCap)}`),
+      balance.capture.firstCaptureGuarantee ? el('div.small.muted', {}, '· 계정의 첫 포획은 100% 성공합니다') : null,
     ),
-    el('div.muted.small', {},
-      `미끼 적재 시 ×${balance.capture.lureMult} (희귀 이상 조우에 자동 사용) · 배수 상한 ×${balance.capture.multCap} · 최종 상한 ${pct1(balance.capture.chanceCap)}`),
-    balance.capture.firstCaptureGuarantee ? el('div.muted.small', {}, '계정 첫 포획은 100% 성공합니다.') : null,
   );
 
-  // 2) 지역별 몬스터 등급 출현 확률 (기본 / 심층)
+  // 2) 카드 합성 — 등급 전환별 성공 확률
+  const fusionCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🧬 카드 합성 성공 확률'),
+    el('div.muted.small', {}, `같은 등급 여분 카드 ${balance.fusion.materials}장으로 다음 등급 랜덤 1종에 도전합니다.`),
+    ...(['common', 'uncommon', 'rare', 'heroic'] as const).map((rarity) => {
+      const nextRarity = FUSION_NEXT[rarity]!;
+      const label = el('span.fusion-step', {},
+        rarityTag(rarity),
+        el('span.muted', {}, ' → '),
+        rarityTag(nextRarity),
+      );
+      return pctBarRow(label, balance.fusion.chance[rarity] ?? 0, `--rar-${nextRarity}`);
+    }),
+    el('div.odds-note', {},
+      el('div.small.muted', {}, '· 성공: 해금한 지역의 다음 등급 몬스터 중 랜덤 1종 (미보유 종이면 도감 등록)'),
+      el('div.small.muted', {}, '· 실패: 재료 카드가 사라집니다'),
+      el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
+    ),
+  );
+
+  // 3) 지역별 몬스터 등급 출현 확률 (기본 / 심층)
   const regionCards = content.regionList.map((region) => {
     const unlocked = isRegionUnlocked(content, state, region.id);
     const base = spawnOddsByRarity(region, 1);
@@ -336,35 +505,37 @@ function oddsSheet(): HTMLElement {
       ),
       ...rarities.filter((rarity) => base.has(rarity)).map((rarity) =>
         el('div.odds-grid', {},
-          el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
+          rarityTag(rarity),
           el('span', {}, pct1(base.get(rarity) ?? 0)),
           el('span', {}, pct1(deep.get(rarity) ?? 0)),
         ),
       ),
-      el('div.muted.small', {},
+      el('div.small.muted', {},
         `⭐ 전설 (${legendNames}) — ${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
     );
   });
 
-  // 3) 유물 등급 확률 + 드랍 소스
+  // 4) 유물 등급 확률 + 발굴 기회
   const artifactRarities = Object.keys(ARTIFACT_RARITY_LABEL) as (keyof typeof ARTIFACT_RARITY_LABEL)[];
   const { sources } = balance.artifacts;
   const artifactOddsCard = el('div.card.stack-sm', {},
-    el('div.odds-title', {}, '💎 유물 등급 확률 (발굴 시)'),
-    ...artifactRarities.map((rarity) =>
-      el('div.list-row', {},
-        el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
-        el('strong', {}, pct1(balance.artifacts.dropRarity[rarity])),
-      ),
+    el('div.odds-title', {}, '💎 유물 등급 확률'),
+    el('div.muted.small', {}, '유물이 발굴될 때 등급이 아래 확률로 결정됩니다.'),
+    ...artifactRarities
+      .filter((rarity) => (balance.artifacts.dropRarity[rarity] ?? 0) > 0)
+      .map((rarity) =>
+        pctBarRow(el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]), balance.artifacts.dropRarity[rarity] ?? 0, `--rar-${rarity}`)),
+    el('div.odds-note', {},
+      el('div.small.muted', {}, `· 발굴 기회 — 보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}`),
+      sources.deepClearBox ? el('div.small.muted', {}, `· ${tierName('deep')} 완주 상자에서는 유물이 확정으로 나옵니다`) : null,
+      balance.artifacts.firstTreasurePity ? el('div.small.muted', {}, '· 계정의 첫 보물 이벤트에서는 유물이 확정으로 나옵니다') : null,
     ),
-    el('div.muted.small', {},
-      `발굴 기회 — 보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}${sources.deepClearBox ? ` · ${tierName('deep')} 완주 상자는 확정` : ''}`),
-    balance.artifacts.firstTreasurePity ? el('div.muted.small', {}, '계정 첫 보물 이벤트에서는 유물이 확정으로 나옵니다.') : null,
   );
 
   return sheetShell('확률 정보',
-    el('div.muted.small', {}, '모든 판정은 파견 시 확정된 시드에서 결정됩니다. 표기 확률은 밸런스 데이터 기준입니다.'),
+    el('div.muted.small', {}, '아래 확률은 게임 데이터의 실제 값 그대로입니다. 모든 판정은 파견 시 확정된 시드에서 결정됩니다.'),
     captureCard,
+    fusionCard,
     ...regionCards,
     artifactOddsCard,
   );

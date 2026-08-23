@@ -5,14 +5,16 @@ import {
   buyPartySlot,
   craftRecipe,
   enhanceArtifact,
+  fuseMonsters,
   levelUpMonster,
   salvageArtifact,
   unlockRegion,
 } from '../src/core/economy';
 import { levelUpCost } from '../src/core/formulas';
 import { canUnlockRegion, teamCount } from '../src/core/progression';
-import { GameError } from '../src/core/types';
-import { content, makeCtx, makeExpedition, saveWithParty } from './helpers';
+import { streamRng } from '../src/core/rng';
+import { GameError, type CoreCtx } from '../src/core/types';
+import { T0, content, findSeed, makeCtx, makeExpedition, saveWithParty } from './helpers';
 
 const wolf = content.monsters.get('thorn-wolf')!; // 커먼
 const turtle = content.monsters.get('pearl-turtle')!; // 레어
@@ -112,6 +114,57 @@ describe('경제 액션', () => {
     expect(next.profile.partySlots).toBe(4);
   });
 
+});
+
+describe('카드 합성 (GDD §4.5)', () => {
+  const fixedCtx = (seed: string): CoreCtx => ({ now: () => T0, newSeed: () => seed, newUid: () => 'u' });
+  const fuseInput = (monsterId: string, count: number) => ({ materials: [{ monsterId, count }] });
+
+  it('마지막 1장은 재료 불가 (여분만 사용)', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]); // count 1 → 여분 0
+    expect(() => fuseMonsters(content, save, fuseInput('dune-pup', 2), fixedCtx('s'))).toThrow(/여분/);
+  });
+
+  it('재료는 같은 등급 2장, 전설은 불가', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }, { id: 'pearl-turtle' }]);
+    save.roster.forEach((m) => { m.count = 3; });
+    expect(() =>
+      fuseMonsters(content, save, { materials: [{ monsterId: 'dune-pup', count: 1 }, { monsterId: 'pearl-turtle', count: 1 }] }, fixedCtx('s')),
+    ).toThrow(/같은 등급/);
+    expect(() => fuseMonsters(content, save, fuseInput('dune-pup', 1), fixedCtx('s'))).toThrow(/2장/);
+
+    const legend = saveWithParty(makeCtx(), [{ id: 'leviathan-calf' }]);
+    legend.save.roster[0]!.count = 3;
+    expect(() => fuseMonsters(content, legend.save, fuseInput('leviathan-calf', 2), fixedCtx('s'))).toThrow(/전설/);
+  });
+
+  it('성공 — 해금 지역의 다음 등급 랜덤 획득, 도감 등록, 재료 차감', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
+    save.roster[0]!.count = 3; // 여분 2
+    const okSeed = findSeed((s) => streamRng(s, 'fusion')() < content.balance.fusion.chance.common!);
+    const result = fuseMonsters(content, save, fuseInput('dune-pup', 2), fixedCtx(okSeed));
+    expect(result.success).toBe(true);
+    const got = content.monsters.get(result.resultMonsterId!)!;
+    expect(got.rarity).toBe('uncommon');
+    expect(got.habitat).toBe('misty-coast'); // 해금 지역(첫 지역)에서만
+    expect(result.save.roster.find((m) => m.monsterId === 'dune-pup')!.count).toBe(1);
+    expect(result.isNew).toBe(true);
+    expect(result.save.codex[got.id]!.captured).toBe(true);
+    expect(result.save.roster.find((m) => m.monsterId === got.id)!.count).toBe(1);
+  });
+
+  it('실패 — 재료만 소실, 로스터·도감 불변', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
+    save.roster[0]!.count = 3;
+    const failSeed = findSeed((s) => streamRng(s, 'fusion')() >= content.balance.fusion.chance.common!);
+    const result = fuseMonsters(content, save, fuseInput('dune-pup', 2), fixedCtx(failSeed));
+    expect(result.success).toBe(false);
+    expect(result.save.roster).toHaveLength(1);
+    expect(result.save.roster[0]!.count).toBe(1);
+  });
+});
+
+describe('지역 해금', () => {
   it('지역 해금 — 조건 검사와 재료 소모', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }]);

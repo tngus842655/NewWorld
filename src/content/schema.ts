@@ -238,6 +238,10 @@ export const BalanceSchema = z.object({
   cp: z.object({ atkWeight: z.number(), hpWeight: z.number() }),
   level: z.object({ statGrowth: z.number(), goldBase: z.number(), goldExp: z.number(), max: z.number().int() }),
   star: z.object({ mult: z.number(), max: z.number().int(), goldCost: z.array(z.number().int()) }),
+  fusion: z.object({
+    materials: z.number().int().min(2), // 재료 카드 수 (같은 등급, 여분만)
+    chance: z.record(MonsterRaritySchema, z.number().min(0).max(1)), // 재료 등급 → 성공 확률
+  }),
   capture: z.object({
     base: z.record(MonsterRaritySchema, z.number()),
     lureMult: z.number(),

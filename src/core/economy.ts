@@ -1,11 +1,13 @@
 /**
- * 경제 액션 — 레벨업·각성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
+ * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
 import { findArtifact, findMonster } from './effects';
+import { evaluateNewMilestones } from './expedition';
 import { enhanceCost, levelUpCost, starUpCost } from './formulas';
-import { canUnlockRegion, capturedCounts, nextPartySlotUnlock, regionFlagKey } from './progression';
-import { GameError, type SaveState } from './types';
+import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
+import { streamRng } from './rng';
+import { GameError, type CoreCtx, type SaveState } from './types';
 
 function spendGold(save: SaveState, amount: number): void {
   if (save.wallet.gold < amount) throw new GameError('gold-short', `골드가 부족합니다 (필요: ${amount})`);
@@ -46,6 +48,97 @@ export function awakenMonster(content: Content, save: SaveState, monsterId: stri
     if (entry) entry.awakened = true;
   }
   return next;
+}
+
+// ── 카드 합성 (GDD §4.5) ─────────────────────────────────────────────────────
+
+/** 재료: 종별 사용 장수 (합계 = balance.fusion.materials, 전부 같은 등급의 여분 카드) */
+export interface FusionInput {
+  materials: { monsterId: string; count: number }[];
+}
+
+export interface FusionResult {
+  save: SaveState;
+  success: boolean;
+  materialRarity: string;
+  resultMonsterId?: string; // 성공 시 획득 종
+  isNew?: boolean; // 도감 신규 등록 여부
+  newMilestones: string[];
+}
+
+/**
+ * 같은 등급 여분 카드 N장 → 다음 등급 랜덤 1종 도전.
+ * 각 종의 마지막 1장은 재료 불가 (여분 = count - 1). 실패 시 재료 소실.
+ * 결과 풀은 해금 지역의 다음 등급 전 종 (미보유면 도감 신규 등록 + 마일스톤 평가).
+ */
+export function fuseMonsters(content: Content, save: SaveState, input: FusionInput, ctx: CoreCtx): FusionResult {
+  const { fusion } = content.balance;
+  const totalUsed = input.materials.reduce((sum, m) => sum + m.count, 0);
+  if (totalUsed !== fusion.materials) {
+    throw new GameError('fusion-materials', `재료 카드는 정확히 ${fusion.materials}장이어야 합니다`);
+  }
+
+  const RARITY_NEXT: Record<string, string | null> = {
+    common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
+  };
+  let rarity: string | null = null;
+  for (const material of input.materials) {
+    if (material.count < 1) throw new GameError('fusion-materials', '재료 수량이 잘못되었습니다');
+    const owned = findMonster(save, material.monsterId);
+    const monster = content.monsters.get(material.monsterId);
+    if (!monster) throw new GameError('monster-def-missing', `콘텐츠에 없는 몬스터: ${material.monsterId}`);
+    if (owned.count - 1 < material.count) {
+      throw new GameError('fusion-spare', `${monster.name}의 여분 카드가 부족합니다 (마지막 1장은 재료가 될 수 없습니다)`);
+    }
+    if (rarity === null) rarity = monster.rarity;
+    else if (rarity !== monster.rarity) throw new GameError('fusion-rarity', '재료는 같은 등급이어야 합니다');
+  }
+  const nextRarity = RARITY_NEXT[rarity!];
+  if (!nextRarity) throw new GameError('fusion-legendary', '전설 카드는 합성할 수 없습니다');
+  const chance = fusion.chance[rarity as keyof typeof fusion.chance] ?? 0;
+
+  const next = structuredClone(save);
+  for (const material of input.materials) {
+    findMonster(next, material.monsterId).count -= material.count;
+  }
+
+  const rng = streamRng(ctx.newSeed(), 'fusion');
+  const success = rng() < chance;
+  if (!success) {
+    return { save: next, success: false, materialRarity: rarity!, newMilestones: [] };
+  }
+
+  // 결과 풀: 해금 지역의 다음 등급 전 종 (전 지역 미해금 케이스 방어로 전체 폴백)
+  let pool = content.monsterList.filter(
+    (m) => m.rarity === nextRarity && isRegionUnlocked(content, next, m.habitat),
+  );
+  if (pool.length === 0) pool = content.monsterList.filter((m) => m.rarity === nextRarity);
+  const result = pool[Math.floor(rng() * pool.length)]!;
+
+  const owned = next.roster.find((m) => m.monsterId === result.id);
+  const isNew = !owned;
+  if (owned) {
+    owned.count += 1;
+  } else {
+    next.roster.push({ monsterId: result.id, level: 1, star: 1, count: 1 });
+    const entry = next.codex[result.id] ?? { seen: false, captured: false, awakened: false };
+    entry.seen = true;
+    if (!entry.captured) {
+      entry.captured = true;
+      entry.firstCapturedAt = ctx.now();
+    }
+    next.codex[result.id] = entry;
+  }
+
+  const newMilestones = evaluateNewMilestones(content, next);
+  for (const id of newMilestones) {
+    next.milestones.push(id);
+    const milestone = content.milestones.find((m) => m.id === id)!;
+    next.wallet.gold += milestone.reward.gold ?? 0;
+    next.wallet.dust += milestone.reward.dust ?? 0;
+  }
+
+  return { save: next, success: true, materialRarity: rarity!, resultMonsterId: result.id, isNew, newMilestones };
 }
 
 export function craftRecipe(content: Content, save: SaveState, recipeId: string): SaveState {

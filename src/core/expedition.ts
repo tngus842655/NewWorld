@@ -686,7 +686,8 @@ export function claimExpedition(
   return { save: next, journal, newMilestones };
 }
 
-function evaluateNewMilestones(content: Content, save: SaveState): string[] {
+/** 아직 미달성인 마일스톤 중 새로 조건을 채운 것들 — 정산·합성 등 도감이 변한 직후 호출 */
+export function evaluateNewMilestones(content: Content, save: SaveState): string[] {
   const captured = Object.entries(save.codex).filter(([, entry]) => entry.captured);
   const total = captured.length;
   const byRegion = new Map<string, number>();

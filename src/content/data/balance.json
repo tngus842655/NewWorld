@@ -218,5 +218,15 @@
     ],
     "gold": 200,
     "lures": 1
+  },
+  "fusion": {
+    "materials": 2,
+    "chance": {
+      "common": 0.5,
+      "uncommon": 0.25,
+      "rare": 0.125,
+      "heroic": 0.0625,
+      "legendary": 0
+    }
   }
 }
