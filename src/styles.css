@@ -489,10 +489,9 @@ body.overlay-open .container { overflow: hidden; }
 
 /* ── 일지 ── */
 .sheet-journal { max-height: 92dvh; }
-/* 정산(순차 공개) 일지 — 처음부터 최대 높이로 열어 카드가 늘어나도 팝업·버튼이 안 움직인다 */
-.sheet-journal-live { height: 92dvh; }
-.sheet-journal-live .journal { flex: 1 1 auto; min-height: 0; }
-.sheet-journal-live .jtimeline { flex: 1 1 auto; min-height: 0; max-height: none; }
+/* 정산(순차 공개) 일지 — 타임라인을 상세 재열람과 같은 최대 높이(62dvh)로 처음부터 고정.
+   카드가 늘어나도 팝업 높이·버튼 위치가 안 움직인다 (2026-08-23 사용자) */
+.sheet-journal-live .jtimeline { height: 62dvh; }
 .journal { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .jheader { display: flex; justify-content: space-between; align-items: center; }
 .jtitle { font-weight: 700; }

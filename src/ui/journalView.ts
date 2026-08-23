@@ -192,7 +192,7 @@ export function journalView(journal: Journal, newMilestones: string[], opts: Jou
     onclick: () => {
       while (revealNext(false)); // 일괄 공개는 무음 — 전 카드 동시 재생 방지
       clearInterval(interval);
-      skip.remove();
+      skip.style.visibility = 'hidden'; // remove()는 헤더 높이가 줄어 시트가 출렁인다
     },
   }, '한번에 보기');
 

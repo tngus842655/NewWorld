@@ -56,7 +56,7 @@ function purchase(product: ShopProduct): void {
       toast(`🏺 [${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name} 획득!`, 'ok');
     } else if (granted.rushedExpeditionId) {
       playSfx('confirm');
-      toast('⏩ 원정대가 즉시 귀환했습니다 — 홈에서 일지를 여세요', 'ok');
+      toast('⏩ 원정대가 즉시 귀환했습니다', 'ok');
     } else if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약
       playSfx('treasure');
@@ -64,7 +64,7 @@ function purchase(product: ShopProduct): void {
     } else if (granted.hourglass) {
       const def = content.hourglasses.get(granted.hourglass.hourglassId)!;
       playSfx('treasure');
-      toast(`⏳ ${def.name} ×${granted.hourglass.count} 획득 — 원정 카드의 가속 버튼으로 사용`, 'ok');
+      toast(`⏳ ${def.name} ×${granted.hourglass.count} 획득!`, 'ok');
     } else {
       const parts = [
         granted.gold ? `골드 ${fmtGold(granted.gold)}` : null,
