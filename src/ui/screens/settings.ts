@@ -3,7 +3,7 @@
  * 캠프에 섞여 있던 설정을 분리해 캠프는 "성장·제작"에 집중시킨다.
  */
 import { exportSave, importSave } from '../../state/save';
-import { resetSave, save, toggleSound } from '../../state/store';
+import { resetSave, save, setNickname, toggleSound } from '../../state/store';
 import { askConfirm, askText } from '../dialog';
 import { el, toast } from '../kit';
 import { overlay } from '../router';
@@ -15,6 +15,19 @@ export function renderSettings(): HTMLElement {
   return el('div.screen', {},
     el('h2.section-title', {}, '게임'),
     el('div.card', {},
+      el('div.list-row', {},
+        el('span', {}, `👤 닉네임 — ${state.profile.nickname}`),
+        el('button.btn.btn-ghost', {
+          onclick: () => {
+            void askText({
+              title: '닉네임 변경',
+              message: '랭킹에 표시될 이름 (2~12자)',
+              placeholder: state.profile.nickname,
+              confirmLabel: '변경',
+            }).then((text) => { if (text) setNickname(text); });
+          },
+        }, '변경'),
+      ),
       el('div.list-row', {},
         el('span', {}, '효과음'),
         el('button.btn.btn-ghost', {

@@ -7,8 +7,7 @@ import { scoreBreakdown } from '../core/score';
 import { taskCounterValue } from '../core/tasks';
 import { fetchBoard, submitScore, type BoardRow, type RankCategory } from '../state/ranking';
 import { signal } from '../state/signal';
-import { save, setNickname } from '../state/store';
-import { askText } from './dialog';
+import { save } from '../state/store';
 import { el, fmtGold } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
@@ -80,22 +79,8 @@ export function rankingSheet(): HTMLElement {
               : null,
           );
 
+  // 닉네임 변경은 설정 탭으로 — 여기는 순위 확인 전용 (2026-08-23 사용자)
   const shell = sheetShell('🏆 랭킹',
-    el('div.card.list-row', {},
-      el('span', {}, `👤 ${state.profile.nickname}`),
-      el('button.btn.btn-ghost', {
-        onclick: () => {
-          void askText({
-            title: '닉네임 변경',
-            message: '랭킹에 표시될 이름 (2~12자)',
-            placeholder: state.profile.nickname,
-            confirmLabel: '변경',
-          }).then((text) => {
-            if (text && setNickname(text)) void loadBoard();
-          });
-        },
-      }, '변경'),
-    ),
     el('div.chips-wrap', {}, ...CATEGORIES.map((c) =>
       el(`button.chip${category === c ? '.active' : ''}`, {
         onclick: () => {
@@ -105,7 +90,6 @@ export function rankingSheet(): HTMLElement {
         },
       }, CATEGORY_LABEL[c]))),
     boardBody,
-    el('div.small.muted.center', {}, '점수는 도감·육성·원정·과업에서 자동 계산 · 종합 = 원정+몬스터+유물+과업×2+전투력÷10'),
   );
   shell.classList.add('sheet-full'); // 팝업이 아닌 전체 화면 (2026-08-23 사용자)
   return shell;
