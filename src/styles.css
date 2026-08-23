@@ -231,7 +231,8 @@ body {
 .codex-summary { display: flex; justify-content: space-between; align-items: baseline; }
 .codex-region { font-size: 13px; color: var(--muted); margin: 12px 2px 6px; }
 .roster-unknown { opacity: 0.4; flex: none; }
-.milestone-reward { text-align: right; max-width: 45%; flex: none; }
+.milestone-reward { text-align: right; max-width: 50%; flex: none; }
+.milestone-reward .small { white-space: nowrap; }
 .codex-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .codex-cell { cursor: pointer; }
 .codex-cell.unknown { cursor: default; }

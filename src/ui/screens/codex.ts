@@ -141,8 +141,8 @@ export function renderCodex(): HTMLElement {
       milestone.reward.gold ? `골드 ${fmtGold(milestone.reward.gold)}` : null,
       milestone.reward.dust ? `가루 ${milestone.reward.dust}` : null,
       ...(milestone.reward.effects ?? []).map((effect) => `영구 ${describeEffect(effect)}`),
-    ].filter(Boolean).join(' · ');
-    // 왼쪽 = 이름 + 달성 내용(진행), 오른쪽 = 보상 (2026-08-23 위치 교환)
+    ].filter((bit): bit is string => bit !== null);
+    // 왼쪽 = 이름 + 달성 내용(진행), 오른쪽 = 보상 항목별 한 줄씩 (2026-08-23)
     return el(`div.list-row${done ? '.done' : ''}`, {},
       el('div', {},
         el('div', {}, `${done ? '🏅' : '⬜'} ${milestone.name}`),
@@ -150,7 +150,9 @@ export function renderCodex(): HTMLElement {
           ? describeCondition(milestone.condition)
           : `${describeCondition(milestone.condition)} (${have}/${need})`),
       ),
-      rewardBits ? el('span.muted.small.milestone-reward', {}, rewardBits) : null,
+      rewardBits.length > 0
+        ? el('div.milestone-reward', {}, ...rewardBits.map((bit) => el('div.muted.small', {}, bit)))
+        : null,
     );
   });
 
