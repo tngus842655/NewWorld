@@ -53,6 +53,11 @@ export interface CodexEntry {
   firstCapturedAt?: number;
 }
 
+/** 유물 도감 (v7) — 획득 이력. 마지막 개를 분해해 종이 사라져도 도감에는 남는다 */
+export interface ArtifactCodexEntry {
+  obtained: boolean;
+}
+
 // ── 누적 통계 (랭킹·반복 과업의 원천 — v3) ───────────────────────────────────
 export interface LifetimeStats {
   expeditions: Record<Tier, number>; // 정산 완료 수 (전멸 포함)
@@ -72,7 +77,7 @@ export interface ShopState {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 6; // v6 (2026-08-23): 유물 종 단위 통합 (개수·공통 강화·부옵션 폐지). migrations.ts
+  version: 7; // v7 (2026-08-23): 유물 도감(획득 이력). v6: 유물 종 단위 통합. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -93,6 +98,7 @@ export interface SaveState {
   artifacts: OwnedArtifact[];
   teams: TeamLoadout[];
   codex: Record<string, CodexEntry>;
+  artifactCodex: Record<string, ArtifactCodexEntry>; // itemId → 획득 이력 (v7)
   milestones: string[]; // 달성 id 목록 (버프는 로드 시 재계산)
   stats: LifetimeStats;
   tasks: Record<string, number>; // 반복 과업 taskId → 보상 수령 완료 횟수

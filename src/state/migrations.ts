@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 6;
+export const CURRENT_SAVE_VERSION = 7;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -150,12 +150,24 @@ const migrateV5toV6: Migration = (raw) => {
   return data;
 };
 
+/** v6 → v7 (2026-08-23): 유물 도감(획득 이력) — 현재 보유 종을 획득 이력으로 시드 */
+const migrateV6toV7: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  const artifactCodex: Record<string, { obtained: boolean }> = {};
+  for (const owned of data['artifacts'] ?? []) {
+    if (owned?.itemId) artifactCodex[owned.itemId] = { obtained: true };
+  }
+  data['artifactCodex'] = artifactCodex;
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
   3: migrateV3toV4,
   4: migrateV4toV5,
   5: migrateV5toV6,
+  6: migrateV6toV7,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

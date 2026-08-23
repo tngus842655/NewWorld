@@ -46,7 +46,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(6); // v1 → … → v6 체인 끝까지
+    expect(migrated.version).toBe(7); // v1 → … → v7 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -127,5 +127,15 @@ describe('세이브 마이그레이션 v5 → v6 (유물 종 단위)', () => {
     expect(migrated.teams[0]!.artifactIds).toEqual(['rusty-saber', 'moss-charm']); // a1·a2 → rusty-saber 하나로
     expect((migrated.teams[0] as unknown as Record<string, unknown>)['artifactUids']).toBeUndefined();
     expect(migrated.expeditions[0]!.artifactIds).toEqual(['rusty-saber']);
+  });
+});
+
+describe('세이브 마이그레이션 v6 → v7 (유물 도감)', () => {
+  it('현재 보유 종을 획득 이력으로 시드한다', () => {
+    const migrated = migrateSave(v1Save())!;
+    expect(migrated.artifactCodex).toEqual({
+      'rusty-saber': { obtained: true },
+      'moss-charm': { obtained: true },
+    });
   });
 });

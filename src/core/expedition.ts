@@ -11,6 +11,7 @@ import {
   collectTeamEffects,
   findArtifact,
   findMonster,
+  grantArtifact,
   query,
   sumDamageReduce,
   sumOf,
@@ -676,12 +677,8 @@ export function claimExpedition(
     if (owned) owned.count += count;
   }
 
-  // 유물 — 종 단위 누적 (v6): 보유 종이면 개수 +1, 신규면 등록
-  for (const drop of journal.totals.artifacts) {
-    const ownedArtifact = next.artifacts.find((a) => a.itemId === drop.itemId);
-    if (ownedArtifact) ownedArtifact.count += 1;
-    else next.artifacts.push({ itemId: drop.itemId, enhance: 0, count: 1 });
-  }
+  // 유물 — 종 단위 누적 (v6): 보유 종이면 개수 +1, 신규면 등록 + 도감 기록
+  for (const drop of journal.totals.artifacts) grantArtifact(next, drop.itemId);
   if (journal.totals.artifacts.length > 0) next.profile.flags['firstArtifactDropped'] = true;
   if (journal.entries.some((entry) => entry.type === 'encounter' && entry.capture?.success)) {
     next.profile.flags['firstCaptured'] = true;

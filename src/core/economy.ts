@@ -3,7 +3,7 @@
  */
 import type { Content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
-import { findArtifact, findMonster } from './effects';
+import { findArtifact, findMonster, grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { artifactEnhanceCost, monsterLevelUpCost, monsterStarUpCost } from './formulas';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock, regionFlagKey } from './progression';
@@ -206,13 +206,8 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   }
 
   const drop = rollArtifactOfRarity(content, rng, nextRarity);
-  const owned = next.artifacts.find((a) => a.itemId === drop.itemId);
-  const isNew = !owned;
-  if (owned) {
-    owned.count += 1;
-  } else {
-    next.artifacts.push({ itemId: drop.itemId, enhance: 0, count: 1 });
-  }
+  const isNew = !next.artifacts.some((a) => a.itemId === drop.itemId);
+  grantArtifact(next, drop.itemId);
   settleTasks(content, next);
   return { save: next, success: true, materialRarity: rarity!, resultItemId: drop.itemId, isNew };
 }

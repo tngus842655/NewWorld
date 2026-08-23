@@ -165,6 +165,14 @@ export function findArtifact(save: SaveState, itemId: string): OwnedArtifact {
   return owned;
 }
 
+/** 유물 지급 (제자리 변경) — 보유 종이면 개수 +1, 신규면 등록. 도감 획득 이력(v7)도 기록한다. */
+export function grantArtifact(save: SaveState, itemId: string): void {
+  const owned = save.artifacts.find((a) => a.itemId === itemId);
+  if (owned) owned.count += 1;
+  else save.artifacts.push({ itemId, enhance: 0, count: 1 });
+  save.artifactCodex[itemId] = { obtained: true };
+}
+
 export function findMonster(save: SaveState, monsterId: string): OwnedMonster {
   const owned = save.roster.find((m) => m.monsterId === monsterId);
   if (!owned) throw new GameError('monster-not-found', `보유하지 않은 몬스터: ${monsterId}`);

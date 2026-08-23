@@ -5,6 +5,7 @@
 import type { Content } from '../content';
 import type { ArtifactRarity, MonsterRarity, ShopProduct } from '../content/schema';
 import { RARITIES } from '../content/schema';
+import { grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { isRegionUnlocked } from './progression';
 import { pickWeighted, streamRng } from './rng';
@@ -143,9 +144,7 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     const candidates = RARITIES.filter((rarity) => (table[rarity] ?? 0) > 0);
     const rarity: ArtifactRarity = pickWeighted(rng, candidates, (r) => table[r] ?? 0);
     const drop = rollArtifactOfRarity(content, rng, rarity);
-    const ownedArtifact = next.artifacts.find((a) => a.itemId === drop.itemId);
-    if (ownedArtifact) ownedArtifact.count += 1;
-    else next.artifacts.push({ itemId: drop.itemId, enhance: 0, count: 1 });
+    grantArtifact(next, drop.itemId);
     granted.artifactItemId = drop.itemId;
   } else {
     // rush — 대상 미지정 시 남은 시간이 가장 긴 원정 (가치 최대 기본값)

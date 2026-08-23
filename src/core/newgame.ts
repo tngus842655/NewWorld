@@ -31,7 +31,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
 
   const playerId = ctx.newUid() + ctx.newUid(); // 랭킹용 익명 신원 (추후 구글 로그인 연동 전까지)
   return {
-    version: 6,
+    version: 7,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -59,6 +59,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
       },
     ],
     codex,
+    artifactCodex: {},
     milestones: [],
     stats: emptyStats(),
     tasks: {},

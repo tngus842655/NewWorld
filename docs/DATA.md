@@ -99,7 +99,7 @@
   "rarity": "legendary",        // common | rare | heroic | legendary
   "set": null,                  // 세트 id 또는 null
   "main": { "stat": "atkMult", "base": 0.18, "perEnhance": 0.03 },
-  "substatCount": 3,            // 획득 시 substatPool에서 중복 없이 롤 (등급별 0~3)
+                                // 부옵션 폐지 (2026-08-23 v6) — 유물은 종 단위, 개체 롤 없음
   "unique": [                   // 고유 능력 (영웅=조건부 옵션 1, 전설=본격 능력)
     { "hook": "beforeEncounter",
       "when": { "encounterIndex": 0, "encounterKind": "monster" },
@@ -145,7 +145,6 @@ Action   = { kind: "statMult", stat, value } | { kind: "captureAdd", value }
   "firstTreasurePity": true,          // 계정 첫 보물 조우는 유물 확정
   "enhance": { "max": 5, "dustCost": [10, 25, 50, 90, 150] },
   "dustPerSalvage": { "common": 5, "rare": 12, "heroic": 30, "legendary": 80 },
-  "substatPool": [ { "stat": "atkMult", "min": 0.03, "max": 0.08, "weight": 20 } /* ... */ ],
   "effectCaps": { "rewardMult": 3.0, "timeMultMin": 0.5, "captureMultCap": 4.0 }
 }
 ```
@@ -159,8 +158,8 @@ interface SaveState {
   wallet: { gold: number; materials: Record<MaterialId, number>; essence: Record<MonsterId, number>; lures: number; dust: number };
   roster: OwnedMonster[];          // { uid, monsterId, level, star } — HP는 원정 내 파티 풀 개념이라 저장 안 함
                                    //   "원정 중" 여부는 expeditions의 partyUids 스냅샷에서 파생
-  artifacts: OwnedArtifact[];      // { uid, itemId, enhance, substats: {stat,value}[], teamId? }
-  teams: TeamLoadout[];            // { id, name, partyUids, artifactUids } — 파견 프리셋 (해금 팀 수만큼)
+  artifacts: OwnedArtifact[];      // v6: { itemId, enhance, count } — 종 단위 (uid·부옵션 폐지)
+  teams: TeamLoadout[];            // { id, name, partyIds, artifactIds } — 파견 프리셋 (해금 팀 수만큼)
   codex: Record<MonsterId, { seen: boolean; captured: boolean; awakened: boolean; firstCapturedAt?: number }>;
   milestones: MilestoneId[];       // 달성 목록 (버프는 로드 시 재계산 — 저장 안 함)
   expeditions: ActiveExpedition[]; // { id, regionId, tier, partyUids, artifactUids, seed, startedAt,
