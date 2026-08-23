@@ -5,6 +5,7 @@ import { effect } from '../state/signal';
 import { save } from '../state/store';
 import { el, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
+import { openRankingBoard } from './rankingSheets';
 import { overlay, tab, type Overlay, type Tab } from './router';
 import { playSfx } from './sfx';
 import { renderCamp } from './screens/camp';
@@ -41,7 +42,15 @@ export function mountApp(root: HTMLElement): void {
   effect(() => {
     const state = save();
     header.replaceChildren(
-      el('div.appbar-title', {}, 'NewWorld'),
+      // 타이틀 대신 랭킹 진입 아이콘 (2026-08-23 사용자) — 전체 화면 랭킹으로
+      el('button.appbar-rank', {
+        title: '랭킹 보기',
+        onclick: () => {
+          playSfx('tap');
+          openRankingBoard();
+          overlay.set({ kind: 'ranking' });
+        },
+      }, '🏆'),
       el('div.appbar-wallet', {
         title: '재화 안내 보기',
         onclick: () => overlay.set({ kind: 'help' }),

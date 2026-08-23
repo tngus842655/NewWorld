@@ -48,11 +48,17 @@ export function rankingSheet(): HTMLElement {
   const scores = scoreBreakdown(content, state);
   const current = board();
   const category = boardCategory();
+  const myScore: Record<RankCategory, number> = {
+    total: scores.total, expedition: scores.expedition, monster: scores.monster,
+    artifact: scores.artifact, task: scores.task, power: scores.power,
+  };
 
-  const myRows: [string, number][] = [
-    ['🏆 종합', scores.total], ['🧭 원정', scores.expedition], ['📖 몬스터', scores.monster],
-    ['💎 유물', scores.artifact], ['📋 과업', scores.task], ['⚔️ 전투력', scores.power],
-  ];
+  const rankRow = (rank: number | null, name: string, score: number, me: boolean) =>
+    el(`div.rank-row${me ? '.rank-me' : ''}`, {},
+      el('span.rank-no', {}, rank === null ? '—' : `${rank}`),
+      el('span.rank-name', {}, name),
+      el('strong.rank-score', {}, fmtGold(score)),
+    );
 
   const boardBody =
     current.phase === 'loading'
@@ -60,24 +66,21 @@ export function rankingSheet(): HTMLElement {
       : current.phase === 'error'
         ? el('div.center.stack-sm', {},
             el('span.muted.small', {}, '지금은 순위를 불러올 수 없습니다 (오프라인이어도 게임은 계속됩니다)'),
+            rankRow(null, `${state.profile.nickname} (내 점수)`, myScore[category], true),
             el('button.btn.btn-ghost', { onclick: () => void loadBoard() }, '다시 시도'),
           )
-        : current.rows.length === 0
-          ? el('div.center.muted.small', {}, '아직 등록된 개척자가 없습니다 — 첫 주인공이 되어보세요!')
-          : el('div.stack-sm', {},
-              ...current.rows.map((row, index) =>
-                el(`div.rank-row${row.player_id === state.profile.playerId ? '.rank-me' : ''}`, {},
-                  el('span.rank-no', {}, `${index + 1}`),
-                  el('span.rank-name', {}, row.nickname),
-                  el('strong.rank-score', {}, fmtGold(row[category])),
-                ),
-              ),
-              current.myRank !== null && current.myRank > current.rows.length
-                ? el('div.center.muted.small', {}, `내 순위: ${current.myRank}위`)
-                : null,
-            );
+        : el('div.stack-sm', {},
+            ...(current.rows.length === 0
+              ? [el('div.center.muted.small', {}, '아직 등록된 개척자가 없습니다 — 첫 주인공이 되어보세요!')]
+              : current.rows.map((row, index) =>
+                  rankRow(index + 1, row.nickname, row[category], row.player_id === state.profile.playerId))),
+            // 상위 50 밖이면 내 행을 하단에 강조로
+            current.rows.every((row) => row.player_id !== state.profile.playerId)
+              ? rankRow(current.myRank, state.profile.nickname, myScore[category], true)
+              : null,
+          );
 
-  return sheetShell('랭킹',
+  const shell = sheetShell('🏆 랭킹',
     el('div.card.list-row', {},
       el('span', {}, `👤 ${state.profile.nickname}`),
       el('button.btn.btn-ghost', {
@@ -93,13 +96,6 @@ export function rankingSheet(): HTMLElement {
         },
       }, '변경'),
     ),
-    el('div.card.stack-sm', {},
-      el('div.odds-title', {}, '내 점수'),
-      ...myRows.map(([label, value]) =>
-        el('div.list-row', {}, el('span.small', {}, label), el('strong', {}, fmtGold(value)))),
-      el('div.small.muted', {}, '점수는 도감·육성·원정·과업에서 자동 계산됩니다 · 종합 = 원정+몬스터+유물+과업×2+전투력÷10'),
-    ),
-    el('div.odds-title', {}, '리더보드'),
     el('div.chips-wrap', {}, ...CATEGORIES.map((c) =>
       el(`button.chip${category === c ? '.active' : ''}`, {
         onclick: () => {
@@ -109,7 +105,10 @@ export function rankingSheet(): HTMLElement {
         },
       }, CATEGORY_LABEL[c]))),
     boardBody,
+    el('div.small.muted.center', {}, '점수는 도감·육성·원정·과업에서 자동 계산 · 종합 = 원정+몬스터+유물+과업×2+전투력÷10'),
   );
+  shell.classList.add('sheet-full'); // 팝업이 아닌 전체 화면 (2026-08-23 사용자)
+  return shell;
 }
 
 const COUNTER_LABEL = { expedition: '원정 완료', capture: '몬스터 포획', craft: '미끼 제작', fusion: '합성 시도' } as const;

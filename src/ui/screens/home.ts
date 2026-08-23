@@ -4,12 +4,10 @@
  */
 import { content } from '../../content';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
-import { scoreBreakdown } from '../../core/score';
 import * as clock from '../../state/clock';
 import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
 import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
-import { openRankingBoard } from '../rankingSheets';
 import { overlay, tab } from '../router';
 
 function expeditionCard(expeditionId: string): HTMLElement {
@@ -156,20 +154,11 @@ export function renderHome(): HTMLElement {
       : el('div.stack', {}, ...running.map((e) => expeditionCard(e.id))),
     nextGoalCard(),
     (() => {
-      // 랭킹·반복 과업 진입 (GDD §9.3)
-      const total = scoreBreakdown(content, state).total;
+      // 반복 과업 진입 (GDD §9.3) — 랭킹은 상단바 🏆 아이콘으로 이동 (2026-08-23 사용자)
       const taskTimes = content.tasks.reduce((sum, task) => sum + (state.tasks[task.id] ?? 0), 0);
-      return el('div.card', {},
-        el('div.list-row', {},
-          el('span', {}, `🏆 랭킹 — 종합 ${fmtGold(total)}점`),
-          el('button.btn.btn-ghost', {
-            onclick: () => { openRankingBoard(); overlay.set({ kind: 'ranking' }); },
-          }, '보기'),
-        ),
-        el('div.list-row', {},
-          el('span', {}, `📋 반복 과업 — 달성 ${taskTimes}회`),
-          el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
-        ),
+      return el('div.card.list-row', {},
+        el('span', {}, `📋 반복 과업 — 달성 ${taskTimes}회`),
+        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
       );
     })(),
     el('h2.section-title', {}, '최근 일지'),
