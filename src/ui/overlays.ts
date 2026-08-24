@@ -329,16 +329,34 @@ function spawnOddsByRarity(region: Region, rareWeightMult: number): Map<MonsterR
   return odds;
 }
 
-/** 등급색 게이지 바 — 확률을 한눈에 비교할 수 있게 (유저 공개용 가독성) */
+/** 등급색 게이지 바 — 확률을 한눈에 비교할 수 있게 (유저 공개용 가독성). 행 왼쪽에 등급색 테두리. */
 function pctBarRow(label: HTMLElement | string, ratio: number, colorVar: string): HTMLElement {
   const fill = el('div.pct-fill');
   fill.style.width = `${Math.max(2, Math.min(100, ratio * 100))}%`;
   fill.style.background = `var(${colorVar})`;
-  return el('div.pct-row', {},
+  const row = el('div.pct-row.edge', {},
     el('div.pct-label', {}, label),
     el('div.pct-track', {}, fill),
     el('strong.pct-value', {}, pct1(ratio)),
   );
+  row.style.setProperty('--edge-color', `var(${colorVar})`);
+  return row;
+}
+
+/** 칩 선택기 — 목록 중 하나를 보여주는 로컬 토글 (시트 내부 전용, 시그널 불필요) */
+function chipPicker<T>(items: { key: T; label: string; view: HTMLElement }[], initial = 0): HTMLElement {
+  const panels = items.map((item, i) => {
+    item.view.classList.toggle('hidden', i !== initial);
+    return item.view;
+  });
+  const chips = items.map((item, i) =>
+    el(`button.chip${i === initial ? '.active' : ''}`, {
+      onclick: () => {
+        chips.forEach((c, j) => c.classList.toggle('active', j === i));
+        panels.forEach((p, j) => p.classList.toggle('hidden', j !== i));
+      },
+    }, item.label));
+  return el('div.stack-sm', {}, el('div.chips-wrap', {}, ...chips), ...panels);
 }
 
 /**
@@ -353,9 +371,9 @@ function oddsSheet(): HTMLElement {
   const tierName = (tier: 'scout' | 'standard' | 'deep') => TIER_LABEL[tier].split(' ')[0];
   const rarityTag = (rarity: MonsterRarity) => el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]);
 
-  // 1) 포획 확률 — 등급별 게이지
+  // ── 탭 1: 몬스터 — 포획 + 지역별 등장 (지역은 칩으로 1개씩) ──
   const captureCard = el('div.card.stack-sm', {},
-    el('div.odds-title', {}, '🎯 몬스터 포획 확률'),
+    el('div.odds-title', {}, '🎯 포획 확률'),
     el('div.muted.small', {}, '조우에서 승리하면 등급별 기본 확률로 포획을 시도합니다.'),
     ...rarities.map((rarity) => pctBarRow(rarityTag(rarity), balance.capture.base[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
@@ -365,9 +383,40 @@ function oddsSheet(): HTMLElement {
     ),
   );
 
-  // 2) 카드 합성 — 등급 전환별 성공 확률
-  const fusionCard = el('div.card.stack-sm', {},
-    el('div.odds-title', {}, '🧬 카드 합성 성공 확률'),
+  const regionViews = content.regionList.map((region) => {
+    const unlocked = isRegionUnlocked(content, state, region.id);
+    const base = spawnOddsByRarity(region, 1);
+    const deep = spawnOddsByRarity(region, deepMult);
+    const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
+    return {
+      key: region.id,
+      label: `${unlocked ? '' : '🔒 '}${region.icon} ${region.name}`,
+      view: el('div.stack-sm', {},
+        el('div.odds-grid.odds-head', {},
+          el('span', {}, '등급'), el('span', {}, `${tierName('scout')}·${tierName('standard')}`), el('span', {}, tierName('deep')),
+        ),
+        ...rarities.filter((rarity) => base.has(rarity)).map((rarity) =>
+          el('div.odds-grid', {},
+            rarityTag(rarity),
+            el('span', {}, pct1(base.get(rarity) ?? 0)),
+            el('span', {}, pct1(deep.get(rarity) ?? 0)),
+          ),
+        ),
+        el('div.small.muted', {},
+          `⭐ 전설 (${legendNames}) [${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
+      ),
+    };
+  });
+  const firstUnlocked = Math.max(0, content.regionList.findIndex((region) => isRegionUnlocked(content, state, region.id)));
+  const regionCard = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🗺️ 지역별 등장 확률'),
+    chipPicker(regionViews, firstUnlocked),
+  );
+  const monsterPanel = el('div.stack-sm', {}, captureCard, regionCard);
+
+  // ── 탭 2: 합성 — 카드·유물 공통 확률 ──
+  const fusionPanel = el('div.card.stack-sm', {},
+    el('div.odds-title', {}, '🧬 합성 성공 확률'),
     el('div.muted.small', {}, `같은 등급 여분 카드 ${balance.fusion.materials}장으로 다음 등급 랜덤 1종에 도전합니다.`),
     ...(['common', 'uncommon', 'rare', 'heroic'] as const).map((rarity) => {
       const nextRarity = FUSION_NEXT[rarity]!;
@@ -386,33 +435,10 @@ function oddsSheet(): HTMLElement {
     ),
   );
 
-  // 3) 지역별 몬스터 등급 출현 확률 (기본 / 심층)
-  const regionCards = content.regionList.map((region) => {
-    const unlocked = isRegionUnlocked(content, state, region.id);
-    const base = spawnOddsByRarity(region, 1);
-    const deep = spawnOddsByRarity(region, deepMult);
-    const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
-    return el('div.card.stack-sm', {},
-      el('div.odds-title', {}, `${unlocked ? '' : '🔒 '}${region.icon} ${region.name}`),
-      el('div.odds-grid.odds-head', {},
-        el('span', {}, '등급'), el('span', {}, `${tierName('scout')}·${tierName('standard')}`), el('span', {}, tierName('deep')),
-      ),
-      ...rarities.filter((rarity) => base.has(rarity)).map((rarity) =>
-        el('div.odds-grid', {},
-          rarityTag(rarity),
-          el('span', {}, pct1(base.get(rarity) ?? 0)),
-          el('span', {}, pct1(deep.get(rarity) ?? 0)),
-        ),
-      ),
-      el('div.small.muted', {},
-        `⭐ 전설 (${legendNames}) [${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
-    );
-  });
-
-  // 4) 유물 등급 확률 + 발굴 기회
+  // ── 탭 3: 유물 — 발굴 등급 확률 + 발굴 기회 ──
   const artifactRarities = Object.keys(ARTIFACT_RARITY_LABEL) as (keyof typeof ARTIFACT_RARITY_LABEL)[];
   const { sources } = balance.artifacts;
-  const artifactOddsCard = el('div.card.stack-sm', {},
+  const artifactPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '💎 유물 등급 확률'),
     el('div.muted.small', {}, '유물이 발굴될 때 등급이 아래 확률로 결정됩니다.'),
     ...artifactRarities
@@ -426,30 +452,43 @@ function oddsSheet(): HTMLElement {
     ),
   );
 
-  // 5) 상점 뽑기 확률 — 확률형 아이템 고지 (GDD §9.4)
+  // ── 탭 4: 상점 뽑기 — 확률형 아이템 고지 (GDD §9.4), 상품은 칩으로 1개씩 ──
   const { shop } = balance;
-  const gachaSection = (title: string, table: Record<string, number>, tags: (r: MonsterRarity) => HTMLElement) => [
-    el('div.small', {}, title),
-    ...rarities.filter((rarity) => (table[rarity] ?? 0) > 0).map((rarity) =>
-      pctBarRow(tags(rarity), table[rarity] ?? 0, `--rar-${rarity}`)),
-  ];
-  const gachaCard = el('div.card.stack-sm', {},
+  const gachaView = (table: Record<string, number>) =>
+    el('div.stack-sm', {}, ...rarities.filter((rarity) => (table[rarity] ?? 0) > 0).map((rarity) =>
+      pctBarRow(rarityTag(rarity), table[rarity] ?? 0, `--rar-${rarity}`)));
+  const shopPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🏪 상점 뽑기 확률'),
     el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다.'),
-    ...gachaSection('🃏 몬스터 뽑기 (골드 상점)', shop.monsterGacha.goldNormal!, rarityTag),
-    ...gachaSection('🃏 몬스터 뽑기 (다이아 상점)', shop.monsterGacha.normal!, rarityTag),
-    ...gachaSection('🌟 고급 몬스터 뽑기', shop.monsterGacha.premium!, rarityTag),
-    ...gachaSection('🏺 유물 발굴', shop.artifactGacha.standard!, rarityTag),
-    ...gachaSection('🔮 고급 유물 발굴', shop.artifactGacha.premium!, rarityTag),
+    chipPicker([
+      { key: 'goldNormal', label: '🃏 뽑기 [골드]', view: gachaView(shop.monsterGacha.goldNormal!) },
+      { key: 'normal', label: '🃏 뽑기 [다이아]', view: gachaView(shop.monsterGacha.normal!) },
+      { key: 'premium', label: '🌟 고급 뽑기', view: gachaView(shop.monsterGacha.premium!) },
+      { key: 'standard', label: '🏺 유물 발굴', view: gachaView(shop.artifactGacha.standard!) },
+      { key: 'artPremium', label: '🔮 고급 발굴', view: gachaView(shop.artifactGacha.premium!) },
+    ]),
   );
+
+  // ── 탭 바 — 모바일 한 화면 분량으로 분할 (2026-08-24) ──
+  const panels = [
+    { label: '몬스터', view: monsterPanel },
+    { label: '합성', view: fusionPanel },
+    { label: '유물', view: artifactPanel },
+    { label: '상점 뽑기', view: shopPanel },
+  ];
+  panels.forEach((panel, i) => panel.view.classList.toggle('hidden', i !== 0));
+  const tabButtons = panels.map((panel, i) =>
+    el(`button.big-tab${i === 0 ? '.active' : ''}`, {
+      onclick: () => {
+        tabButtons.forEach((b, j) => b.classList.toggle('active', j === i));
+        panels.forEach((p, j) => p.view.classList.toggle('hidden', j !== i));
+      },
+    }, panel.label));
 
   return sheetShell('확률 정보',
     el('div.muted.small', {}, '아래 확률은 게임 데이터의 실제 값 그대로입니다. 모든 판정은 파견 시 확정된 시드에서 결정됩니다.'),
-    captureCard,
-    fusionCard,
-    ...regionCards,
-    artifactOddsCard,
-    gachaCard,
+    el('div.big-tabs', {}, ...tabButtons),
+    ...panels.map((panel) => panel.view),
   );
 }
 
