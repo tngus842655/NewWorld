@@ -558,48 +558,64 @@ function elementInfoSheet(): HTMLElement {
  * 전체 몬스터 데이터 뷰 — 도감 진행과 무관하게 104종 전부, 등급·속성·종족·기본 스탯.
  * 추후 관리자 전용 메뉴로 전환 예정 (지금은 설정에서 진입).
  */
-const RARITY_DESC = ['legendary', 'heroic', 'rare', 'uncommon', 'common'] as const;
+const RARITY_ASC = ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const;
+
+/** 등급 필터 칩('전체' + 등장 등급) + 등급 구간 목록 — 정보 시트 공용. 칩이 구간 표시/숨김을 토글한다. */
+function rarityFilterSections(sections: { rarity: string; view: HTMLElement }[]): HTMLElement[] {
+  const filters: { label: string; match: string | null }[] = [
+    { label: '전체', match: null },
+    ...sections.map((section) => ({ label: MONSTER_RARITY_LABEL[section.rarity as MonsterRarity], match: section.rarity })),
+  ];
+  const chips = filters.map((filter, i) =>
+    el(`button.chip${i === 0 ? '.active' : ''}`, {
+      onclick: () => {
+        chips.forEach((c, j) => c.classList.toggle('active', j === i));
+        sections.forEach((section) => section.view.classList.toggle('hidden', filter.match !== null && section.rarity !== filter.match));
+      },
+    }, filter.label));
+  return [el('div.chips-wrap', {}, ...chips), ...sections.map((section) => section.view)];
+}
 
 function monsterInfoSheet(): HTMLElement {
   const { balance } = content;
   const regionPanels = content.regionList.map((region) => {
     const natives = content.monsterList.filter((monster) => monster.habitat === region.id);
-    // 등급 내림차순(전설→일반) 구간별로 묶어 표시
-    const groups = RARITY_DESC.flatMap((rarity) => {
+    // 등급 오름차순(일반→전설) 구간 — 필터 칩이 구간 단위로 표시/숨김을 토글한다
+    const sections = RARITY_ASC.flatMap((rarity) => {
       const members = natives.filter((monster) => monster.rarity === rarity);
       if (members.length === 0) return [];
-      return [
-        el('div.info-group-head', {},
-          el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
-          el('span.muted.small', {}, `${members.length}종`),
-        ),
-        ...members.map((monster) =>
-          el('div.info-row', {},
-            monsterIcon(monster.id),
-            el('div.info-body', {},
-              el('div.info-name', {},
-                monster.name,
-                el('span.mchip-elems', { title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}` },
-                  ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
+      return [{
+        rarity,
+        view: el('div', {},
+          el('div.info-group-head', {},
+            el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]),
+            el('span.muted.small', {}, `${members.length}종`),
+          ),
+          ...members.map((monster) =>
+            el('div.info-row', {},
+              monsterIcon(monster.id),
+              el('div.info-body', {},
+                el('div.info-name', {},
+                  monster.name,
+                  el('span.mchip-elems', { title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}` },
+                    ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
+                ),
+                el('div.muted.small', {}, `“${monster.flavor}”`),
               ),
-              el('div.muted.small', {}, `“${monster.flavor}”`),
-            ),
-            el('div.info-stats', {},
-              el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity]),
-              el('div.small', {}, `공 ${monster.baseAtk} · 생 ${monster.baseHp}`),
-              el('div.small.muted', {}, `CP ${Math.round(monsterBaseCp(monster, balance))}`),
+              el('div.info-stats', {},
+                el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity]),
+                el('div.small', {}, `공 ${monster.baseAtk} · 생 ${monster.baseHp}`),
+                el('div.small.muted', {}, `CP ${Math.round(monsterBaseCp(monster, balance))}`),
+              ),
             ),
           ),
         ),
-      ];
+      }];
     });
     return {
       // 탭 폭이 좁아 지역명 마지막 어절만 (물안개 해안 → 해안)
       label: `${region.icon} ${region.name.split(' ').pop()}`,
-      view: el('div.card.stack-sm', {},
-        el('div.odds-title', {}, `${region.icon} ${region.name} (${natives.length}종)`),
-        ...groups,
-      ),
+      view: el('div.card.stack-sm', {}, ...rarityFilterSections(sections)),
     };
   });
 
@@ -615,41 +631,41 @@ function monsterInfoSheet(): HTMLElement {
  */
 function artifactInfoSheet(): HTMLElement {
   const { balance } = content;
-  // 유물은 지역 개념이 없어 슬롯 4탭 + 세트 탭으로 분할, 탭 안은 등급 내림차순 구간
+  // 유물은 지역 개념이 없어 슬롯 4탭 + 세트 탭으로 분할, 탭 안은 등급 오름차순 구간 + 등급 필터 칩
   const slotPanels = (Object.keys(SLOT_LABEL) as (keyof typeof SLOT_LABEL)[]).map((slot) => {
     const inSlot = [...content.artifacts.values()].filter((def) => def.slot === slot);
-    const groups = RARITY_DESC.flatMap((rarity) => {
+    const sections = RARITY_ASC.flatMap((rarity) => {
       const defs = inSlot.filter((def) => def.rarity === rarity);
       if (defs.length === 0) return [];
-      return [
-        el('div.info-group-head', {},
-          el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
-          el('span.muted.small', {}, `${defs.length}점 · 분해 가루 ${balance.artifacts.dustPerSalvage[rarity]}`),
+      return [{
+        rarity,
+        view: el('div', {},
+          el('div.info-group-head', {},
+            el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
+            el('span.muted.small', {}, `${defs.length}점 · 분해 가루 ${balance.artifacts.dustPerSalvage[rarity]}`),
+          ),
+          ...defs.map((def) => {
+            const setDef = def.set ? content.sets.get(def.set) : null;
+            return el('div.info-row', {},
+              artifactIcon(def.id),
+              el('div.info-body', {},
+                el('div.info-name', {}, def.name),
+                el('div.small.muted', {},
+                  `주옵션 · ${mainLabel(def.main.stat)} ${fmtEffect(def.main.stat, def.main.base)} (강화당 ${fmtEffect(def.main.stat, def.main.perEnhance)})`),
+                ...def.unique.map((effect) => el('div.small.unique-row', {}, `✦ ${describeEffect(effect)}`)),
+              ),
+              el('div.info-stats', {},
+                el(`span.tag.rar-${def.rarity}`, {}, ARTIFACT_RARITY_LABEL[def.rarity]),
+                setDef ? el('div.small.muted', {}, `${setDef.name} 세트`) : null,
+              ),
+            );
+          }),
         ),
-        ...defs.map((def) => {
-          const setDef = def.set ? content.sets.get(def.set) : null;
-          return el('div.info-row', {},
-            artifactIcon(def.id),
-            el('div.info-body', {},
-              el('div.info-name', {}, def.name),
-              el('div.small.muted', {},
-                `주옵션 · ${mainLabel(def.main.stat)} ${fmtEffect(def.main.stat, def.main.base)} (강화당 ${fmtEffect(def.main.stat, def.main.perEnhance)})`),
-              ...def.unique.map((effect) => el('div.small.unique-row', {}, `✦ ${describeEffect(effect)}`)),
-            ),
-            el('div.info-stats', {},
-              el(`span.tag.rar-${def.rarity}`, {}, ARTIFACT_RARITY_LABEL[def.rarity]),
-              setDef ? el('div.small.muted', {}, `${setDef.name} 세트`) : null,
-            ),
-          );
-        }),
-      ];
+      }];
     });
     return {
       label: SLOT_LABEL[slot] ?? slot,
-      view: el('div.card.stack-sm', {},
-        el('div.odds-title', {}, `${SLOT_LABEL[slot] ?? slot} (${inSlot.length}점)`),
-        ...groups,
-      ),
+      view: el('div.card.stack-sm', {}, ...rarityFilterSections(sections)),
     };
   });
 
