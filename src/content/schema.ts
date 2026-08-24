@@ -98,6 +98,7 @@ export const MonsterSchema = z.object({
   habitat: z.string(),
   asset: z.string(),
   flavor: z.string(),
+  unique: z.array(EffectSchema).default([]), // 고유 능력 — 전설 전용, 파티에 있으면 발동 (2026-08-24)
   tags: z.array(z.string()).default([]), // 확장 슬롯 (v1 미사용)
 });
 export type Monster = z.infer<typeof MonsterSchema>;

@@ -16,6 +16,17 @@ function artifactLabel(itemId: string): string {
   const def = content.artifacts.get(itemId);
   return def ? `[${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name}` : itemId;
 }
+/** 유물 드랍 줄 — 등급색으로 표시 (전설 고정색이던 것을 실제 등급 연동으로, 2026-08-24) */
+function artifactDropLine(text: string, itemId: string): HTMLElement {
+  const line = el('div.jline.jdrop', {}, text);
+  const def = content.artifacts.get(itemId);
+  if (def) line.style.color = `var(--rar-${def.rarity})`;
+  return line;
+}
+/** 영웅·전설 조우 카드를 카드째 빛나게 하는 등급 클래스 */
+function rarityCardClass(rarity: string): string {
+  return rarity === 'heroic' || rarity === 'legendary' ? `.jcard-rar-${rarity}` : '';
+}
 function eventName(kind: 'treasures' | 'traps' | 'gathers' | 'crossroads', id: string): string {
   return (content.events[kind] as { id: string; name: string }[]).find((e) => e.id === id)?.name ?? id;
 }
@@ -67,16 +78,18 @@ function entryCard(entry: JournalEntry): HTMLElement {
           lines.push(el('div.jline.jmiss', {}, `🎯 포획 시도${retry}… 놓쳤다`));
         }
       }
-      if (entry.artifact) lines.push(el('div.jline.jdrop', {}, `💎 전설의 전리품! ${artifactLabel(entry.artifact.itemId)}`));
-      return el('div.jcard.jcard-mon', {},
+      if (entry.artifact) lines.push(artifactDropLine(`💎 전설의 전리품! ${artifactLabel(entry.artifact.itemId)}`, entry.artifact.itemId));
+      const rarity = content.monsters.get(entry.monsterId)?.rarity ?? 'common';
+      return el(`div.jcard.jcard-mon${rarityCardClass(rarity)}`, {},
         monsterIcon(entry.monsterId),
         el('div.jbody', {}, ...lines),
       );
     }
     case 'treasure': {
       const lines = [el('div.jline', {}, `💰 ${eventName('treasures', entry.eventId)} [골드 +${fmtGold(entry.gold)}]`)];
-      if (entry.artifact) lines.push(el('div.jline.jdrop', {}, `💎 유물 발굴! ${artifactLabel(entry.artifact.itemId)}`));
-      return el('div.jcard', {}, ...lines);
+      if (entry.artifact) lines.push(artifactDropLine(`💎 유물 발굴! ${artifactLabel(entry.artifact.itemId)}`, entry.artifact.itemId));
+      const dropRarity = entry.artifact ? content.artifacts.get(entry.artifact.itemId)?.rarity ?? 'common' : 'common';
+      return el(`div.jcard${rarityCardClass(dropRarity)}`, {}, ...lines);
     }
     case 'trap':
       return el(`div.jcard${entry.avoided ? '' : '.jcard-bad'}`, {},
@@ -110,8 +123,11 @@ function entryCard(entry: JournalEntry): HTMLElement {
       return entry.revived
         ? el('div.jcard.jrevive', {}, el('div.jline', {}, `✨ 전멸 위기 [원정대가 다시 일어선다! HP ${fmtPct(entry.hpAfter)}]`))
         : el('div.jcard.jcard-bad', {}, el('div.jline', {}, '💀 전멸… 원정대가 서둘러 철수한다 (전리품 일부 소실)'));
-    case 'clearBox':
-      return el('div.jcard.jdrop-card', {}, el('div.jline.jdrop', {}, `🎁 심층 완주 상자 ${artifactLabel(entry.artifact.itemId)}`));
+    case 'clearBox': {
+      const boxRarity = content.artifacts.get(entry.artifact.itemId)?.rarity ?? 'common';
+      return el(`div.jcard.jdrop-card${rarityCardClass(boxRarity)}`, {},
+        artifactDropLine(`🎁 심층 완주 상자 ${artifactLabel(entry.artifact.itemId)}`, entry.artifact.itemId));
+    }
   }
 }
 

@@ -254,6 +254,7 @@ function resultView(rarity: MonsterRarity, nextRarity: MonsterRarity): HTMLEleme
           : el('span.muted', {}, '카드 +1'),
       ),
     );
+    card.classList.add(`rar-${def.rarity}`); // 영웅·전설 공개 시 글로우·맥동 (styles.css)
     card.style.borderColor = `var(--rar-${def.rarity})`;
     return card;
   });

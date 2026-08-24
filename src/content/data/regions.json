@@ -19,7 +19,7 @@
       "mirage-admiral",
       "tide-empress",
       "coral-colossus",
-      "storm-albatross"
+      "abyss-angler"
     ],
     "encounterMix": {
       "monster": 72,
@@ -54,7 +54,7 @@
       },
       {
         "monster": "moon-jelly",
-        "weight": 9
+        "weight": 6
       },
       {
         "monster": "hermit-scuttler",
@@ -102,27 +102,27 @@
       },
       {
         "monster": "thunder-ray",
-        "weight": 7
+        "weight": 2
       },
       {
         "monster": "siren-conch",
-        "weight": 6
+        "weight": 9
       },
       {
         "monster": "storm-petrel",
         "weight": 3
       },
       {
-        "monster": "abyss-angler",
+        "monster": "storm-albatross",
         "weight": 2
       },
       {
         "monster": "maelstrom-turtle",
-        "weight": 3
+        "weight": 7
       },
       {
         "monster": "coast-wyrm",
-        "weight": 2
+        "weight": 7
       },
       {
         "monster": "coral-pup",
@@ -198,7 +198,7 @@
       },
       {
         "monster": "squall-serpent",
-        "weight": 7
+        "weight": 3
       },
       {
         "monster": "driftnet-phantom",
@@ -245,7 +245,7 @@
       "ancient-sloth",
       "moon-sovereign",
       "thorn-emperor",
-      "dusk-regent",
+      "nightmare-stalker",
       "worldroot-turtle"
     ],
     "encounterMix": {
@@ -305,7 +305,7 @@
       },
       {
         "monster": "night-raven",
-        "weight": 9
+        "weight": 6
       },
       {
         "monster": "root-tortoise",
@@ -317,7 +317,7 @@
       },
       {
         "monster": "spore-shaman",
-        "weight": 6
+        "weight": 3
       },
       {
         "monster": "moss-drake",
@@ -325,11 +325,11 @@
       },
       {
         "monster": "moonpetal-fox",
-        "weight": 6
+        "weight": 9
       },
       {
         "monster": "bramble-golem",
-        "weight": 7
+        "weight": 3
       },
       {
         "monster": "wind-piper",
@@ -337,7 +337,7 @@
       },
       {
         "monster": "ancient-ent",
-        "weight": 3
+        "weight": 7
       },
       {
         "monster": "sylvan-stag",
@@ -433,7 +433,7 @@
       },
       {
         "monster": "grove-matriarch",
-        "weight": 3
+        "weight": 6
       },
       {
         "monster": "starfall-owl",
@@ -444,7 +444,7 @@
         "weight": 3
       },
       {
-        "monster": "nightmare-stalker",
+        "monster": "dusk-regent",
         "weight": 2
       }
     ]
@@ -512,7 +512,7 @@
       },
       {
         "monster": "mist-widow",
-        "weight": 9
+        "weight": 6
       },
       {
         "monster": "sunken-doll",
@@ -544,7 +544,7 @@
       },
       {
         "monster": "drowned-knight",
-        "weight": 7
+        "weight": 2
       },
       {
         "monster": "marsh-siren",
@@ -640,7 +640,7 @@
       },
       {
         "monster": "banshee-widow",
-        "weight": 7
+        "weight": 2
       },
       {
         "monster": "tombstone-golem",
@@ -660,7 +660,7 @@
       },
       {
         "monster": "swamp-chimera",
-        "weight": 6
+        "weight": 9
       },
       {
         "monster": "dread-ferryman",
@@ -668,7 +668,7 @@
       },
       {
         "monster": "lantern-titan",
-        "weight": 2
+        "weight": 7
       },
       {
         "monster": "venom-matriarch",
@@ -676,7 +676,7 @@
       },
       {
         "monster": "requiem-harpy",
-        "weight": 2
+        "weight": 7
       }
     ]
   },
@@ -704,7 +704,7 @@
     ],
     "legendary": [
       "ember-dragon-king",
-      "volcano-heart",
+      "solar-roc",
       "obsidian-overlord",
       "sun-forger",
       "ashen-behemoth",
@@ -906,7 +906,7 @@
         "weight": 3
       },
       {
-        "monster": "solar-roc",
+        "monster": "volcano-heart",
         "weight": 2
       }
     ]

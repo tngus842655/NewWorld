@@ -132,6 +132,14 @@ export function loadContent(): Content {
   }
   for (const monster of monsterList) {
     if (!regions.has(monster.habitat)) fail(`${monster.id} habitat이 없는 지역 참조: ${monster.habitat}`);
+    // 고유 능력은 전설 전용·전설 필수 (유물 GDD §8.2와 대칭 — 2026-08-24)
+    if (monster.rarity === 'legendary' && monster.unique.length === 0) fail(`전설 몬스터 ${monster.id}에 고유 능력이 없음`);
+    if (monster.rarity !== 'legendary' && monster.unique.length > 0) fail(`비전설 몬스터 ${monster.id}에 고유 능력 — 고유 능력은 전설 전용`);
+    for (const effect of monster.unique) {
+      for (const rid of effect.when?.region ?? []) {
+        if (!regions.has(rid)) fail(`몬스터 ${monster.id} 고유 능력이 없는 지역 참조: ${rid}`);
+      }
+    }
   }
   for (const material of materialList) {
     if (!regions.has(material.region)) fail(`${material.id}가 없는 지역 참조: ${material.region}`);

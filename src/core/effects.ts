@@ -181,7 +181,7 @@ export function findMonster(save: SaveState, monsterId: string): OwnedMonster {
 
 /**
  * 파티 + 유물 + 마일스톤에서 활성 효과 전체를 수집한다.
- * 순서: ① 유물(주/부옵션·고유)·세트·마일스톤 → ② synergyAmp 합산 → ③ 시너지 효과(증폭 적용)
+ * 순서: ① 유물(주/부옵션·고유)·세트·마일스톤·몬스터 고유(전설) → ② synergyAmp 합산 → ③ 시너지 효과(증폭 적용)
  */
 export function collectTeamEffects(content: Content, save: SaveState, partyIds: string[], artifactIds: string[]): TeamEffects {
   const effects: ActiveEffect[] = [];
@@ -215,6 +215,16 @@ export function collectTeamEffects(content: Content, save: SaveState, partyIds: 
     }
   }
 
+  // 몬스터 고유 능력 (전설 전용 — 파티에 있으면 발동, 2026-08-24) + 종족 카운트
+  const tribeCounts = new Map<Tribe, number>();
+  for (const monsterId of partyIds) {
+    const owned = findMonster(save, monsterId);
+    const monster = content.monsters.get(owned.monsterId);
+    if (!monster) throw new GameError('monster-def-missing', `콘텐츠에 없는 몬스터: ${owned.monsterId}`);
+    for (const unique of monster.unique) effects.push({ ...unique, source: `monster:${monster.id}` });
+    tribeCounts.set(monster.tribe, (tribeCounts.get(monster.tribe) ?? 0) + 1);
+  }
+
   // 시너지 증폭 합산 (조건 없는 synergyAmp만 — 콘텐츠 규약)
   let synergyAmp = 0;
   for (const effect of effects) {
@@ -223,13 +233,6 @@ export function collectTeamEffects(content: Content, save: SaveState, partyIds: 
   synergyAmp = clamp(synergyAmp, 0, content.balance.artifacts.effectCaps.synergyAmpMax);
 
   // 종족 시너지
-  const tribeCounts = new Map<Tribe, number>();
-  for (const monsterId of partyIds) {
-    const owned = findMonster(save, monsterId);
-    const monster = content.monsters.get(owned.monsterId);
-    if (!monster) throw new GameError('monster-def-missing', `콘텐츠에 없는 몬스터: ${owned.monsterId}`);
-    tribeCounts.set(monster.tribe, (tribeCounts.get(monster.tribe) ?? 0) + 1);
-  }
   const ampMult = 1 + synergyAmp;
   for (const [tribe, count] of tribeCounts) {
     if (count < 2) continue;

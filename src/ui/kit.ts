@@ -61,7 +61,8 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 // ── 토스트 ───────────────────────────────────────────────────────────────────
-export function toast(message: string, kind: 'ok' | 'error' = 'ok'): void {
+/** opts.rarity — 획득 토스트의 등급 연출 (희귀=색 테두리, 영웅=글로우, 전설=맥동) */
+export function toast(message: string, kind: 'ok' | 'error' = 'ok', opts: { rarity?: MonsterRarity } = {}): void {
   if (kind === 'error') playSfx('error');
   let host = document.getElementById('toasts');
   if (!host) {
@@ -69,7 +70,8 @@ export function toast(message: string, kind: 'ok' | 'error' = 'ok'): void {
     host.id = 'toasts';
     document.body.append(host);
   }
-  const item = el(`div.toast.${kind === 'error' ? 'toast-error' : 'toast-ok'}`, {}, message);
+  const rarityClass = opts.rarity && opts.rarity !== 'common' && opts.rarity !== 'uncommon' ? `.toast-rar-${opts.rarity}` : '';
+  const item = el(`div.toast.${kind === 'error' ? 'toast-error' : 'toast-ok'}${rarityClass}`, {}, message);
   host.append(item);
   setTimeout(() => item.classList.add('show'), 10);
   setTimeout(() => {

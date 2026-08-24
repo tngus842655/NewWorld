@@ -23,12 +23,15 @@
   "habitat": "whispering-woods",  // 대표 서식지 (도감 힌트 표기용)
   "asset": "thorn-wolf",          // public/assets/monsters/{asset}.webp
   "flavor": "덤불 속에서 꼬리만 보인다면 이미 늦었다.",
+  "unique": [],                   // 고유 능력 (§1.5 Effect) — 전설 전용·전설 필수, 파티 편성 시 발동 (2026-08-24)
   "tags": []                      // 확장 슬롯: 추후 스킬·특성 도입 시 사용 (v1 빈 배열)
 }
 ```
 
 - 기본 CP 밴드는 **지역별로 스케일**된다 — 지역 권장 CP 대비 대략 일반·고급 25~35% / 희귀 45~55% /
   영웅 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정, 조정은 데이터 수정으로만
+- `unique`는 유물 고유 능력과 같은 Effect 문법·훅을 그대로 쓴다. 로더가 전설=필수·비전설=금지를 강제하고,
+  `collectTeamEffects`가 파티의 전설 몬스터에서 `monster:{id}` 출처로 수집한다
 - `tags`가 v1의 확장 여지: 스킬/장비 시스템이 와도 스키마 파괴 없이 증축
 
 ### 1.2 regions.json — 지역 4+1

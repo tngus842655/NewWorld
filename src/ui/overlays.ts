@@ -153,6 +153,12 @@ function monsterSheet(monsterId: string): HTMLElement | null {
       statCell('생명', hp, gains?.hp),
       statCell('전투력', cp, gains?.cp),
     ),
+    monster.unique.length > 0
+      ? el('div.card.stack-sm', {},
+          ...monster.unique.map((effect) => el('div.list-row.unique-row', {}, el('span', {}, `✦ 고유 능력 · ${describeEffect(effect)}`))),
+          el('div.small.muted', {}, '전설 몬스터의 고유 능력 — 파티에 편성하면 원정 내내 발동합니다'),
+        )
+      : null,
     el('p.flavor', {}, `“${monster.flavor}”`),
     el('div.row-gap', {},
       el('button.btn.btn-primary', {
@@ -286,6 +292,7 @@ function speciesSheet(monsterId: string): HTMLElement | null {
       el('div.stat', {}, el('div.muted.small', {}, '기본 전투력'), el('strong', {}, `${Math.round(monsterBaseCp(monster, balance))}`)),
     ),
     el('div.card.stack-sm', {},
+      ...monster.unique.map((effect) => el('div.small.unique-row', {}, `✦ 고유 능력 · ${describeEffect(effect)} [파티 편성 시 발동]`)),
       synergy
         ? el('div', {},
             el('div.muted.small', {}, `${TRIBE_LABEL[monster.tribe]} 시너지 (같은 종족 편성 시)`),

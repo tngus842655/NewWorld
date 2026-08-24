@@ -228,6 +228,7 @@ function resultView(rarity: ArtifactRarity, nextRarity: ArtifactRarity): HTMLEle
           : el('span.muted', {}, `[${ARTIFACT_RARITY_LABEL[def.rarity]} ${SLOT_LABEL[def.slot]}] +1`),
       ),
     );
+    card.classList.add(`rar-${def.rarity}`); // 영웅·전설 공개 시 글로우·맥동 (styles.css)
     card.style.borderColor = `var(--rar-${def.rarity})`;
     return card;
   });

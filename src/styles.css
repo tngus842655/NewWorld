@@ -163,11 +163,28 @@ body {
 }
 .micon img { width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4)); }
 .micon-fallback { font-size: 24px; }
+/* 등급 연출 사다리 (2026-08-24): 희귀=은은한 색광 → 영웅=정적 글로우 → 전설=맥동 글로우+살광 스윕 */
 .micon.rar-uncommon { border-color: var(--rar-uncommon); }
-.micon.rar-rare { border-color: var(--rar-rare); }
-.micon.rar-heroic { border-color: var(--rar-heroic); }
-.micon.rar-legendary { border-color: var(--rar-legendary); box-shadow: 0 0 8px rgba(255, 165, 61, 0.35); }
+.micon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }
+.micon.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 9px rgba(182, 120, 255, 0.45); }
+.micon.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 2.2s ease-in-out infinite; }
+.micon.rar-legendary::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 225, 160, 0.4) 50%, transparent 68%);
+  transform: translateX(-110%); animation: legend-sheen 3.4s ease-in-out infinite;
+}
+@keyframes legend-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 165, 61, 0.35); }
+  50% { box-shadow: 0 0 16px rgba(255, 165, 61, 0.7); }
+}
+@keyframes legend-sheen {
+  0%, 55% { transform: translateX(-110%); }
+  85%, 100% { transform: translateX(110%); }
+}
 .micon.silhouette img, .micon.silhouette .micon-fallback { filter: brightness(0) opacity(0.55); }
+/* 실루엣(미포획)은 연출 없이 조용히 — 등급은 테두리 색으로만 */
+.micon.silhouette { animation: none; box-shadow: none; }
+.micon.silhouette::after { display: none; }
 
 .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .chips-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -199,6 +216,8 @@ body {
 .acard-subs { font-size: 11px; color: #6f7488; margin-top: 2px; }
 .acard.rar-legendary .acard-name { color: var(--rar-legendary); }
 .acard.rar-heroic .acard-name { color: var(--rar-heroic); }
+.acard.rar-heroic:not(.selected) { border-color: rgba(182, 120, 255, 0.45); }
+.acard.rar-legendary:not(.selected) { border-color: var(--rar-legendary); box-shadow: 0 0 10px rgba(255, 165, 61, 0.2); }
 
 .tag.rar-common { color: var(--rar-common); }
 .tag.rar-uncommon { color: var(--rar-uncommon); border-color: var(--rar-uncommon); }
@@ -418,6 +437,9 @@ body.overlay-open .container { overflow: hidden; }
 .fuse-back { cursor: pointer; animation: fuse-throb 1.6s ease-in-out infinite; }
 .fuse-q { font-size: 30px; font-weight: 800; color: var(--accent-2); text-shadow: 0 0 12px rgba(240, 192, 96, 0.7); }
 .fuse-open { animation: fuse-flip 0.5s cubic-bezier(0.34, 1.4, 0.64, 1); }
+/* 합성 공개 카드 등급 연출 (2026-08-24) */
+.fuse-card.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 12px rgba(182, 120, 255, 0.4); }
+.fuse-card.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 1.8s ease-in-out infinite; }
 .fuse-new { color: var(--accent-2); font-weight: 700; }
 .fuse-fail { opacity: 0.65; }
 .fuse-fail-mark { font-size: 26px; }
@@ -480,9 +502,9 @@ body.overlay-open .container { overflow: hidden; }
 .shop-limit { font-weight: 400; }
 .auto-btn { padding: 4px 10px; font-size: 12px; }
 .hg-icon.rar-uncommon { border-color: var(--rar-uncommon); }
-.hg-icon.rar-rare { border-color: var(--rar-rare); }
-.hg-icon.rar-heroic { border-color: var(--rar-heroic); }
-.hg-icon.rar-legendary { border-color: var(--rar-legendary); box-shadow: 0 0 8px rgba(255, 165, 61, 0.35); }
+.hg-icon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }
+.hg-icon.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 9px rgba(182, 120, 255, 0.45); }
+.hg-icon.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 2.2s ease-in-out infinite; }
 .hg-body { flex: 1; min-width: 0; }
 .hg-use { flex: none; padding: 7px 14px; }
 
@@ -502,6 +524,13 @@ body.overlay-open .container { overflow: hidden; }
 .jcard-bad { border-color: #4a2e2b; background: #241a1c; }
 .jrevive { border-color: #5a5426; background: #26240f; }
 .jdrop-card { border-color: var(--rar-legendary); }
+/* 일지 카드 등급 연출 — 영웅·전설 조우는 카드째로 빛난다 (2026-08-24) */
+.jcard.jcard-rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 10px rgba(182, 120, 255, 0.3); }
+.jcard.jcard-rar-legendary {
+  border-color: var(--rar-legendary);
+  background: linear-gradient(90deg, rgba(255, 165, 61, 0.1), var(--bg3) 55%);
+  animation: legend-pulse 2.2s ease-in-out infinite;
+}
 .jline { font-size: 13.5px; }
 .jsub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .jcapture { color: var(--good); }
@@ -580,3 +609,10 @@ body.overlay-open .container { overflow: hidden; }
 .toast.show { opacity: 1; transform: none; }
 .toast-error { border-color: #7a3b34; }
 .toast-ok { border-color: #3d5a3a; }
+/* 획득 토스트 등급 연출 — 높은 등급일수록 뚜렷하게 (2026-08-24) */
+.toast.toast-rar-rare { border-color: var(--rar-rare); }
+.toast.toast-rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 14px rgba(182, 120, 255, 0.45); }
+.toast.toast-rar-legendary {
+  border-color: var(--rar-legendary); font-weight: 600;
+  animation: legend-pulse 1.6s ease-in-out infinite;
+}

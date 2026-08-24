@@ -41,11 +41,11 @@ function purchase(product: ShopProduct): void {
     if (granted.monsterId) {
       const monster = content.monsters.get(granted.monsterId)!;
       playSfx(granted.isNewMonster ? 'capture-new' : 'treasure');
-      toast(`🃏 [${MONSTER_RARITY_LABEL[monster.rarity]}] ${monster.name} 카드 획득!${granted.isNewMonster ? ' ✨ 도감 신규!' : ''}`, 'ok');
+      toast(`🃏 [${MONSTER_RARITY_LABEL[monster.rarity]}] ${monster.name} 카드 획득!${granted.isNewMonster ? ' ✨ 도감 신규!' : ''}`, 'ok', { rarity: monster.rarity });
     } else if (granted.artifactItemId) {
       const def = content.artifacts.get(granted.artifactItemId)!;
       playSfx('artifact');
-      toast(`🏺 [${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name} 획득!`, 'ok');
+      toast(`🏺 [${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name} 획득!`, 'ok', { rarity: def.rarity });
     } else if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약 (+골드는 병기)
       playSfx('treasure');

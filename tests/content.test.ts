@@ -59,6 +59,16 @@ describe('콘텐츠 무결성', () => {
     }
   });
 
+  it('전설 몬스터는 전부 고유 능력을 가지고, 비전설은 없다 (2026-08-24)', () => {
+    for (const monster of content.monsterList) {
+      if (monster.rarity === 'legendary') {
+        expect(monster.unique.length, monster.id).toBeGreaterThan(0);
+      } else {
+        expect(monster.unique, monster.id).toHaveLength(0);
+      }
+    }
+  });
+
   it('모든 종족에 시너지가 정의돼 있고, 종족별 보유 몬스터가 3마리 이상이다', () => {
     for (const tribe of ['beast', 'spirit', 'undead', 'aquatic', 'flying', 'construct'] as const) {
       expect(content.synergies.has(tribe), tribe).toBe(true);

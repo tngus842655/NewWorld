@@ -84,6 +84,19 @@ describe('팀 효과 수집', () => {
     expect(sumOf(query(fxFour.effects, 'crossroad', base), 'crossroadSuccessAdd')).toBeCloseTo(0.15);
   });
 
+  it('전설 몬스터의 고유 능력이 파티 효과로 수집된다 (2026-08-24)', () => {
+    const clock = makeCtx();
+    // 산호거상: computeParty damageReduce 0.05 (조건 없음)
+    const { save, partyIds } = saveWithParty(clock, [{ id: 'coral-colossus' }, { id: 'dune-pup' }]);
+    const fx = collectTeamEffects(content, save, partyIds, []);
+    expect(fx.effects.some((e) => e.source === 'monster:coral-colossus')).toBe(true);
+
+    // 비전설만 있는 파티엔 monster: 출처 효과가 없다
+    const plain = saveWithParty(clock, [{ id: 'dune-pup' }, { id: 'fog-lynx' }]);
+    const fxPlain = collectTeamEffects(content, plain.save, plain.partyIds, []);
+    expect(fxPlain.effects.some((e) => e.source.startsWith('monster:'))).toBe(false);
+  });
+
   it('달성한 마일스톤 버프만 포함된다', () => {
     const clock = makeCtx();
     const { save, partyIds } = saveWithParty(clock, [{ id: 'dune-pup' }]);
