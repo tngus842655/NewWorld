@@ -72,11 +72,10 @@ function purchase(product: ShopProduct): void {
   });
 }
 
-function productCard(product: ShopProduct): HTMLElement {
+/** 한도·잔액 상태 — 카드/타일 공용 */
+function productState(product: ShopProduct) {
   const state = save();
   const now = nowTick();
-
-  // 한도 상태 — 이름 옆 (n/m)으로 표시, none(무제한)은 표시 없음 (2026-08-23 사용자)
   let limitLabel: string | null = null;
   let exhausted = false;
   if (product.limit.kind === 'daily') {
@@ -87,36 +86,74 @@ function productCard(product: ShopProduct): HTMLElement {
     exhausted = onceBought(state, product);
     limitLabel = `${exhausted ? 1 : 0}/1`;
   }
-  const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
-
   const shortFunds = product.shop === 'gold' ? state.wallet.gold < product.price : state.wallet.diamonds < product.price;
+  return { limitLabel, exhausted, shortFunds };
+}
 
-  // 모래시계 — 가속 시트와 동일하게 등급색 테두리 타일로 (라벨 없이 색으로만 구분)
-  const hourglass = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
+function buyButton(product: ShopProduct, exhausted: boolean, shortFunds: boolean): HTMLElement {
+  return el('button.btn.btn-primary', {
+    disabled: exhausted || shortFunds,
+    onclick: () => purchase(product),
+  }, exhausted ? '한도 소진' : priceTag(product));
+}
+
+function productCard(product: ShopProduct): HTMLElement {
+  const { limitLabel, exhausted, shortFunds } = productState(product);
+  const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
 
   return el('div.card.stack-sm.shop-item', {},
     el('div.list-row', {},
       el('div', {},
-        // 모래시계는 이모지 대신 등급 테두리 미니 아이콘 — 다른 상품 이모지와 같은 줄 높이
-        hourglass
-          ? el('div.shop-name.hg-name', {}, hourglassIcon(hourglass, { small: true }), product.name, limitTag)
-          : el('div.shop-name', {}, `${product.icon} ${product.name} `, limitTag),
+        el('div.shop-name', {}, `${product.icon} ${product.name} `, limitTag),
         el('div.muted.small', {}, product.desc),
       ),
-      el('div.shop-buy', {},
-        el('button.btn.btn-primary', {
-          disabled: exhausted || shortFunds,
-          onclick: () => purchase(product),
-        }, exhausted ? '한도 소진' : priceTag(product)),
-      ),
+      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds)),
     ),
   );
 }
+
+/** 모래시계 압축 타일 — 2열 그리드용. 등급색 테두리 아이콘으로 구분 (라벨 없이 색으로만) */
+function hourglassTile(product: ShopProduct): HTMLElement {
+  const { limitLabel, exhausted, shortFunds } = productState(product);
+  const def = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
+  const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
+
+  return el('div.card.shop-tile', {},
+    el('div.shop-tile-name', {},
+      def ? hourglassIcon(def, { small: true }) : product.icon,
+      el('span', {}, product.name), limitTag,
+    ),
+    el('div.muted.small', {}, product.desc),
+    buyButton(product, exhausted, shortFunds),
+  );
+}
+
+// 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
+const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][] }[] = [
+  { label: '🎲 뽑기·발굴', kinds: ['monsterGacha', 'artifactGacha'] },
+  { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll'] },
+  { label: '⏳ 원정 가속', kinds: ['hourglass'] },
+];
 
 export function shopSheet(): HTMLElement {
   const state = save();
   const tab = shopTab();
   const products = content.shopProducts.filter((product) => product.shop === tab);
+
+  const groupBlocks = SHOP_GROUPS.flatMap((group) => {
+    const members = products.filter((product) => group.kinds.includes(product.goods.kind));
+    if (members.length === 0) return [];
+    const body = group.kinds.includes('hourglass')
+      ? [el('div.shop-grid', {}, ...members.map((product) => hourglassTile(product)))]
+      : members.map((product) => productCard(product));
+    return [
+      el('div.info-group-head', {},
+        el('span.small', {}, group.label),
+        el('span.muted.small', {}, `${members.length}종`),
+      ),
+      ...body,
+    ];
+  });
 
   const shell = sheetShell('🏪 상점',
     el('div.card.list-row', {},
@@ -130,11 +167,11 @@ export function shopSheet(): HTMLElement {
         }, '충전'),
       ),
     ),
-    el('div.chips-wrap', {},
-      el(`button.chip${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),
-      el(`button.chip${tab === 'diamond' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('diamond'); } }, '💎 다이아 상점'),
+    el('div.big-tabs', {},
+      el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),
+      el(`button.big-tab${tab === 'diamond' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('diamond'); } }, '💎 다이아 상점'),
     ),
-    ...products.map((product) => productCard(product)),
+    ...groupBlocks,
     tab === 'gold'
       ? el('div.center.small.muted', {}, `구매 한도는 매일 자정에 초기화됩니다 (오늘: ${todayKey(nowTick())})`)
       : null,

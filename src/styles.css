@@ -458,6 +458,12 @@ body.overlay-open .container { overflow: hidden; }
 /* ── 데이터 뷰 (몬스터·유물 정보 — 추후 관리자 전용) ── */
 .info-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
 .info-row + .info-row { border-top: 1px solid var(--line); }
+/* 상점 — 모래시계 압축 타일 2열 그리드 (2026-08-24 가독성 개편) */
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.shop-tile { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
+.shop-tile-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 600; }
+.shop-tile .btn { width: 100%; padding: 7px 8px; }
+
 /* 등급 구간 헤더 — 정보 시트에서 등급 내림차순 구간을 나눈다 (2026-08-24) */
 .info-group-head {
   display: flex; align-items: center; gap: 7px; margin-top: 8px;
