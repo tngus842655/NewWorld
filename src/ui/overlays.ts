@@ -23,6 +23,7 @@ import {
   TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
+import { chipPanels, filterSections, tabPanels, type Panel } from './panels';
 import { closeOverlay, overlay, type Overlay } from './router';
 import { playSfx } from './sfx';
 
@@ -343,34 +344,7 @@ function pctBarRow(label: HTMLElement | string, ratio: number, colorVar: string)
   return row;
 }
 
-/** big-tab 패널 묶음 — 시트 내부 로컬 탭 (시그널·재렌더 불필요). [탭바, ...패널] 을 반환한다. */
-function tabbedPanels(items: { label: string; view: HTMLElement }[], initial = 0): HTMLElement[] {
-  items.forEach((item, i) => item.view.classList.toggle('hidden', i !== initial));
-  const buttons = items.map((item, i) =>
-    el(`button.big-tab${i === initial ? '.active' : ''}`, {
-      onclick: () => {
-        buttons.forEach((b, j) => b.classList.toggle('active', j === i));
-        items.forEach((p, j) => p.view.classList.toggle('hidden', j !== i));
-      },
-    }, item.label));
-  return [el('div.big-tabs', {}, ...buttons), ...items.map((item) => item.view)];
-}
-
-/** 칩 선택기 — 목록 중 하나를 보여주는 로컬 토글 (시트 내부 전용, 시그널 불필요) */
-function chipPicker<T>(items: { key: T; label: string; view: HTMLElement }[], initial = 0): HTMLElement {
-  const panels = items.map((item, i) => {
-    item.view.classList.toggle('hidden', i !== initial);
-    return item.view;
-  });
-  const chips = items.map((item, i) =>
-    el(`button.chip${i === initial ? '.active' : ''}`, {
-      onclick: () => {
-        chips.forEach((c, j) => c.classList.toggle('active', j === i));
-        panels.forEach((p, j) => p.classList.toggle('hidden', j !== i));
-      },
-    }, item.label));
-  return el('div.stack-sm', {}, el('div.chips-wrap', {}, ...chips), ...panels);
-}
+// 빅탭·칩 선택기·필터 구간은 ui/panels.ts로 이전 (2026-08-25) — 화면·편성 시트와 공유한다.
 
 /**
  * 확률 정보 — 유저에게 공개되는 확률 고지 (밸런스 데이터에서 파생, 하드코딩 없음).
@@ -423,7 +397,7 @@ function oddsSheet(): HTMLElement {
   const firstUnlocked = Math.max(0, content.regionList.findIndex((region) => isRegionUnlocked(content, state, region.id)));
   const regionCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🗺️ 지역별 등장 확률'),
-    chipPicker(regionViews, firstUnlocked),
+    ...chipPanels(regionViews, { initial: firstUnlocked }),
   );
   const monsterPanel = el('div.stack-sm', {}, captureCard, regionCard);
 
@@ -473,7 +447,7 @@ function oddsSheet(): HTMLElement {
   const shopPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🏪 상점 뽑기 확률'),
     el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다.'),
-    chipPicker([
+    ...chipPanels([
       { key: 'goldNormal', label: '🃏 뽑기 [골드]', view: gachaView(shop.monsterGacha.goldNormal!) },
       { key: 'normal', label: '🃏 뽑기 [다이아]', view: gachaView(shop.monsterGacha.normal!) },
       { key: 'premium', label: '🌟 고급 뽑기', view: gachaView(shop.monsterGacha.premium!) },
@@ -485,11 +459,11 @@ function oddsSheet(): HTMLElement {
   // ── 탭 바 — 모바일 한 화면 분량으로 분할 (2026-08-24) ──
   return sheetShell('확률 정보',
     el('div.muted.small', {}, '아래 확률은 게임 데이터의 실제 값 그대로입니다. 모든 판정은 파견 시 확정된 시드에서 결정됩니다.'),
-    ...tabbedPanels([
-      { label: '몬스터', view: monsterPanel },
-      { label: '합성', view: fusionPanel },
-      { label: '유물', view: artifactPanel },
-      { label: '상점 뽑기', view: shopPanel },
+    ...tabPanels([
+      { key: 'monster', label: '몬스터', view: monsterPanel },
+      { key: 'fusion', label: '합성', view: fusionPanel },
+      { key: 'artifact', label: '유물', view: artifactPanel },
+      { key: 'shop', label: '상점 뽑기', view: shopPanel },
     ]),
   );
 }
@@ -558,20 +532,17 @@ function elementInfoSheet(): HTMLElement {
  * 전체 몬스터 데이터 뷰 — 도감 진행과 무관하게 104종 전부, 등급·속성·종족·기본 스탯.
  * 추후 관리자 전용 메뉴로 전환 예정 (지금은 설정에서 진입).
  */
-/** 등급 필터 칩('전체' + 등장 등급) + 등급 구간 목록 — 정보 시트 공용. 칩이 구간 표시/숨김을 토글한다. */
-function rarityFilterSections(sections: { rarity: string; view: HTMLElement }[]): HTMLElement[] {
-  const filters: { label: string; match: string | null }[] = [
-    { label: '전체', match: null },
-    ...sections.map((section) => ({ label: MONSTER_RARITY_LABEL[section.rarity as MonsterRarity], match: section.rarity })),
-  ];
-  const chips = filters.map((filter, i) =>
-    el(`button.chip${i === 0 ? '.active' : ''}`, {
-      onclick: () => {
-        chips.forEach((c, j) => c.classList.toggle('active', j === i));
-        sections.forEach((section) => section.view.classList.toggle('hidden', filter.match !== null && section.rarity !== filter.match));
-      },
-    }, filter.label));
-  return [el('div.chips-wrap', {}, ...chips), ...sections.map((section) => section.view)];
+/**
+ * 등급 구간을 filterSections에 넘길 형태로 — 라벨·색은 여기서 주입한다 (panels.ts는 등급을 모른다).
+ * 등급 오름차순(일반→전설)은 '읽는 화면'의 규칙 (2026-08-25 사용자 확정).
+ */
+function raritySections(sections: { rarity: MonsterRarity; view: HTMLElement }[]): Panel<MonsterRarity>[] {
+  return sections.map((section) => ({
+    key: section.rarity,
+    label: MONSTER_RARITY_LABEL[section.rarity],
+    cls: `rar-${section.rarity}`,
+    view: section.view,
+  }));
 }
 
 function monsterInfoSheet(): HTMLElement {
@@ -611,15 +582,16 @@ function monsterInfoSheet(): HTMLElement {
       }];
     });
     return {
+      key: region.id,
       // 탭 폭이 좁아 지역명 마지막 어절만 (물안개 해안 → 해안)
       label: `${region.icon} ${region.name.split(' ').pop()}`,
-      view: el('div.card.stack-sm', {}, ...rarityFilterSections(sections)),
+      view: el('div.card.stack-sm', {}, ...filterSections(raritySections(sections))),
     };
   });
 
   return sheetShell('몬스터 정보',
     el('div.muted.small', {}, `전체 ${content.monsterList.length}종 · 기본 스탯 기준 (레벨·성급 보정 전) · 관리자용 데이터 뷰`),
-    ...tabbedPanels(regionPanels),
+    ...tabPanels(regionPanels),
   );
 }
 
@@ -662,8 +634,9 @@ function artifactInfoSheet(): HTMLElement {
       }];
     });
     return {
+      key: slot,
       label: SLOT_LABEL[slot] ?? slot,
-      view: el('div.card.stack-sm', {}, ...rarityFilterSections(sections)),
+      view: el('div.card.stack-sm', {}, ...filterSections(raritySections(sections))),
     };
   });
 
@@ -677,6 +650,7 @@ function artifactInfoSheet(): HTMLElement {
     );
   });
   const setPanel = {
+    key: 'set',
     label: '세트',
     view: el('div.card.stack-sm', {},
       el('div.odds-title', {}, '세트 효과'),
@@ -686,7 +660,7 @@ function artifactInfoSheet(): HTMLElement {
 
   return sheetShell('유물 정보',
     el('div.muted.small', {}, `전체 ${content.artifacts.size}점 · 주옵션은 +0 기준 · 관리자용 데이터 뷰`),
-    ...tabbedPanels([...slotPanels, setPanel]),
+    ...tabPanels([...slotPanels, setPanel]),
   );
 }
 

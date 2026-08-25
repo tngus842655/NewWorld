@@ -12,6 +12,7 @@ import { save } from '../../state/store';
 import { artifactIcon, artifactIconBadged, monsterIcon } from '../components';
 import { describeEffect } from '../effectText';
 import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { filterChips } from '../panels';
 import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 상태 (GDD §11)
@@ -23,19 +24,7 @@ const openCodexRegions = signal<Record<string, boolean>>({});
 const openArtifactRarities = signal<Record<string, boolean>>({});
 const achieveTab = signal<string>(content.regionList[0]!.id); // 지역 id 또는 'common'
 
-function filterChips<T extends string>(
-  current: T | null,
-  entries: [T, string][],
-  pick: (value: T | null) => void,
-): HTMLElement {
-  return el('div.chips-wrap', {},
-    el(`button.chip${current === null ? '.active' : ''}`, { onclick: () => pick(null) }, '전체'),
-    ...entries.map(([value, label]) =>
-      el(`button.chip${current === value ? '.active' : ''}`,
-        { onclick: () => pick(current === value ? null : value) }, label),
-    ),
-  );
-}
+// 필터 칩은 ui/panels.ts로 이전 (2026-08-25) — 편성 시트·캠프와 같은 구현을 쓴다.
 
 export function renderCodex(): HTMLElement {
   const state = save();
@@ -144,8 +133,15 @@ function monsterTab(state: Save): HTMLElement[] {
       el('div.muted.small', {}, `목격 ${seen} · 도감 점수 ${score}`),
     ),
     el('div.card.stack-sm', {},
-      filterChips(tribe, Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][], (v) => tribeFilter.set(v)),
-      filterChips(rarity, RARITY_ASC.map((r) => [r, MONSTER_RARITY_LABEL[r]] as [Monster['rarity'], string]), (v) => rarityFilter.set(v)),
+      filterChips(
+        (Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][]).map(([key, label]) => ({ key, label })),
+        { active: tribe, onPick: (v) => tribeFilter.set(v) },
+      ),
+      // 등급 칩은 등급색으로 — 도감은 '읽는 화면'이라 오름차순 (2026-08-25 사용자 확정)
+      filterChips(
+        RARITY_ASC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
+        { active: rarity, onPick: (v) => rarityFilter.set(v) },
+      ),
     ),
     visibleSections.length > 0
       ? el('div.stack-sm', {}, ...visibleSections)
