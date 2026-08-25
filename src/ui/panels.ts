@@ -75,6 +75,28 @@ export function tabPanels<K extends string>(items: Panel<K>[], opts?: PanelOpts<
   return panelGroup(items, opts, 'div.big-tabs', 'button.big-tab');
 }
 
+/**
+ * 탭바만 — 패널을 미리 만들지 않고 **목록 하나를 탭이 갈아끼우는** 구조용 (항상 controlled).
+ * 216종처럼 패널 N개를 다 만들면 낭비인 경우에 쓴다. 선택 상태는 호출부 시그널이 든다.
+ */
+export function tabBar<K extends string>(
+  items: { key: K; label: string; title?: string }[],
+  opts: { active: K; onPick: (key: K) => void; scroll?: boolean; sfx?: boolean },
+): HTMLElement {
+  const { active, onPick, scroll = false, sfx = true } = opts;
+  return el(`div.big-tabs${scroll ? '.scroll' : ''}`, {},
+    ...items.map((item) =>
+      el(`button.big-tab${item.key === active ? '.active' : ''}`, {
+        title: item.title ?? item.label,
+        onclick: () => {
+          if (sfx) playSfx('tap');
+          onPick(item.key);
+        },
+      }, item.label),
+    ),
+  );
+}
+
 /** 칩 선택기 — 탭 안을 한 번 더 좁히는 2차 분할축. [칩줄, ...패널]을 반환한다. */
 export function chipPanels<K extends string>(items: Panel<K>[], opts?: PanelOpts<K>): HTMLElement[] {
   return panelGroup(items, opts, 'div.chips-wrap', 'button.chip');

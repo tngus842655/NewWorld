@@ -299,6 +299,19 @@ body {
 .party-slot.filled .micon { width: 100%; height: 100%; }
 .party-slot.locked { opacity: 0.45; cursor: default; font-size: 14px; }
 .pick-controls { display: flex; flex-direction: column; gap: 6px; }
+/*
+ * 시트 안에서 목록 위에 붙어 있는 탭·칩 묶음 (2026-08-25).
+ * .sheet가 overflow-y:auto라 sticky가 여기 기준으로 걸린다. 지역 한 칸이 화면 여러 개 분량이므로
+ * 이게 없으면 탭을 바꿀 때마다 맨 위까지 스크롤해 올라와야 한다.
+ * 375×667에서 세로 예산을 아끼려고 빅탭 패딩을 줄인다.
+ */
+.sheet-sticky {
+  position: sticky; top: -14px; z-index: 2;
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--bg2); padding: 6px 0 8px; margin-top: -4px;
+  box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.5);
+}
+.sheet-sticky .big-tab { padding-top: 9px; padding-bottom: 9px; font-size: 13px; }
 
 .dispatch-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; bottom: 8px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35); padding-top: 4px; }
 .dispatch-panel.collapsed { gap: 6px; }
