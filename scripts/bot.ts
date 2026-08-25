@@ -10,7 +10,7 @@ import type { Content } from '../src/content';
 import { computePartyPower } from '../src/core/combat';
 import { collectTeamEffects } from '../src/core/effects';
 import { canCheckIn, checkIn } from '../src/core/attendance';
-import { awakenMonster, buyPartySlot, craftRecipe, enhanceArtifact, levelUpMonster, unlockRegion } from '../src/core/economy';
+import { awakenMonster, buyPartySlot, craftRecipe, enhanceArtifact, fuseMonsters, levelUpMonster, unlockRegion } from '../src/core/economy';
 import { monsterLevelUpCost, monsterStarUpCost } from '../src/core/formulas';
 import { chooseCrossroad, claimExpedition, createExpedition, useHourglass } from '../src/core/expedition';
 import { createInitialSave } from '../src/core/newgame';
@@ -114,6 +114,14 @@ export interface SimOptions {
   spendPolicy?: 'time' | 'codex';
   /** 시드 소금 — 같은 설정을 여러 시드로 돌려 노이즈를 평균낼 때 쓴다 (기본 빈 문자열 = 기존 시드) */
   seedSalt?: string;
+
+  // ── 도감 완성 추정용 (scripts/codex-sim.ts) ───────────────────────────────
+  /** 여분 카드를 등급 사다리로 계속 합성 — 전설의 주 획득 경로다 (조우는 심층 5%뿐) */
+  fuseSpares?: boolean;
+  /** 도감이 가장 덜 찬 지역으로 파견 — 봇 기본값(가장 깊은 지역)은 앞 지역을 영영 안 채운다 */
+  codexRotate?: boolean;
+  /** 항상 심층 — 전설은 심층에서만 조우한다(tiers.deep.legendaryChance) */
+  alwaysDeep?: boolean;
 }
 
 function makeCtx(name: string): { ctx: CoreCtx; set: (t: number) => void } {
@@ -505,9 +513,40 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
       }
     }
 
+    // 6-b) 여분 카드 합성 — 등급 사다리를 끝까지 굴린다 (도감 완성 추정용)
+    //
+    // 전설은 심층 조우 5%로만 나오고 포획률도 0.015라, 실제 주 경로는 **영웅 여분 2장 → 전설 6.25%** 다.
+    // 각 종의 마지막 1장은 재료가 될 수 없으므로(여분 = 보유수 − 1) 육성분이 사라질 일은 없다.
+    if (opts.fuseSpares) {
+      for (let guard = 0; guard < 200; guard++) {
+        let fused = false;
+        for (const rarity of ['common', 'uncommon', 'rare', 'heroic'] as const) {
+          const spares = save.roster
+            .filter((m) => m.count > 1 && content.monsters.get(m.monsterId)?.rarity === rarity)
+            .map((m) => ({ monsterId: m.monsterId, spare: m.count - 1 }));
+          if (spares.reduce((sum, s) => sum + s.spare, 0) < content.balance.fusion.materials) continue;
+          const materials: { monsterId: string; count: number }[] = [];
+          let need = content.balance.fusion.materials;
+          for (const s of spares) {
+            const take = Math.min(need, s.spare);
+            materials.push({ monsterId: s.monsterId, count: take });
+            need -= take;
+            if (need === 0) break;
+          }
+          const next = safely(() => fuseMonsters(content, save, { materials }, ctx).save);
+          if (next) {
+            save = next;
+            fused = true;
+          }
+        }
+        if (!fused) break;
+      }
+    }
+
     // 7) 파견 — 빈 팀 슬롯마다
     const hour = Math.floor((t % DAY_MS) / 3600_000);
-    const tier: 'scout' | 'standard' | 'deep' = hour >= 22 || hour < 6 ? 'deep' : 'standard';
+    const tier: 'scout' | 'standard' | 'deep' =
+      opts.alwaysDeep ? 'deep' : hour >= 22 || hour < 6 ? 'deep' : 'standard';
     const dispatchAll = (): boolean => {
     let sent = false;
     while (save.expeditions.filter((e) => !e.claimed).length < teamCount(content, save)) {
@@ -530,6 +569,18 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
             partyPowerOf(content, save, party, artifacts, r.id, tier) >= r.recommendedCp * strategy.safety,
         );
         if (target) region = target;
+      }
+      // 완성 모드: 감당 가능한 지역 중 **도감이 가장 덜 찬 곳**으로.
+      // 기본 봇은 늘 가장 깊은 지역만 돌아서 앞 지역 도감이 영영 안 찬다 — 완성 추정에는 못 쓴다.
+      if (opts.codexRotate) {
+        const counts = capturedCounts(content, save);
+        const affordable = unlocked.filter(
+          (r) => partyPowerOf(content, save, party, artifacts, r.id, tier) >= r.recommendedCp * strategy.safety,
+        );
+        const target = affordable
+          .map((r) => ({ r, n: counts.byRegion.get(r.id) ?? 0 }))
+          .sort((a, b) => a.n - b.n)[0];
+        if (target) region = target.r;
       }
 
       const result = (() => {
