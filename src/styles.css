@@ -15,6 +15,10 @@
   --rar-rare: #4aa3ff;
   --rar-heroic: #b678ff;
   --rar-legendary: #ffa53d;
+  /* 초월 — 기존 5색(회색·초록·파랑·보라·주황)이 비워둔 마젠타 대역. 시안 보조색과 이중색으로
+     영웅 보라(#b678ff)와도 확실히 갈린다 (2026-08-25) */
+  --rar-transcendent: #ff5cf0;
+  --rar-transcendent-2: #7cf5ff;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -169,6 +173,7 @@ body {
 .micon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }
 .micon.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 9px rgba(182, 120, 255, 0.45); }
 .micon.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 2.2s ease-in-out infinite; }
+.micon.rar-transcendent { border-color: var(--rar-transcendent); animation: transcend-pulse 2.6s ease-in-out infinite; }
 .micon.rar-legendary::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(115deg, transparent 32%, rgba(255, 225, 160, 0.4) 50%, transparent 68%);
@@ -177,6 +182,11 @@ body {
 @keyframes legend-pulse {
   0%, 100% { box-shadow: 0 0 8px rgba(255, 165, 61, 0.35); }
   50% { box-shadow: 0 0 16px rgba(255, 165, 61, 0.7); }
+}
+/* 초월 — 전설 맥동 위 한 칸. 마젠타↔시안을 오가 이중색이 눈에 남는다 (2026-08-25) */
+@keyframes transcend-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 92, 240, 0.5); }
+  50% { box-shadow: 0 0 22px rgba(124, 245, 255, 0.75); }
 }
 @keyframes legend-sheen {
   0%, 55% { transform: translateX(-110%); }
@@ -200,6 +210,7 @@ body {
 .chip.rar-rare:not(.active) { color: var(--rar-rare); border-color: var(--rar-rare); }
 .chip.rar-heroic:not(.active) { color: var(--rar-heroic); border-color: var(--rar-heroic); }
 .chip.rar-legendary:not(.active) { color: var(--rar-legendary); border-color: var(--rar-legendary); }
+.chip.rar-transcendent:not(.active) { color: var(--rar-transcendent); border-color: var(--rar-transcendent); }
 .mchip {
   display: flex; gap: 9px; align-items: center; text-align: left;
   background: var(--bg3); border: 1.5px solid var(--line); border-radius: 12px; padding: 7px; cursor: pointer; color: var(--text);
@@ -222,6 +233,11 @@ body {
 .acard-sub { font-size: 11.5px; color: var(--muted); }
 .acard-subs { font-size: 11px; color: #6f7488; margin-top: 2px; }
 .acard.rar-legendary .acard-name { color: var(--rar-legendary); }
+.acard.rar-transcendent .acard-name {
+  background: linear-gradient(90deg, var(--rar-transcendent), var(--rar-transcendent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.acard.rar-transcendent:not(.selected) { border-color: var(--rar-transcendent); box-shadow: 0 0 14px rgba(255, 92, 240, 0.3); }
 .acard.rar-heroic .acard-name { color: var(--rar-heroic); }
 .acard.rar-heroic:not(.selected) { border-color: rgba(182, 120, 255, 0.45); }
 .acard.rar-legendary:not(.selected) { border-color: var(--rar-legendary); box-shadow: 0 0 10px rgba(255, 165, 61, 0.2); }
@@ -231,6 +247,7 @@ body {
 .tag.rar-rare { color: var(--rar-rare); border-color: var(--rar-rare); }
 .tag.rar-heroic { color: var(--rar-heroic); border-color: var(--rar-heroic); }
 .tag.rar-legendary { color: var(--rar-legendary); border-color: var(--rar-legendary); }
+.tag.rar-transcendent { color: var(--rar-transcendent); border-color: var(--rar-transcendent); box-shadow: 0 0 6px rgba(255, 92, 240, 0.35); }
 .tag.synergy { color: var(--good); border-color: #3d5a3a; }
 .tag.synergy-max { background: #22301f; font-weight: 700; }
 .busy-tag { margin-top: 4px; }
@@ -470,6 +487,7 @@ body.overlay-open .container { overflow: hidden; }
 /* 합성 공개 카드 등급 연출 (2026-08-24) */
 .fuse-card.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 12px rgba(182, 120, 255, 0.4); }
 .fuse-card.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 1.8s ease-in-out infinite; }
+.fuse-card.rar-transcendent { border-color: var(--rar-transcendent); animation: transcend-pulse 1.6s ease-in-out infinite; }
 .fuse-new { color: var(--accent-2); font-weight: 700; }
 .fuse-fail { opacity: 0.65; }
 .fuse-fail-mark { font-size: 26px; }
@@ -547,6 +565,7 @@ body.overlay-open .container { overflow: hidden; }
 .hg-icon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }
 .hg-icon.rar-heroic { border-color: var(--rar-heroic); box-shadow: 0 0 9px rgba(182, 120, 255, 0.45); }
 .hg-icon.rar-legendary { border-color: var(--rar-legendary); animation: legend-pulse 2.2s ease-in-out infinite; }
+.hg-icon.rar-transcendent { border-color: var(--rar-transcendent); animation: transcend-pulse 2.6s ease-in-out infinite; }
 .hg-body { flex: 1; min-width: 0; }
 .hg-use { flex: none; padding: 7px 14px; }
 

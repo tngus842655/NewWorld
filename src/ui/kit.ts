@@ -1,7 +1,7 @@
 /**
  * UI 킷 — DOM 헬퍼(el), 스코프 이펙트, 토스트, 공용 포맷터. 사용자 노출 문자열의 집결지.
  */
-import { RARITIES, type ArtifactRarity, type Element, type MonsterRarity, type Tier, type Tribe } from '../content/schema';
+import { RARITIES, RARITY_LABEL, type ArtifactRarity, type Element, type MonsterRarity, type Tier, type Tribe } from '../content/schema';
 import { RARITY_ORDER as CORE_RARITY_ORDER } from '../core/effects';
 import { effect } from '../state/signal';
 import { playSfx } from './sfx';
@@ -95,13 +95,8 @@ export const TRIBE_LABEL: Record<Tribe, string> = {
 export const TRIBE_EMOJI: Record<Tribe, string> = {
   beast: '🐾', spirit: '✨', undead: '💀', aquatic: '💧', flying: '🪽', construct: '⚙️',
 };
-/**
- * 등급 라벨 — 몬스터·유물 공용 (2026-08-23 통일).
- * Record라 등급이 늘면 TS가 누락을 잡는다. 순서를 뜻하지 않으니 정렬에 Object.keys를 쓰지 말 것 — RARITY_ASC/DESC를 쓴다.
- */
-export const RARITY_LABEL: Record<MonsterRarity, string> = {
-  common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설',
-};
+/** 등급 라벨 — 정본은 content/schema.ts (스크립트·코어도 쓸 수 있게 데이터 레이어에 둔다) */
+export { RARITY_LABEL };
 export const MONSTER_RARITY_LABEL: Record<MonsterRarity, string> = RARITY_LABEL;
 export const ARTIFACT_RARITY_LABEL: Record<ArtifactRarity, string> = RARITY_LABEL;
 

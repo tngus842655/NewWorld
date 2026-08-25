@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { RARITIES } from '../src/content/schema';
+import { RARITIES, RARITY_LABEL } from '../src/content/schema';
 import { RARITY_ORDER } from '../src/core/effects';
 import { RARITY_NEXT } from '../src/core/economy';
 import { RARITY_SCORE } from '../src/core/score';
@@ -73,14 +73,22 @@ describe('등급 체계 (RARITIES 파생)', () => {
     }
   });
 
-  it('모든 등급에 한글 라벨과 --rar-* 색이 있다 (UI 폴백 없이 회색으로 뜨는 것 방지)', () => {
-    // kit.ts는 DOM에 의존하지 않는 상수만 쓰지만 import 부작용을 피해 파일 텍스트로 검사한다
-    const kit = readFileSync(new URL('../src/ui/kit.ts', import.meta.url), 'utf8');
+  it('모든 등급에 한글 라벨이 있다', () => {
+    for (const rarity of RARITIES) {
+      expect(RARITY_LABEL[rarity], `${rarity}의 한글 라벨 누락`).toBeTruthy();
+    }
+    expect(new Set(Object.values(RARITY_LABEL)).size, '라벨이 중복된 등급이 있다').toBe(RARITIES.length);
+  });
+
+  it('모든 등급에 --rar-* 색과 태그 규칙이 있다 (UI에서 회색으로 뜨는 것 방지)', () => {
+    // CSS는 자동화할 수 없어 등급 추가 시 가장 조용히 빠지는 자리다. 파일 텍스트로 직접 검사한다.
     const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
     for (const rarity of RARITIES) {
-      expect(kit, `kit.ts RARITY_LABEL에 ${rarity} 누락`).toMatch(new RegExp(`\\b${rarity}:`));
       expect(css, `styles.css에 --rar-${rarity} 누락`).toContain(`--rar-${rarity}:`);
+      // .tag가 가장 중요 — 없으면 등급 태그가 앱 전역에서 회색으로 뜬다
       expect(css, `styles.css에 .tag.rar-${rarity} 누락`).toContain(`.tag.rar-${rarity}`);
+      expect(css, `styles.css에 .chip.rar-${rarity} 누락 (등급 필터 칩)`).toContain(`.chip.rar-${rarity}`);
+      expect(css, `styles.css에 .micon.rar-${rarity} 누락 (몬스터 아이콘 테두리)`).toContain(`.micon.rar-${rarity}`);
     }
   });
 

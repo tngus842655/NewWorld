@@ -4,6 +4,7 @@
  */
 import {
   ARTIFACT_RARITIES,
+  RARITY_ORDER,
   BalanceSchema,
   EventsSchema,
   HourglassSchema,
@@ -113,7 +114,10 @@ export function loadContent(): Content {
     for (const spawn of region.spawns) {
       const m = monsters.get(spawn.monster) ?? fail(`${region.id} spawns가 없는 몬스터 참조: ${spawn.monster}`);
       if (m.habitat !== region.id) fail(`${spawn.monster}의 habitat(${m.habitat})와 출현 지역(${region.id}) 불일치`);
-      if (m.rarity === 'legendary') fail(`${region.id} spawns에 전설 몬스터(${spawn.monster}) — 전설은 legendary 필드로만`);
+      // 전설은 legendary 필드로만, 초월은 어디에도 스폰되지 않는다 (합성 전용 — 2026-08-25 사용자)
+      if (RARITY_ORDER[m.rarity] >= RARITY_ORDER.legendary) {
+        fail(`${region.id} spawns에 ${m.rarity} 몬스터(${spawn.monster}) — 전설은 legendary 필드로만, 초월은 합성 전용`);
+      }
     }
     for (const legendId of region.legendary) {
       const legend = monsters.get(legendId) ?? fail(`${region.id} legendary가 없는 몬스터 참조: ${legendId}`);
@@ -132,9 +136,10 @@ export function loadContent(): Content {
   }
   for (const monster of monsterList) {
     if (!regions.has(monster.habitat)) fail(`${monster.id} habitat이 없는 지역 참조: ${monster.habitat}`);
-    // 고유 능력은 전설 전용·전설 필수 (유물 GDD §8.2와 대칭 — 2026-08-24)
-    if (monster.rarity === 'legendary' && monster.unique.length === 0) fail(`전설 몬스터 ${monster.id}에 고유 능력이 없음`);
-    if (monster.rarity !== 'legendary' && monster.unique.length > 0) fail(`비전설 몬스터 ${monster.id}에 고유 능력 — 고유 능력은 전설 전용`);
+    // 고유 능력은 전설 이상 전용·전설 이상 필수 (유물 GDD §8.2와 대칭 — 2026-08-24, 2026-08-25 초월 포함)
+    const rank = RARITY_ORDER[monster.rarity];
+    if (rank >= RARITY_ORDER.legendary && monster.unique.length === 0) fail(`${monster.rarity} 몬스터 ${monster.id}에 고유 능력이 없음`);
+    if (rank < RARITY_ORDER.legendary && monster.unique.length > 0) fail(`${monster.id}에 고유 능력 — 고유 능력은 전설 이상 전용`);
     for (const effect of monster.unique) {
       for (const rid of effect.when?.region ?? []) {
         if (!regions.has(rid)) fail(`몬스터 ${monster.id} 고유 능력이 없는 지역 참조: ${rid}`);

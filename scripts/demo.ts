@@ -5,6 +5,7 @@
  *   npm run demo -- --region sunken-marsh --tier deep --seed abc --level 30 --choice safe
  */
 import { content } from '../src/content';
+import { RARITY_LABEL } from '../src/content/schema';
 import { chooseCrossroad, claimExpedition, createExpedition } from '../src/core/expedition';
 import { createInitialSave } from '../src/core/newgame';
 import type { CoreCtx, GrantedReward, Journal } from '../src/core/types';
@@ -48,12 +49,12 @@ const { save: after, journal, newMilestones } = claimExpedition(content, save, e
 // ── 출력 ─────────────────────────────────────────────────────────────────────
 const region = content.regions.get(regionId)!;
 const tierLabel = { scout: '정찰 (15분)', standard: '원정 (2시간)', deep: '심층 탐사 (8시간)' }[tier];
-const artifactRarityLabel = { common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설' } as const;
+
 const pct = (hp: number) => `${Math.round(hp * 100)}%`;
 const monsterName = (id: string) => content.monsters.get(id)?.name ?? id;
 const artifactLine = (itemId: string) => {
   const def = content.artifacts.get(itemId)!;
-  return `[${artifactRarityLabel[def.rarity]}] ${def.name}`;
+  return `[${RARITY_LABEL[def.rarity]}] ${def.name}`;
 };
 const rewardText = (r: GrantedReward): string => {
   switch (r.kind) {

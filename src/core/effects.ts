@@ -4,7 +4,7 @@
  * 새 Action variant를 추가하면 이 파일의 exhaustive switch가 컴파일 에러로 미구현을 알린다.
  */
 import type { Content } from '../content';
-import { RARITIES } from '../content/schema';
+import { RARITY_ORDER } from '../content/schema';
 import type {
   Action,
   Condition,
@@ -36,13 +36,8 @@ export interface EffectCtx {
   hpRatio?: number;
 }
 
-/**
- * 등급 서열의 정본 — schema.ts의 RARITIES 순서에서 파생한다 (2026-08-25).
- * 손으로 번호를 매기던 것을 파생으로 바꿨다. UI(kit.ts)는 이걸 재노출만 한다.
- */
-export const RARITY_ORDER = Object.fromEntries(
-  RARITIES.map((rarity, index) => [rarity, index]),
-) as Record<MonsterRarity, number>;
+/** 등급 서열 — 정본은 content/schema.ts (RARITIES 옆). 기존 import 경로를 위해 재노출한다 */
+export { RARITY_ORDER };
 
 export function matchCondition(when: Condition | undefined, ctx: EffectCtx): boolean {
   if (!when) return true;

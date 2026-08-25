@@ -7,10 +7,30 @@ import { z } from 'zod';
 // ── 기본 열거 ────────────────────────────────────────────────────────────────
 export const ELEMENTS = ['fire', 'nature', 'frost', 'light', 'dark'] as const;
 export const TRIBES = ['beast', 'spirit', 'undead', 'aquatic', 'flying', 'construct'] as const;
-// 등급 5단계 — 몬스터·유물 공용 (2026-08-23 통일: 일반/고급/희귀/영웅/전설)
-export const RARITIES = ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const;
+// 등급 6단계 — 몬스터·유물 공용 (2026-08-23 통일, 2026-08-25 초월 추가)
+// 순서가 곧 서열이다 — 반드시 뒤에 append (core/teams.ts가 indexOf를 서열로 쓴다).
+// 'transcendent'(초월)는 합성으로만 도달하는 최종 등급 — 조우·드랍·상점 뽑기 확률은 전부 0 (2026-08-25 사용자)
+export const RARITIES = ['common', 'uncommon', 'rare', 'heroic', 'legendary', 'transcendent'] as const;
 export const MONSTER_RARITIES = RARITIES;
 export const ARTIFACT_RARITIES = RARITIES;
+
+/**
+ * 등급 한글 라벨의 정본 — 라벨 표가 kit·effectText·demo 세 벌로 갈려 있어
+ * 등급을 늘릴 때마다 세 곳을 따로 고쳐야 했다. DOM에 의존하지 않으므로 스크립트·코어도 쓸 수 있다.
+ * Record라 등급이 늘면 TS가 누락을 잡는다. 순서를 뜻하지 않으니 정렬에 Object.keys를 쓰지 말 것.
+ */
+export const RARITY_LABEL: Record<(typeof RARITIES)[number], string> = {
+  common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설', transcendent: '초월',
+};
+
+/**
+ * 등급 서열 — RARITIES의 인덱스가 곧 서열이다. 정렬과 '이 등급 이상' 판정은 반드시 이걸 쓴다
+ * (id 알파벳순은 뒤집히고, 리터럴 비교는 등급이 늘어도 조용히 그대로다).
+ * 정본이 RARITIES 옆에 있어야 코어·UI·콘텐츠 로더가 층을 넘지 않고 같은 표를 쓴다.
+ */
+export const RARITY_ORDER = Object.fromEntries(
+  RARITIES.map((rarity, index) => [rarity, index]),
+) as Record<(typeof RARITIES)[number], number>;
 export const SLOTS = ['weapon', 'armor', 'banner', 'charm'] as const;
 export const TIERS = ['scout', 'standard', 'deep'] as const;
 export const HOOKS = [

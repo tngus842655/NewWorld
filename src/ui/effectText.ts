@@ -2,7 +2,7 @@
  * Effect → 한글 설명 — 유물 고유 능력·세트 보너스를 사람이 읽는 문장으로.
  */
 import { content } from '../content';
-import type { Action, Condition, Effect } from '../content/schema';
+import { RARITY_LABEL, type Action, type Condition, type Effect } from '../content/schema';
 import { ELEMENT_LABEL, TIER_LABEL, TRIBE_LABEL } from './kit';
 
 function pct(value: number): string {
@@ -46,7 +46,7 @@ function describeAction(action: Action): string {
       return `${target} 빈도 ×${action.value}`;
     }
     case 'spawnWeightMult': {
-      const rarity = { common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설' }[action.minRarity];
+      const rarity = RARITY_LABEL[action.minRarity];
       return `${rarity} 이상 출현 가중 ×${action.value}`;
     }
     case 'salvageOnFail': return `갈림길 실패 시에도 보상 ${pct(action.ratio)} 획득`;

@@ -310,7 +310,12 @@ export function rollArtifact(content: Content, rng: Rng, rarityBonus = 0): Dropp
 
 /** 지정 등급의 랜덤 유물 1종 — 드랍·유물 합성·상점 뽑기가 공유 */
 export function rollArtifactOfRarity(content: Content, rng: Rng, rarity: ArtifactRarity): DroppedArtifact {
-  const defs = content.artifactsByRarity.get(rarity)!;
+  const defs = content.artifactsByRarity.get(rarity);
+  // 빈 풀 방어 — 등급을 신설하고 유물을 아직 안 만든 상태에서 여기로 들어오면 조용히 크래시한다.
+  // 호출부가 셋(드랍·합성·뽑기)이라 어느 하나만 막아서는 부족하다 (2026-08-25)
+  if (!defs || defs.length === 0) {
+    throw new GameError('artifact-pool-empty', `${rarity} 등급의 유물이 아직 없습니다`);
+  }
   const def = defs[Math.floor(rng() * defs.length)]!;
 
   return { itemId: def.id }; // v6: 부옵션 폐지 — 종만 결정

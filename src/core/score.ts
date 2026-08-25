@@ -7,7 +7,7 @@ import type { MonsterRarity, Tier } from '../content/schema';
 import type { OwnedArtifact, OwnedMonster, SaveState } from './types';
 
 export const RARITY_SCORE: Record<MonsterRarity, number> = {
-  common: 10, uncommon: 20, rare: 40, heroic: 80, legendary: 200,
+  common: 10, uncommon: 20, rare: 40, heroic: 80, legendary: 200, transcendent: 500,
 };
 
 /** 파견 길이별 점수 — 시간 비례 + 위험 가중 (전멸 귀환은 절반) */

@@ -18,7 +18,8 @@
       "uncommon": 1.2,
       "rare": 1.5,
       "heroic": 2,
-      "legendary": 3
+      "legendary": 3,
+      "transcendent": 5
     }
   },
   "star": {
@@ -37,7 +38,8 @@
       "uncommon": 0.34,
       "rare": 0.18,
       "heroic": 0.06,
-      "legendary": 0.015
+      "legendary": 0.015,
+      "transcendent": 0
     },
     "lureMult": 2,
     "adBuffMult": 2,
@@ -89,7 +91,8 @@
       "uncommon": 1.3,
       "rare": 1.6,
       "heroic": 2.5,
-      "legendary": 5
+      "legendary": 5,
+      "transcendent": 8
     }
   },
   "crossroad": {
@@ -142,7 +145,8 @@
       "uncommon": 0.27,
       "rare": 0.22,
       "heroic": 0.1,
-      "legendary": 0.03
+      "legendary": 0.03,
+      "transcendent": 0
     },
     "sources": {
       "treasureChance": 0.35,
@@ -165,7 +169,8 @@
         "uncommon": 1.3,
         "rare": 1.8,
         "heroic": 2.5,
-        "legendary": 3.5
+        "legendary": 3.5,
+        "transcendent": 5
       }
     },
     "dustPerSalvage": {
@@ -173,7 +178,8 @@
       "uncommon": 8,
       "rare": 12,
       "heroic": 30,
-      "legendary": 80
+      "legendary": 80,
+      "transcendent": 200
     },
     "effectCaps": {
       "rewardMult": 3,
@@ -199,7 +205,8 @@
       "uncommon": 0.25,
       "rare": 0.125,
       "heroic": 0.0625,
-      "legendary": 0
+      "legendary": 0.03,
+      "transcendent": 0
     }
   },
   "shop": {
@@ -209,21 +216,24 @@
         "uncommon": 0.25,
         "rare": 0.15,
         "heroic": 0.05,
-        "legendary": 0.01
+        "legendary": 0.01,
+        "transcendent": 0
       },
       "premium": {
         "common": 0,
         "uncommon": 0,
         "rare": 0.75,
         "heroic": 0.22,
-        "legendary": 0.03
+        "legendary": 0.03,
+        "transcendent": 0
       },
       "goldNormal": {
         "common": 0.62,
         "uncommon": 0.24,
         "rare": 0.1,
         "heroic": 0.035,
-        "legendary": 0.005
+        "legendary": 0.005,
+        "transcendent": 0
       }
     },
     "artifactGacha": {
@@ -232,14 +242,16 @@
         "uncommon": 0.27,
         "rare": 0.22,
         "heroic": 0.1,
-        "legendary": 0.03
+        "legendary": 0.03,
+        "transcendent": 0
       },
       "premium": {
         "common": 0,
         "uncommon": 0,
         "rare": 0.72,
         "heroic": 0.23,
-        "legendary": 0.05
+        "legendary": 0.05,
+        "transcendent": 0
       }
     }
   },

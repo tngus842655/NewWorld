@@ -10,6 +10,8 @@ import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';
 import { ARTIFACT_RARITY_LABEL, SLOT_LABEL, el } from './kit';
+import { finalRegion } from '../core/economy';
+import { isRegionUnlocked } from '../core/progression';
 import { FUSABLE_RARITIES, FUSION_NEXT, ritualCircle } from './fusionSheet';
 import { pct1, sheetShell } from './overlays';
 import { playSfx } from './sfx';
@@ -121,6 +123,11 @@ export function artifactFusionSheet(): HTMLElement {
   if (phase === 'result') return resultView(rarity, nextRarity);
 
   // ── setup ──
+  // 초월 단계는 최종 지역 해금이 관문이다 (유물엔 서식 지역이 없어 몬스터의 '최종 지역 재료' 규칙에 대응하는 등가).
+  // 코어가 거절하므로 시트에서도 막지 않으면 눌러도 0회 합성되는 조용한 실패가 난다 (2026-08-25)
+  const restricted = FUSION_NEXT[nextRarity] === null;
+  const last = finalRegion(content);
+  const gateOpen = !restricted || isRegionUnlocked(content, state, last.id);
   const spares = spareMap(state, rarity);
   const total = sumOf(spares);
   const maxRounds = Math.floor(total / fusion.materials);
@@ -152,6 +159,12 @@ export function artifactFusionSheet(): HTMLElement {
       total > 0
         ? `${ARTIFACT_RARITY_LABEL[rarity]} 여분 ${total}개 [최대 ${maxRounds}회 합성 가능]`
         : `${ARTIFACT_RARITY_LABEL[rarity]} 여분 유물이 없습니다 [중복 획득으로 모아보세요]`),
+    restricted
+      ? el('div.center.small.muted', {},
+          gateOpen
+            ? `⚠️ ${ARTIFACT_RARITY_LABEL[nextRarity]}은 합성으로만 얻습니다 [발굴·상점 뽑기에는 등장하지 않습니다]`
+            : `🔒 ${ARTIFACT_RARITY_LABEL[nextRarity]} 도전은 ${last.name}을 해금해야 열립니다`)
+      : null,
 
     el('div.card.stack-sm', {},
       el('div.list-row', {},
@@ -176,11 +189,13 @@ export function artifactFusionSheet(): HTMLElement {
         el('span.small.muted', {}, `성공 시 ${ARTIFACT_RARITY_LABEL[nextRarity]} ${resultPool}종 중 랜덤 · 실패 시 1개 반환`),
       ),
       el('button.btn.btn-primary.btn-big', {
-        disabled: maxRounds < 1,
+        disabled: maxRounds < 1 || !gateOpen,
         onclick: () => startRitual(rarity, rounds),
-      }, maxRounds < 1
-        ? '여분 유물이 부족합니다'
-        : `💠 합성 시작 [${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회]`),
+      }, !gateOpen
+        ? `${last.name} 해금이 필요합니다`
+        : maxRounds < 1
+          ? '여분 유물이 부족합니다'
+          : `💠 합성 시작 [${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회]`),
     ),
     el('div.center.muted.small', {}, '각 종의 마지막 1개는 재료로 쓰지 않습니다 (강화 보호)'),
   );

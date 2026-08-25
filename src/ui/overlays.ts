@@ -2,9 +2,10 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
-import { ELEMENTS, type MonsterRarity, type Region } from '../content/schema';
+import { ELEMENTS, RARITY_LABEL, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
+import { finalRegion } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
@@ -362,7 +363,10 @@ function oddsSheet(): HTMLElement {
   const captureCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🎯 포획 확률'),
     el('div.muted.small', {}, '조우에서 승리하면 등급별 기본 확률로 포획을 시도합니다.'),
-    ...rarities.map((rarity) => pctBarRow(rarityTag(rarity), balance.capture.base[rarity] ?? 0, `--rar-${rarity}`)),
+    // 0%인 등급은 행을 만들지 않는다 — 초월은 조우 자체가 없어 "0%" 행이 뜨면 오히려 오해를 부른다 (2026-08-25)
+    ...rarities
+      .filter((rarity) => (balance.capture.base[rarity] ?? 0) > 0)
+      .map((rarity) => pctBarRow(rarityTag(rarity), balance.capture.base[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
       el('div.small.muted', {}, `· 미끼 적재 시 ×${balance.capture.lureMult} [희귀 이상 조우에 자동 사용됩니다]`),
       el('div.small.muted', {}, `· 확률 배수 상한 ×${balance.capture.multCap} · 최종 확률 상한 ${pct1(balance.capture.chanceCap)}`),
@@ -419,6 +423,11 @@ function oddsSheet(): HTMLElement {
       el('div.small.muted', {}, '· 실패: 재료 2장 중 1장이 사라지고, 1장은 돌아옵니다'),
       el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
       el('div.small.muted', {}, '· 유물 합성도 같은 확률입니다 [같은 등급 유물 2개 → 다음 등급 랜덤 1개 · 실패 시 1개 반환]'),
+      // 초월은 유일한 획득 경로가 합성이므로 확률 고지에 명시한다 (2026-08-25 사용자)
+      el('div.small.muted', {},
+        `· ${RARITY_LABEL.transcendent}은 오직 합성으로만 얻습니다 [조우·발굴·상점 뽑기에는 등장하지 않습니다]`),
+      el('div.small.muted', {},
+        `· ${RARITY_LABEL.transcendent} 도전은 ${finalRegion(content).name} 서식 ${RARITY_LABEL.legendary} 카드만 재료가 됩니다`),
     ),
   );
 

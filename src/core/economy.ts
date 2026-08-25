@@ -2,7 +2,7 @@
  * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
-import { RARITIES, type ArtifactRarity, type MonsterRarity } from '../content/schema';
+import { RARITIES, RARITY_LABEL, type ArtifactRarity, type MonsterRarity } from '../content/schema';
 import { findArtifact, findMonster, grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { artifactEnhanceCost, monsterLevelUpCost, monsterStarUpCost } from './formulas';
@@ -23,6 +23,16 @@ function spendGold(save: SaveState, amount: number): void {
 export const RARITY_NEXT = Object.fromEntries(
   RARITIES.map((rarity, index) => [rarity, RARITIES[index + 1] ?? null]),
 ) as Record<MonsterRarity, MonsterRarity | null>;
+
+/** 최종 지역 — 초월 합성의 관문. 지역이 늘어나면 자동으로 따라온다 (별빛 폐허 등) */
+export function finalRegion(content: Content) {
+  return content.regionList[content.regionList.length - 1]!;
+}
+
+/** 초월로 올라가는 합성인가 — 최상위 등급이 결과인 경우 */
+function isTranscendStep(nextRarity: MonsterRarity): boolean {
+  return RARITY_NEXT[nextRarity] === null;
+}
 
 
 /** 레벨업 — 종 단위 (카드가 몇 장이든 종당 레벨 하나, 골드 소모) */
@@ -92,7 +102,18 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
     else if (rarity !== monster.rarity) throw new GameError('fusion-rarity', '재료는 같은 등급이어야 합니다');
   }
   const nextRarity = RARITY_NEXT[rarity!];
-  if (!nextRarity) throw new GameError('fusion-legendary', '전설 카드는 합성할 수 없습니다');
+  if (!nextRarity) throw new GameError('fusion-top', `${RARITY_LABEL[rarity!]} 카드는 더 합성할 수 없습니다`);
+  // 초월 도전은 최종 지역 서식 카드만 재료로 쓸 수 있다 (2026-08-25 사용자) — 엔드콘텐츠 관문
+  if (isTranscendStep(nextRarity)) {
+    const last = finalRegion(content);
+    for (const material of input.materials) {
+      const monster = content.monsters.get(material.monsterId)!;
+      if (monster.habitat !== last.id) {
+        throw new GameError('fusion-region',
+          `${RARITY_LABEL[nextRarity]} 합성은 ${last.name} 서식 카드만 재료가 됩니다 (${monster.name}은 다른 지역)`);
+      }
+    }
+  }
   const chance = fusion.chance[rarity!] ?? 0;
 
   const next = structuredClone(save);
@@ -187,7 +208,14 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
     else if (rarity !== def.rarity) throw new GameError('fusion-rarity', '재료는 같은 등급이어야 합니다');
   }
   const nextRarity = RARITY_NEXT[rarity!];
-  if (!nextRarity) throw new GameError('fusion-legendary', '전설 유물은 합성할 수 없습니다');
+  if (!nextRarity) throw new GameError('fusion-top', `${RARITY_LABEL[rarity!]} 유물은 더 합성할 수 없습니다`);
+  // 유물에는 서식 지역이 없다 — 몬스터의 '최종 지역 재료' 규칙에 대응하는 등가로 최종 지역 해금을 요구한다
+  if (isTranscendStep(nextRarity)) {
+    const last = finalRegion(content);
+    if (!isRegionUnlocked(content, save, last.id)) {
+      throw new GameError('fusion-region', `${RARITY_LABEL[nextRarity]} 합성은 ${last.name}을 해금해야 도전할 수 있습니다`);
+    }
+  }
   const chance = fusion.chance[rarity!] ?? 0;
 
   const next = structuredClone(save);

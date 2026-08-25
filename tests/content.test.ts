@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RARITY_ORDER } from '../src/content/schema';
 import { content } from './helpers';
 
 describe('콘텐츠 무결성', () => {
@@ -6,10 +7,15 @@ describe('콘텐츠 무결성', () => {
     expect(content.monsterList.length).toBeGreaterThan(0);
   });
 
-  it('도감은 정확히 216종 — 지역 4 × (일반16 + 고급12 + 희귀12 + 영웅8 + 전설6)', () => {
-    expect(content.monsterList).toHaveLength(216);
+  it('도감은 219종 — 지역 4 × (일반16 + 고급12 + 희귀12 + 영웅8 + 전설6) + 초월 3 (합성 전용)', () => {
+    expect(content.monsterList).toHaveLength(219);
+    // 초월 3종은 최종 지역 소속이지만 어느 지역의 출현 테이블에도 없다 (2026-08-25 사용자)
+    const transcendent = content.monsterList.filter((m) => m.rarity === 'transcendent');
+    expect(transcendent).toHaveLength(3);
+    const last = content.regionList[content.regionList.length - 1]!;
+    for (const m of transcendent) expect(m.habitat, m.id).toBe(last.id);
     for (const region of content.regionList) {
-      const natives = content.monsterList.filter((m) => m.habitat === region.id);
+      const natives = content.monsterList.filter((m) => m.habitat === region.id && m.rarity !== 'transcendent');
       expect(natives, region.id).toHaveLength(54);
       const by = (rarity: string) => natives.filter((m) => m.rarity === rarity).length;
       expect(by('common'), region.id).toBe(16);
@@ -37,20 +43,21 @@ describe('콘텐츠 무결성', () => {
     for (let i = 1; i < scales.length; i++) expect(scales[i]!).toBeGreaterThan(scales[i - 1]!);
   });
 
-  it('유물은 96종 — 일반8 + 고급8 + 희귀16 + 영웅48 + 전설16, 세트 8계열 (전설은 2배 확장 제외 — 2026-08-24 사용자)', () => {
-    expect(content.artifacts.size).toBe(96);
+  it('유물은 99종 — 일반8 + 고급8 + 희귀16 + 영웅48 + 전설16 + 초월3, 세트 8계열', () => {
+    expect(content.artifacts.size).toBe(99);
     const byRarity = (r: string) => [...content.artifacts.values()].filter((a) => a.rarity === r).length;
     expect(byRarity('common')).toBe(8);
     expect(byRarity('uncommon')).toBe(8);
     expect(byRarity('rare')).toBe(16);
     expect(byRarity('heroic')).toBe(48);
     expect(byRarity('legendary')).toBe(16);
+    expect(byRarity('transcendent')).toBe(3); // 합성 전용 — 세트 없음 (3점으로는 2/4세트가 성립하지 않는다)
     expect(content.sets.size).toBe(8);
   });
 
   it('전설 유물은 전부 고유 능력을 가진다 (빌드 정의급 — GDD §8.2)', () => {
     for (const artifact of content.artifacts.values()) {
-      if (artifact.rarity === 'legendary') {
+      if (RARITY_ORDER[artifact.rarity] >= RARITY_ORDER.legendary) {
         expect(artifact.unique.length, artifact.id).toBeGreaterThan(0);
       }
       if (artifact.rarity === 'common' || artifact.rarity === 'uncommon' || artifact.rarity === 'rare') {
@@ -59,9 +66,9 @@ describe('콘텐츠 무결성', () => {
     }
   });
 
-  it('전설 몬스터는 전부 고유 능력을 가지고, 비전설은 없다 (2026-08-24)', () => {
+  it('전설 이상 몬스터는 전부 고유 능력을 가지고, 그 아래는 없다 (2026-08-24, 2026-08-25 초월 포함)', () => {
     for (const monster of content.monsterList) {
-      if (monster.rarity === 'legendary') {
+      if (RARITY_ORDER[monster.rarity] >= RARITY_ORDER.legendary) {
         expect(monster.unique.length, monster.id).toBeGreaterThan(0);
       } else {
         expect(monster.unique, monster.id).toHaveLength(0);

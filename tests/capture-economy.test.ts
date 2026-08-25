@@ -13,6 +13,7 @@ import {
 } from '../src/core/economy';
 import { artifactEnhanceCost, levelUpCost, monsterCostMult, monsterLevelUpCost, monsterStarUpCost, starUpCost } from '../src/core/formulas';
 import { canUnlockRegion, teamCount } from '../src/core/progression';
+import { regionFlagKey } from '../src/core/progression';
 import { streamRng } from '../src/core/rng';
 import { GameError, type CoreCtx } from '../src/core/types';
 import { T0, content, findSeed, makeCtx, makeExpedition, saveWithParty } from './helpers';
@@ -145,7 +146,7 @@ describe('카드 합성 (GDD §4.5)', () => {
     expect(() => fuseMonsters(content, save, fuseInput('dune-pup', 2), fixedCtx('s'))).toThrow(/여분/);
   });
 
-  it('재료는 같은 등급 2장, 전설은 불가', () => {
+  it('재료는 같은 등급 2장, 초월은 종점', () => {
     const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }, { id: 'pearl-turtle' }]);
     save.roster.forEach((m) => { m.count = 3; });
     expect(() =>
@@ -153,9 +154,38 @@ describe('카드 합성 (GDD §4.5)', () => {
     ).toThrow(/같은 등급/);
     expect(() => fuseMonsters(content, save, fuseInput('dune-pup', 1), fixedCtx('s'))).toThrow(/2장/);
 
-    const legend = saveWithParty(makeCtx(), [{ id: 'leviathan-calf' }]);
-    legend.save.roster[0]!.count = 3;
-    expect(() => fuseMonsters(content, legend.save, fuseInput('leviathan-calf', 2), fixedCtx('s'))).toThrow(/전설/);
+    // 초월(최상위)은 더 합성할 수 없다 — 사다리의 새 종점 (2026-08-25)
+    const top = saveWithParty(makeCtx(), [{ id: 'emberwing-sovereign' }]);
+    top.save.roster[0]!.count = 3;
+    expect(() => fuseMonsters(content, top.save, fuseInput('emberwing-sovereign', 2), fixedCtx('s')))
+      .toThrow(/더 합성할 수 없습니다/);
+  });
+
+  it('초월 합성은 최종 지역 서식 전설만 재료로 받는다 (2026-08-25 사용자)', () => {
+    const last = content.regionList[content.regionList.length - 1]!;
+    // 해안 전설 — 최종 지역이 아니므로 거절
+    const coast = saveWithParty(makeCtx(), [{ id: 'leviathan-calf' }]);
+    coast.save.roster[0]!.count = 3;
+    expect(() => fuseMonsters(content, coast.save, fuseInput('leviathan-calf', 2), fixedCtx('s')))
+      .toThrow(/서식 카드만/);
+
+    // 최종 지역 전설 — 도전 가능 (확률 판정까지 도달한다)
+    const volcanoLegend = content.monsterList.find((m) => m.rarity === 'legendary' && m.habitat === last.id)!;
+    const volcano = saveWithParty(makeCtx(), [{ id: volcanoLegend.id }]);
+    volcano.save.roster[0]!.count = 3;
+    expect(() => fuseMonsters(content, volcano.save, fuseInput(volcanoLegend.id, 2), fixedCtx('s'))).not.toThrow();
+  });
+
+  it('초월 합성 성공 시 초월 종만 나온다 — 조우·뽑기로는 절대 얻을 수 없는 등급', () => {
+    const last = content.regionList[content.regionList.length - 1]!;
+    const volcanoLegend = content.monsterList.find((m) => m.rarity === 'legendary' && m.habitat === last.id)!;
+    const { save } = saveWithParty(makeCtx(), [{ id: volcanoLegend.id }]);
+    save.roster[0]!.count = 3;
+    for (const region of content.regionList) save.profile.flags[regionFlagKey(region.id)] = true;
+    const okSeed = findSeed((seed) => streamRng(seed, 'fusion')() < content.balance.fusion.chance.legendary!);
+    const result = fuseMonsters(content, save, fuseInput(volcanoLegend.id, 2), fixedCtx(okSeed));
+    expect(result.success).toBe(true);
+    expect(content.monsters.get(result.resultMonsterId!)!.rarity).toBe('transcendent');
   });
 
   it('성공 — 해금 지역의 다음 등급 랜덤 획득, 도감 등록, 재료 차감', () => {
@@ -197,7 +227,7 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     return save;
   };
 
-  it('재료 검증 (v6 종 단위) — 개수·여분·등급 혼합·전설 불가', () => {
+  it('재료 검증 (v6 종 단위) — 개수·여분·등급 혼합·초월 종점', () => {
     const save = withArtifacts([
       { itemId: commonId, count: 3 },
       { itemId: uncommonId, count: 3 },
@@ -207,7 +237,18 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
     expect(() => fuseArtifacts(content, save, {
       materials: [{ itemId: commonId, count: 1 }, { itemId: uncommonId, count: 1 }],
     }, fixedCtx('s'))).toThrow(/같은 등급/);
-    expect(() => fuseArtifacts(content, save, { materials: [{ itemId: legendaryId, count: 2 }] }, fixedCtx('s'))).toThrow(/전설/);
+    // 전설은 이제 초월로 올라가는 재료다 — 단 최종 지역을 해금해야 도전할 수 있다 (2026-08-25 사용자)
+    expect(() => fuseArtifacts(content, save, { materials: [{ itemId: legendaryId, count: 2 }] }, fixedCtx('s')))
+      .toThrow(/해금해야/);
+    const unlocked = withArtifacts([{ itemId: legendaryId, count: 3 }]);
+    for (const region of content.regionList) unlocked.profile.flags[regionFlagKey(region.id)] = true;
+    expect(() => fuseArtifacts(content, unlocked, { materials: [{ itemId: legendaryId, count: 2 }] }, fixedCtx('s'))).not.toThrow();
+    // 초월은 사다리의 종점
+    const topId = [...content.artifacts.values()].find((a) => a.rarity === 'transcendent')!.id;
+    const top = withArtifacts([{ itemId: topId, count: 3 }]);
+    for (const region of content.regionList) top.profile.flags[regionFlagKey(region.id)] = true;
+    expect(() => fuseArtifacts(content, top, { materials: [{ itemId: topId, count: 2 }] }, fixedCtx('s')))
+      .toThrow(/더 합성할 수 없습니다/);
 
     // 마지막 1개 보호 — count 2면 여분 1뿐이라 2개 재료 불가
     const scarce = withArtifacts([{ itemId: commonId, count: 2 }]);
