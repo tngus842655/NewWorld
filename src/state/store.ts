@@ -11,7 +11,6 @@ import {
   fuseMonsters,
   levelUpMonster,
   fuseArtifacts,
-  salvageArtifact,
   unlockRegion,
   type ArtifactFusionInput,
   type ArtifactFusionResult,
@@ -27,11 +26,13 @@ import {
   type ExpeditionInput,
   type UseHourglassResult,
 } from '../core/expedition';
+import { accountBonusState } from '../core/accountBonus';
 import { checkIn, type CheckInResult } from '../core/attendance';
 import { createInitialSave } from '../core/newgame';
 import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
 import { ensureTeams, setTeamLoadout } from '../core/teams';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
+import { describeEffect } from '../ui/effectText';
 import { toast } from '../ui/kit';
 import * as clock from './clock';
 import { submitScore } from './ranking';
@@ -172,16 +173,28 @@ export function crossroadsOf(expeditionId: string) {
   return previewCrossroads(content, save(), expedition);
 }
 
+/** 육성 액션 뒤 영구 보너스 계단 상승 검사 — 달성 순간을 토스트로 (GDD §4.6 킥) */
+function checkBonusTier(axis: 'training' | 'resonance', before: number): void {
+  const st = accountBonusState(content, save())[axis];
+  if (st.active <= before) return;
+  const label = axis === 'training' ? '🐾 조련' : '🔮 공명';
+  const gained = st.tiers.slice(before, st.active).flatMap((t) => t.effects.map(describeEffect));
+  toast(`🎖 ${label} ${st.active}계단 달성! [${gained.join(' · ')}]`, 'ok');
+}
 export function levelUp(monsterId: string): boolean {
   return act(() => {
+    const before = accountBonusState(content, save()).training.active;
     save.set(levelUpMonster(content, save(), monsterId));
+    checkBonusTier('training', before);
     return true;
   }) !== null;
 }
 export function awaken(monsterId: string): boolean {
   return act(() => {
+    const before = accountBonusState(content, save()).training.active;
     save.set(awakenMonster(content, save(), monsterId));
     toast('각성! 성급이 올랐습니다 ★', 'ok');
+    checkBonusTier('training', before);
     return true;
   }) !== null;
 }
@@ -251,14 +264,9 @@ export function setNickname(raw: string): boolean {
 }
 export function enhance(uid: string): boolean {
   return act(() => {
+    const before = accountBonusState(content, save()).resonance.active;
     save.set(enhanceArtifact(content, save(), uid));
-    return true;
-  }) !== null;
-}
-export function salvage(uid: string): boolean {
-  return act(() => {
-    save.set(salvageArtifact(content, save(), uid));
-    toast('유물을 분해해 가루를 얻었습니다', 'ok');
+    checkBonusTier('resonance', before);
     return true;
   }) !== null;
 }

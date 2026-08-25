@@ -1,7 +1,7 @@
 /**
  * 도감 — 몬스터/유물/업적 3탭 (모바일 스크롤 최소화, 2026-08-23).
  * 몬스터: 지역별 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 종족·등급 필터.
- * 유물: 등급별 그리드 — 획득 이력(v7) 기반, 분해로 종이 사라져도 도감에는 남는다.
+ * 유물: 등급별 그리드 — 획득 이력(v7) 기반, 종이 사라진 과거 세이브(분해 제거 전)도 도감에는 남는다.
  * 업적: 지역 4탭 + 공통.
  */
 import { content } from '../../content';
@@ -189,7 +189,7 @@ function artifactTab(state: Save): HTMLElement[] {
         );
       }
       if (state.artifactCodex[def.id]?.obtained) {
-        // 획득 이력은 있으나 현재 미보유 (마지막 개까지 분해)
+        // 획득 이력은 있으나 현재 미보유 (분해 제거 전 세이브 호환)
         return el('div.codex-cell.lost', { title: `${def.name} — 획득 이력 있음 · 현재 미보유` },
           artifactIcon(def.id),
           el('div.codex-name.muted', {}, def.name),

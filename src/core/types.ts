@@ -53,7 +53,7 @@ export interface CodexEntry {
   firstCapturedAt?: number;
 }
 
-/** 유물 도감 (v7) — 획득 이력. 마지막 개를 분해해 종이 사라져도 도감에는 남는다 */
+/** 유물 도감 (v7) — 획득 이력. 과거 분해(기능 제거 전)로 종이 사라진 세이브도 도감에는 남는다 */
 export interface ArtifactCodexEntry {
   obtained: boolean;
 }

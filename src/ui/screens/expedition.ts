@@ -5,7 +5,7 @@
 import { content } from '../../content';
 import type { Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
-import { collectTeamEffects } from '../../core/effects';
+import { collectTeamEffects, query } from '../../core/effects';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { signal } from '../../state/signal';
@@ -46,6 +46,7 @@ interface Preview {
   power: number;
   tribes: { tribe: string; count: number }[];
   synergyAmp: number;
+  encounterAdd: number; // 계정 보너스·유물 고유의 원정당 조우 추가 — 정보줄 표기용
 }
 
 /** 군 프리셋 기준 유효 전투력 미리보기 (artifactUids를 []로 주면 유물 제외) */
@@ -61,7 +62,10 @@ function teamPreview(team: TeamLoadout, regionId: string, tier: Tier, withArtifa
     const tribes = [...fx.tribeCounts.entries()]
       .map(([tribe, count]) => ({ tribe, count }))
       .sort((a, b) => b.count - a.count);
-    return { power: Math.round(power), tribes, synergyAmp: fx.synergyAmp };
+    const setupActions = query(fx.effects, 'expeditionSetup', { regionId: region.id, tier });
+    let encounterAdd = 0;
+    for (const action of setupActions) if (action.kind === 'encounterAdd') encounterAdd += action.count;
+    return { power: Math.round(power), tribes, synergyAmp: fx.synergyAmp, encounterAdd };
   } catch (error) {
     if (error instanceof GameError) return null;
     throw error;
@@ -137,7 +141,7 @@ function teamCard(team: TeamLoadout): HTMLElement {
     const monsterId = party[i];
     if (monsterId) {
       const owned = state.roster.find((m) => m.monsterId === monsterId)!;
-      iconCells.push(el('div.team-cell', {}, monsterIconBadged(owned)));
+      iconCells.push(el('div.team-cell', {}, monsterIconBadged(owned, { count: false }))); // 편성 미리보기 — 편성 슬롯과 같은 이유로 카드 수 숨김
     } else {
       iconCells.push(el('div.team-cell.team-cell-empty', {}, '+'));
     }
@@ -218,7 +222,7 @@ export function renderExpedition(): HTMLElement {
 
   const tierDef = content.balance.tiers[tier];
   const tierInfo = [
-    `조우 ${tierDef.encounters}회`,
+    `조우 ${tierDef.encounters + (info?.encounterAdd ?? 0)}회`,
     tierDef.crossroads > 0 ? `갈림길 ${tierDef.crossroads}회` : null,
     tierDef.yieldMult > 1 ? `보상 ×${tierDef.yieldMult}` : null,
     tierDef.rareWeightMult > 1 ? `희귀 출현 ×${tierDef.rareWeightMult}` : null,

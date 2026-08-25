@@ -286,7 +286,7 @@ export function previewCrossroads(content: Content, save: SaveState, expedition:
     .map((item) => item.event);
 }
 
-/** 파견 스냅샷의 유물 중 아직 보유 중인 종만 — 파견 중 분해로 종이 사라졌을 때의 방어 (v6) */
+/** 파견 스냅샷의 유물 중 아직 보유 중인 종만 — 과거 분해로 종이 사라진 세이브 방어 (분해 기능 제거 2026-08-25) */
 function liveArtifactIds(save: SaveState, expedition: ActiveExpedition): string[] {
   return expedition.artifactIds.filter((itemId) => save.artifacts.some((a) => a.itemId === itemId));
 }

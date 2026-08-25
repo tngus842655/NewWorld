@@ -8,7 +8,6 @@ import {
   fuseArtifacts,
   fuseMonsters,
   levelUpMonster,
-  salvageArtifact,
   unlockRegion,
 } from '../src/core/economy';
 import { artifactEnhanceCost, levelUpCost, monsterCostMult, monsterLevelUpCost, monsterStarUpCost, starUpCost } from '../src/core/formulas';
@@ -103,7 +102,7 @@ describe('경제 액션', () => {
     expect(() => craftRecipe(content, { ...next, wallet: { ...next.wallet, materials: {} } }, 'basic-lure')).toThrow(/부족/);
   });
 
-  it('유물 강화·분해 — 종 단위 (v6): 강화는 종 공통, 분해는 개수 차감·환급 없음', () => {
+  it('유물 강화 — 종 단위 (v6): 강화는 종 공통, 등급 차등 비용', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { artifacts: ['rusty-saber'], dust: 100 });
     save.artifacts[0]!.count = 2; // 2개 보유
@@ -112,20 +111,6 @@ describe('경제 액션', () => {
     // 등급 차등 (2026-08-23): 고급 유물은 기본 10 × 1.3 = 13
     const enhance0Cost = artifactEnhanceCost(content, 'rusty-saber', 0);
     expect(enhanced.wallet.dust).toBe(100 - enhance0Cost);
-
-    const saberRarity = content.artifacts.get('rusty-saber')!.rarity;
-    const salvageGain = content.balance.artifacts.dustPerSalvage[saberRarity]!;
-    // 개수 2 → 1: 종·강화 유지, 분해 가루만 (강화 환급 없음 — 2026-08-23 사용자 결정)
-    const one = salvageArtifact(content, enhanced, 'rusty-saber');
-    expect(one.artifacts[0]).toMatchObject({ itemId: 'rusty-saber', enhance: 1, count: 1 });
-    expect(one.wallet.dust).toBe(enhanced.wallet.dust + salvageGain);
-
-    // 마지막 1개 분해 → 종 소멸 + 팀 프리셋 정리, 역시 환급 없음
-    one.teams = [{ id: 't', name: 't', partyIds: [], artifactIds: ['rusty-saber'] }];
-    const gone = salvageArtifact(content, one, 'rusty-saber');
-    expect(gone.artifacts).toHaveLength(0);
-    expect(gone.teams[0]!.artifactIds).toHaveLength(0);
-    expect(gone.wallet.dust).toBe(one.wallet.dust + salvageGain);
   });
 
   it('파티 슬롯 구매 — 도감 조건 + 골드', () => {

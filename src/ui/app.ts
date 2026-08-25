@@ -22,7 +22,7 @@ import { renderSettings } from './screens/settings';
 const selCurrency = signal<string | null>(null);
 const CURRENCIES = [
   { id: 'gold', icon: '💰', name: '골드', gain: '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', use: '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작' },
-  { id: 'dust', icon: '✨', name: '가루', gain: '유물 분해', use: '유물 강화' },
+  { id: 'dust', icon: '✨', name: '가루', gain: '과업·마일스톤·출석·상점', use: '유물 강화' },
   { id: 'lures', icon: '🪤', name: '미끼', gain: '캠프에서 제작 (지역 재료 + 골드) · 상점', use: '파견에 자동 적재 [희귀 이상 몬스터 포획률 ×2]' },
   { id: 'diamonds', icon: '💎', name: '다이아', gain: '월간 출석 (충전은 정식 출시 후)', use: '다이아 상점 [뽑기·모래시계·패키지]' },
 ] as const;

@@ -83,7 +83,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
     return el('button.party-slot.filled', {
       title: `${content.monsters.get(monsterId)?.name ?? ''} — 눌러서 해제`,
       onclick: () => { if (!guard()) commit(party.filter((id) => id !== monsterId), artifacts, 'tap'); },
-    }, monsterIconBadged(owned));
+    }, monsterIconBadged(owned, { count: false })); // 편성 슬롯은 카드 수 뱃지를 뺀다 — 편성 마릿수로 오독된다
   });
 
   const artifactCells = Array.from({ length: 4 }, (_, i) => {

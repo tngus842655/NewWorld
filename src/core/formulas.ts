@@ -82,7 +82,7 @@ export function artifactEnhanceCost(content: Content, itemId: string, enhance: n
 }
 
 // (v6) investedEnhanceDust 폐지 — 유물이 종 단위가 되며 강화는 종에 영구히 남는 소모로 재분류
-// (여분만 합성 재료 + 분해는 개수 차감이라 강화 종이 사라지는 시스템 경로가 없다)
+// (여분만 합성 재료 + 분해 기능 제거(2026-08-25)로 강화 종이 사라지는 시스템 경로가 없다)
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

@@ -5,13 +5,13 @@
  */
 export type SfxId =
   | 'tap' | 'open' | 'close' | 'confirm' | 'error' | 'question' | 'select' | 'treasure'
-  | 'defeat' | 'trap' | 'artifact' | 'gather' | 'enhance' | 'salvage' | 'craft'
+  | 'defeat' | 'trap' | 'artifact' | 'gather' | 'enhance' | 'craft'
   | 'capture-new' | 'capture-dupe' | 'capture-miss' | 'levelup' | 'awaken' | 'revive'
   | 'wipe' | 'milestone';
 
 export const ALL_SFX: SfxId[] = [
   'tap', 'open', 'close', 'confirm', 'error', 'question', 'select', 'treasure',
-  'defeat', 'trap', 'artifact', 'gather', 'enhance', 'salvage', 'craft',
+  'defeat', 'trap', 'artifact', 'gather', 'enhance', 'craft',
   'capture-new', 'capture-dupe', 'capture-miss', 'levelup', 'awaken', 'revive',
   'wipe', 'milestone',
 ];

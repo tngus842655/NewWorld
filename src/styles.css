@@ -858,3 +858,11 @@ body.overlay-open .container { overflow: hidden; }
   .micon.rar-transcendent { box-shadow: 0 0 16px rgba(255, 45, 79, 0.6); }
   .acard.rar-transcendent .acard-name { animation: none; }
 }
+
+/* ── 영구 보너스 (조련·공명, GDD §4.6) ── */
+.bonus-entry { width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; color: var(--text); } /* 버튼 기본색(검정) 상속 방지 (2026-08-25 사용자) */
+.bonus-active { color: var(--accent); }
+.bonus-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; }
+.bonus-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.3s; }
+.bonus-tier { opacity: 0.5; }
+.bonus-tier.done { opacity: 1; }

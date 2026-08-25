@@ -1,5 +1,5 @@
 /**
- * 캠프 — 몬스터 관리(레벨·각성), 유물 인벤토리(강화·분해), 미끼 제작, 지갑.
+ * 캠프 — 몬스터 관리(레벨·각성), 유물 인벤토리(강화), 미끼 제작, 지갑.
  * 설정·세이브 관리는 설정 탭으로 분리 (2026-08-23).
  */
 import { content } from '../../content';
@@ -11,6 +11,7 @@ import { resetArtifactFusion } from '../artifactFusionSheet';
 import { artifactCard, monsterChip, ownedCp } from '../components';
 import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGold, fmtRemain } from '../kit';
 import { FUSION_NEXT, resetFusion } from '../fusionSheet';
+import { accountBonusState } from '../../core/accountBonus';
 import { filterChips, tabBar } from '../panels';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
@@ -286,7 +287,17 @@ export function renderCamp(): HTMLElement {
     el('div.card', {}, ...hourglassRecipes),
   ];
 
+  // 영구 보너스 진입 카드 (GDD §4.6) — 육성 총량의 킥을 캠프 입구에서 보여준다
+  const bonus = accountBonusState(content, state);
   return el('div.screen', {},
+    el('button.card.bonus-entry', { // 가운데 정렬 (2026-08-25 사용자)
+      title: '몬스터 레벨·각성, 유물 강화 총량에 따른 계정 영구 보너스',
+      onclick: () => overlay.set({ kind: 'accountBonus' }),
+    },
+      el('span.small', {}, '🎖 영구 보너스'),
+      el('span.muted.small', {},
+        `🐾 조련 ${bonus.training.active}/${bonus.training.tiers.length} · 🔮 공명 ${bonus.resonance.active}/${bonus.resonance.tiers.length}`),
+    ),
     tabBar(
       [
         { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },

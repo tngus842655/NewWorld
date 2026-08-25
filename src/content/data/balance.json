@@ -173,14 +173,6 @@
         "transcendent": 5
       }
     },
-    "dustPerSalvage": {
-      "common": 5,
-      "uncommon": 8,
-      "rare": 12,
-      "heroic": 30,
-      "legendary": 80,
-      "transcendent": 200
-    },
     "effectCaps": {
       "rewardMult": 3,
       "timeMultMin": 0.5,
@@ -188,6 +180,455 @@
       "synergyAmpMax": 1,
       "trapAvoidMax": 1
     }
+  },
+  "accountBonus": {
+    "starWeight": 10,
+    "training": [
+      {
+        "score": 5,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 12,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 25,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 45,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 75,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "damageReduce",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 120,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 180,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 260,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "encounterAdd",
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "score": 370,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 520,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.02
+            }
+          }
+        ]
+      },
+      {
+        "score": 720,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "damageReduce",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 1000,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 1400,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 1900,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "encounterAdd",
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "score": 2600,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 3500,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 4700,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "damageReduce",
+              "value": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "score": 6000,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "atk",
+              "value": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "score": 7000,
+        "effects": [
+          {
+            "hook": "computeParty",
+            "do": {
+              "kind": "statMult",
+              "stat": "hp",
+              "value": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "score": 8000,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "encounterAdd",
+              "count": 1
+            }
+          }
+        ]
+      }
+    ],
+    "resonance": [
+      {
+        "score": 2,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.005
+            }
+          }
+        ]
+      },
+      {
+        "score": 5,
+        "effects": [
+          {
+            "hook": "journalEnd",
+            "do": {
+              "kind": "rewardMult",
+              "target": "gold",
+              "value": 0.03
+            }
+          }
+        ]
+      },
+      {
+        "score": 9,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.005
+            }
+          }
+        ]
+      },
+      {
+        "score": 15,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "spawnWeightMult",
+              "minRarity": "rare",
+              "value": 1.1
+            }
+          }
+        ]
+      },
+      {
+        "score": 24,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.005
+            }
+          }
+        ]
+      },
+      {
+        "score": 36,
+        "effects": [
+          {
+            "hook": "journalEnd",
+            "do": {
+              "kind": "rewardMult",
+              "target": "gold",
+              "value": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "score": 52,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.01
+            }
+          }
+        ]
+      },
+      {
+        "score": 72,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "spawnWeightMult",
+              "minRarity": "rare",
+              "value": 1.1
+            }
+          }
+        ]
+      },
+      {
+        "score": 100,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.01
+            }
+          }
+        ]
+      },
+      {
+        "score": 135,
+        "effects": [
+          {
+            "hook": "journalEnd",
+            "do": {
+              "kind": "rewardMult",
+              "target": "gold",
+              "value": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "score": 175,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.01
+            }
+          }
+        ]
+      },
+      {
+        "score": 225,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "spawnWeightMult",
+              "minRarity": "rare",
+              "value": 1.15
+            }
+          }
+        ]
+      },
+      {
+        "score": 285,
+        "effects": [
+          {
+            "hook": "journalEnd",
+            "do": {
+              "kind": "rewardMult",
+              "target": "gold",
+              "value": 0.05
+            }
+          }
+        ]
+      },
+      {
+        "score": 340,
+        "effects": [
+          {
+            "hook": "captureRoll",
+            "do": {
+              "kind": "captureAdd",
+              "value": 0.015
+            }
+          }
+        ]
+      },
+      {
+        "score": 400,
+        "effects": [
+          {
+            "hook": "expeditionSetup",
+            "do": {
+              "kind": "spawnWeightMult",
+              "minRarity": "rare",
+              "value": 1.15
+            }
+          }
+        ]
+      }
+    ]
   },
   "starter": {
     "monsters": [

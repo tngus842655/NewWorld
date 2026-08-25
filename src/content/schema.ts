@@ -106,6 +106,13 @@ export const EffectSchema = z.object({
 });
 export type Effect = z.infer<typeof EffectSchema>;
 
+// 계정 영구 보너스 계단 (GDD §4.6, 2026-08-25) — 점수 도달 시 영구 발동, 마일스톤 버프처럼 재계산
+export const AccountBonusTierSchema = z.object({
+  score: z.number().int().positive(),
+  effects: z.array(EffectSchema).min(1),
+});
+export type AccountBonusTier = z.infer<typeof AccountBonusTierSchema>;
+
 // ── 몬스터 ───────────────────────────────────────────────────────────────────
 export const MonsterSchema = z.object({
   id: z.string(),
@@ -428,7 +435,6 @@ export const BalanceSchema = z.object({
       dustCost: z.array(z.number().int()),
       rarityCostMult: z.record(ArtifactRaritySchema, z.number()), // 등급별 강화 가루 배수
     }),
-    dustPerSalvage: z.record(ArtifactRaritySchema, z.number().int()),
     effectCaps: z.object({
       rewardMult: z.number(),
       timeMultMin: z.number(),
@@ -436,6 +442,12 @@ export const BalanceSchema = z.object({
       synergyAmpMax: z.number(),
       trapAvoidMax: z.number(),
     }),
+  }),
+  // 계정 영구 보너스 (GDD §4.6) — 조련(몬스터 레벨·각성)·공명(유물 강화) 계단
+  accountBonus: z.object({
+    starWeight: z.number().positive(), // 성급 1단 = 레벨 몇 개분으로 칠 것인가
+    training: z.array(AccountBonusTierSchema).min(1),
+    resonance: z.array(AccountBonusTierSchema).min(1),
   }),
   starter: z.object({ monsters: z.array(z.string()), gold: z.number().int(), lures: z.number().int() }),
   shop: z.object({

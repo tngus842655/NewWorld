@@ -1,5 +1,5 @@
 /**
- * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
+ * 경제 액션 — 레벨업·각성·합성·제작·강화·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
 import { RARITIES, RARITY_LABEL, type ArtifactRarity, type MonsterRarity, type RecipeOutput } from '../content/schema';
@@ -287,23 +287,6 @@ export function enhanceArtifact(content: Content, save: SaveState, itemId: strin
   if (next.wallet.dust < cost) throw new GameError('dust-short', `가루가 부족합니다 (필요: ${cost})`);
   next.wallet.dust -= cost;
   artifact.enhance++;
-  return next;
-}
-
-/** 분해 — 개수 1 차감. 마지막 개를 분해하면 종이 사라진다 (강화 투자는 환급 없음 — 2026-08-23 사용자 결정) */
-export function salvageArtifact(content: Content, save: SaveState, itemId: string): SaveState {
-  const next = structuredClone(save);
-  const artifact = findArtifact(next, itemId);
-  const def = content.artifacts.get(artifact.itemId);
-  if (!def) throw new GameError('artifact-def-missing', `콘텐츠에 없는 유물: ${artifact.itemId}`);
-  next.wallet.dust += content.balance.artifacts.dustPerSalvage[def.rarity];
-  artifact.count -= 1;
-  if (artifact.count <= 0) {
-    next.artifacts = next.artifacts.filter((a) => a.itemId !== itemId);
-    for (const team of next.teams) {
-      team.artifactIds = team.artifactIds.filter((id) => id !== itemId); // 종 소멸 시 프리셋 정리
-    }
-  }
   return next;
 }
 

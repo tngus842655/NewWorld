@@ -65,7 +65,7 @@ export function ownedCp(owned: OwnedMonster): number {
 }
 
 /** 몬스터 아이콘 + 뱃지(출신 지역·원정 중·카드 수) — 칩과 캠프 접힘 목록이 공유 */
-export function monsterIconBadged(owned: OwnedMonster, opts: { onExpedition?: boolean } = {}): HTMLElement {
+export function monsterIconBadged(owned: OwnedMonster, opts: { onExpedition?: boolean; count?: boolean } = {}): HTMLElement {
   const monster = content.monsters.get(owned.monsterId)!;
   const icon = monsterIcon(owned.monsterId);
   // 출신 지역 — 기본 CP가 지역 축으로 뛰기 때문에 등급만 보고 헷갈리지 않게 (2026-08-23)
@@ -73,8 +73,9 @@ export function monsterIconBadged(owned: OwnedMonster, opts: { onExpedition?: bo
   if (habitat) icon.append(el('span.micon-region', { title: `서식지 ${habitat.name}` }, habitat.icon));
   // 캠프 등에서 파견 중임을 알리는 코너 뱃지 (클릭은 막지 않는다 — busy와 별개)
   if (opts.onExpedition) icon.append(el('span.micon-badge', { title: '원정 중' }, '🧭'));
-  // 보유 카드 수 (중복 포획 누적 — 합성 재료)
-  if (owned.count > 1) icon.append(el('span.micon-count', { title: `보유 카드 ${owned.count}장` }, `×${owned.count}`));
+  // 보유 카드 수 (중복 포획 누적 — 합성 재료). 편성된 자리에서는 count:false로 감춘다 (2026-08-25 사용자) —
+  // 슬롯 한 칸 = 1마리인데 ×6이 붙으면 6마리가 편성된 것으로 읽힌다.
+  if (owned.count > 1 && opts.count !== false) icon.append(el('span.micon-count', { title: `보유 카드 ${owned.count}장` }, `×${owned.count}`));
   return icon;
 }
 

@@ -16,6 +16,7 @@ import type {
   Tier,
   Tribe,
 } from '../content/schema';
+import { accountBonusState } from './accountBonus';
 import { clamp } from './formulas';
 import type { OwnedArtifact, OwnedMonster, SaveState } from './types';
 import { GameError } from './types';
@@ -214,6 +215,15 @@ export function collectTeamEffects(content: Content, save: SaveState, partyIds: 
     if (!save.milestones.includes(milestone.id)) continue;
     for (const effect of milestone.reward.effects ?? []) {
       effects.push({ ...effect, source: `milestone:${milestone.id}` });
+    }
+  }
+
+  // 계정 영구 보너스 (조련·공명, GDD §4.6) — 마일스톤과 같은 재계산 주입, 모든 군에 적용
+  const account = accountBonusState(content, save);
+  for (const axis of ['training', 'resonance'] as const) {
+    const st = account[axis];
+    for (let i = 0; i < st.active; i++) {
+      for (const effect of st.tiers[i]!.effects) effects.push({ ...effect, source: `account:${axis}:${i + 1}` });
     }
   }
 

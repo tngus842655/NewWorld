@@ -34,7 +34,7 @@ describe('등급 체계 (RARITIES 파생)', () => {
     expect(terminals).toEqual([RARITIES.at(-1)]);
   });
 
-  it('등급별 수치 테이블 12종에 빠진 등급이 없다', () => {
+  it('등급별 수치 테이블 11종에 빠진 등급이 없다', () => {
     const { balance } = content;
     const tables: [string, Record<string, unknown>][] = [
       ['level.rarityCostMult', balance.level.rarityCostMult],
@@ -42,7 +42,6 @@ describe('등급 체계 (RARITIES 파생)', () => {
       ['rewards.rarityGoldMult', balance.rewards.rarityGoldMult],
       ['artifacts.dropRarity', balance.artifacts.dropRarity],
       ['artifacts.enhance.rarityCostMult', balance.artifacts.enhance.rarityCostMult],
-      ['artifacts.dustPerSalvage', balance.artifacts.dustPerSalvage],
       ['fusion.chance', balance.fusion.chance],
       ['shop.monsterGacha.normal', balance.shop.monsterGacha.normal!],
       ['shop.monsterGacha.premium', balance.shop.monsterGacha.premium!],

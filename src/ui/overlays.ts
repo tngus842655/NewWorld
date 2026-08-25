@@ -8,16 +8,16 @@ import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { finalRegion } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
-import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
+import { awaken, choose, claim, crossroadsOf, enhance, levelUp, save } from '../state/store';
 import { accelerateSheet } from './accelerateSheet';
 import { artifactFusionSheet } from './artifactFusionSheet';
 import { FUSABLE_RARITIES, FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
+import { accountBonusSheet } from './accountBonusSheet';
 import { attendanceSheet } from './attendanceSheet';
 import { shopSheet } from './shopSheet';
 import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
-import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
 import {
   ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
@@ -49,6 +49,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? shopSheet()
             : current.kind === 'attendance'
               ? attendanceSheet()
+            : current.kind === 'accountBonus'
+              ? accountBonusSheet()
             : current.kind === 'tasks'
               ? tasksSheet()
               : current.kind === 'fusion'
@@ -185,7 +187,6 @@ function artifactSheet(itemId: string): HTMLElement | null {
   const maxEnhance = owned.enhance >= balance.artifacts.enhance.max;
   const cost = maxEnhance ? 0 : artifactEnhanceCost(content, def.id, owned.enhance);
   const setDef = def.set ? content.sets.get(def.set) : null;
-  const lastOne = owned.count <= 1;
 
   return sheetShell(`${def.name}${owned.enhance > 0 ? ` +${owned.enhance}` : ''}`,
     el('div.detail-head', {},
@@ -216,23 +217,6 @@ function artifactSheet(itemId: string): HTMLElement | null {
         disabled: maxEnhance || state.wallet.dust < cost,
         onclick: () => { if (enhance(itemId)) playSfx('enhance'); },
       }, maxEnhance ? '최대 강화' : `강화 +${owned.enhance + 1} (가루 ${cost} / 보유 ${state.wallet.dust})`),
-      el('button.btn.btn-danger', {
-        onclick: () => {
-          const gain = balance.artifacts.dustPerSalvage[def.rarity];
-          void askConfirm({
-            title: '유물 분해',
-            message: lastOne
-              ? `마지막 1개입니다 — 분해하면 ${def.name}${owned.enhance > 0 ? `와(과) 강화 +${owned.enhance}` : ''}이(가) 사라지고 가루 ${gain}을 얻습니다. 되돌릴 수 없습니다.`
-              : `${def.name} 1개를 분해해 가루 ${gain}을 얻습니다 (남는 ${owned.count - 1}개와 강화는 유지). 되돌릴 수 없습니다.`,
-            confirmLabel: '분해',
-            danger: true,
-          }).then((ok) => {
-            if (!ok) return;
-            if (salvage(itemId)) playSfx('salvage');
-            if (lastOne) closeOverlay();
-          });
-        },
-      }, '분해'),
     ),
   );
 }
@@ -621,7 +605,7 @@ function artifactInfoSheet(): HTMLElement {
         view: el('div', {},
           el('div.info-group-head', {},
             el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
-            el('span.muted.small', {}, `${defs.length}점 · 분해 가루 ${balance.artifacts.dustPerSalvage[rarity]}`),
+            el('span.muted.small', {}, `${defs.length}점`),
           ),
           ...defs.map((def) => {
             const setDef = def.set ? content.sets.get(def.set) : null;

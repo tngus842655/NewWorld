@@ -63,11 +63,12 @@ describe('팀 효과 수집', () => {
     save.artifacts[0]!.enhance = 2;
     const fx = collectTeamEffects(content, save, partyIds, artifactUids);
 
-    // 주옵션 captureAdd 0.05 + perEnhance 0.01×2 = 0.07
+    // 주옵션 captureAdd 0.05 + perEnhance 0.01×2 = 0.07 — 계정 보너스(공명) 몫은 제외하고 유물만 검증
+    const artifactOnly = fx.effects.filter((e) => !e.source.startsWith('account:'));
     const capCtx: EffectCtx = { ...base, element: 'nature' };
-    expect(sumOf(query(fx.effects, 'captureRoll', capCtx), 'captureAdd')).toBeCloseTo(0.07 + 0.04); // 고유(자연 조건) 포함
+    expect(sumOf(query(artifactOnly, 'captureRoll', capCtx), 'captureAdd')).toBeCloseTo(0.07 + 0.04); // 고유(자연 조건) 포함
     // 자연이 아니면 고유 효과 제외
-    expect(sumOf(query(fx.effects, 'captureRoll', { ...base, element: 'fire' }), 'captureAdd')).toBeCloseTo(0.07);
+    expect(sumOf(query(artifactOnly, 'captureRoll', { ...base, element: 'fire' }), 'captureAdd')).toBeCloseTo(0.07);
   });
 
   it('세트 2·4개 보너스가 단계적으로 붙는다 (잊힌 개척단)', () => {

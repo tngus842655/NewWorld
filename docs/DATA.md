@@ -154,6 +154,16 @@ Action   = { kind: "statMult", stat, value } | { kind: "captureAdd", value }
 
 세트는 같은 파일의 `sets` 배열: `{ id, name, bonuses: { "2": Effect[], "4": Effect[] } }`
 
+**balance.json `accountBonus` (GDD §4.6, 2026-08-25)** — 계정 영구 보너스 계단. 저장 없이 재계산:
+
+```jsonc
+"accountBonus": {
+  "starWeight": 10,                                        // 성급 1단 = 레벨 10개분
+  "training":  [{ "score": 5, "effects": [Effect] }, ...], // 몬스터 Σ(레벨-1)+w×Σ(성급-1), 20계단
+  "resonance": [{ "score": 2, "effects": [Effect] }, ...]  // 유물 Σ강화, 15계단
+}
+```
+
 **balance.json 추가 키:**
 
 ```jsonc
@@ -163,7 +173,6 @@ Action   = { kind: "statMult", stat, value } | { kind: "captureAdd", value }
                "legendaryEncounter": 0.35, "crossroadCrit": 0.15 },
   "firstTreasurePity": true,          // 계정 첫 보물 조우는 유물 확정
   "enhance": { "max": 5, "dustCost": [10, 25, 50, 90, 150] },
-  "dustPerSalvage": { "common": 5, "rare": 12, "heroic": 30, "legendary": 80 },
   "effectCaps": { "rewardMult": 3.0, "timeMultMin": 0.5, "captureMultCap": 4.0 }
 }
 ```

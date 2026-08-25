@@ -121,7 +121,6 @@ node scripts/check-asset-dupes.mjs
 | artifact | 유물 발굴·완주 상자 | impact / impactBell_heavy_000 |
 | gather | 채집 | impact / impactMining_000 |
 | enhance | 유물 강화 | impact / impactMetal_medium_000 |
-| salvage | 유물 분해 | impact / impactGlass_medium_000 |
 | craft | 미끼 제작 | impact / impactPlank_medium_000 |
 | capture-new | 포획 성공 (신규 등록) | digital-audio / powerUp1 |
 | capture-dupe | 포획 성공 (정수 전환) | digital-audio / powerUp5 |

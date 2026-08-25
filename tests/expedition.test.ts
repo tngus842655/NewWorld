@@ -203,7 +203,8 @@ describe('시너지 (훅 통합)', () => {
     for (const entry of journal.entries) {
       if (entry.type === 'trap') expect(entry.avoided).toBe(true);
     }
-    const noSynergy = resolveWith([flyers[0]!, { id: 'thorn-wolf', level: 30 }, { id: 'dew-fairy', level: 30 }], 'whispering-woods', 'standard', seed);
+    // 비교군도 같은 조련 계단(★3 동일)이어야 계정 조우 보너스가 상쇄되고 시너지 몫 +1만 남는다 (GDD §4.6)
+    const noSynergy = resolveWith([flyers[0]!, { id: 'thorn-wolf', level: 30, star: 3 }, { id: 'dew-fairy', level: 30, star: 3 }], 'whispering-woods', 'standard', seed);
     const slotCount = (j: Journal) => j.entries.filter((e) => e.type !== 'crossroad' && e.type !== 'wipe').length;
     expect(slotCount(journal)).toBe(slotCount(noSynergy) + 1);
   });
