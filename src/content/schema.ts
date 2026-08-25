@@ -192,6 +192,17 @@ export const EventsSchema = z.object({
 export type EventsContent = z.infer<typeof EventsSchema>;
 
 // ── 제작 ─────────────────────────────────────────────────────────────────────
+/**
+ * 제작 산출 — 미끼 또는 모래시계 (2026-08-25).
+ * discriminatedUnion이라 kind를 추가하면 core의 switch가 컴파일 에러로 미구현을 알린다.
+ * (기존 { lures: n } 고정에서 확장 — 지역 재료 8종 중 3종이 소모처가 없던 문제를 푼다)
+ */
+export const RecipeOutputSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('lures'), count: z.number().int().positive() }),
+  z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive() }),
+]);
+export type RecipeOutput = z.infer<typeof RecipeOutputSchema>;
+
 export const RecipeSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -199,7 +210,7 @@ export const RecipeSchema = z.object({
     gold: z.number().int().min(0),
     materials: z.record(z.string(), z.number().int().positive()),
   }),
-  output: z.object({ lures: z.number().int().positive() }),
+  output: RecipeOutputSchema,
 });
 export type Recipe = z.infer<typeof RecipeSchema>;
 

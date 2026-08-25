@@ -180,6 +180,15 @@ export function loadContent(): Content {
       fail(`상품 ${product.id}가 없는 모래시계 참조: ${product.goods.hourglassId}`);
     }
   }
+  // 레시피도 같은 규칙 — 산출이 모래시계면 실재해야 하고, 비용 재료도 실재해야 한다 (2026-08-25)
+  for (const recipe of recipeList) {
+    if (recipe.output.kind === 'hourglass' && !hourglasses.has(recipe.output.hourglassId)) {
+      fail(`레시피 ${recipe.id}가 없는 모래시계 참조: ${recipe.output.hourglassId}`);
+    }
+    for (const materialId of Object.keys(recipe.cost.materials)) {
+      if (!materials.has(materialId)) fail(`레시피 ${recipe.id}가 없는 재료 참조: ${materialId}`);
+    }
+  }
 
   const artifactsByRarity = new Map<ArtifactRarity, ArtifactDef[]>();
   for (const rarity of ARTIFACT_RARITIES) artifactsByRarity.set(rarity, []);

@@ -298,6 +298,17 @@ body {
 .chip.rar-heroic:not(.active) { color: var(--rar-heroic); border-color: var(--rar-heroic); }
 .chip.rar-legendary:not(.active) { color: var(--rar-legendary); border-color: var(--rar-legendary); }
 .chip.rar-transcendent:not(.active) { color: var(--rar-transcendent); border-color: var(--rar-transcendent); }
+/*
+ * 등급색 인라인 텍스트 — 태그 알약이 과한 자리에 (2026-08-25).
+ * 제작 레시피의 산출 표기처럼 문장 안에 이름이 들어갈 때 쓴다.
+ */
+.rar-name { font-weight: 600; }
+.rar-name.rar-common { color: var(--rar-common); }
+.rar-name.rar-uncommon { color: var(--rar-uncommon); }
+.rar-name.rar-rare { color: var(--rar-rare); }
+.rar-name.rar-heroic { color: var(--rar-heroic); }
+.rar-name.rar-legendary { color: var(--rar-legendary); }
+.rar-name.rar-transcendent { color: var(--rar-transcendent); }
 .mchip {
   display: flex; gap: 9px; align-items: center; text-align: left;
   background: var(--bg3); border: 1.5px solid var(--line); border-radius: 12px; padding: 7px; cursor: pointer; color: var(--text);

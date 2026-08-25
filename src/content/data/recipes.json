@@ -2,13 +2,110 @@
   {
     "id": "basic-lure",
     "name": "기본 미끼",
-    "cost": { "gold": 150, "materials": { "salt-bloom": 2 } },
-    "output": { "lures": 1 }
+    "cost": {
+      "gold": 150,
+      "materials": {
+        "salt-bloom": 2
+      }
+    },
+    "output": {
+      "kind": "lures",
+      "count": 1
+    }
   },
   {
     "id": "lure-bundle",
     "name": "미끼 꾸러미",
-    "cost": { "gold": 400, "materials": { "dew-branch": 2, "spirit-moss": 1 } },
-    "output": { "lures": 3 }
+    "cost": {
+      "gold": 400,
+      "materials": {
+        "dew-branch": 2,
+        "spirit-moss": 1
+      }
+    },
+    "output": {
+      "kind": "lures",
+      "count": 3
+    }
+  },
+  {
+    "id": "craft-hourglass-15",
+    "name": "해안의 모래 세공",
+    "cost": {
+      "gold": 1000,
+      "materials": {
+        "salt-bloom": 2,
+        "tide-shell": 3
+      }
+    },
+    "output": {
+      "kind": "hourglass",
+      "hourglassId": "hourglass-15",
+      "count": 8
+    }
+  },
+  {
+    "id": "craft-hourglass-60",
+    "name": "숲의 모래 세공",
+    "cost": {
+      "gold": 800,
+      "materials": {
+        "dew-branch": 2,
+        "spirit-moss": 2
+      }
+    },
+    "output": {
+      "kind": "hourglass",
+      "hourglassId": "hourglass-60",
+      "count": 2
+    }
+  },
+  {
+    "id": "craft-hourglass-120",
+    "name": "늪의 모래 세공",
+    "cost": {
+      "gold": 700,
+      "materials": {
+        "grave-reed": 3,
+        "chill-amber": 2
+      }
+    },
+    "output": {
+      "kind": "hourglass",
+      "hourglassId": "hourglass-120",
+      "count": 1
+    }
+  },
+  {
+    "id": "craft-hourglass-240",
+    "name": "화산의 모래 세공",
+    "cost": {
+      "gold": 1200,
+      "materials": {
+        "ember-core": 4,
+        "obsidian-shard": 3
+      }
+    },
+    "output": {
+      "kind": "hourglass",
+      "hourglassId": "hourglass-240",
+      "count": 1
+    }
+  },
+  {
+    "id": "craft-hourglass-480",
+    "name": "화산의 정수 세공",
+    "cost": {
+      "gold": 2000,
+      "materials": {
+        "ember-core": 8,
+        "obsidian-shard": 7
+      }
+    },
+    "output": {
+      "kind": "hourglass",
+      "hourglassId": "hourglass-480",
+      "count": 1
+    }
   }
 ]

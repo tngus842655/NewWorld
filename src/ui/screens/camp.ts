@@ -9,7 +9,7 @@ import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
 import { artifactCard, monsterChip, ownedCp } from '../components';
-import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGold } from '../kit';
+import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGold, fmtRemain } from '../kit';
 import { FUSION_NEXT, resetFusion } from '../fusionSheet';
 import { filterChips, tabBar } from '../panels';
 import { overlay } from '../router';
@@ -54,12 +54,13 @@ export function renderCamp(): HTMLElement {
     .filter(({ def }) => def.slot === slot && (rarity === null || def.rarity === rarity))
     .sort((a, b) => RARITY_ORDER[b.def.rarity] - RARITY_ORDER[a.def.rarity] || b.owned.enhance - a.owned.enhance);
 
-  const recipes = [...content.recipes.values()].map((recipe) => {
+  const canAfford = (recipe: { cost: { gold: number; materials: Record<string, number> } }): boolean =>
+    state.wallet.gold >= recipe.cost.gold
+    && Object.entries(recipe.cost.materials).every(([id, n]) => (state.wallet.materials[id] ?? 0) >= n);
+
+  const recipeRow = (recipe: (typeof content.recipes) extends ReadonlyMap<string, infer R> ? R : never) => {
     // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
-    const goldShort = state.wallet.gold < recipe.cost.gold;
-    const materialShorts = Object.entries(recipe.cost.materials)
-      .filter(([id, n]) => (state.wallet.materials[id] ?? 0) < n);
-    const affordable = !goldShort && materialShorts.length === 0;
+    const affordable = canAfford(recipe);
     const costText = [
       recipe.cost.gold > 0 ? `골드 ${fmtGold(recipe.cost.gold)}` : null,
       ...Object.entries(recipe.cost.materials).map(([id, n]) => {
@@ -69,9 +70,22 @@ export function renderCamp(): HTMLElement {
         return have < n ? `${material?.icon ?? ''}${material?.name} ${have}/${n}` : `${material?.icon ?? ''}${material?.name} ×${n}`;
       }),
     ].filter(Boolean).join(' + ');
+    // 산출 표기 — 모래시계는 등급색 이름 + 총 단축 시간을 병기한다 (몇 분을 버는지가 판단 기준)
+    const out = recipe.output;
+    const outLabel = out.kind === 'lures'
+      ? el('span', {}, `미끼 ${out.count}개`)
+      : (() => {
+          const def = content.hourglasses.get(out.hourglassId);
+          const total = (def?.minutes ?? 0) * out.count;
+          return el('span', {},
+            el(`span.rar-name.rar-${def?.rarity ?? 'common'}`, {}, def?.name ?? out.hourglassId),
+            ` ${out.count}개`,
+            el('span.muted.small', {}, ` [총 ${fmtRemain(total * 60_000)} 단축]`),
+          );
+        })();
     return el('div.list-row', {},
       el('div', {},
-        el('div', {}, `${recipe.name} → 미끼 ${recipe.output.lures}개`),
+        el('div', {}, `${recipe.name} → `, outLabel),
         el(`div.muted.small${affordable ? '' : '.cost-short'}`, {}, costText),
       ),
       el('button.btn.btn-ghost', {
@@ -79,7 +93,11 @@ export function renderCamp(): HTMLElement {
         onclick: () => { if (craft(recipe.id)) playSfx('craft'); },
       }, '제작'),
     );
-  });
+  };
+  // 산출 종류로 나눈다 — 섹션 제목이 내용과 맞아야 한다 (2026-08-25)
+  const allRecipes = [...content.recipes.values()];
+  const lureRecipes = allRecipes.filter((r) => r.output.kind === 'lures').map(recipeRow);
+  const hourglassRecipes = allRecipes.filter((r) => r.output.kind === 'hourglass').map(recipeRow);
 
   // 지역 재료 — 상단 앱바 지갑과 중복되던 재화 카드 대신, 재료를 아이콘 한 줄로 (해금 지역은 0 포함)
   const shownMaterialIds = new Set<string>();
@@ -138,6 +156,9 @@ export function renderCamp(): HTMLElement {
   // 합성 한 번에 필요한 재료 수 — 여분이 이만큼 모여야 실제로 돌릴 수 있다
   const fusionCost = content.balance.fusion.materials;
   const canFuse = spareCards >= fusionCost || spareArtifacts >= fusionCost;
+  // 제작 탭 알림 점 — 합성뿐 아니라 '지금 만들 수 있는 레시피'도 포함한다 (2026-08-25).
+  // 모래시계 레시피가 들어오면서 제작 탭에 할 일이 늘었다
+  const canCraft = [...content.recipes.values()].some(canAfford);
 
   const rarityChipRow = filterChips(
     RARITY_DESC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
@@ -219,14 +240,18 @@ export function renderCamp(): HTMLElement {
         }, '열기'),
       ),
     ),
-    el('h2.section-title', {}, '미끼 제작'),
+    // 재료 지갑은 두 제작 섹션의 공통 재원이라 위에 한 번만
+    el('h2.section-title', {}, '제작 재료'),
     el('div.card.wallet', {},
       ...(materialChips.length > 0
         ? materialChips
         : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
       materialTip,
     ),
-    el('div.card', {}, ...recipes),
+    el('h2.section-title', {}, '미끼 제작'),
+    el('div.card', {}, ...lureRecipes),
+    el('h2.section-title', {}, '모래시계 세공'),
+    el('div.card', {}, ...hourglassRecipes),
   ];
 
   return el('div.screen', {},
@@ -234,9 +259,9 @@ export function renderCamp(): HTMLElement {
       [
         { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },
         { key: 'artifact' as const, label: `유물 (${state.artifacts.length})` },
-        // 제작 탭만 수치가 없어 발견성이 떨어진다 — 지금 합성이 가능하면 점으로 알린다 (2026-08-25 사용자).
-        // '보유 여분이 있다'가 아니라 '실제로 한 번 돌릴 수 있다'가 기준 (재료 수를 채워야 한다)
-        { key: 'craft' as const, label: '제작', dot: canFuse },
+        // 제작 탭만 수치가 없어 발견성이 떨어진다 — 지금 할 수 있는 일이 있으면 점으로 알린다 (2026-08-25 사용자).
+        // '보유하고 있다'가 아니라 '실제로 지금 한 번 실행할 수 있다'가 기준
+        { key: 'craft' as const, label: '제작', dot: canFuse || canCraft },
       ],
       { active: tab, onPick: (key) => campTab.set(key) },
     ),

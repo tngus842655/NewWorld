@@ -2,7 +2,7 @@
  * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
-import { RARITIES, RARITY_LABEL, type ArtifactRarity, type MonsterRarity } from '../content/schema';
+import { RARITIES, RARITY_LABEL, type ArtifactRarity, type MonsterRarity, type RecipeOutput } from '../content/schema';
 import { findArtifact, findMonster, grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { artifactEnhanceCost, monsterLevelUpCost, monsterStarUpCost } from './formulas';
@@ -242,6 +242,23 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   return { save: next, success: true, materialRarity: rarity!, resultItemId: drop.itemId, isNew };
 }
 
+/**
+ * 제작 산출 지급 (2026-08-25) — 미끼 또는 모래시계.
+ * exhaustive switch라 RecipeOutput에 종류를 추가하면 여기가 컴파일 에러로 미구현을 알린다.
+ * 모래시계 지급은 상점(core/shop.ts)과 같은 모양이다 — 지갑 구조가 하나뿐이라 의도된 일치.
+ */
+function grantRecipeOutput(save: SaveState, output: RecipeOutput): void {
+  switch (output.kind) {
+    case 'lures':
+      save.wallet.lures += output.count;
+      return;
+    case 'hourglass':
+      save.wallet.hourglasses[output.hourglassId] =
+        (save.wallet.hourglasses[output.hourglassId] ?? 0) + output.count;
+      return;
+  }
+}
+
 export function craftRecipe(content: Content, save: SaveState, recipeId: string): SaveState {
   const recipe = content.recipes.get(recipeId);
   if (!recipe) throw new GameError('recipe-missing', `없는 레시피: ${recipeId}`);
@@ -255,7 +272,7 @@ export function craftRecipe(content: Content, save: SaveState, recipeId: string)
     }
     next.wallet.materials[materialId] = have - count;
   }
-  next.wallet.lures += recipe.output.lures;
+  grantRecipeOutput(next, recipe.output);
   next.stats.crafts += 1;
   settleTasks(content, next); // 반복 과업 — 보상은 제자리 지급, 알림은 store가 tasks 변화로 감지
   return next;
