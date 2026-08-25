@@ -6,7 +6,7 @@ import { content } from '../content';
 import type { HourglassDef } from '../content/schema';
 import { devGrantHourglasses, nowTick, save, useHourglassOn } from '../state/store';
 import { hourglassIcon } from './components';
-import { el, fmtRemain, toast } from './kit';
+import { el, fmtRemain, josa, toast } from './kit';
 import { sheetShell } from './overlays';
 import { closeOverlay, overlay } from './router';
 import { playSfx } from './sfx';
@@ -23,13 +23,23 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
   const region = content.regions.get(expedition.regionId);
   const done = expedition.endsAt <= now;
 
+  const remain = expedition.endsAt - now;
+
   const rows = content.hourglassList.map((def) => {
     const owned = state.wallet.hourglasses[def.id] ?? 0;
+    // 코어는 단축 결과를 현재 시각으로 클램프하고 모래시계는 그대로 1개 소모한다 —
+    // 남은 시간보다 긴 것을 쓰면 초과분이 그냥 사라진다. 누르기 전에 알려준다 (2026-08-25 사용자).
+    // 1분 미만 초과는 알리지 않는다 — 남은 시간이 줄면 거의 항상 몇 초씩 넘쳐서 경고가 무뎌진다.
+    const excess = def.minutes * 60_000 - remain;
+    const wasteful = !done && excess >= 60_000;
     return el('div.list-row.hg-row', {},
       el('div.hg-body', {},
         // 미니 아이콘을 이름 옆 인라인으로 — 상점과 동일한 스케일 (등급은 테두리 색으로만)
         el('div.hg-name', {}, hourglassIcon(def, { small: true }), def.name),
         el('div.muted.small', {}, `${hourglassDuration(def)} 단축 · 보유 ${owned}개`),
+        wasteful
+          ? el('div.small.hg-waste', {}, `⚠️ 남은 시간보다 깁니다 [초과 ${josa(fmtRemain(excess), '은', '는')} 사라집니다]`)
+          : null,
       ),
       el('button.btn.btn-primary.hg-use', {
         disabled: owned <= 0 || done,

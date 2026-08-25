@@ -660,6 +660,8 @@ body.overlay-open .container { overflow: hidden; }
 .hg-icon.rar-transcendent { border-color: var(--rar-transcendent); animation: transcend-pulse 2.6s ease-in-out infinite; }
 .hg-body { flex: 1; min-width: 0; }
 .hg-use { flex: none; padding: 7px 14px; }
+/* 남은 시간보다 긴 모래시계 — 초과분이 버려진다는 경고 (2026-08-25) */
+.hg-waste { color: var(--bad); margin-top: 2px; }
 
 /* ── 일지 ── */
 .sheet-journal { max-height: 92dvh; }

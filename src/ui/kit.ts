@@ -128,9 +128,27 @@ export function fmtRemain(ms: number): string {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  if (h > 0) return `${h}시간 ${m}분`;
-  if (m > 0) return `${m}분 ${s}초`;
+  // 0인 하위 단위는 생략 — "2시간 0분"·"5분 0초"처럼 어색하게 읽히던 것 (2026-08-25)
+  if (h > 0) return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+  if (m > 0) return s > 0 ? `${m}분 ${s}초` : `${m}분`;
   return `${s}초`;
+}
+
+/**
+ * 한글 조사 선택 — 앞말의 받침 유무로 고른다 (2026-08-25).
+ * 수치 포맷 결과가 '2시간'(받침 없음)일 수도 '30분'(받침 있음)일 수도 있어
+ * "…은/는"을 고정해 쓰면 반드시 한쪽이 틀린다.
+ *
+ *   josa('30분', '은', '는') → '30분은'
+ *   josa('13초', '은', '는') → '13초는'
+ *
+ * 한글 음절로 끝나지 않으면(숫자·영문) 받침 없는 형태를 쓴다 — 이 코드베이스의 표기는 항상 한글로 끝난다.
+ */
+export function josa(word: string, withFinal: string, withoutFinal: string): string {
+  const code = word.charCodeAt(word.length - 1);
+  const isHangulSyllable = code >= 0xac00 && code <= 0xd7a3;
+  const hasFinalConsonant = isHangulSyllable && (code - 0xac00) % 28 !== 0;
+  return `${word}${hasFinalConsonant ? withFinal : withoutFinal}`;
 }
 
 export function fmtPct(ratio: number): string {
