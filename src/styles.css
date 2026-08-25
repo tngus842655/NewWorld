@@ -66,12 +66,11 @@ body {
   background: none; border: 1px solid transparent; color: var(--text);
 }
 .appbar-wallet .wallet-item.active { background: var(--bg3); border-color: var(--accent); }
-/* 재화 설명 말풍선 — 앱바 아래로 떨어진다 (헤더가 relative) */
-.appbar-tip {
-  position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
-  margin: 0; border-radius: 0 0 14px 14px;
-  border-top: none; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
-}
+/*
+ * 앱바 말풍선 — 겹침 동작은 .wallet-tip 공통 규칙에서, 여기선 앱바에 붙은 모양만 (2026-08-25).
+ * 클래스 2개로 특이도를 올린다: .wallet-tip 정의가 이 파일 뒤쪽에 있어 같은 특이도면 그쪽이 이긴다.
+ */
+.wallet-tip.appbar-tip { z-index: 20; margin: 0; border-radius: 0 0 14px 14px; border-top: none; }
 .appbar-rank { background: none; border: none; font-size: 20px; padding: 0 1px; cursor: pointer; line-height: 1; position: relative; }
 /* 출석 미수령 알림 점 */
 .attend-dot {
@@ -771,7 +770,8 @@ body.overlay-open .container { overflow: hidden; }
 @keyframes jup { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ── 기타 ── */
-.wallet { display: flex; gap: 8px; font-size: 14px; flex-wrap: wrap; align-items: center; }
+/* 말풍선(.wallet-tip)의 기준 — 이게 없으면 말풍선이 화면 최상단에 붙는다 */
+.wallet { display: flex; gap: 8px; font-size: 14px; flex-wrap: wrap; align-items: center; position: relative; }
 .wallet-item {
   white-space: nowrap; font-variant-numeric: tabular-nums;
   background: none; border: 1px solid transparent; border-radius: 9px; color: var(--text);
@@ -779,9 +779,16 @@ body.overlay-open .container { overflow: hidden; }
 }
 .wallet-item.active { background: var(--bg3); border-color: var(--accent); }
 /* 터치한 재료 설명 말풍선 — 아이콘 줄 바로 아래 */
+/*
+ * 설명 말풍선은 **항상 겹쳐서** 뜬다 — 흐름에 끼면 탭할 때마다 아래 내용이 밀려 내려가
+ * 레이아웃이 출렁이고, 방금 보던 항목이 화면 밖으로 나간다 (2026-08-25 사용자).
+ * 띄우는 쪽(.appbar / .card.wallet)이 position: relative 를 가져야 한다.
+ */
 .wallet-tip {
-  width: 100%; background: var(--bg3); border: 1px solid var(--line); border-radius: 10px;
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 15;
+  background: var(--bg3); border: 1px solid var(--line); border-radius: 10px;
   padding: 8px 11px; display: flex; flex-direction: column; gap: 3px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
 }
 .wallet-tip-title { font-weight: 600; font-size: 13px; }
 .wallet-tip-use { color: var(--accent-2); }
