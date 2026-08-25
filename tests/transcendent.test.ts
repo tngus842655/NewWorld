@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { RARITIES, RARITY_ORDER } from '../src/content/schema';
-import { resolveExpedition } from '../src/core/expedition';
+import { evaluateNewMilestones, resolveExpedition } from '../src/core/expedition';
+import { capturedCounts } from '../src/core/progression';
 import { buyShopProduct } from '../src/core/shop';
 import type { CoreCtx } from '../src/core/types';
 import { T0, content, makeCtx, makeExpedition, saveWithParty } from './helpers';
@@ -93,6 +94,45 @@ describe('초월 등급 격리 (합성 전용)', () => {
     for (const owned of current.artifacts) {
       expect(content.artifacts.get(owned.itemId)!.rarity, owned.itemId).not.toBe(TOP);
     }
+  });
+
+  /**
+   * 초월은 도감 사다리(서식종 축)를 밀지 않는다 (2026-08-25 사용자 결정).
+   *
+   * 초월의 habitat은 최종 지역이지만 그 지역에서 잡을 수 없다. 지역·총합 집계에 넣으면
+   * 서식종을 다 못 채운 유저가 "잿빛 화산 완전 정복"·"신대륙 도감의 완성"을 받는다.
+   */
+  describe('서식종 축 집계에서 분리된다', () => {
+    const volcano = content.regionList[content.regionList.length - 1]!;
+    /** 서식종 n종 + 초월 전 종을 포획한 세이브 */
+    const saveWith = (nativeCount: number) => {
+      const clock = makeCtx();
+      const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { unlockAll: true });
+      save.codex = {};
+      const natives = content.nativeList.filter((m) => m.habitat === volcano.id).slice(0, nativeCount);
+      for (const m of [...natives, ...content.transcendentList]) {
+        save.codex[m.id] = { seen: true, captured: true, awakened: false, firstCapturedAt: T0 };
+      }
+      return save;
+    };
+
+    it('초월 3종은 지역·총합 집계에 잡히지 않는다', () => {
+      const counts = capturedCounts(content, saveWith(51));
+      expect(counts.byRegion.get(volcano.id), `${volcano.name} 서식종`).toBe(51);
+      expect(counts.total, '총합(서식종)').toBe(51);
+      expect(counts.byRarity.get(TOP), '등급 집계는 초월을 센다').toBe(content.transcendentList.length);
+    });
+
+    it('서식종 51종 + 초월 3종으로는 "완전 정복"이 터지지 않는다', () => {
+      const awarded = evaluateNewMilestones(content, saveWith(51));
+      expect(awarded, '54 계단이 3종 모자란 채로 터지면 안 된다').not.toContain('volcano-54');
+      expect(awarded, '초월 축은 별개로 터진다').toContain('transcend-3');
+    });
+
+    it('서식종을 다 채우면 그때 터진다', () => {
+      const natives = content.nativeList.filter((m) => m.habitat === volcano.id).length;
+      expect(evaluateNewMilestones(content, saveWith(natives))).toContain('volcano-54');
+    });
   });
 
   it('초월 몬스터·유물은 최상위 스탯 대역을 가진다 (합성 보상이 체감되도록)', () => {

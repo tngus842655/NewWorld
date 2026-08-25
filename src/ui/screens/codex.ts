@@ -300,6 +300,8 @@ function milestoneProgress(
       return { have: Math.min(counts.byTribe.get(condition.tribe) ?? 0, condition.count), need: condition.count };
     case 'totalCaptured':
       return { have: Math.min(counts.total, condition.count), need: condition.count };
+    case 'rarityCaptured':
+      return { have: Math.min(counts.byRarity.get(condition.rarity) ?? 0, condition.count), need: condition.count };
   }
 }
 
@@ -312,6 +314,8 @@ function describeCondition(condition: (typeof content.milestones)[number]['condi
     case 'tribeCaptured':
       return `${{ beast: '야수', spirit: '정령', undead: '언데드', aquatic: '수생', flying: '비행', construct: '기계' }[condition.tribe]} ${condition.count}종 포획`;
     case 'totalCaptured':
-      return `총 ${condition.count}종 포획`;
+      return `서식종 ${condition.count}종 포획`;
+    case 'rarityCaptured':
+      return `${MONSTER_RARITY_LABEL[condition.rarity]} ${condition.count}종 포획`;
   }
 }

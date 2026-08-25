@@ -21,7 +21,7 @@ import {
   type EffectCtx,
 } from './effects';
 import { clamp } from './formulas';
-import { isRegionUnlocked, teamCount } from './progression';
+import { capturedCounts, isRegionUnlocked, teamCount } from './progression';
 import { pickWeighted, randInt, streamRng, type Rng } from './rng';
 import { settleTasks, type TaskCompletion } from './tasks';
 import {
@@ -769,29 +769,26 @@ export function claimExpedition(
   return { save: next, journal, newMilestones, newTasks };
 }
 
-/** 아직 미달성인 마일스톤 중 새로 조건을 채운 것들 — 정산·합성 등 도감이 변한 직후 호출 */
+/**
+ * 아직 미달성인 마일스톤 중 새로 조건을 채운 것들 — 정산·합성 등 도감이 변한 직후 호출.
+ * 집계는 progression.capturedCounts를 그대로 쓴다. 예전엔 여기서 같은 집계를 따로 돌려서,
+ * 도감 화면 진행바(capturedCounts)와 실제 지급이 갈라질 수 있었다 (2026-08-25).
+ */
 export function evaluateNewMilestones(content: Content, save: SaveState): string[] {
-  const captured = Object.entries(save.codex).filter(([, entry]) => entry.captured);
-  const total = captured.length;
-  const byRegion = new Map<string, number>();
-  const byTribe = new Map<string, number>();
-  for (const [monsterId] of captured) {
-    const monster = content.monsters.get(monsterId);
-    if (!monster) continue;
-    byRegion.set(monster.habitat, (byRegion.get(monster.habitat) ?? 0) + 1);
-    byTribe.set(monster.tribe, (byTribe.get(monster.tribe) ?? 0) + 1);
-  }
+  const counts = capturedCounts(content, save);
   const done: string[] = [];
   for (const milestone of content.milestones) {
     if (save.milestones.includes(milestone.id)) continue;
     const c = milestone.condition;
-    const satisfied =
+    const have =
       c.kind === 'totalCaptured'
-        ? total >= c.count
+        ? counts.total
         : c.kind === 'regionCaptured'
-          ? (byRegion.get(c.region) ?? 0) >= c.count
-          : (byTribe.get(c.tribe) ?? 0) >= c.count;
-    if (satisfied) done.push(milestone.id);
+          ? (counts.byRegion.get(c.region) ?? 0)
+          : c.kind === 'tribeCaptured'
+            ? (counts.byTribe.get(c.tribe) ?? 0)
+            : (counts.byRarity.get(c.rarity) ?? 0);
+    if (have >= c.count) done.push(milestone.id);
   }
   return done;
 }

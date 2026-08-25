@@ -50,6 +50,14 @@ import tasksRaw from './data/tasks.json';
 export interface Content {
   monsters: ReadonlyMap<string, Monster>;
   monsterList: readonly Monster[];
+  /**
+   * 서식종 — 초월을 뺀, 지역 출현 테이블에 실제로 등장하는 종 (2026-08-25).
+   * 도감 사다리·해금 조건의 모수는 monsterList가 아니라 이쪽이다
+   * (초월은 합성 전용이라 habitat이 최종 지역이어도 그 지역에서 잡을 수 없다).
+   */
+  nativeList: readonly Monster[];
+  /** 합성 전용 최종 등급 — 초월 축 업적의 모수 */
+  transcendentList: readonly Monster[];
   regions: ReadonlyMap<string, Region>;
   regionList: readonly Region[]; // order 순 정렬
   materials: ReadonlyMap<string, Material>;
@@ -98,6 +106,8 @@ export function loadContent(): Content {
   const hourglasses = toMap(hourglassList, 'hourglass');
 
   const monsters = toMap(monsterList, 'monster');
+  const nativeList = monsterList.filter((m) => m.rarity !== 'transcendent');
+  const transcendentList = monsterList.filter((m) => m.rarity === 'transcendent');
   const regions = toMap(regionList, 'region');
   const materials = toMap(materialList, 'material');
   const recipes = toMap(recipeList, 'recipe');
@@ -167,10 +177,23 @@ export function loadContent(): Content {
     if (members.length !== 4) fail(`세트 ${set.id}의 구성 유물이 4개가 아님 (${members.length}개)`);
     if (new Set(members.map((m) => m.slot)).size !== 4) fail(`세트 ${set.id}가 4슬롯을 전부 커버하지 않음`);
   }
+  // 마일스톤은 참조가 유효할 뿐 아니라 **달성 가능**해야 한다 — 모수를 넘는 계단은 영영 안 터진다.
+  // 초월 3종을 넣으며 화산 사다리(54)와 화산 소속(57)이 어긋난 적이 있다 (2026-08-25).
   for (const milestone of milestones) {
-    if (milestone.condition.kind === 'regionCaptured' && !regions.has(milestone.condition.region)) {
-      fail(`마일스톤 ${milestone.id}가 없는 지역 참조: ${milestone.condition.region}`);
+    const c = milestone.condition;
+    if (c.kind === 'regionCaptured' && !regions.has(c.region)) {
+      fail(`마일스톤 ${milestone.id}가 없는 지역 참조: ${c.region}`);
     }
+    // 모수는 축마다 다르다 — 서식종 축은 nativeList, 초월 축(rarityCaptured)만 전 등급을 본다
+    const cap =
+      c.kind === 'regionCaptured'
+        ? nativeList.filter((m) => m.habitat === c.region).length
+        : c.kind === 'tribeCaptured'
+          ? nativeList.filter((m) => m.tribe === c.tribe).length
+          : c.kind === 'totalCaptured'
+            ? nativeList.length
+            : monsterList.filter((m) => m.rarity === c.rarity).length;
+    if (c.count > cap) fail(`마일스톤 ${milestone.id}의 조건 ${c.count}종이 모수 ${cap}종을 넘음 — 달성 불가`);
   }
   for (const id of balance.starter.monsters) {
     if (!monsters.has(id)) fail(`starter가 없는 몬스터 참조: ${id}`);
@@ -197,6 +220,8 @@ export function loadContent(): Content {
   return {
     monsters,
     monsterList,
+    nativeList,
+    transcendentList,
     regions,
     regionList,
     materials,

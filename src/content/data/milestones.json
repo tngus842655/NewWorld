@@ -469,5 +469,17 @@
       "gold": 80000,
       "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
     }
+  },
+  {
+    "id": "transcend-1",
+    "name": "초월에 닿은 자",
+    "condition": { "kind": "rarityCaptured", "rarity": "transcendent", "count": 1 },
+    "reward": { "gold": 120000, "dust": 1500 }
+  },
+  {
+    "id": "transcend-3",
+    "name": "세 초월을 거느린 자",
+    "condition": { "kind": "rarityCaptured", "rarity": "transcendent", "count": 3 },
+    "reward": { "gold": 300000, "dust": 4000 }
   }
 ]

@@ -257,10 +257,22 @@ export const HourglassSchema = z.object({
 export type HourglassDef = z.infer<typeof HourglassSchema>;
 
 // ── 마일스톤 ─────────────────────────────────────────────────────────────────
+/**
+ * 업적 조건. 사다리는 **두 축**이다 (2026-08-25 사용자 결정).
+ *
+ * - 서식종 축 (regionCaptured·tribeCaptured·totalCaptured): 지역 출현 테이블에 실제로 등장하는
+ *   216종만 센다. 초월은 합성 전용이라 어느 지역에도 서식하지 않으므로 여기서 빠진다 —
+ *   넣어두면 화산 서식종 51종 + 초월 3종으로 "잿빛 화산 완전 정복"이 터진다.
+ * - 초월 축 (rarityCaptured): 등급 단위로 센다. 서식종 축과 달리 초월을 포함한 전 등급이 대상.
+ *
+ * 집계 정본은 core/progression.ts capturedCounts 하나뿐이다. 두 축의 상한이 총 종 수를 덮는지는
+ * tests/content.test.ts가 고정한다 — 종을 늘리면 사다리도 같이 늘려야 통과한다.
+ */
 export const MilestoneConditionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('regionCaptured'), region: z.string(), count: z.number().int().positive() }),
   z.object({ kind: z.literal('tribeCaptured'), tribe: TribeSchema, count: z.number().int().positive() }),
   z.object({ kind: z.literal('totalCaptured'), count: z.number().int().positive() }),
+  z.object({ kind: z.literal('rarityCaptured'), rarity: MonsterRaritySchema, count: z.number().int().positive() }),
 ]);
 export type MilestoneCondition = z.infer<typeof MilestoneConditionSchema>;
 

@@ -116,11 +116,23 @@ function nextGoalCard(): HTMLElement | null {
     );
   }
 
-  const totalSpecies = content.monsterList.length;
+  // 모수는 monsterList(219)가 아니라 nativeList(216)다 — 초월은 잡을 수 없어 목표가 안 닫힌다 (2026-08-25)
+  const totalSpecies = content.nativeList.length;
   if (counts.total < totalSpecies) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
       el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [신대륙 도감의 완성]')),
       el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 [전설은 심층 탐사에서만]`)),
+    );
+  }
+
+  // 서식종을 다 채운 뒤의 목표는 초월 축 — 합성으로만 닿는 3종 (2026-08-25)
+  const transcendTotal = content.transcendentList.length;
+  const transcendHave = counts.byRarity.get('transcendent') ?? 0;
+  if (transcendHave < transcendTotal) {
+    return el('div.card.goal-card', { onclick: () => tab.set('codex') },
+      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [초월]')),
+      el('div.goal-items', {}, el('div.goal-item', {},
+        `▫️ 초월 ${transcendHave}/${transcendTotal}종 수집 [전설 카드 합성으로만]`)),
     );
   }
   return null;

@@ -2,28 +2,44 @@
  * 진행·해금 판정 — 도감 집계, 지역/팀/슬롯 해금. 파생값은 저장하지 않고 여기서 계산한다.
  */
 import type { Content } from '../content';
+import type { MonsterRarity } from '../content/schema';
 import type { SaveState } from './types';
 import { GameError } from './types';
 
+/**
+ * 포획 집계의 정본. 사다리가 두 축이라 모수도 둘이다 (schema.ts MilestoneConditionSchema 참조).
+ * 여기 하나만 두는 이유: 예전엔 expedition.evaluateNewMilestones가 같은 집계를 따로 돌려서,
+ * 한쪽만 고치면 진행바와 실제 지급이 조용히 갈라졌다 (2026-08-25).
+ */
 export interface CapturedCounts {
+  /** 서식종(초월 제외) 포획 종 수 — 도감 사다리·지역 해금·팀/슬롯 해금의 모수 */
   total: number;
+  /** 지역별 서식종 포획 수 — 초월은 habitat이 최종 지역이어도 세지 않는다 */
   byRegion: Map<string, number>;
+  /** 종족별 서식종 포획 수 */
   byTribe: Map<string, number>;
+  /** 등급별 포획 수 — 여기만 초월을 포함한 전 등급을 센다 (초월 축 업적의 모수) */
+  byRarity: Map<MonsterRarity, number>;
 }
 
 export function capturedCounts(content: Content, save: SaveState): CapturedCounts {
   const byRegion = new Map<string, number>();
   const byTribe = new Map<string, number>();
+  const byRarity = new Map<MonsterRarity, number>();
   let total = 0;
   for (const [monsterId, entry] of Object.entries(save.codex)) {
     if (!entry.captured) continue;
     const monster = content.monsters.get(monsterId);
     if (!monster) continue;
+    byRarity.set(monster.rarity, (byRarity.get(monster.rarity) ?? 0) + 1);
+    // 초월은 합성 전용 — 어느 지역 출현 테이블에도 없다. 서식종 축에 넣으면 화산 서식종을
+    // 51종만 채운 유저가 "잿빛 화산 완전 정복"(54)을 받는다 (2026-08-25 사용자 결정)
+    if (monster.rarity === 'transcendent') continue;
     total++;
     byRegion.set(monster.habitat, (byRegion.get(monster.habitat) ?? 0) + 1);
     byTribe.set(monster.tribe, (byTribe.get(monster.tribe) ?? 0) + 1);
   }
-  return { total, byRegion, byTribe };
+  return { total, byRegion, byTribe, byRarity };
 }
 
 export function regionFlagKey(regionId: string): string {

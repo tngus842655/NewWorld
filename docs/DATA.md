@@ -64,6 +64,10 @@
 - `events.json`: 갈림길/함정/보물/채집 풀. 갈림길은 `{ id, text, safe: Reward, risky: { check: cpRatio, success: Reward, fail: Damage } }`
 - `recipes.json`: 미끼 등 제작법 `{ id, cost: { materials, gold }, effect }`
 - `milestones.json`: `{ id, condition: {...태그드 유니언}, reward: { buff?, gold } }`
+  - 조건은 **두 축**이다 (2026-08-25) — 서식종 축(`regionCaptured`·`tribeCaptured`·`totalCaptured`)은
+    초월을 빼고 216종을 세고, 초월 축(`rarityCaptured`)이 나머지 3종을 센다.
+    집계 정본은 `core/progression.ts capturedCounts` 하나 (`byRarity`만 전 등급).
+    모수를 넘는 계단은 로더가 throw하고, 모수에 **못 미치는** 사다리는 `tests/content.test.ts`가 잡는다
 - 보상(Reward)·조건(Condition)·효과(Effect)는 **공용 태그드 유니언 타입**으로 통일 —
   새 종류 추가 = 스키마에 variant 추가 + core에 해당 케이스 구현 (컴파일러가 누락 잡음)
 
