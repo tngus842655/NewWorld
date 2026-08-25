@@ -80,7 +80,8 @@ export function tabPanels<K extends string>(items: Panel<K>[], opts?: PanelOpts<
  * 216종처럼 패널 N개를 다 만들면 낭비인 경우에 쓴다. 선택 상태는 호출부 시그널이 든다.
  */
 export function tabBar<K extends string>(
-  items: { key: K; label: string; title?: string }[],
+  /** dot: 지금 할 수 있는 일이 있다는 알림 점 (수치를 붙이기 애매한 탭용 — 앱바 출석 점과 같은 관용) */
+  items: { key: K; label: string; title?: string; dot?: boolean }[],
   opts: { active: K; onPick: (key: K) => void; scroll?: boolean; sfx?: boolean },
 ): HTMLElement {
   const { active, onPick, scroll = false, sfx = true } = opts;
@@ -92,7 +93,10 @@ export function tabBar<K extends string>(
           if (sfx) playSfx('tap');
           onPick(item.key);
         },
-      }, item.label),
+      },
+        item.label,
+        item.dot ? el('span.tab-dot') : null,
+      ),
     ),
   );
 }

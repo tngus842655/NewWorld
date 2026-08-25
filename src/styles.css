@@ -374,6 +374,15 @@ body {
 .big-tab.active { background: #2a2413; color: var(--accent-2); box-shadow: inset 0 -2px 0 var(--accent); }
 /* 탭 라벨이 375px에서 줄바꿈되지 않게 — 넘치면 말줄임 (지역명+카운트 조합이 87px을 넘길 수 있다) */
 .big-tab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 2px; padding-right: 2px; }
+/*
+ * 탭 알림 점 — 수치를 붙이기 애매한 탭에 "지금 할 수 있는 일이 있다"를 알린다 (2026-08-25).
+ * 앱바 출석 점(.attend-dot)과 같은 색·크기. 라벨 옆 인라인이라 말줄임(overflow:hidden)에 잘리지 않는다.
+ */
+.tab-dot {
+  display: inline-block; width: 7px; height: 7px; margin-left: 5px; vertical-align: 2px;
+  border-radius: 50%; background: #e2554f; box-shadow: 0 0 4px rgba(226, 85, 79, 0.7);
+}
+.big-tab.active .tab-dot { background: var(--accent-2); box-shadow: 0 0 4px rgba(240, 192, 96, 0.7); }
 /* 탭이 5개 이상이면 균등분할 대신 가로 스크롤 */
 .big-tabs.scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .big-tabs.scroll::-webkit-scrollbar { display: none; }

@@ -135,6 +135,10 @@ export function renderCamp(): HTMLElement {
     return sum + (r && FUSION_NEXT[r] !== null ? Math.max(0, a.count - 1) : 0);
   }, 0);
 
+  // 합성 한 번에 필요한 재료 수 — 여분이 이만큼 모여야 실제로 돌릴 수 있다
+  const fusionCost = content.balance.fusion.materials;
+  const canFuse = spareCards >= fusionCost || spareArtifacts >= fusionCost;
+
   const rarityChipRow = filterChips(
     RARITY_DESC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
     { active: rarity, onPick: (v) => campRarity.set(v) },
@@ -203,14 +207,14 @@ export function renderCamp(): HTMLElement {
       el('div.list-row', {},
         el('span', {}, `🧬 카드 합성 [여분 카드 ${spareCards}장]`),
         el('button.btn.btn-ghost', {
-          disabled: spareCards < content.balance.fusion.materials,
+          disabled: spareCards < fusionCost,
           onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); },
         }, '열기'),
       ),
       el('div.list-row', {},
         el('span', {}, `💠 유물 합성 [여분 ${spareArtifacts}개]`),
         el('button.btn.btn-ghost', {
-          disabled: spareArtifacts < content.balance.fusion.materials,
+          disabled: spareArtifacts < fusionCost,
           onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); },
         }, '열기'),
       ),
@@ -235,7 +239,9 @@ export function renderCamp(): HTMLElement {
       [
         { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },
         { key: 'artifact' as const, label: `유물 (${state.artifacts.length})` },
-        { key: 'craft' as const, label: '제작' },
+        // 제작 탭만 수치가 없어 발견성이 떨어진다 — 지금 합성이 가능하면 점으로 알린다 (2026-08-25 사용자).
+        // '보유 여분이 있다'가 아니라 '실제로 한 번 돌릴 수 있다'가 기준 (재료 수를 채워야 한다)
+        { key: 'craft' as const, label: '제작', dot: canFuse },
       ],
       { active: tab, onPick: (key) => campTab.set(key) },
     ),
