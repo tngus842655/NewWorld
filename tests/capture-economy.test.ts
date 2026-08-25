@@ -36,10 +36,13 @@ describe('포획 판정', () => {
     expect(high).toBe(content.balance.capture.chanceCap);
   });
 
-  it('미끼는 레어 이상에만 자동 사용', () => {
-    expect(shouldUseLure(wolf, 3)).toBe(false);
-    expect(shouldUseLure(turtle, 3)).toBe(true);
-    expect(shouldUseLure(turtle, 0)).toBe(false);
+  it('미끼는 아직 도감에 없는 희귀 이상에만 자동 사용', () => {
+    expect(shouldUseLure(wolf, 3, false), '일반은 미끼를 쓰지 않는다').toBe(false);
+    expect(shouldUseLure(turtle, 3, false), '미포획 희귀에는 쓴다').toBe(true);
+    expect(shouldUseLure(turtle, 0, false), '남은 미끼가 없으면 못 쓴다').toBe(false);
+    // 2026-08-25: 이미 잡은 종에 쓰면 카드 1장이 전부다. 미끼의 값어치는 도감을 늘리는 데 있다
+    expect(shouldUseLure(turtle, 3, true), '이미 포획한 종에는 쓰지 않는다').toBe(false);
+    expect(shouldUseLure(dragon, 3, true), '전설이어도 보유 중이면 아낀다').toBe(false);
   });
 });
 

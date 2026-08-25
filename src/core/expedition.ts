@@ -518,7 +518,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
         // 포획
         const alreadyCaptured = save.codex[monster.id]?.captured === true || totals.capturedMonsterIds.includes(monster.id);
         const captureAdds = sumOf(query(effects, 'captureRoll', ctx), 'captureAdd');
-        const useLure = shouldUseLure(monster, luresLeft);
+        const useLure = shouldUseLure(monster, luresLeft, alreadyCaptured);
         if (useLure) {
           luresLeft--;
           totals.luresUsed++;

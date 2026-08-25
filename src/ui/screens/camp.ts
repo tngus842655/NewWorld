@@ -58,6 +58,36 @@ export function renderCamp(): HTMLElement {
     state.wallet.gold >= recipe.cost.gold
     && Object.entries(recipe.cost.materials).every(([id, n]) => (state.wallet.materials[id] ?? 0) >= n);
 
+  /**
+   * 아직 잠긴 지역이 요구하는 재료 수량 (재료 id → 필요 개수).
+   * 제작과 지역 해금이 **같은 재료 풀을 공유**해서, 모르고 만들다 보면 해금이 밀린다
+   * (시뮬 실측: 모래시계를 계속 세공하면 화산 해금이 D7 → D19). 막지는 않고 알려만 준다 —
+   * 지금 시간을 벌지 나중에 문을 열지는 유저가 고를 문제다.
+   */
+  const unlockReserve = new Map<string, { need: number; region: string }>();
+  for (const region of content.regionList) {
+    if (isRegionUnlocked(content, state, region.id)) continue;
+    for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
+      const prev = unlockReserve.get(materialId);
+      if (!prev || need > prev.need) unlockReserve.set(materialId, { need, region: `${region.icon} ${region.name}` });
+    }
+  }
+  /** 이 레시피를 만들면 해금 예약분을 깎는가 — 깎는 재료들의 안내 문구 */
+  const reserveWarning = (recipe: { cost: { materials: Record<string, number> } }): string | null => {
+    const hits: string[] = [];
+    let regionLabel = '';
+    for (const [materialId, count] of Object.entries(recipe.cost.materials)) {
+      const reserve = unlockReserve.get(materialId);
+      if (!reserve) continue;
+      const have = state.wallet.materials[materialId] ?? 0;
+      if (have - count >= reserve.need) continue; // 만들어도 해금분이 남는다
+      // "보유/필요"로 쓰면 충족된 것처럼 읽힌다 — 만든 **뒤**의 수량을 보여준다
+      hits.push(`${content.materials.get(materialId)?.icon ?? ''}${have - count}/${reserve.need}`);
+      regionLabel = reserve.region;
+    }
+    return hits.length > 0 ? `🔒 만들면 ${regionLabel} 해금분이 모자랍니다 (제작 후 ${hits.join(' · ')})` : null;
+  };
+
   const recipeRow = (recipe: (typeof content.recipes) extends ReadonlyMap<string, infer R> ? R : never) => {
     // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
     const affordable = canAfford(recipe);
@@ -83,10 +113,12 @@ export function renderCamp(): HTMLElement {
             el('span.muted.small', {}, ` [총 ${fmtRemain(total * 60_000)} 단축]`),
           );
         })();
+    const warning = affordable ? reserveWarning(recipe) : null; // 못 만드는 레시피엔 경고가 무의미
     return el('div.list-row', {},
       el('div', {},
         el('div', {}, `${recipe.name} → `, outLabel),
         el(`div.muted.small${affordable ? '' : '.cost-short'}`, {}, costText),
+        warning ? el('div.small.cost-reserve', {}, warning) : null,
       ),
       el('button.btn.btn-ghost', {
         disabled: !affordable,
