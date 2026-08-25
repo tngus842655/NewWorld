@@ -106,13 +106,13 @@
     "slotUnlocks": [
       {
         "slots": 4,
-        "gold": 3000,
-        "totalCaptured": 10
+        "gold": 6000,
+        "totalCaptured": 40
       },
       {
         "slots": 5,
-        "gold": 12000,
-        "totalCaptured": 25
+        "gold": 40000,
+        "totalCaptured": 104
       }
     ]
   },

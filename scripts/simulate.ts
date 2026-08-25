@@ -1,6 +1,6 @@
 /**
  * M3 밸런스 시뮬레이터 (ROADMAP M3, TECH §10)
- * 봇 전략 3종이 같은 core 로직으로 7일을 플레이한 진행 리포트를 낸다.
+ * 봇 전략 3종(scripts/bot.ts)이 같은 core 로직으로 N일을 플레이한 진행 리포트를 낸다.
  *
  *   npx tsx scripts/simulate.ts [--days 7] [--json <출력경로>] [--codex] [--gates]
  *
@@ -27,14 +27,16 @@ const REGION_LABEL: Record<string, string> = {
 const GOAL: Record<string, [number, number]> = {
   'whispering-woods': [1, 2], 'sunken-marsh': [6, 8], 'ashen-volcano': [10, 14],
 };
+/** 파티 슬롯 목표 창 ("보통" 기준, GDD §9.1 — 2026-08-25 219종 재조정) */
+const SLOT_GOAL: Record<number, [number, number]> = { 4: [3, 6], 5: [9, 14] };
 
 console.log(`\n=== NewWorld ${DAYS}일 진행 시뮬레이션 ===`);
 for (const result of results) {
   console.log(`\n▶ ${result.label}`);
-  console.log('  일차 | 누적골드 | 도감 | 상위3 CP | 런 | 전멸 | 해금');
+  console.log('  일차 | 누적골드 | 도감 | 상위3 CP | 런 | 전멸 | 슬롯 | 해금');
   for (const row of result.days) {
     console.log(
-      `   D${row.day}  | ${String(row.gold).padStart(7)} | ${String(row.captured).padStart(3)} | ${String(row.topCp).padStart(7)} | ${String(row.runs).padStart(3)} | ${String(row.wipes).padStart(3)} | 지역${row.unlocked}`,
+      `   D${row.day}  | ${String(row.gold).padStart(7)} | ${String(row.captured).padStart(3)} | ${String(row.topCp).padStart(7)} | ${String(row.runs).padStart(3)} | ${String(row.wipes).padStart(3)} | ${String(row.partySlots).padStart(4)} | 지역${row.unlocked}`,
     );
   }
   const unlocks = Object.entries(result.unlockDay)
@@ -58,6 +60,16 @@ for (const result of results) {
     });
     console.log(`  게이트: ${gates.join(' · ')}`);
   }
+  // 파티 슬롯 게이트 (2026-08-25) — 도감/골드 중 무엇이 제동인지까지 표기
+  const slots = Object.entries(result.slotGate).map(([slots, obs]) => {
+    const [lo, hi] = SLOT_GOAL[Number(slots)] ?? [0, 99];
+    if (obs.buyDay === undefined) return `${slots}칸 미달(도감 ${obs.codexDay ? `D${obs.codexDay}` : '미충족'}·골드 ${obs.goldDay ? `D${obs.goldDay}` : '미충족'})`;
+    const mark = obs.buyDay >= lo && obs.buyDay <= hi ? '✅' : obs.buyDay < lo ? '⚡빠름' : '🐌느림';
+    // 마지막으로 충족된 조건이 곧 제동이다
+    const brake = (obs.codexDay ?? 0) >= (obs.goldDay ?? 0) ? '도감' : '골드';
+    return `${slots}칸 D${obs.buyDay}(목표 D${lo}~${hi}) ${mark} 제동=${brake}(도감 ${obs.capturedAtBuy}종)`;
+  });
+  console.log(`  파티 슬롯: ${slots.length > 0 ? slots.join(' · ') : '없음'}`);
   // 지역 도감 24종(업적 9단계, 완전 정복 제외) 도달 일차
   const codexGoals = content.regionList.map((region) => {
     const label = region.id === 'misty-coast' ? '해안' : (REGION_LABEL[region.id] ?? region.id);

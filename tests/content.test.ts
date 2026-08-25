@@ -108,6 +108,46 @@ describe('콘텐츠 무결성', () => {
     });
   });
 
+  // 파티 슬롯 게이트 (2026-08-25 재조정) — 52종 시절 값(10/25종)이 219종까지 방치돼
+  // 첫날 지나치는 무료 배급이 됐던 회귀를 막는다. 근거: scripts/slot-sweep.ts
+  it('파티 슬롯 해금은 baseSlots 다음 칸부터 1칸씩, 도감·골드 모두 단조 증가한다', () => {
+    const { baseSlots, slotUnlocks } = content.balance.party;
+    expect(slotUnlocks.length).toBeGreaterThan(0);
+    expect(slotUnlocks.map((u) => u.slots)).toEqual(slotUnlocks.map((_, i) => baseSlots + 1 + i));
+    for (let i = 1; i < slotUnlocks.length; i++) {
+      expect(slotUnlocks[i]!.totalCaptured, `${slotUnlocks[i]!.slots}칸 도감`).toBeGreaterThan(slotUnlocks[i - 1]!.totalCaptured);
+      expect(slotUnlocks[i]!.gold, `${slotUnlocks[i]!.slots}칸 골드`).toBeGreaterThan(slotUnlocks[i - 1]!.gold);
+    }
+  });
+
+  it('파티 슬롯 도감 조건은 총 종 수 대비 비율 구간 안에 있다 (도감 = 제동, GDD §6.1)', () => {
+    // 종 확장(52 → 104 → 216 → 219) 때마다 비율이 희석되는 회귀를 잡는다.
+    // 구간은 52종 시절 설계 의도(4칸 19% · 5칸 48%)를 중심으로 잡은 허용폭.
+    const total = content.monsterList.length;
+    const BANDS: Record<number, [number, number]> = { 4: [0.12, 0.26], 5: [0.4, 0.6] };
+    for (const unlock of content.balance.party.slotUnlocks) {
+      const band = BANDS[unlock.slots];
+      expect(band, `${unlock.slots}칸 슬롯의 비율 구간이 정의돼 있지 않다`).toBeDefined();
+      const ratio = unlock.totalCaptured / total;
+      expect(ratio, `${unlock.slots}칸 도감 ${unlock.totalCaptured}/${total}종 = ${(ratio * 100).toFixed(1)}%`)
+        .toBeGreaterThanOrEqual(band![0]);
+      expect(ratio, `${unlock.slots}칸 도감 ${unlock.totalCaptured}/${total}종 = ${(ratio * 100).toFixed(1)}%`)
+        .toBeLessThanOrEqual(band![1]);
+    }
+  });
+
+  it('파티 슬롯 도감 조건은 총도감 업적 계단 위에 놓인다 (슬롯과 업적이 같은 날 오도록)', () => {
+    const rungs = new Set(
+      content.milestones
+        .filter((m) => m.condition.kind === 'totalCaptured')
+        .map((m) => (m.condition as { kind: 'totalCaptured'; count: number }).count),
+    );
+    for (const unlock of content.balance.party.slotUnlocks) {
+      expect([...rungs].sort((a, b) => a - b), `${unlock.slots}칸 도감 ${unlock.totalCaptured}종`)
+        .toContain(unlock.totalCaptured);
+    }
+  });
+
   it('유물은 100종 — 일반8 + 고급8 + 희귀16 + 영웅48 + 전설16 + 초월4, 세트 8계열', () => {
     expect(content.artifacts.size).toBe(100);
     const byRarity = (r: string) => [...content.artifacts.values()].filter((a) => a.rarity === r).length;

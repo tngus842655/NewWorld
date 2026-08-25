@@ -52,6 +52,18 @@ export interface DayRow {
   runs: number;
   unlocked: string;
   byRegion: Record<string, number>; // 지역별 도감 수 (업적 계단 도달 측정)
+  partySlots: number; // 그날 말 파티 슬롯 (2026-08-25 슬롯 게이트 계측)
+}
+
+/**
+ * 슬롯 게이트 관측 (2026-08-25) — 지역 해금의 codexReadyDay/materialReadyDay와 같은 방식.
+ * 도감·골드 조건의 충족 일차를 따로 남겨, 둘 중 무엇이 실제 제동인지 판별한다.
+ */
+export interface SlotGateObs {
+  codexDay?: number; // totalCaptured 조건을 처음 만족한 일차
+  goldDay?: number; // gold 조건을 처음 만족한 일차 (그 시점 보유 골드 기준)
+  buyDay?: number; // 실제로 구매한 일차
+  capturedAtBuy?: number; // 구매 시점 도감 종 수
 }
 
 export interface SimResult {
@@ -59,6 +71,8 @@ export interface SimResult {
   label: string;
   days: DayRow[];
   unlockDay: Record<string, number>;
+  /** 슬롯 칸수 → 게이트 관측 (scripts/slot-sweep.ts) */
+  slotGate: Record<number, SlotGateObs>;
   /** 도감 조건만 따로 충족된 일차 — 게이트 중 무엇이 병목인지 보려고 */
   codexReadyDay: Record<string, number>;
   /** 재료 조건만 따로 충족된 일차 */
@@ -199,6 +213,7 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
   const unlockDay: Record<string, number> = { 'misty-coast': 0 };
   const codexReadyDay: Record<string, number> = {};
   const materialReadyDay: Record<string, number> = {};
+  const slotGate: Record<number, SlotGateObs> = {};
   const days: DayRow[] = [];
   let wipes = 0;
   let runs = 0;
@@ -254,10 +269,22 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
       }
     }
 
-    // 3) 슬롯 구매
-    if (nextPartySlotUnlock(content, save)) {
-      const next = safely(() => buyPartySlot(content, save));
-      if (next) save = next;
+    // 3) 슬롯 구매 — 두 조건의 충족 일차를 따로 기록한다 (무엇이 제동인지 판별)
+    {
+      const pending = nextPartySlotUnlock(content, save);
+      if (pending) {
+        const day = Math.floor(t / DAY_MS) + 1;
+        const obs = (slotGate[pending.slots] ??= {});
+        const captured = capturedCounts(content, save).total;
+        if (obs.codexDay === undefined && captured >= pending.totalCaptured) obs.codexDay = day;
+        if (obs.goldDay === undefined && save.wallet.gold >= pending.gold) obs.goldDay = day;
+        const next = safely(() => buyPartySlot(content, save));
+        if (next) {
+          save = next;
+          obs.buyDay = day;
+          obs.capturedAtBuy = captured;
+        }
+      }
     }
 
     // 4) 성장: 각성(골드 — 2026-08-23 정수 폐기) → 레벨업(예산 내 CP 최대화)
@@ -546,6 +573,7 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         unlocked: content.regionList.filter((r) => isRegionUnlocked(content, save, r.id)).map((r) => r.order).join(''),
         // 지역별 도감 수 — 업적 계단 도달 일차 측정용 (2026-08-23)
         byRegion: Object.fromEntries(content.regionList.map((r) => [r.id, counts.byRegion.get(r.id) ?? 0])),
+        partySlots: save.profile.partySlots,
       });
     }
   }
@@ -555,6 +583,7 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
     label: strategy.label,
     days,
     unlockDay,
+    slotGate,
     codexReadyDay,
     materialReadyDay,
     spend,

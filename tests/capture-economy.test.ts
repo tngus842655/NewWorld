@@ -127,10 +127,11 @@ describe('경제 액션', () => {
 
   it('파티 슬롯 구매 — 도감 조건 + 골드', () => {
     const clock = makeCtx();
-    const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 50_000, partySlots: 3 });
+    const unlock = content.balance.party.slotUnlocks[0]!; // 콘텐츠 파생 — 게이트 재조정에 테스트가 따라간다
+    const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: unlock.gold * 2, partySlots: 3 });
     expect(() => buyPartySlot(content, save)).toThrow(/도감/);
-    // 도감 10종 채우기
-    for (const monster of content.monsterList.slice(0, 10)) {
+    // 도감 조건만큼 채우기
+    for (const monster of content.monsterList.slice(0, unlock.totalCaptured)) {
       save.codex[monster.id] = { seen: true, captured: true, awakened: false };
     }
     const next = buyPartySlot(content, save);
