@@ -190,8 +190,8 @@
       "contributor": "Saw Ind"
     },
     "flame-dancer": {
-      "slug": "fire-flame-10980858",
-      "contributor": "Platypus Projects"
+      "slug": "fire-11212183",
+      "contributor": "Zulfa Mahendra"
     },
     "pyro-drake": {
       "slug": "dynosaurus-11889339",
@@ -682,8 +682,8 @@
       "contributor": "Fernanda Aulia Yahya"
     },
     "solar-roc": {
-      "slug": "eagle-12138751",
-      "contributor": "Fuwa Team"
+      "slug": "eagle-12730520",
+      "contributor": "Zulfa Mahendra"
     },
     "marsh-lurker": {
       "slug": "blue-monster-5710646",
@@ -714,8 +714,8 @@
       "contributor": "Tin Myint Sein"
     },
     "bone-orchard-king": {
-      "slug": "spooky-skull-10881063",
-      "contributor": "Vektora Studio"
+      "slug": "skull-6617622",
+      "contributor": "Monsters Visual"
     },
     "moonwell-newt": {
       "slug": "axolotl-11889342",
@@ -850,8 +850,14 @@
       "contributor": "Tin Naing Linn"
     },
     "ash-dancer": {
-      "slug": "fire-flame-angry-18910179",
-      "contributor": "StoiCreator"
+      "slug": "fire-13778238",
+      "contributor": "Misbah Ihsan",
+      "recolor": {
+        "hue": 275,
+        "saturation": 1,
+        "brightness": 0.8,
+        "note": "자주빛 재의 불씨 — 암흑 속성에 맞춘 리컬러 (원본은 붉은 불꽃)"
+      }
     },
     "lava-shepherd": {
       "slug": "fire-flame-18910200",
@@ -969,8 +975,8 @@
       "contributor": "Dzulfikar Laode"
     },
     "gullwing-pennant": {
-      "slug": "medieval-house-banner-11740131",
-      "contributor": "Wolfy Studio"
+      "slug": "pennant-9353364",
+      "contributor": "Nixx Design"
     },
     "ashen-idol": {
       "slug": "totem-12878910",
@@ -1295,6 +1301,10 @@
     "sovereign-standard": {
       "slug": "house-banner-13852245",
       "contributor": "Iconfield"
+    },
+    "wyrmfang-edge": {
+      "slug": "sword-11304458",
+      "contributor": "Flat- Icons"
     }
   },
   "hourglasses": {

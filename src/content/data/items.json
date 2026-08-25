@@ -2244,6 +2244,30 @@
       ],
       "asset": "sovereign-standard",
       "flavor": "깃발이 오르면 뒤따르는 것들의 걸음이 달라진다."
+    },
+    {
+      "id": "wyrmfang-edge",
+      "name": "용아검",
+      "slot": "weapon",
+      "rarity": "transcendent",
+      "set": null,
+      "main": {
+        "stat": "atkMult",
+        "base": 0.38,
+        "perEnhance": 0.07
+      },
+      "unique": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.18
+          }
+        }
+      ],
+      "asset": "wyrmfang-edge",
+      "flavor": "부러진 이빨 하나로 벼렸다. 그 한 조각이 이미 검보다 길었다."
     }
   ],
   "sets": [

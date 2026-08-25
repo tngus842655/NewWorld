@@ -43,15 +43,18 @@ describe('콘텐츠 무결성', () => {
     for (let i = 1; i < scales.length; i++) expect(scales[i]!).toBeGreaterThan(scales[i - 1]!);
   });
 
-  it('유물은 99종 — 일반8 + 고급8 + 희귀16 + 영웅48 + 전설16 + 초월3, 세트 8계열', () => {
-    expect(content.artifacts.size).toBe(99);
+  it('유물은 100종 — 일반8 + 고급8 + 희귀16 + 영웅48 + 전설16 + 초월4, 세트 8계열', () => {
+    expect(content.artifacts.size).toBe(100);
     const byRarity = (r: string) => [...content.artifacts.values()].filter((a) => a.rarity === r).length;
     expect(byRarity('common')).toBe(8);
     expect(byRarity('uncommon')).toBe(8);
     expect(byRarity('rare')).toBe(16);
     expect(byRarity('heroic')).toBe(48);
     expect(byRarity('legendary')).toBe(16);
-    expect(byRarity('transcendent')).toBe(3); // 합성 전용 — 세트 없음 (3점으로는 2/4세트가 성립하지 않는다)
+    expect(byRarity('transcendent')).toBe(4); // 합성 전용 — 세트 없음 (4점이어도 세트는 만들지 않는다)
+    // 초월 유물은 4슬롯을 한 점씩 채운다 — 어느 슬롯도 비지 않아야 편성이 온전하다
+    const topSlots = [...content.artifacts.values()].filter((a) => a.rarity === 'transcendent').map((a) => a.slot);
+    expect([...topSlots].sort()).toEqual(['armor', 'banner', 'charm', 'weapon']);
     expect(content.sets.size).toBe(8);
   });
 
