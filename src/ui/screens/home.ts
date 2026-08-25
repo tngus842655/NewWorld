@@ -3,12 +3,12 @@
  * 카드 구조는 고정하고 시간 관련 표시만 scopedEffect로 갱신한다 (탭 안정성).
  */
 import { content } from '../../content';
-import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
+import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
 import { claim, nowTick, save } from '../../state/store';
 import { monsterIcon } from '../components';
-import { TIER_LABEL, el, fmtAgo, fmtClock, fmtRemain, scopedEffect } from '../kit';
+import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -76,7 +76,7 @@ function expeditionCard(expeditionId: string): HTMLElement {
   );
 }
 
-/** 다음 목표 카드 — 지역 해금 → 3번째 원정대 → 도감 완성 순으로 지금 좇을 목표 하나만 (GDD 필러 3) */
+/** 다음 목표 카드 — 지역 해금 → 파티 슬롯 → 도감 완성 → 초월 순으로 지금 좇을 목표 하나만 (GDD 필러 3) */
 function nextGoalCard(): HTMLElement | null {
   const state = save();
   const counts = capturedCounts(content, state);
@@ -107,12 +107,27 @@ function nextGoalCard(): HTMLElement | null {
     );
   }
 
-  const maxTeamUnlock = content.balance.teams.find((u) => u.count === 3);
-  if (maxTeamUnlock?.totalCaptured !== undefined && teamCount(content, state) < 3) {
-    return el('div.card.goal-card', { onclick: () => tab.set('codex') },
-      el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [3번째 원정대]')),
-      el('div.goal-items', {}, el('div.goal-item', {},
-        `▫️ 도감 ${Math.min(counts.total, maxTeamUnlock.totalCaptured)}/${maxTeamUnlock.totalCaptured}종 포획`)),
+  // 동시 파견 군(1~4군)은 지역 해금에 딸려 오므로 독립된 목표가 될 수 없다 (GDD §5.1) —
+  // 지역이 다 열린 뒤 남는 유일한 해금 축은 파티 슬롯이다 (필러 3 "도감 진척 → 슬롯 해금", §9.1 골드 싱크)
+  const slotUnlock = nextPartySlotUnlock(content, state);
+  if (slotUnlock) {
+    const codexHave = Math.min(counts.total, slotUnlock.totalCaptured);
+    const goldHave = Math.min(state.wallet.gold, slotUnlock.gold);
+    const codexOk = codexHave >= slotUnlock.totalCaptured;
+    const goldOk = goldHave >= slotUnlock.gold;
+    return el('div.card.goal-card', { onclick: () => tab.set('camp') },
+      el('div.goal-head', {},
+        el('span', {}, `🎯 다음 목표 [파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots}칸]`),
+        codexOk && goldOk ? el('span.tag.goal-ready', {}, '조건 달성!') : null,
+      ),
+      el('div.goal-items', {},
+        el(`div.goal-item${codexOk ? '.goal-done' : ''}`, {},
+          `${codexOk ? '✅' : '▫️'} 도감 ${codexHave}/${slotUnlock.totalCaptured}종 포획`),
+        el(`div.goal-item${goldOk ? '.goal-done' : ''}`, {},
+          `${goldOk ? '✅' : '▫️'} 골드 ${fmtGold(goldHave)}/${fmtGold(slotUnlock.gold)}`),
+      ),
+      el('div.muted.small', {},
+        codexOk && goldOk ? '캠프에서 확장할 수 있습니다' : '슬롯이 늘면 3+2 이중 시너지 편성이 열립니다'),
     );
   }
 
