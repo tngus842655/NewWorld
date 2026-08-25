@@ -122,6 +122,25 @@ export function fmtGold(value: number): string {
   return value.toLocaleString('ko-KR');
 }
 
+/**
+ * 폭이 제한된 자리(앱바 지갑)용 축약 표기 — 만/억 단위 (2026-08-25).
+ *
+ * 재화를 앱바에 두면 후반부에 "9,999,999"처럼 길어져 아이콘 줄이 줄바꿈된다.
+ * 2026-08-23에 그 이유로 재화를 홈 카드로 내렸었다 — 축약이 그 원인을 없앤다.
+ * 최대 6글자로 묶인다: 9,999 · 9.9만 · 83.6만 · 123만 · 1.2억
+ *
+ * 1만 미만은 정확히 보여준다 — 레벨업·제작 비용이 대부분 이 구간이라 어림수면 판단이 안 된다.
+ * 비용 표기에는 쓰지 말 것 (그쪽은 fmtGold로 정확히).
+ */
+export function fmtCompact(value: number): string {
+  if (value < 10_000) return value.toLocaleString('ko-KR');
+  // 경계는 반올림 '결과'로 판단한다 — 999,999를 99.9999만으로 보고 소수 분기를 타면 "100.0만"이 된다.
+  // 억 전환도 99,950,000부터 — 그래야 "10000만" 대신 "1.0억"이 나온다.
+  const [div, suffix] = value < 99_950_000 ? [10_000, '만'] : [100_000_000, '억'];
+  const n = value / div;
+  return n < 99.95 ? `${n.toFixed(1)}${suffix}` : `${Math.round(n)}${suffix}`;
+}
+
 export function fmtRemain(ms: number): string {
   if (ms <= 0) return '완료!';
   const totalSec = Math.ceil(ms / 1000);

@@ -42,11 +42,37 @@ body {
 /* ── 셸 ── */
 .appbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg2);
+  padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--bg2);
+  /* 재화가 함께 놓이므로 절대 접히지 않게 — 2026-08-23에 줄바꿈으로 재화를 내렸던 자리다 (2026-08-25) */
+  flex-wrap: nowrap; position: relative; gap: 8px;
 }
 .appbar-title { font-weight: 700; letter-spacing: 0.5px; color: var(--accent-2); }
-.appbar-icons { display: flex; gap: 10px; align-items: center; }
-.appbar-rank { background: none; border: none; font-size: 21px; padding: 0 2px; cursor: pointer; line-height: 1; position: relative; }
+/* 진입 아이콘 3종 — 간격을 좁혀 재화가 들어갈 폭을 낸다 (2026-08-25 사용자) */
+.appbar-icons { display: flex; gap: 2px; align-items: center; flex: none; }
+
+/* ── 앱바 재화 ── */
+/*
+ * 절대 접히지 않는다 — 접히던 것이 2026-08-23에 재화를 앱바에서 뺀 이유였다.
+ * 축약(fmtCompact)으로 실사용 폭은 다 들어가고, 비현실적으로 큰 값에서만 가로로 밀린다.
+ * 줄바꿈은 레이아웃이 무너지지만 가로 스크롤은 그렇지 않다 — 안전판이다.
+ */
+.appbar-wallet {
+  display: flex; gap: 3px; align-items: center; flex-wrap: nowrap;
+  min-width: 0; overflow-x: auto; scrollbar-width: none;
+}
+.appbar-wallet::-webkit-scrollbar { display: none; }
+.appbar-wallet .wallet-item {
+  font-size: 12px; padding: 3px 5px; white-space: nowrap; flex: none;
+  background: none; border: 1px solid transparent; color: var(--text);
+}
+.appbar-wallet .wallet-item.active { background: var(--bg3); border-color: var(--accent); }
+/* 재화 설명 말풍선 — 앱바 아래로 떨어진다 (헤더가 relative) */
+.appbar-tip {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
+  margin: 0; border-radius: 0 0 14px 14px;
+  border-top: none; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+.appbar-rank { background: none; border: none; font-size: 20px; padding: 0 1px; cursor: pointer; line-height: 1; position: relative; }
 /* 출석 미수령 알림 점 */
 .attend-dot {
   position: absolute; top: -2px; right: -3px; width: 8px; height: 8px;

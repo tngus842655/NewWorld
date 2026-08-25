@@ -2,9 +2,10 @@
  * 앱 셸 — 헤더 + 화면 컨테이너 + 하단 탭 + 오버레이. effect가 화면을 다시 그린다.
  */
 import { canCheckIn } from '../core/attendance';
-import { effect } from '../state/signal';
+import { effect, signal } from '../state/signal';
 import { ctx, save } from '../state/store';
-import { el, withScope } from './kit';
+import type { SaveState } from '../core/types';
+import { el, fmtCompact, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
 import { openRankingBoard } from './rankingSheets';
 import { resetShop } from './shopSheet';
@@ -15,6 +16,50 @@ import { renderCodex } from './screens/codex';
 import { renderExpedition } from './screens/expedition';
 import { renderHome } from './screens/home';
 import { renderSettings } from './screens/settings';
+
+// ── 재화 지갑 (앱바, 2026-08-25 사용자 요청으로 홈 카드에서 복귀) ──
+// 탭하면 얻기·쓰기 설명이 뜬다. 별도 '재화 안내 시트'를 지우고 이 말풍선이 그 역할을 대체한다 (2026-08-23).
+const selCurrency = signal<string | null>(null);
+const CURRENCIES = [
+  { id: 'gold', icon: '💰', name: '골드', gain: '조우 승리 · 보물 · 일지 정산 · 도감 마일스톤', use: '몬스터 레벨업·각성 · 파티 슬롯 확장 · 미끼 제작' },
+  { id: 'dust', icon: '✨', name: '가루', gain: '유물 분해', use: '유물 강화' },
+  { id: 'lures', icon: '🪤', name: '미끼', gain: '캠프에서 제작 (지역 재료 + 골드) · 상점', use: '파견에 자동 적재 [희귀 이상 몬스터 포획률 ×2]' },
+  { id: 'diamonds', icon: '💎', name: '다이아', gain: '월간 출석 (충전은 정식 출시 후)', use: '다이아 상점 [뽑기·모래시계·패키지]' },
+] as const;
+
+type CurrencyId = (typeof CURRENCIES)[number]['id'];
+
+/** 앱바 폭이 한정적이라 4종 모두 축약 — 다이아가 가장 넓었다 (💎 999999 = 77px) */
+function currencyValue(state: SaveState, id: CurrencyId): string {
+  return fmtCompact(rawCurrency(state, id));
+}
+
+function rawCurrency(state: SaveState, id: CurrencyId): number {
+  const { wallet } = state;
+  return id === 'gold' ? wallet.gold : id === 'dust' ? wallet.dust : id === 'lures' ? wallet.lures : wallet.diamonds;
+}
+
+function walletBar(state: SaveState): HTMLElement {
+  const sel = selCurrency();
+  return el('div.appbar-wallet', {},
+    ...CURRENCIES.map((c) =>
+      el(`button.wallet-item${sel === c.id ? '.active' : ''}`, {
+        title: c.name,
+        onclick: () => { playSfx('tap'); selCurrency.set(sel === c.id ? null : c.id); },
+      }, `${c.icon} ${currencyValue(state, c.id)}`)),
+  );
+}
+
+function currencyTip(state: SaveState): HTMLElement | null {
+  const tip = CURRENCIES.find((c) => c.id === selCurrency());
+  if (!tip) return null;
+  return el('div.wallet-tip.appbar-tip', {},
+    el('div.wallet-tip-title', {}, `${tip.icon} ${tip.name}`,
+      el('span.muted.small', {}, `  보유 ${fmtGold(rawCurrency(state, tip.id))}`)), // 말풍선은 정확한 값 — 축약은 앱바 줄에서만
+    el('div.small.muted', {}, `얻기 [${tip.gain}]`),
+    el('div.small.wallet-tip-use', {}, `쓰기 [${tip.use}]`),
+  );
+}
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: '홈', icon: '🏕️' },
@@ -43,6 +88,7 @@ export function mountApp(root: HTMLElement): void {
 
   effect(() => {
     const state = save();
+    const tip = currencyTip(state);
     header.replaceChildren(
       // 타이틀 대신 진입 아이콘들 (2026-08-23 사용자) — 랭킹·상점 전체 화면
       el('div.appbar-icons', {},
@@ -71,7 +117,11 @@ export function mountApp(root: HTMLElement): void {
           // 비추적 시계 — 매초 헤더 재렌더 방지 (도장 후엔 save 변경으로 즉시 갱신)
         }, '📅', canCheckIn(state, ctx.now()) ? el('span.attend-dot', {}) : null),
       ),
-      // 재화는 홈 화면 상단으로 이동 (2026-08-23 사용자) — 재화가 커지면 앱바가 줄바꿈되던 문제
+      // 재화를 앱바로 복귀 (2026-08-25 사용자) — 2026-08-23에 "커지면 줄바꿈"을 이유로 홈 카드로 내렸었다.
+      // 축약 표기(fmtCompact, 최대 6글자)로 그 원인을 없앴고 아이콘 간격도 좁혔다.
+      walletBar(state),
+      // 탭한 재화의 설명 — 앱바 아래로 떨어지는 말풍선 (홈 카드에 있던 기능을 그대로 옮겼다)
+      ...(tip ? [tip] : []),
     );
   });
 

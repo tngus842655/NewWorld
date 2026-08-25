@@ -11,6 +11,7 @@ import { RARITIES, RARITY_LABEL } from '../src/content/schema';
 import { RARITY_ORDER } from '../src/core/effects';
 import { RARITY_NEXT } from '../src/core/economy';
 import { RARITY_SCORE } from '../src/core/score';
+import { fmtCompact } from '../src/ui/kit';
 import { content } from './helpers';
 
 describe('등급 체계 (RARITIES 파생)', () => {
@@ -99,6 +100,32 @@ describe('등급 체계 (RARITIES 파생)', () => {
     }
     for (const artifact of content.artifacts.values()) {
       expect(allowed.has(artifact.rarity), `${artifact.id}의 등급 ${artifact.rarity}`).toBe(true);
+    }
+  });
+});
+
+describe('축약 표기 (앱바 지갑)', () => {
+  it('만/억 경계에서 소수점이 남거나 단위가 밀리지 않는다', () => {
+    const cases: [number, string][] = [
+      [0, '0'],
+      [9_999, '9,999'],          // 1만 미만은 정확히 — 레벨업·제작 비용 구간
+      [10_000, '1.0만'],
+      [99_817, '10.0만'],
+      [836_400, '83.6만'],
+      [999_999, '100만'],        // 99.9999만 → 반올림 결과로 판단해야 "100.0만"이 안 나온다
+      [12_345_678, '1235만'],
+      [99_950_000, '1.0억'],     // 여기서 억으로 넘어간다 — 아니면 "10000만"이 된다
+      [1_234_567_890, '12.3억'],
+    ];
+    for (const [value, expected] of cases) {
+      expect(fmtCompact(value), `${value}`).toBe(expected);
+    }
+  });
+
+  it('어떤 값이든 6글자를 넘지 않는다 — 앱바가 줄바꿈되면 레이아웃이 무너진다', () => {
+    // 2026-08-23에 재화가 앱바에서 빠진 이유가 이 줄바꿈이었다
+    for (const v of [0, 1, 9_999, 10_000, 999_999, 99_949_999, 99_950_000, 1e9, 9.9e11]) {
+      expect(fmtCompact(v).length, `${v} → ${fmtCompact(v)}`).toBeLessThanOrEqual(6);
     }
   });
 });

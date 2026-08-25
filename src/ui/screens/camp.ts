@@ -230,11 +230,6 @@ export function renderCamp(): HTMLElement {
   ];
 
   return el('div.screen', {},
-    // 골드·가루는 캠프 액션 4종(레벨업·각성·제작·슬롯 확장)의 공통 관문인데 홈에만 있었다 (2026-08-25)
-    el('div.card.wallet', {},
-      el('span.wallet-item', {}, `💰 ${fmtGold(state.wallet.gold)}`),
-      el('span.wallet-item', {}, `✨ ${fmtGold(state.wallet.dust)}`),
-    ),
     tabBar(
       [
         { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },
