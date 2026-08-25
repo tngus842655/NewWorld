@@ -55,6 +55,12 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
   (Taru Epic Medieval 30종 → 유물 무기, Kentung Fantasy Avatar 20종 → 인간형 몬스터).
   콘택트 시트 전수 검사로 교체 7건(큐피드→백조, 픽셀랩터→공룡 등) + 이름 조정 18건
   (온천달팽이, 눌어붙은 마시멜로, 노을홍학, 진혼백조, 태양의 모루, 견습기사 흉갑 등)
+- **[대기 2026-08-25] 초월 등급 6점** — 드래곤 몬스터 3(emberwing-sovereign·obsidian-wyrm·dawnscale-drake)
+  + 유물 3(dragonheart-core·wyrmscale-aegis·sovereign-standard). `assets-manifest.json` 미등록 상태이며
+  파일이 없으면 종족 이모지로 폴백되므로 게임은 정상 동작한다.
+  **탐색 메모**: `asset=3d, query="dragon"`은 1,265건이지만 대부분 춘절 용(뱀형)·용과(dragon fruit)·
+  머리만 크롭된 것이라, 표본 24개 중 게임 톤(클레이 전신)과 스케일이 맞는 것은 1~2개뿐이었다.
+  `wyvern`은 0건. 3종뿐이니 여러 검색어를 돌려 최상위만 고른다 (사용자 지시: 개수 대신 퀄리티)
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 
