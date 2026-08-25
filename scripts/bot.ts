@@ -137,6 +137,34 @@ function safely(fn: () => SaveState): SaveState | null {
   }
 }
 
+/**
+ * 아직 잠긴 지역이 요구하는 재료 수량 — 제작이 이걸 깎으면 해금이 밀린다.
+ * 재료를 쓰는 레시피(미끼 꾸러미·모래시계 세공)가 전부 같은 풀을 공유하기 때문에
+ * 예약 없이 만들면 "많이 만들수록 진행이 늦어지는" 역설이 생긴다.
+ */
+function unlockReserve(content: Content, save: SaveState): Record<string, number> {
+  const reserved: Record<string, number> = {};
+  for (const region of content.regionList) {
+    if (isRegionUnlocked(content, save, region.id)) continue;
+    for (const [materialId, count] of Object.entries(region.unlock.materials ?? {})) {
+      reserved[materialId] = Math.max(reserved[materialId] ?? 0, count);
+    }
+  }
+  return reserved;
+}
+
+/** 예약분을 깎지 않는 선에서만 제작한다 (깎게 되면 GameError처럼 취급) */
+function craftRecipeSparing(content: Content, save: SaveState, recipeId: string, reserved: Record<string, number>): SaveState {
+  const recipe = content.recipes.get(recipeId);
+  if (!recipe) throw new GameError('recipe-missing', recipeId);
+  for (const [materialId, count] of Object.entries(recipe.cost.materials)) {
+    if ((save.wallet.materials[materialId] ?? 0) - count < (reserved[materialId] ?? 0)) {
+      throw new GameError('material-reserved', `${materialId}는 해금 예약분`);
+    }
+  }
+  return craftRecipe(content, save, recipeId);
+}
+
 /** 슬롯별 최고 유물 선택 (등급 → 강화 순) — v6 종 단위: 진행 원정 사용분은 개수에서 차감 */
 function pickArtifacts(content: Content, save: SaveState): string[] {
   const rank: Record<string, number> = { common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4 };
@@ -423,11 +451,14 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
     // 5) 미끼 제작 (기본 미끼만, 보유 3개 미만일 때)
     if (strategy.craftLures) {
       const lureGoal = opts.lurePerTeam ? teamCount(content, save) * content.balance.lures.maxLoad : 3;
+      // 모래시계 세공과 같은 함정 — 미끼 꾸러미(이슬가지2·정령이끼2)는 늪 해금 재료와 같은 풀을 먹는다.
+      // 예약 없이 만들면 미끼를 채울수록 해금이 밀린다(실측: 늪 D6 → D8, 화산 D9 → D13).
+      const reserved = opts.lurePerTeam ? unlockReserve(content, save) : {};
       while (save.wallet.lures < lureGoal) {
         // 기본 경로는 기본 미끼만 (기존 동작 보존). 팀별 확보 모드에서만 꾸러미도 쓴다
         const next =
-          safely(() => craftRecipe(content, save, 'basic-lure')) ??
-          (opts.lurePerTeam ? safely(() => craftRecipe(content, save, 'lure-bundle')) : null);
+          safely(() => craftRecipeSparing(content, save, 'basic-lure', reserved)) ??
+          (opts.lurePerTeam ? safely(() => craftRecipeSparing(content, save, 'lure-bundle', reserved)) : null);
         if (!next) break;
         save = next;
       }
