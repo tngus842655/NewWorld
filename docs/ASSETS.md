@@ -55,14 +55,40 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
   (Taru Epic Medieval 30종 → 유물 무기, Kentung Fantasy Avatar 20종 → 인간형 몬스터).
   콘택트 시트 전수 검사로 교체 7건(큐피드→백조, 픽셀랩터→공룡 등) + 이름 조정 18건
   (온천달팽이, 눌어붙은 마시멜로, 노을홍학, 진혼백조, 태양의 모루, 견습기사 흉갑 등)
-- **[대기 2026-08-25] 초월 등급 6점** — 드래곤 몬스터 3(emberwing-sovereign·obsidian-wyrm·dawnscale-drake)
-  + 유물 3(dragonheart-core·wyrmscale-aegis·sovereign-standard). `assets-manifest.json` 미등록 상태이며
-  파일이 없으면 종족 이모지로 폴백되므로 게임은 정상 동작한다.
-  **탐색 메모**: `asset=3d, query="dragon"`은 1,265건이지만 대부분 춘절 용(뱀형)·용과(dragon fruit)·
-  머리만 크롭된 것이라, 표본 24개 중 게임 톤(클레이 전신)과 스케일이 맞는 것은 1~2개뿐이었다.
-  `wyvern`은 0건. 3종뿐이니 여러 검색어를 돌려 최상위만 고른다 (사용자 지시: 개수 대신 퀄리티)
+- **[완료 2026-08-25] 초월 등급 6점** — 몬스터 3(같은 드래곤의 원소별 리컬러: 빨강·보라·금)
+  + 유물 3(수정구·방패·문장기). 몬스터는 Flat- Icons `dragon-11304451` 한 점을 `modulate({hue,saturation,brightness})`로
+  변주했다 — IconScout이 `can_recolor: true`로 허용한 에셋이고, 실루엣 공유는 '같은 종의 원소 변종'이라는 의도다.
+  리컬러 수치는 매핑 대장의 `recolor` 필드에 남겨 언제든 재현·되돌릴 수 있다.
+  **탐색 실측 (다음에 드래곤을 다시 찾을 때의 출발점)**: `asset=3d query="dragon"` 1,265건은 대부분 춘절 용(뱀형)·
+  용과(dragon fruit)·머리만 크롭. `wyvern`·`phoenix`는 사실상 0건. Ali Rahmat "Dragon Character" 팩 20점은
+  **같은 드래곤의 포즈 변형**이라 3종으로 쓸 수 없다. 서로 다른 서양 드래곤 3종은 카탈로그에 없다시피 하다.
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
+
+## 3-1. 에셋 교체·중복 검사 도구 (2026-08-25)
+
+에셋은 나중에 더 나은 것으로 바꾸게 된다. 손으로 하면 순서를 빠뜨리기 쉬워 스크립트로 고정했다.
+
+```bash
+# 한 점 교체 — id 검증 → 중복 대조 → BAK 보관 → 256 WebP 변환 → 매핑 대장 갱신
+node scripts/swap-asset.mjs monsters emberwing-sovereign ~/Downloads/new-dragon.png --slug dragon-999 --by "Artist"
+
+# 전 에셋 중복 검사 (--all 로 '의심'까지)
+node scripts/check-asset-dupes.mjs
+```
+
+**중복 판정은 지각 해시(dHash 16×16)로 한다.** sha256이 아닌 이유가 중요하다 —
+원본은 PNG(무손실), 저장소 변환본은 WebP q82(손실)라 **같은 그림인데도 픽셀의 43%가 다르다.**
+2026-08-25에 정확 해시로 검사했다가 전부 "고유"로 통과했고, 그 상태로 진행하다 에셋 1점을 덮어썼다.
+실측 분리도: 같은 그림 PNG↔WebP 7~11% · 진짜 중복 0~4% · 실루엣만 닮은 것(창·작살류) 15~21%
+→ 중복선 13%, 의심선 22%.
+
+`swap-asset.mjs`는 **파일을 하나도 쓰기 전에** 검증을 끝낸다 (쓰기를 먼저 했다가 원본까지 날린 전례).
+의도적으로 같은 조각을 공유하는 변종(초월 3색 드래곤)은 매핑 대장의 `variantOf`로 묶어 검사에서 제외한다.
+
+**미해소 중복 5쌍** (2026-08-25 전수 검사, 전부 이전 라운드에서 유입):
+`flame-dancer ≡ spark-wisp`(0%) · `solar-roc ≡ storm-albatross`(2%) · `ash-dancer ≡ lava-shepherd`(3%) ·
+`gale-feather ≡ gullwing-pennant`(3%) · `bone-orchard-king ≡ drowned-emperor`(4%)
 
 ## 4-1. 사운드 (SFX) 매핑 대장 — 2026-08-23
 
