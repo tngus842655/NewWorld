@@ -160,10 +160,6 @@ export function renderCamp(): HTMLElement {
           inRegion.length > 0
             ? '이 등급의 몬스터가 없습니다 [등급 칩을 눌러 해제해 보세요]'
             : '이 지역의 몬스터를 아직 보유하지 않았습니다 [원정에서 포획해 보세요]')),
-    el('div.card.list-row', {},
-      el('span.muted.small', {}, `🧬 카드 합성 (여분 카드 ${spareCards}장)`),
-      el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
-    ),
     slotUnlock
       ? (() => {
           const captured = Object.values(state.codex).filter((c) => c.captured).length;
@@ -197,13 +193,29 @@ export function renderCamp(): HTMLElement {
           state.artifacts.length > 0
             ? '이 조건의 유물이 없습니다 [다른 슬롯 탭이나 등급 칩을 확인해 보세요]'
             : '원정에서 발굴한 유물이 여기 모입니다')),
-    el('div.card.list-row', {},
-      el('span.muted.small', {}, `💠 유물 합성 (여분 ${spareArtifacts}개)`),
-      el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),
-    ),
   ];
 
+  // 제작 탭 = 만드는 것 전부 (2026-08-25 사용자) — 합성 진입 2종을 몬스터·유물 목록 끝에서 여기로 옮겼다.
+  // 목록 탭은 '보고 고르는 곳', 제작 탭은 '만드는 곳'으로 역할이 갈린다.
   const craftPanel = [
+    el('h2.section-title', {}, '합성'),
+    el('div.card', {},
+      el('div.list-row', {},
+        el('span', {}, `🧬 카드 합성 [여분 카드 ${spareCards}장]`),
+        el('button.btn.btn-ghost', {
+          disabled: spareCards < content.balance.fusion.materials,
+          onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); },
+        }, '열기'),
+      ),
+      el('div.list-row', {},
+        el('span', {}, `💠 유물 합성 [여분 ${spareArtifacts}개]`),
+        el('button.btn.btn-ghost', {
+          disabled: spareArtifacts < content.balance.fusion.materials,
+          onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); },
+        }, '열기'),
+      ),
+    ),
+    el('h2.section-title', {}, '미끼 제작'),
     el('div.card.wallet', {},
       ...(materialChips.length > 0
         ? materialChips
