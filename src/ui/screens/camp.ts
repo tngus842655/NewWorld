@@ -3,101 +3,56 @@
  * 설정·세이브 관리는 설정 탭으로 분리 (2026-08-23).
  */
 import { content } from '../../content';
+import { SLOTS, type MonsterRarity, type Slot } from '../../content/schema';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
-import { artifactCard, artifactIconBadged, monsterChip, monsterIconBadged, ownedCp } from '../components';
-import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, RARITY_DESC, RARITY_ORDER, el, fmtGold } from '../kit';
+import { artifactCard, monsterChip, ownedCp } from '../components';
+import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGold } from '../kit';
 import { FUSION_NEXT, resetFusion } from '../fusionSheet';
+import { filterChips, tabBar } from '../panels';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
-// 상단 재료 설명(터치 토글)·지역별 몬스터·등급별 유물 접힘 상태 — 화면을 오가도 세션 동안 유지
+// 상단 재료 설명(터치 토글) — 화면을 오가도 세션 동안 유지
 const selMaterialId = signal<string | null>(null);
-const openRegions = signal<Record<string, boolean>>({});
-const openArtifactGroups = signal<Record<string, boolean>>({});
+/**
+ * 216종·96점 규모에 맞춘 분할 (2026-08-25) — 접힘 카드를 탭으로 교체.
+ * 최상위는 몬스터/유물/제작 3탭, 그 안에서 몬스터는 지역, 유물은 슬롯, 공통으로 등급 칩.
+ * 편성 시트와 같은 축이라 두 화면을 오갈 때 같은 근육 기억이 통한다.
+ * 화면은 save() 변경마다 통째로 다시 그려지므로 상태는 반드시 시그널이어야 한다.
+ */
+const campTab = signal<'monster' | 'artifact' | 'craft'>('monster');
+const campRegion = signal<string | null>(null); // null = 최강 몬스터의 서식지
+const campRarity = signal<MonsterRarity | null>(null);
+const campSlot = signal<Slot | null>(null);
 
 export function renderCamp(): HTMLElement {
   const state = save();
   const busyIds = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyIds));
+  const tab = campTab();
+  const rarity = campRarity();
 
-  // 몬스터는 지역별 카드로 — 기본은 접힘(가로 슬라이드 1줄), 펼치면 전체 그리드
-  const rosterCards = content.regionList
-    .map((region) => ({
-      region,
-      owned: state.roster
-        .filter((m) => content.monsters.get(m.monsterId)?.habitat === region.id)
-        .sort((a, b) =>
-          RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
-          || ownedCp(b) - ownedCp(a)),
-    }))
-    .filter(({ owned }) => owned.length > 0)
-    .map(({ region, owned }) => {
-      const open = openRegions()[region.id] === true;
-      // 접힘: 아이콘만 가로 슬라이드 · 펼침: 한 줄에 1마리 (2026-08-23 사용자)
-      const body = open
-        ? el('div.stack-sm', {}, ...owned.map((o) => monsterChip(o, {
-            onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
-            onExpedition: busyIds.has(o.monsterId),
-          })))
-        : el('div.roster-row', {}, ...owned.map((o) =>
-            el('button.roster-icon', {
-              title: content.monsters.get(o.monsterId)?.name ?? '',
-              onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
-            }, monsterIconBadged(o, { onExpedition: busyIds.has(o.monsterId) }))));
-      return el('div.card.stack-sm', {},
-        el('button.roster-head', {
-          onclick: () => {
-            playSfx('tap');
-            openRegions.set({ ...openRegions(), [region.id]: !open });
-          },
-        },
-          el('span', {}, `${region.icon} ${region.name} (${owned.length})`),
-          el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
-        ),
-        body,
-      );
-    });
+  // ── 몬스터: 지역 탭 + 등급 칩 ──
+  // 캠프는 '키울 놈 고르는 화면' — 등급 내림차순 (읽는 화면인 정보 시트·도감은 오름차순, 2026-08-25 사용자 확정)
+  const strongest = [...state.roster].sort((a, b) => ownedCp(b) - ownedCp(a))[0];
+  const region = campRegion()
+    ?? (strongest ? content.monsters.get(strongest.monsterId)!.habitat : content.regionList[0]!.id);
+  const inRegion = state.roster.filter((m) => content.monsters.get(m.monsterId)?.habitat === region);
+  const rosterList = inRegion
+    .filter((m) => rarity === null || content.monsters.get(m.monsterId)!.rarity === rarity)
+    .sort((a, b) =>
+      RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
+      || ownedCp(b) - ownedCp(a));
 
-  // 유물도 몬스터처럼 등급별 카드 — 종 단위(개수·공통 강화, v6), 기본 접힘(아이콘 슬라이드)
-  // 캠프는 '고르는 화면' — 등급 내림차순 (읽는 화면인 정보 시트·도감은 오름차순, 2026-08-25 사용자 확정)
-  const artifactGroupCards = RARITY_DESC
-    .map((rarity) => ({
-      rarity,
-      items: state.artifacts
-        .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId)! }))
-        .filter(({ def }) => def.rarity === rarity)
-        .sort((a, b) => b.owned.enhance - a.owned.enhance || a.def.slot.localeCompare(b.def.slot)),
-    }))
-    .filter(({ items }) => items.length > 0)
-    .map(({ rarity, items }) => {
-      const open = openArtifactGroups()[rarity] === true;
-      // 접힘: 아이콘만 (개수·강화 뱃지) · 펼침: 한 줄 카드
-      const body = open
-        ? el('div.stack-sm', {}, ...items.map(({ owned, def }) =>
-            artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }) })))
-        : el('div.roster-row', {}, ...items.map(({ owned, def }) =>
-            el('button.roster-icon', {
-              title: `${def.name}${owned.enhance > 0 ? ` +${owned.enhance}` : ''}`,
-              onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }),
-            }, artifactIconBadged(owned))));
-      return el('div.card.stack-sm', {},
-        el('button.roster-head', {
-          onclick: () => {
-            playSfx('tap');
-            openArtifactGroups.set({ ...openArtifactGroups(), [rarity]: !open });
-          },
-        },
-          el('span.roster-head-title', {},
-            el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
-            el('span.muted.small', {}, ` ${items.length}개`),
-          ),
-          el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
-        ),
-        body,
-      );
-    });
+  // ── 유물: 슬롯 탭 + 등급 칩 ──
+  const slot = campSlot() ?? SLOTS[0];
+  const artifactList = state.artifacts
+    .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId) }))
+    .filter((entry): entry is { owned: typeof entry.owned; def: NonNullable<typeof entry.def> } => entry.def !== undefined)
+    .filter(({ def }) => def.slot === slot && (rarity === null || def.rarity === rarity))
+    .sort((a, b) => RARITY_ORDER[b.def.rarity] - RARITY_ORDER[a.def.rarity] || b.owned.enhance - a.owned.enhance);
 
   const recipes = [...content.recipes.values()].map((recipe) => {
     // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
@@ -170,28 +125,45 @@ export function renderCamp(): HTMLElement {
 
   const slotUnlock = nextPartySlotUnlock(content, state);
 
-  return el('div.screen', {},
-    el('div.card.wallet', {},
-      ...(materialChips.length > 0
-        ? materialChips
-        : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
-      materialTip,
-    ),
+  // 합성 여분 — 합성 가능 등급(다음 등급이 있는 등급)만. 최상위 등급은 재료가 될 수 없다 (2026-08-25)
+  const spareCards = state.roster.reduce((sum, m) => {
+    const r = content.monsters.get(m.monsterId)?.rarity;
+    return sum + (r && FUSION_NEXT[r] !== null ? Math.max(0, m.count - 1) : 0);
+  }, 0);
+  const spareArtifacts = state.artifacts.reduce((sum, a) => {
+    const r = content.artifacts.get(a.itemId)?.rarity;
+    return sum + (r && FUSION_NEXT[r] !== null ? Math.max(0, a.count - 1) : 0);
+  }, 0);
 
-    el('h2.section-title', {}, `몬스터 (${state.roster.length})`),
-    ...(rosterCards.length > 0 ? rosterCards : [el('div.card', {}, el('span.muted', {}, '아직 몬스터가 없습니다 [원정에서 포획해 보세요]'))]),
-    (() => {
-      // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
-      // 유물 쪽과 같은 규칙 — 합성 가능 등급의 여분만 센다 (2026-08-25, 비대칭 해소)
-      const spareTotal = state.roster.reduce((sum, m) => {
-        const rarity = content.monsters.get(m.monsterId)?.rarity;
-        return sum + (rarity && FUSION_NEXT[rarity] !== null ? Math.max(0, m.count - 1) : 0);
-      }, 0);
-      return el('div.card.list-row', {},
-        el('span.muted.small', {}, `🧬 카드 합성 (여분 카드 ${spareTotal}장)`),
-        el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
-      );
-    })(),
+  const rarityChipRow = filterChips(
+    RARITY_DESC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
+    { active: rarity, onPick: (v) => campRarity.set(v) },
+  );
+
+  const monsterPanel = [
+    // 지역 탭은 4개 고정 — 진행도에 따라 탭이 생겼다 사라지면 근육 기억이 깨진다
+    tabBar(
+      content.regionList.map((r) => ({
+        key: r.id,
+        label: `${r.icon} ${r.name.split(' ').pop()} ${state.roster.filter((m) => content.monsters.get(m.monsterId)?.habitat === r.id).length}`,
+        title: r.name,
+      })),
+      { active: region, onPick: (key) => campRegion.set(key) },
+    ),
+    rarityChipRow,
+    rosterList.length > 0
+      ? el('div.stack-sm', {}, ...rosterList.map((o) => monsterChip(o, {
+          onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
+          onExpedition: busyIds.has(o.monsterId),
+        })))
+      : el('div.card', {}, el('span.muted.small', {},
+          inRegion.length > 0
+            ? '이 등급의 몬스터가 없습니다 [등급 칩을 눌러 해제해 보세요]'
+            : '이 지역의 몬스터를 아직 보유하지 않았습니다 [원정에서 포획해 보세요]')),
+    el('div.card.list-row', {},
+      el('span.muted.small', {}, `🧬 카드 합성 (여분 카드 ${spareCards}장)`),
+      el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
+    ),
     slotUnlock
       ? (() => {
           const captured = Object.values(state.codex).filter((c) => c.captured).length;
@@ -206,25 +178,55 @@ export function renderCamp(): HTMLElement {
           );
         })()
       : null,
+  ];
 
-    el('h2.section-title', {}, `유물 (${state.artifacts.length})`),
-    ...(artifactGroupCards.length > 0
-      ? artifactGroupCards
-      : [el('div.card', {}, el('span.muted', {}, '원정에서 발굴한 유물이 여기 모입니다'))]),
-    (() => {
-      // 유물 합성 진입 — 여분(각 종 count-1) 총량 (몬스터와 동일 규칙, v6)
-      // 합성 가능 등급(다음 등급이 있는 등급)의 여분만 — 최상위 등급은 재료가 될 수 없다 (2026-08-25)
-      const spareArtifacts = state.artifacts.reduce((sum, a) => {
-        const rarity = content.artifacts.get(a.itemId)?.rarity;
-        return sum + (rarity && FUSION_NEXT[rarity] !== null ? Math.max(0, a.count - 1) : 0);
-      }, 0);
-      return el('div.card.list-row', {},
-        el('span.muted.small', {}, `💠 유물 합성 (여분 ${spareArtifacts}개)`),
-        el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),
-      );
-    })(),
+  const artifactPanel = [
+    // 슬롯 탭 — 편성 시트의 유물 탭과 같은 축
+    tabBar(
+      SLOTS.map((s) => ({
+        key: s,
+        label: `${SLOT_LABEL[s]} ${state.artifacts.filter((a) => content.artifacts.get(a.itemId)?.slot === s).length}`,
+      })),
+      { active: slot, onPick: (key) => campSlot.set(key) },
+    ),
+    rarityChipRow,
+    artifactList.length > 0
+      ? el('div.stack-sm', {}, ...artifactList.map(({ owned, def }) =>
+          artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }) })))
+      : el('div.card', {}, el('span.muted.small', {},
+          state.artifacts.length > 0
+            ? '이 조건의 유물이 없습니다 [다른 슬롯 탭이나 등급 칩을 확인해 보세요]'
+            : '원정에서 발굴한 유물이 여기 모입니다')),
+    el('div.card.list-row', {},
+      el('span.muted.small', {}, `💠 유물 합성 (여분 ${spareArtifacts}개)`),
+      el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),
+    ),
+  ];
 
-    el('h2.section-title', {}, '미끼 제작'),
+  const craftPanel = [
+    el('div.card.wallet', {},
+      ...(materialChips.length > 0
+        ? materialChips
+        : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
+      materialTip,
+    ),
     el('div.card', {}, ...recipes),
+  ];
+
+  return el('div.screen', {},
+    // 골드·가루는 캠프 액션 4종(레벨업·각성·제작·슬롯 확장)의 공통 관문인데 홈에만 있었다 (2026-08-25)
+    el('div.card.wallet', {},
+      el('span.wallet-item', {}, `💰 ${fmtGold(state.wallet.gold)}`),
+      el('span.wallet-item', {}, `✨ ${fmtGold(state.wallet.dust)}`),
+    ),
+    tabBar(
+      [
+        { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },
+        { key: 'artifact' as const, label: `유물 (${state.artifacts.length})` },
+        { key: 'craft' as const, label: '제작' },
+      ],
+      { active: tab, onPick: (key) => campTab.set(key) },
+    ),
+    ...(tab === 'monster' ? monsterPanel : tab === 'artifact' ? artifactPanel : craftPanel),
   );
 }
