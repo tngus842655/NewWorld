@@ -72,6 +72,15 @@ for (const strategy of styles) {
   });
   console.log(`  ${padE('도달일', 8)} ${cells.join('')}`);
 
+  /**
+   * 완성 일차는 **시드 분산이 크다** — 마지막 전설 몇 종이 순전히 운이라
+   * 중앙값 하나로 말하면 과대 확신이 된다. 전 시드 값을 그대로 보여준다.
+   */
+  const finals = results
+    .map((r) => dayReaching(r, TARGET))
+    .map((d) => (d === null ? `미완(${DAYS}일)` : `D${d}`));
+  console.log(`  ${padE('완성 분포', 10)} ${finals.join(' · ')}`);
+
   const last = results.map((r) => r.days[r.days.length - 1]?.captured ?? 0);
   const runs = results.map((r) => r.totals.runs);
   console.log(
