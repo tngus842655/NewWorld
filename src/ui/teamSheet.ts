@@ -10,7 +10,7 @@ import type { OwnedArtifact } from '../core/types';
 import { signal } from '../state/signal';
 import { save, setTeam } from '../state/store';
 import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
-import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
+import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -96,7 +96,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
     .sort((a, b) => {
       if (sort === 'level' && b.level !== a.level) return b.level - a.level;
       if (sort === 'rarity') {
-        const diff = ARTIFACT_RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - ARTIFACT_RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity];
+        const diff = RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity];
         if (diff !== 0) return diff;
       }
       return ownedCp(b) - ownedCp(a);

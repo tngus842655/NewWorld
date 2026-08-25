@@ -4,19 +4,21 @@
  */
 import { content } from '../content';
 import type { MonsterRarity } from '../content/schema';
-import type { FusionInput, FusionResult } from '../core/economy';
+import { RARITY_NEXT, type FusionInput, type FusionResult } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import type { SaveState } from '../core/types';
 import { batch, signal } from '../state/signal';
 import { fuse, save } from '../state/store';
 import { monsterIcon } from './components';
-import { MONSTER_RARITY_LABEL, el } from './kit';
+import { MONSTER_RARITY_LABEL, RARITY_ASC, el } from './kit';
 import { pct1, sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
-export const FUSION_NEXT: Record<MonsterRarity, MonsterRarity | null> = {
-  common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
-};
+/** 합성 사다리는 코어가 정본 (core/economy.ts) — UI는 재노출만 한다 (2026-08-25) */
+export const FUSION_NEXT: Record<MonsterRarity, MonsterRarity | null> = RARITY_NEXT;
+/** 합성 가능 등급 = 다음 등급이 있는 등급. 등급이 늘면 탭이 자동으로 따라온다 (순서는 RARITIES가 정본) */
+export const FUSABLE_RARITIES: readonly MonsterRarity[] =
+  RARITY_ASC.filter((rarity) => FUSION_NEXT[rarity] !== null);
 
 const RITUAL_MS = 1500; // 의식 연출 길이 — 기대감 구간
 
@@ -148,7 +150,7 @@ export function fusionSheet(): HTMLElement {
   const rounds = Math.min(Math.max(1, fuseRounds()), Math.max(1, maxRounds));
 
   const spareByRarity = (r: MonsterRarity) => sumOf(spareMap(state, r));
-  const tabs = (['common', 'uncommon', 'rare', 'heroic'] as const).map((r) =>
+  const tabs = FUSABLE_RARITIES.map((r) =>
     el(`button.chip${rarity === r ? '.active' : ''}`, {
       onclick: () => {
         fuseRarity.set(r);

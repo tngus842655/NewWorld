@@ -10,7 +10,7 @@ import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';
 import { ARTIFACT_RARITY_LABEL, SLOT_LABEL, el } from './kit';
-import { FUSION_NEXT, ritualCircle } from './fusionSheet';
+import { FUSABLE_RARITIES, FUSION_NEXT, ritualCircle } from './fusionSheet';
 import { pct1, sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -127,7 +127,7 @@ export function artifactFusionSheet(): HTMLElement {
   const rounds = Math.min(Math.max(1, afRounds()), Math.max(1, maxRounds));
 
   const spareByRarity = (r: ArtifactRarity) => sumOf(spareMap(state, r));
-  const tabs = (['common', 'uncommon', 'rare', 'heroic'] as const).map((r) =>
+  const tabs = FUSABLE_RARITIES.map((r) =>
     el(`button.chip${rarity === r ? '.active' : ''}`, {
       onclick: () => {
         afRarity.set(r);

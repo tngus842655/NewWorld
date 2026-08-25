@@ -8,8 +8,8 @@ import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
 import { artifactCard, artifactIconBadged, monsterChip, monsterIconBadged, ownedCp } from '../components';
-import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, el, fmtGold } from '../kit';
-import { resetFusion } from '../fusionSheet';
+import { ARTIFACT_RARITY_LABEL, ARTIFACT_RARITY_ORDER, RARITY_DESC, RARITY_ORDER, el, fmtGold } from '../kit';
+import { FUSION_NEXT, resetFusion } from '../fusionSheet';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
@@ -29,7 +29,7 @@ export function renderCamp(): HTMLElement {
       owned: state.roster
         .filter((m) => content.monsters.get(m.monsterId)?.habitat === region.id)
         .sort((a, b) =>
-          ARTIFACT_RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - ARTIFACT_RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
+          RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
           || ownedCp(b) - ownedCp(a)),
     }))
     .filter(({ owned }) => owned.length > 0)
@@ -61,7 +61,8 @@ export function renderCamp(): HTMLElement {
     });
 
   // 유물도 몬스터처럼 등급별 카드 — 종 단위(개수·공통 강화, v6), 기본 접힘(아이콘 슬라이드)
-  const artifactGroupCards = (['legendary', 'heroic', 'rare', 'uncommon', 'common'] as const)
+  // 캠프는 '고르는 화면' — 등급 내림차순 (읽는 화면인 정보 시트·도감은 오름차순, 2026-08-25 사용자 확정)
+  const artifactGroupCards = RARITY_DESC
     .map((rarity) => ({
       rarity,
       items: state.artifacts
@@ -181,7 +182,11 @@ export function renderCamp(): HTMLElement {
     ...(rosterCards.length > 0 ? rosterCards : [el('div.card', {}, el('span.muted', {}, '아직 몬스터가 없습니다 [원정에서 포획해 보세요]'))]),
     (() => {
       // 카드 합성 진입 — 여분(각 종 count-1) 총량이 보이게
-      const spareTotal = state.roster.reduce((sum, m) => sum + Math.max(0, m.count - 1), 0);
+      // 유물 쪽과 같은 규칙 — 합성 가능 등급의 여분만 센다 (2026-08-25, 비대칭 해소)
+      const spareTotal = state.roster.reduce((sum, m) => {
+        const rarity = content.monsters.get(m.monsterId)?.rarity;
+        return sum + (rarity && FUSION_NEXT[rarity] !== null ? Math.max(0, m.count - 1) : 0);
+      }, 0);
       return el('div.card.list-row', {},
         el('span.muted.small', {}, `🧬 카드 합성 (여분 카드 ${spareTotal}장)`),
         el('button.btn.btn-ghost', { onclick: () => { resetFusion(); overlay.set({ kind: 'fusion' }); } }, '열기'),
@@ -208,8 +213,11 @@ export function renderCamp(): HTMLElement {
       : [el('div.card', {}, el('span.muted', {}, '원정에서 발굴한 유물이 여기 모입니다'))]),
     (() => {
       // 유물 합성 진입 — 여분(각 종 count-1) 총량 (몬스터와 동일 규칙, v6)
-      const spareArtifacts = state.artifacts.reduce((sum, a) =>
-        sum + (content.artifacts.get(a.itemId)?.rarity !== 'legendary' ? Math.max(0, a.count - 1) : 0), 0);
+      // 합성 가능 등급(다음 등급이 있는 등급)의 여분만 — 최상위 등급은 재료가 될 수 없다 (2026-08-25)
+      const spareArtifacts = state.artifacts.reduce((sum, a) => {
+        const rarity = content.artifacts.get(a.itemId)?.rarity;
+        return sum + (rarity && FUSION_NEXT[rarity] !== null ? Math.max(0, a.count - 1) : 0);
+      }, 0);
       return el('div.card.list-row', {},
         el('span.muted.small', {}, `💠 유물 합성 (여분 ${spareArtifacts}개)`),
         el('button.btn.btn-ghost', { onclick: () => { resetArtifactFusion(); overlay.set({ kind: 'artifactFusion' }); } }, '열기'),

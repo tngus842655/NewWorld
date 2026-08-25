@@ -1,7 +1,8 @@
 /**
  * UI 킷 — DOM 헬퍼(el), 스코프 이펙트, 토스트, 공용 포맷터. 사용자 노출 문자열의 집결지.
  */
-import type { ArtifactRarity, Element, MonsterRarity, Tier, Tribe } from '../content/schema';
+import { RARITIES, type ArtifactRarity, type Element, type MonsterRarity, type Tier, type Tribe } from '../content/schema';
+import { RARITY_ORDER as CORE_RARITY_ORDER } from '../core/effects';
 import { effect } from '../state/signal';
 import { playSfx } from './sfx';
 
@@ -70,7 +71,8 @@ export function toast(message: string, kind: 'ok' | 'error' = 'ok', opts: { rari
     host.id = 'toasts';
     document.body.append(host);
   }
-  const rarityClass = opts.rarity && opts.rarity !== 'common' && opts.rarity !== 'uncommon' ? `.toast-rar-${opts.rarity}` : '';
+  // 희귀 이상만 등급 연출 — 등급이 늘어도 자동으로 따라오도록 서열 비교 (2026-08-25)
+  const rarityClass = opts.rarity && RARITY_ORDER[opts.rarity] >= RARITY_ORDER.rare ? `.toast-rar-${opts.rarity}` : '';
   const item = el(`div.toast.${kind === 'error' ? 'toast-error' : 'toast-ok'}${rarityClass}`, {}, message);
   host.append(item);
   setTimeout(() => item.classList.add('show'), 10);
@@ -93,16 +95,26 @@ export const TRIBE_LABEL: Record<Tribe, string> = {
 export const TRIBE_EMOJI: Record<Tribe, string> = {
   beast: '🐾', spirit: '✨', undead: '💀', aquatic: '💧', flying: '🪽', construct: '⚙️',
 };
-/** 등급 라벨 — 몬스터·유물 공용 5단계 (2026-08-23 통일) */
+/**
+ * 등급 라벨 — 몬스터·유물 공용 (2026-08-23 통일).
+ * Record라 등급이 늘면 TS가 누락을 잡는다. 순서를 뜻하지 않으니 정렬에 Object.keys를 쓰지 말 것 — RARITY_ASC/DESC를 쓴다.
+ */
 export const RARITY_LABEL: Record<MonsterRarity, string> = {
   common: '일반', uncommon: '고급', rare: '희귀', heroic: '영웅', legendary: '전설',
 };
 export const MONSTER_RARITY_LABEL: Record<MonsterRarity, string> = RARITY_LABEL;
 export const ARTIFACT_RARITY_LABEL: Record<ArtifactRarity, string> = RARITY_LABEL;
-/** 등급 서열 — 정렬은 반드시 이 랭크로 (id 알파벳순은 뒤집힌다) */
-export const ARTIFACT_RARITY_ORDER: Record<ArtifactRarity, number> = {
-  common: 0, uncommon: 1, rare: 2, heroic: 3, legendary: 4,
-};
+
+/**
+ * 등급 순서·서열의 정본은 schema.ts의 RARITIES 하나. 아래는 전부 그 파생이다 (2026-08-25).
+ * 화면 성격에 따라 방향이 다르다 — 읽는 화면(정보·도감)은 ASC, 고르는 화면(편성·캠프)은 DESC.
+ */
+export const RARITY_ASC: readonly MonsterRarity[] = RARITIES;
+export const RARITY_DESC: readonly MonsterRarity[] = [...RARITIES].reverse();
+/** 등급 서열 — 정본은 core/effects.ts. 정렬은 반드시 이 랭크로 (id 알파벳순은 뒤집힌다) */
+export const RARITY_ORDER = CORE_RARITY_ORDER;
+/** 유물도 같은 등급 체계 (schema.ts에서 같은 배열의 별칭) */
+export const ARTIFACT_RARITY_ORDER: Record<ArtifactRarity, number> = CORE_RARITY_ORDER;
 export const TIER_LABEL: Record<Tier, string> = {
   scout: '정찰 · 15분', standard: '원정 · 2시간', deep: '심층 탐사 · 8시간',
 };

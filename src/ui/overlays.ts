@@ -10,7 +10,7 @@ import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, salvage, save } from '../state/store';
 import { accelerateSheet } from './accelerateSheet';
 import { artifactFusionSheet } from './artifactFusionSheet';
-import { FUSION_NEXT, fusionSheet } from './fusionSheet';
+import { FUSABLE_RARITIES, FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
 import { attendanceSheet } from './attendanceSheet';
@@ -19,7 +19,7 @@ import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ow
 import { askConfirm } from './dialog';
 import { describeEffect } from './effectText';
 import {
-  ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL,
+  ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
   TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
@@ -379,7 +379,7 @@ function chipPicker<T>(items: { key: T; label: string; view: HTMLElement }[], in
 function oddsSheet(): HTMLElement {
   const { balance } = content;
   const state = save();
-  const rarities = Object.keys(MONSTER_RARITY_LABEL) as MonsterRarity[];
+  const rarities = RARITY_ASC; // 순서 정본은 RARITIES — 라벨 객체의 키 순서에 기대지 않는다 (2026-08-25)
   const deepMult = balance.tiers.deep.rareWeightMult;
   const tierName = (tier: 'scout' | 'standard' | 'deep') => TIER_LABEL[tier].split(' ')[0];
   const rarityTag = (rarity: MonsterRarity) => el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]);
@@ -431,7 +431,7 @@ function oddsSheet(): HTMLElement {
   const fusionPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🧬 합성 성공 확률'),
     el('div.muted.small', {}, `같은 등급 여분 카드 ${balance.fusion.materials}장으로 다음 등급 랜덤 1종에 도전합니다.`),
-    ...(['common', 'uncommon', 'rare', 'heroic'] as const).map((rarity) => {
+    ...FUSABLE_RARITIES.map((rarity) => {
       const nextRarity = FUSION_NEXT[rarity]!;
       const label = el('span.fusion-step', {},
         rarityTag(rarity),
@@ -449,7 +449,7 @@ function oddsSheet(): HTMLElement {
   );
 
   // ── 탭 3: 유물 — 발굴 등급 확률 + 발굴 기회 ──
-  const artifactRarities = Object.keys(ARTIFACT_RARITY_LABEL) as (keyof typeof ARTIFACT_RARITY_LABEL)[];
+  const artifactRarities = RARITY_ASC;
   const { sources } = balance.artifacts;
   const artifactPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '💎 유물 등급 확률'),
@@ -558,8 +558,6 @@ function elementInfoSheet(): HTMLElement {
  * 전체 몬스터 데이터 뷰 — 도감 진행과 무관하게 104종 전부, 등급·속성·종족·기본 스탯.
  * 추후 관리자 전용 메뉴로 전환 예정 (지금은 설정에서 진입).
  */
-const RARITY_ASC = ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const;
-
 /** 등급 필터 칩('전체' + 등장 등급) + 등급 구간 목록 — 정보 시트 공용. 칩이 구간 표시/숨김을 토글한다. */
 function rarityFilterSections(sections: { rarity: string; view: HTMLElement }[]): HTMLElement[] {
   const filters: { label: string; match: string | null }[] = [

@@ -4,7 +4,7 @@
 import { content } from '../content';
 import type { Journal, JournalEntry } from '../core/types';
 import { monsterIcon } from './components';
-import { ARTIFACT_RARITY_LABEL, TIER_LABEL, el, fmtGold, fmtPct } from './kit';
+import { ARTIFACT_RARITY_LABEL, RARITY_ORDER, TIER_LABEL, el, fmtGold, fmtPct } from './kit';
 import { playSfx, type SfxId } from './sfx';
 
 const REVEAL_INTERVAL_MS = 420;
@@ -23,9 +23,10 @@ function artifactDropLine(text: string, itemId: string): HTMLElement {
   if (def) line.style.color = `var(--rar-${def.rarity})`;
   return line;
 }
-/** 영웅·전설 조우 카드를 카드째 빛나게 하는 등급 클래스 */
+/** 영웅 이상 조우 카드를 카드째 빛나게 하는 등급 클래스 — 등급이 늘어도 서열로 따라온다 (2026-08-25) */
 function rarityCardClass(rarity: string): string {
-  return rarity === 'heroic' || rarity === 'legendary' ? `.jcard-rar-${rarity}` : '';
+  const rank = RARITY_ORDER[rarity as keyof typeof RARITY_ORDER];
+  return rank !== undefined && rank >= RARITY_ORDER.heroic ? `.jcard-rar-${rarity}` : '';
 }
 function eventName(kind: 'treasures' | 'traps' | 'gathers' | 'crossroads', id: string): string {
   return (content.events[kind] as { id: string; name: string }[]).find((e) => e.id === id)?.name ?? id;

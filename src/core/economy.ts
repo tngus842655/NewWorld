@@ -2,7 +2,7 @@
  * 경제 액션 — 레벨업·각성·합성·제작·강화·분해·해금. 전부 순수 함수, 실패는 GameError.
  */
 import type { Content } from '../content';
-import type { ArtifactRarity } from '../content/schema';
+import { RARITIES, type ArtifactRarity, type MonsterRarity } from '../content/schema';
 import { findArtifact, findMonster, grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { artifactEnhanceCost, monsterLevelUpCost, monsterStarUpCost } from './formulas';
@@ -15,6 +15,14 @@ function spendGold(save: SaveState, amount: number): void {
   if (save.wallet.gold < amount) throw new GameError('gold-short', `골드가 부족합니다 (필요: ${amount})`);
   save.wallet.gold -= amount;
 }
+
+/**
+ * 합성 사다리의 정본 — RARITIES에서 파생한다 (2026-08-25).
+ * 최상위 등급만 null. 몬스터·유물·UI가 전부 이 한 벌을 쓴다 (이전에는 세 벌로 갈려 있었다).
+ */
+export const RARITY_NEXT = Object.fromEntries(
+  RARITIES.map((rarity, index) => [rarity, RARITIES[index + 1] ?? null]),
+) as Record<MonsterRarity, MonsterRarity | null>;
 
 
 /** 레벨업 — 종 단위 (카드가 몇 장이든 종당 레벨 하나, 골드 소모) */
@@ -71,10 +79,7 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
     throw new GameError('fusion-materials', `재료 카드는 정확히 ${fusion.materials}장이어야 합니다`);
   }
 
-  const RARITY_NEXT: Record<string, string | null> = {
-    common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
-  };
-  let rarity: string | null = null;
+  let rarity: MonsterRarity | null = null;
   for (const material of input.materials) {
     if (material.count < 1) throw new GameError('fusion-materials', '재료 수량이 잘못되었습니다');
     const owned = findMonster(save, material.monsterId);
@@ -88,7 +93,7 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
   }
   const nextRarity = RARITY_NEXT[rarity!];
   if (!nextRarity) throw new GameError('fusion-legendary', '전설 카드는 합성할 수 없습니다');
-  const chance = fusion.chance[rarity as keyof typeof fusion.chance] ?? 0;
+  const chance = fusion.chance[rarity!] ?? 0;
 
   const next = structuredClone(save);
   for (const material of input.materials) {
@@ -169,10 +174,7 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
     throw new GameError('fusion-materials', `재료 유물은 정확히 ${fusion.materials}개여야 합니다`);
   }
 
-  const RARITY_NEXT: Record<string, ArtifactRarity | null> = {
-    common: 'uncommon', uncommon: 'rare', rare: 'heroic', heroic: 'legendary', legendary: null,
-  };
-  let rarity: string | null = null;
+  let rarity: ArtifactRarity | null = null;
   for (const material of input.materials) {
     if (material.count < 1) throw new GameError('fusion-materials', '재료 수량이 잘못되었습니다');
     const owned = findArtifact(save, material.itemId);
@@ -186,7 +188,7 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   }
   const nextRarity = RARITY_NEXT[rarity!];
   if (!nextRarity) throw new GameError('fusion-legendary', '전설 유물은 합성할 수 없습니다');
-  const chance = fusion.chance[rarity as keyof typeof fusion.chance] ?? 0;
+  const chance = fusion.chance[rarity!] ?? 0;
 
   const next = structuredClone(save);
   for (const material of input.materials) {

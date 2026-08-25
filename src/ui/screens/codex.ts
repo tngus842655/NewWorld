@@ -11,7 +11,7 @@ import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { artifactIcon, artifactIconBadged, monsterIcon } from '../components';
 import { describeEffect } from '../effectText';
-import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 상태 (GDD §11)
@@ -145,7 +145,7 @@ function monsterTab(state: Save): HTMLElement[] {
     ),
     el('div.card.stack-sm', {},
       filterChips(tribe, Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][], (v) => tribeFilter.set(v)),
-      filterChips(rarity, Object.entries(MONSTER_RARITY_LABEL) as [Monster['rarity'], string][], (v) => rarityFilter.set(v)),
+      filterChips(rarity, RARITY_ASC.map((r) => [r, MONSTER_RARITY_LABEL[r]] as [Monster['rarity'], string]), (v) => rarityFilter.set(v)),
     ),
     visibleSections.length > 0
       ? el('div.stack-sm', {}, ...visibleSections)

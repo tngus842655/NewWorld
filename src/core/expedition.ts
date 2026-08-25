@@ -3,6 +3,7 @@
  * 결정론: 같은 (seed, choices, save 상태)면 언제 어디서 계산해도 같은 일지가 나온다.
  */
 import type { Content } from '../content';
+import { RARITIES } from '../content/schema';
 import type { ArtifactRarity, CrossroadEvent, HourglassDef, Region, Reward, Tier } from '../content/schema';
 import { captureChance, shouldUseLure } from './capture';
 import { computePartyPower, enemyPower, partyDamageReduce, resolveClash } from './combat';
@@ -301,8 +302,9 @@ export function rollArtifact(content: Content, rng: Rng, rarityBonus = 0): Dropp
     weights.heroic += rarityBonus * 0.6;
     weights.legendary += rarityBonus * 0.4;
   }
-  // 5단계 전 등급에서 추첨 — 고급(uncommon)이 목록에 빠져 표기 확률과 어긋나던 버그 수정 (2026-08-23)
-  const rarity = pickWeighted(rng, ['common', 'uncommon', 'rare', 'heroic', 'legendary'] as const, (r) => weights[r]);
+  // 전 등급에서 추첨 — 고급(uncommon)이 목록에 빠져 표기 확률과 어긋나던 버그 수정 (2026-08-23).
+  // 2026-08-25: 하드코딩 배열을 RARITIES 파생으로 — 등급이 늘어도 같은 사고가 재발하지 않는다
+  const rarity = pickWeighted(rng, RARITIES, (r) => weights[r]);
   return rollArtifactOfRarity(content, rng, rarity);
 }
 
