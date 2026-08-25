@@ -91,9 +91,11 @@ describe('경제 액션', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 1000, lures: 0 });
     save.wallet.materials['salt-bloom'] = 5;
+    save.wallet.materials['tide-shell'] = 5;
     const next = craftRecipe(content, save, 'basic-lure');
     expect(next.wallet.lures).toBe(1);
-    expect(next.wallet.materials['salt-bloom']).toBe(3);
+    expect(next.wallet.materials['salt-bloom']).toBe(4);
+    expect(next.wallet.materials['tide-shell']).toBe(4);
     expect(next.wallet.gold).toBe(850);
     expect(() => craftRecipe(content, { ...next, wallet: { ...next.wallet, materials: {} } }, 'basic-lure')).toThrow(/부족/);
   });

@@ -9,7 +9,7 @@
 
 로드 시 zod로 전수 검증. id는 전부 kebab-case 문자열, 참조 무결성 테스트로 보증.
 
-### 1.1 monsters.json — 216종 *(2026-08-24 재확장 — 비전설 2배·전설 지역당 2→6)*
+### 1.1 monsters.json — 219종 *(2026-08-24 재확장 — 비전설 2배·전설 지역당 2→6)*
 
 ```jsonc
 {
@@ -17,7 +17,7 @@
   "name": "가시덩쿨 늑대",
   "element": "nature",            // fire | nature | frost | light | dark
   "tribe": "beast",               // beast | spirit | undead | aquatic | flying | construct
-  "rarity": "common",             // common | rare | epic | legendary
+  "rarity": "common",             // common | uncommon | rare | heroic | legendary | transcendent (schema.ts RARITIES가 정본)
   "baseHp": 46,
   "baseAtk": 12,
   "habitat": "whispering-woods",  // 대표 서식지 (도감 힌트 표기용)
@@ -44,16 +44,18 @@
   "order": 2,
   "element": "nature",                    // 지역 우세 속성 (파티 상성 보정)
   "recommendedCp": 400,
-  "unlock": { "codexCaptured": { "misty-coast": 6 }, "materials": {} },
+  "unlock": { "codexCaptured": { "misty-coast": 10 } },  // 재료도 걸리는 예: 늪 = { "whispering-woods": 24 } + materials { dew-branch: 16, spirit-moss: 16 }
   "materials": ["dew-branch", "spirit-moss"],
   "spawns": [                              // 조우 출현 테이블 (가중치)
-    { "monster": "thorn-wolf", "weight": 18 },
-    { "monster": "gale-owl",   "weight": 14 }
+    { "monster": "thorn-wolf", "weight": 15 },
+    { "monster": "gale-owl",   "weight": 9 }
     // ... 지역당 일반16 고급12 희귀12 영웅8 (전설 6은 legendary 필드)
   ],
-  "legendary": ["elder-treant", "moon-sovereign"], // 심층 한정 전설 (지역당 6종, 조우 시 시드로 1종 선택 — balance.json)
+  "legendary": ["verdant-phoenix", "moon-sovereign"], // 심층 한정 전설 (지역당 6종, 조우 시 시드로 1종 선택 — balance.json)
   "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },  // %
-  "tierMods": { "deep": { "rareWeightMult": 2.0 } }
+  "growthCostMult": 2.4,                  // 이 지역 몬스터의 레벨업·각성 골드 배수
+  "rewardScale": 2.4                      // 골드 보상 배수 (재료·카드에는 안 붙는다)
+  // 티어별 보정(rareWeightMult 등)은 지역이 아니라 balance.json tiers에 있다
 }
 ```
 
@@ -75,28 +77,38 @@
 
 ```jsonc
 {
-  "elementAdvantage": 1.3,
-  "elementDisadvantage": 0.77,
-  "cpFormula": { "atkWeight": 2, "hpWeight": 0.5 },
-  "levelCurve": { "statGrowth": 0.08, "goldBase": 40, "goldExp": 1.6, "maxLevel": 30 },
-  "starMult": 1.25,
-  "essencePerDupe": { "common": 3, "rare": 8, "epic": 20, "legendary": 50 },
-  "starCost": [10, 25, 60, 150],
-  "captureBase": { "common": 0.40, "rare": 0.15, "epic": 0.05, "legendary": 0.015 },
-  "lureMult": 2.0, "adBuffMult": 2.0, "captureMultCap": 4.0,
+  "element": { "same": 1.3, "advantage": 1.3, "disadvantage": 0.77 },
+  "cp": { "atkWeight": 2, "hpWeight": 0.5 },
+  "level": { "statGrowth": 0.08, "goldBase": 40, "goldExp": 1.5, "max": 30,
+              "rarityCostMult": { "common": 1, "uncommon": 1.2, "rare": 1.5, "heroic": 2, "legendary": 3, "transcendent": 5 } },
+  "star": { "mult": 1.25, "max": 5, "goldCost": [1500, 6000, 20000, 60000] },
+  "capture": { "base": { "common": 0.45, "uncommon": 0.34, "rare": 0.18, "heroic": 0.06, "legendary": 0.015, "transcendent": 0 },
+                "lureMult": 2, "adBuffMult": 2, "multCap": 4, "chanceCap": 0.95, "firstCaptureGuarantee": true },
   "tiers": {
-    "scout": { "minutes": 15, "encounters": 3, "crossroads": 0 },
-    "standard": { "minutes": 120, "encounters": 8, "crossroads": 1, "yieldMult": 1.2 },
-    "deep": { "minutes": 480, "encounters": 20, "crossroads": 2, "legendaryChance": 0.05 }
+    "scout":    { "minutes": 15,  "encounters": 3,  "crossroads": 0, "yieldMult": 1,    "legendaryChance": 0,    "rareWeightMult": 1 },
+    "standard": { "minutes": 120, "encounters": 8,  "crossroads": 1, "yieldMult": 1.2,  "legendaryChance": 0,    "rareWeightMult": 1 },
+    "deep":     { "minutes": 480, "encounters": 18, "crossroads": 2, "yieldMult": 1.35, "legendaryChance": 0.05, "rareWeightMult": 2 }
   },
-  "defeatDamageK": 0.35, "victoryDamageK": 0.12,
-  "fleeRewardRatio": 0.5,
-  "crossroadTimeoutHours": 4,
-  "adDailyLimits": { "instantReturn": 3, "scentBuff": 3 }
+  "combat": { "encounterPowerMult": 3.2, "victoryDamageK": 0.08, "defeatDamageK": 0.25,
+              "defeatRatioCap": 2, "trapDamage": 0.1, "fleeRewardRatio": 0.55 },
+  "rewards": { "goldPerVictory": 24, "goldPerTreasure": 110, "gatherMaterialMin": 2, "gatherMaterialMax": 3, "rarityGoldMult": { /* 등급별 */ } },
+  "crossroad": { "timeoutHours": 4, "riskyCheckRatio": 1.15, "baseChanceFloor": 0.15, "baseChanceCeil": 0.9 },
+  "party": { "baseSlots": 3, "slotUnlocks": [ { "slots": 4, "gold": 3000, "totalCaptured": 10 } /* , 5슬롯 */ ] },
+  "teams": [ { "count": 2, "regionUnlocked": "whispering-woods" } /* , 3군·4군 */ ],
+  "lures": { "maxLoad": 3 },
+  "fusion": { "materials": 2, "chance": { "common": 0.5, "legendary": 0.03, "transcendent": 0 } },
+  "artifacts": { "dropRarity": {}, "sources": {}, "enhance": {}, "dustPerSalvage": {}, "effectCaps": {} },
+  "shop": { "monsterGacha": {}, "artifactGacha": {} },
+  "ads": { "daily": { "instantReturn": 3, "scentBuff": 3 } },
+  "starter": { "monsters": [ /* 3종 */ ], "gold": 200, "lures": 1 },
+  "attendance": { "rewards": [ /* 28일 */ ] }
 }
 ```
 
-### 1.5 items.json — 유물 96종 + 세트 8계열 (GDD §8, 2026-08-24 재확장 — 전설 제외 2배)
+> 정수(essence) 시스템은 2026-08-23에 폐기됐다 — 성장 재화는 골드로 일원화.
+> 스키마 정본은 `src/content/schema.ts` BalanceSchema이고, 위 예시는 키 구조만 보여준다.
+
+### 1.5 items.json — 유물 100종 + 세트 8계열 (GDD §8, 2026-08-24 재확장 — 전설 제외 2배)
 
 ```jsonc
 {

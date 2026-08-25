@@ -86,7 +86,12 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
       "hpAfter": 0.9864835572168258,
       "rewards": [
         {
-          "count": 6,
+          "count": 3,
+          "kind": "material",
+          "materialId": "grave-reed",
+        },
+        {
+          "count": 3,
           "kind": "material",
           "materialId": "chill-amber",
         },
@@ -297,7 +302,8 @@ exports[`결정론 > 일지 스냅샷 — 심층(늪·정예 5인 + 유물) 1`] 
     "luresGained": 0,
     "luresUsed": 3,
     "materials": {
-      "chill-amber": 8,
+      "chill-amber": 5,
+      "grave-reed": 3,
     },
     "seenMonsterIds": [
       "bog-slime",

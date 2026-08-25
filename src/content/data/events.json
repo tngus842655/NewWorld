@@ -14,8 +14,13 @@
         "success": [
           {
             "kind": "material",
+            "slot": 0,
+            "count": 3
+          },
+          {
+            "kind": "material",
             "slot": 1,
-            "count": 6
+            "count": 3
           },
           {
             "kind": "artifactRoll"
@@ -62,7 +67,12 @@
         {
           "kind": "material",
           "slot": 0,
-          "count": 3
+          "count": 2
+        },
+        {
+          "kind": "material",
+          "slot": 1,
+          "count": 2
         }
       ],
       "risky": {

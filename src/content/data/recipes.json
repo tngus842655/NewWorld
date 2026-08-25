@@ -5,7 +5,8 @@
     "cost": {
       "gold": 150,
       "materials": {
-        "salt-bloom": 2
+        "salt-bloom": 1,
+        "tide-shell": 1
       }
     },
     "output": {
@@ -20,7 +21,7 @@
       "gold": 400,
       "materials": {
         "dew-branch": 2,
-        "spirit-moss": 1
+        "spirit-moss": 2
       }
     },
     "output": {
@@ -34,7 +35,7 @@
     "cost": {
       "gold": 1000,
       "materials": {
-        "salt-bloom": 2,
+        "salt-bloom": 3,
         "tide-shell": 3
       }
     },
@@ -50,8 +51,8 @@
     "cost": {
       "gold": 800,
       "materials": {
-        "dew-branch": 2,
-        "spirit-moss": 2
+        "dew-branch": 3,
+        "spirit-moss": 3
       }
     },
     "output": {
@@ -67,7 +68,7 @@
       "gold": 700,
       "materials": {
         "grave-reed": 3,
-        "chill-amber": 2
+        "chill-amber": 3
       }
     },
     "output": {
@@ -82,8 +83,8 @@
     "cost": {
       "gold": 1200,
       "materials": {
-        "ember-core": 4,
-        "obsidian-shard": 3
+        "ember-core": 6,
+        "obsidian-shard": 6
       }
     },
     "output": {
@@ -98,8 +99,8 @@
     "cost": {
       "gold": 2000,
       "materials": {
-        "ember-core": 8,
-        "obsidian-shard": 7
+        "ember-core": 11,
+        "obsidian-shard": 11
       }
     },
     "output": {

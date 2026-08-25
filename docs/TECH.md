@@ -56,12 +56,12 @@ src/
     schema.ts          # zod 스키마 (monsters/regions/encounters/synergies/...)
     index.ts           # 로드 + 검증 + 파생 인덱스(id맵, 지역별 출현테이블)
     data/
-      monsters.json    #   52종 (스탯·속성·종족·등급·서식지·에셋id)
+      monsters.json    #  219종 (스탯·속성·종족·등급·서식지·에셋id)
       regions.json     #   지역·출현 가중치·재료·해금 조건
       synergies.json   #   종족 시너지 수치
       events.json      #   갈림길·함정·보물·채집 이벤트 풀
-      recipes.json     #   미끼 레시피
-      items.json       #   유물 28종 + 세트 (효과는 공용 Effect 문법 — DATA §1.5)
+      recipes.json     #   미끼·모래시계 세공 레시피
+      items.json       #   유물 100점 + 세트 8계열 (효과는 공용 Effect 문법 — DATA §1.5)
       milestones.json  #   도감 마일스톤·보상
       balance.json     #   전역 계수(상성 배수, 포획 기본률, 성장 곡선 계수...)
   core/

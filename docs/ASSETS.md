@@ -24,8 +24,8 @@
 
 | 용도 | 수량 | 검색 방향 (asset=3d) |
 |---|---|---|
-| 몬스터 (도감 216종) | 216 | monster / cute monster / halloween monster / dragon / slime / ghost / robot |
-| 유물 (96종) | 96 | medieval weapon / armor / shield / flag / amulet / artifact / relic |
+| 몬스터 (도감 219종) | 219 | monster / cute monster / halloween monster / dragon / slime / ghost / robot |
+| 유물 (100종) | 100 | medieval weapon / armor / shield / flag / amulet / artifact / relic |
 | 지역 배너 | 5 | forest / swamp / volcano / island / ruins (또는 illustration으로 대체 검토) |
 | 재료 아이콘 | 8 | herb / shell / crystal / moss / branch ... |
 | 재화·아이템 | 6± | gold coin / potion / trap / treasure chest |
@@ -55,8 +55,8 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
   (Taru Epic Medieval 30종 → 유물 무기, Kentung Fantasy Avatar 20종 → 인간형 몬스터).
   콘택트 시트 전수 검사로 교체 7건(큐피드→백조, 픽셀랩터→공룡 등) + 이름 조정 18건
   (온천달팽이, 눌어붙은 마시멜로, 노을홍학, 진혼백조, 태양의 모루, 견습기사 흉갑 등)
-- **[완료 2026-08-25] 초월 등급 6점** — 몬스터 3(같은 드래곤의 원소별 리컬러: 빨강·보라·금)
-  + 유물 3(수정구·방패·문장기). 몬스터는 Flat- Icons `dragon-11304451` 한 점을 `modulate({hue,saturation,brightness})`로
+- **[완료 2026-08-25] 초월 등급 7점** — 몬스터 3(같은 드래곤의 원소별 리컬러: 빨강·보라·금)
+  + 유물 4(용심핵·용린 방벽·군주의 군기·용아검 — 부적/방어구/깃발/무기 4슬롯을 한 점씩). 몬스터는 Flat- Icons `dragon-11304451` 한 점을 `modulate({hue,saturation,brightness})`로
   변주했다 — IconScout이 `can_recolor: true`로 허용한 에셋이고, 실루엣 공유는 '같은 종의 원소 변종'이라는 의도다.
   리컬러 수치는 매핑 대장의 `recolor` 필드에 남겨 언제든 재현·되돌릴 수 있다.
   **탐색 실측 (다음에 드래곤을 다시 찾을 때의 출발점)**: `asset=3d query="dragon"` 1,265건은 대부분 춘절 용(뱀형)·

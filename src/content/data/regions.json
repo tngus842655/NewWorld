@@ -233,7 +233,7 @@
     "rewardScale": 2.4,
     "unlock": {
       "codexCaptured": {
-        "misty-coast": 8
+        "misty-coast": 10
       }
     },
     "materials": [
@@ -460,11 +460,11 @@
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": {
-        "whispering-woods": 20
+        "whispering-woods": 24
       },
       "materials": {
         "dew-branch": 16,
-        "spirit-moss": 10
+        "spirit-moss": 16
       }
     },
     "materials": [
@@ -691,11 +691,11 @@
     "rewardScale": 12,
     "unlock": {
       "codexCaptured": {
-        "sunken-marsh": 20
+        "sunken-marsh": 40
       },
       "materials": {
         "grave-reed": 24,
-        "chill-amber": 16
+        "chill-amber": 24
       }
     },
     "materials": [
