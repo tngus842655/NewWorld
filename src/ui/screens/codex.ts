@@ -11,7 +11,7 @@ import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { artifactIcon, artifactIconBadged, monsterIcon } from '../components';
 import { describeEffect } from '../effectText';
-import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, RARITY_ORDER, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { filterChips } from '../panels';
 import { overlay } from '../router';
 
@@ -53,7 +53,6 @@ function monsterTab(state: Save): HTMLElement[] {
   const tribe = tribeFilter();
   const rarity = rarityFilter();
   const seen = Object.values(state.codex).filter((c) => c.seen && !c.captured).length;
-  const captured = Object.values(state.codex).filter((c) => c.captured).length;
   const score = Object.entries(state.codex).reduce((sum, [, entry]) => {
     if (entry.awakened) return sum + 5;
     if (entry.captured) return sum + 3;
@@ -76,13 +75,23 @@ function monsterTab(state: Save): HTMLElement[] {
   const sections = content.regionList.map((region) => {
     const allNatives = content.monsterList.filter((m) => m.habitat === region.id);
     const regionCaptured = allNatives.filter((m) => state.codex[m.id]?.captured).length;
-    const natives = allNatives.filter(
-      (m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
-    );
+    const natives = allNatives
+      .filter((m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity))
+      // 도감은 '읽는 화면' — 등급 오름차순(일반→전설). 지금까지 정렬이 아예 없어
+      // monsters.json 파일 순서 그대로였다 (2026-08-25)
+      .sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name, 'ko'));
     if (natives.length === 0) return null;
     const open = openCodexRegions()[region.id] === true;
 
-    const cells = natives.map((monster) => {
+    const cells = () => natives.flatMap((monster, i) => {
+      // 등급이 바뀌는 자리마다 구간 헤더 — 오름차순이 눈에 보이게 (grid-column: 1/-1로 한 줄 차지)
+      const head = i === 0 || natives[i - 1]!.rarity !== monster.rarity
+        ? [el('div.info-group-head', {}, el(`span.tag.rar-${monster.rarity}`, {}, MONSTER_RARITY_LABEL[monster.rarity]))]
+        : [];
+      return [...head, cell(monster)];
+    });
+
+    const cell = (monster: Monster): HTMLElement => {
       const entry = state.codex[monster.id];
       const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
       if (entry?.captured) {
@@ -101,19 +110,21 @@ function monsterTab(state: Save): HTMLElement[] {
         );
       }
       return el('div.codex-cell.unknown', {}, el('div.codex-q', {}, '?'), el('div.codex-name.muted', {}, '???'));
-    });
+    };
 
     // 접힘: 아이콘만 가로 슬라이드 — 미지(?) 종은 제외 (2026-08-23 사용자)
-    const discovered = natives.filter((monster) => state.codex[monster.id]?.seen || state.codex[monster.id]?.captured);
-    const iconRow = discovered.length > 0
-      ? el('div.roster-row', {}, ...discovered.map((monster) => {
-          const entry = state.codex[monster.id]!;
-          const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
-          return entry.captured
-            ? el('button.roster-icon', { title: monster.name, onclick: openSpecies }, capturedIcon(monster))
-            : el('button.roster-icon', { title: '목격', onclick: openSpecies }, monsterIcon(monster.id, { silhouette: true }));
-        }))
-      : el('div.muted.small', {}, '아직 발견한 몬스터가 없습니다');
+    const iconRow = () => {
+      const discovered = natives.filter((monster) => state.codex[monster.id]?.seen || state.codex[monster.id]?.captured);
+      return discovered.length > 0
+        ? el('div.roster-row', {}, ...discovered.map((monster) => {
+            const entry = state.codex[monster.id]!;
+            const openSpecies = () => overlay.set({ kind: 'species', monsterId: monster.id });
+            return entry.captured
+              ? el('button.roster-icon', { title: monster.name, onclick: openSpecies }, capturedIcon(monster))
+              : el('button.roster-icon', { title: '목격', onclick: openSpecies }, monsterIcon(monster.id, { silhouette: true }));
+          }))
+        : el('div.muted.small', {}, '아직 발견한 몬스터가 없습니다');
+    };
 
     return el('div.card.stack-sm', {},
       el('button.roster-head', {
@@ -122,17 +133,24 @@ function monsterTab(state: Save): HTMLElement[] {
         el('span', {}, `${region.icon} ${region.name} (${regionCaptured}/${allNatives.length})`),
         el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
       ),
-      open ? el('div.codex-grid', {}, ...cells) : iconRow,
+      // 지연 생성 — 지금까지는 접힘 여부와 무관하게 셀 216개와 아이콘 줄을 둘 다 만들고 하나를 버렸다
+      open ? el('div.codex-grid', {}, ...cells()) : iconRow(),
     );
   });
   const visibleSections = sections.filter((s): s is HTMLElement => s !== null);
 
+  // 필터가 걸리면 '보이는 수'를 병기 — 헤더 진행도(필터 전)와 그리드(필터 후)가 어긋나 보이던 지점
+  const shownCount = content.monsterList.filter(
+    (m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
+  ).length;
+  const filtered = tribe !== null || rarity !== null;
+
   return [
-    el('div.card.codex-summary', {},
-      el('div', {}, el('strong', {}, `${captured}`), el('span.muted', {}, ` / ${content.monsterList.length} 포획`)),
-      el('div.muted.small', {}, `목격 ${seen} · 도감 점수 ${score}`),
-    ),
+    // 포획 수는 탭 라벨('몬스터 n/216')이 이미 말한다 — 중복 요약 카드를 지우고
+    // 보조 수치만 필터 카드에 한 줄로 (탭 라벨과 겹치는 타이틀 금지 규칙, 2026-08-25)
     el('div.card.stack-sm', {},
+      el('div.muted.small', {},
+        `목격 ${seen} · 도감 점수 ${score}${filtered ? ` · 필터 ${shownCount}종 표시` : ''}`),
       filterChips(
         (Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][]).map(([key, label]) => ({ key, label })),
         { active: tribe, onPick: (v) => tribeFilter.set(v) },
@@ -197,7 +215,11 @@ function artifactTab(state: Save): HTMLElement[] {
       el('button.roster-head', {
         onclick: () => openArtifactRarities.set({ ...openArtifactRarities(), [rarity]: !open }),
       },
-        el('span', {}, `${ARTIFACT_RARITY_LABEL[rarity]} (${obtainedDefs.length}/${defs.length})`),
+        // 등급은 색으로 식별 — 평문 라벨이던 유일한 지점 (2026-08-25)
+        el('span.roster-head-title', {},
+          el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]),
+          el('span.muted.small', {}, ` ${obtainedDefs.length}/${defs.length}`),
+        ),
         el('span.muted.small', {}, open ? '접기 ∧' : '펼치기 ∨'),
       ),
       open ? el('div.codex-grid', {}, ...cells) : iconRow,
