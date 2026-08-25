@@ -70,5 +70,6 @@ for (const slots of CASES) {
     );
   }
 }
-console.log(`\n   ※ GDD §9.1: "방치는 숲 콘텐츠 중심으로 첫 주를 보내며 전멸률이 낮게 유지되어야 한다"`);
+console.log(`\n   ※ 방치의 전멸률 상승은 2026-08-25에 수용하기로 한 사안이다 (GDD §9.1 파티 슬롯 항).`);
+console.log(`      되돌린다면 손댈 곳은 슬롯 게이트가 아니라 3칸 파티 기준 recommendedCp다.`);
 console.log('');
