@@ -13,6 +13,7 @@ import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } f
 import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { filterChips, tabBar } from './panels';
+import { regionTiers, tierShortName } from './regionTiers';
 import { playSfx } from './sfx';
 
 type SortMode = 'cp' | 'level';
@@ -20,10 +21,11 @@ const SORT_LABEL: Record<SortMode, string> = { cp: 'CP순', level: '레벨순' }
 const sortMode = signal<SortMode>('cp');
 const tribeFilter = signal<Tribe | null>(null);
 const listTab = signal<'monster' | 'artifact'>('monster'); // 하단 목록 탭 (2026-08-23 사용자)
-// 216종·96점 규모에 맞춘 분할축 (2026-08-25) — 몬스터는 지역 탭, 유물은 슬롯 탭, 공통으로 등급 칩.
+// 216종·96점 규모에 맞춘 분할축 (2026-08-25) — 몬스터는 권역 탭(캠프와 같은 축, 2026-08-27),
+// 유물은 슬롯 탭, 공통으로 등급 칩.
 // 전부 시그널이어야 한다: 편성은 탭할 때마다 save()가 바뀌어 시트가 통째로 다시 그려지므로,
 // DOM 로컬 상태로 두면 몬스터 하나 넣을 때마다 첫 탭으로 튕긴다.
-const regionTab = signal<string | null>(null); // null = 렌더 시점에 '최강 몬스터의 서식지'로 해소
+const tierTab = signal<number | null>(null); // null = 렌더 시점에 '최강 몬스터 서식지의 권역'으로 해소
 const raritySel = signal<MonsterRarity | null>(null);
 const slotTab = signal<Slot | null>(null); // null = 첫 슬롯
 
@@ -32,7 +34,7 @@ export function resetTeamSheet(): void {
   sortMode.set('cp');
   tribeFilter.set(null);
   listTab.set('monster');
-  regionTab.set(null);
+  tierTab.set(null);
   raritySel.set(null);
   slotTab.set(null);
 }
@@ -41,9 +43,9 @@ export function resetTeamSheet(): void {
  * 빈 목록의 사유를 구분한다 — 하나뿐이던 문구("다른 군이 카드를 사용 중이면…")는
  * 필터로 0건일 때 틀린 원인을 말한다.
  */
-function emptyMonsterText(inRegionCount: number, filtered: boolean): string {
-  if (inRegionCount > 0 && filtered) return '이 조건에 맞는 몬스터가 없습니다 [등급·종족 칩을 눌러 해제해 보세요]';
-  if (inRegionCount === 0) return '이 지역의 몬스터를 아직 보유하지 않았습니다 [다른 지역 탭을 보거나 원정으로 포획해 보세요]';
+function emptyMonsterText(inTierCount: number, filtered: boolean): string {
+  if (inTierCount > 0 && filtered) return '이 조건에 맞는 몬스터가 없습니다 [등급·종족 칩을 눌러 해제해 보세요]';
+  if (inTierCount === 0) return '이 권역의 몬스터를 아직 보유하지 않았습니다 [다른 권역 탭을 보거나 원정으로 포획해 보세요]';
   return '편성할 수 있는 몬스터가 없습니다 [다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요]';
 }
 
@@ -118,22 +120,24 @@ export function teamSheet(teamId: string): HTMLElement | null {
     return party.includes(owned.monsterId) || available > 0;
   });
 
-  // 기본 지역 탭 = 보유 몬스터 중 최강의 서식지. 전역 CP 서열을 잃는 것에 대한 보완 —
-  // 막 해금해서 0마리인 지역이 기본 탭이 되는 것도 같이 막는다.
+  // 기본 권역 탭 = 보유 몬스터 중 최강의 서식지 권역. 전역 CP 서열을 잃는 것에 대한 보완 —
+  // 막 해금해서 0마리인 권역이 기본 탭이 되는 것도 같이 막는다.
+  const habitatTier = (monsterId: string): number | undefined => {
+    const habitat = content.monsters.get(monsterId)?.habitat;
+    return habitat ? content.regions.get(habitat)?.tier : undefined;
+  };
   const strongest = [...baseMonsters].sort((a, b) => ownedCp(b) - ownedCp(a))[0];
-  const defaultRegion = strongest
-    ? content.monsters.get(strongest.monsterId)!.habitat
-    : content.regionList[0]!.id;
-  const region = regionTab() ?? defaultRegion;
+  const tier = tierTab()
+    ?? (strongest ? habitatTier(strongest.monsterId)! : regionTiers[0]!.tier);
   const rarity = raritySel();
   const sort = sortMode();
   const tribe = tribeFilter();
 
-  const inRegion = baseMonsters.filter((owned) => content.monsters.get(owned.monsterId)!.habitat === region);
-  // 종족 칩은 '이 지역에 실제로 보유한 종족'만 — 전체 로스터 기준이면 누르면 0건인 칩이 생긴다
-  const tribesHere = [...new Set(inRegion.map((m) => content.monsters.get(m.monsterId)!.tribe))];
+  const inTier = baseMonsters.filter((owned) => habitatTier(owned.monsterId) === tier);
+  // 종족 칩은 '이 권역에 실제로 보유한 종족'만 — 전체 로스터 기준이면 누르면 0건인 칩이 생긴다
+  const tribesHere = [...new Set(inTier.map((m) => content.monsters.get(m.monsterId)!.tribe))];
 
-  const monsterList = inRegion
+  const monsterList = inTier
     .filter((owned) => {
       const def = content.monsters.get(owned.monsterId)!;
       if (tribe !== null && def.tribe !== tribe) return false;
@@ -240,15 +244,15 @@ export function teamSheet(teamId: string): HTMLElement | null {
         ],
         { active: listTab(), onPick: (key) => listTab.set(key) },
       ),
-      // 2차 분할축 — 몬스터는 서식 지역, 유물은 장착 슬롯 (상단 유물 4칸과 1:1이라 교체 규칙이 설명 없이 읽힌다)
+      // 2차 분할축 — 몬스터는 서식 권역(캠프와 같은 축), 유물은 장착 슬롯 (상단 유물 4칸과 1:1이라 교체 규칙이 설명 없이 읽힌다)
       listTab() === 'monster'
         ? tabBar(
-            content.regionList.map((r) => ({
-              key: r.id,
-              label: `${r.icon} ${r.name.split(' ').pop()} ${baseMonsters.filter((m) => content.monsters.get(m.monsterId)!.habitat === r.id).length}`,
-              title: r.name,
+            regionTiers.map(({ tier: t, regions }) => ({
+              key: String(t),
+              label: `${regions[0]!.icon} ${tierShortName(regions)} ${baseMonsters.filter((m) => habitatTier(m.monsterId) === t).length}`,
+              title: `${regions[0]!.name} 권역`,
             })),
-            { active: region, onPick: (key) => regionTab.set(key) },
+            { active: String(tier), onPick: (key) => tierTab.set(Number(key)) },
           )
         : tabBar(
             SLOTS.map((s) => ({
@@ -283,7 +287,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
     ...(listTab() === 'monster'
       ? [
           monsterChips.length === 0
-            ? el('div.muted.small', {}, emptyMonsterText(inRegion.length, rarity !== null || tribe !== null))
+            ? el('div.muted.small', {}, emptyMonsterText(inTier.length, rarity !== null || tribe !== null))
             : el('div.chips', {}, ...monsterChips),
         ]
       : [

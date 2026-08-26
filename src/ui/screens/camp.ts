@@ -13,6 +13,7 @@ import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGol
 import { FUSION_NEXT, resetFusion } from '../fusionSheet';
 import { accountBonusState } from '../../core/accountBonus';
 import { filterChips, tabBar } from '../panels';
+import { regionTiers, tierShortName } from '../regionTiers';
 import { overlay } from '../router';
 import { playSfx } from '../sfx';
 
@@ -20,12 +21,14 @@ import { playSfx } from '../sfx';
 const selMaterialId = signal<string | null>(null);
 /**
  * 216종·96점 규모에 맞춘 분할 (2026-08-25) — 접힘 카드를 탭으로 교체.
- * 최상위는 몬스터/유물/제작 3탭, 그 안에서 몬스터는 지역, 유물은 슬롯, 공통으로 등급 칩.
+ * 최상위는 몬스터/유물/제작 3탭, 그 안에서 몬스터는 권역, 유물은 슬롯, 공통으로 등급 칩.
+ * (지역 축은 12지역 개편으로 소지역 12탭이 뭉개져 권역 4탭으로 — 소지역은 아이콘의
+ * 서식지 뱃지가 구분하고, 등급 내림차순 정렬이 우선순위를 잡는다. 2026-08-27)
  * 편성 시트와 같은 축이라 두 화면을 오갈 때 같은 근육 기억이 통한다.
  * 화면은 save() 변경마다 통째로 다시 그려지므로 상태는 반드시 시그널이어야 한다.
  */
 const campTab = signal<'monster' | 'artifact' | 'craft'>('monster');
-const campRegion = signal<string | null>(null); // null = 최강 몬스터의 서식지
+const campTier = signal<number | null>(null); // null = 최강 몬스터 서식지의 권역
 const campRarity = signal<MonsterRarity | null>(null);
 const campSlot = signal<Slot | null>(null);
 
@@ -35,13 +38,17 @@ export function renderCamp(): HTMLElement {
   const tab = campTab();
   const rarity = campRarity();
 
-  // ── 몬스터: 지역 탭 + 등급 칩 ──
+  // ── 몬스터: 권역 탭 + 등급 칩 ──
   // 캠프는 '키울 놈 고르는 화면' — 등급 내림차순 (읽는 화면인 정보 시트·도감은 오름차순, 2026-08-25 사용자 확정)
+  const habitatTier = (monsterId: string): number | undefined => {
+    const habitat = content.monsters.get(monsterId)?.habitat;
+    return habitat ? content.regions.get(habitat)?.tier : undefined;
+  };
   const strongest = [...state.roster].sort((a, b) => ownedCp(b) - ownedCp(a))[0];
-  const region = campRegion()
-    ?? (strongest ? content.monsters.get(strongest.monsterId)!.habitat : content.regionList[0]!.id);
-  const inRegion = state.roster.filter((m) => content.monsters.get(m.monsterId)?.habitat === region);
-  const rosterList = inRegion
+  const tier = campTier()
+    ?? (strongest ? habitatTier(strongest.monsterId)! : regionTiers[0]!.tier);
+  const inTier = state.roster.filter((m) => habitatTier(m.monsterId) === tier);
+  const rosterList = inTier
     .filter((m) => rarity === null || content.monsters.get(m.monsterId)!.rarity === rarity)
     .sort((a, b) =>
       RARITY_ORDER[content.monsters.get(b.monsterId)!.rarity] - RARITY_ORDER[content.monsters.get(a.monsterId)!.rarity]
@@ -199,14 +206,14 @@ export function renderCamp(): HTMLElement {
   );
 
   const monsterPanel = [
-    // 지역 탭은 4개 고정 — 진행도에 따라 탭이 생겼다 사라지면 근육 기억이 깨진다
+    // 권역 탭은 4개 고정 — 진행도에 따라 탭이 생겼다 사라지면 근육 기억이 깨진다
     tabBar(
-      content.regionList.map((r) => ({
-        key: r.id,
-        label: `${r.icon} ${r.name.split(' ').pop()} ${state.roster.filter((m) => content.monsters.get(m.monsterId)?.habitat === r.id).length}`,
-        title: r.name,
+      regionTiers.map(({ tier: t, regions }) => ({
+        key: String(t),
+        label: `${regions[0]!.icon} ${tierShortName(regions)} ${state.roster.filter((m) => habitatTier(m.monsterId) === t).length}`,
+        title: `${regions[0]!.name} 권역`,
       })),
-      { active: region, onPick: (key) => campRegion.set(key) },
+      { active: String(tier), onPick: (key) => campTier.set(Number(key)) },
     ),
     rarityChipRow,
     rosterList.length > 0
@@ -215,9 +222,9 @@ export function renderCamp(): HTMLElement {
           onExpedition: busyIds.has(o.monsterId),
         })))
       : el('div.card', {}, el('span.muted.small', {},
-          inRegion.length > 0
+          inTier.length > 0
             ? '이 등급의 몬스터가 없습니다 [등급 칩을 눌러 해제해 보세요]'
-            : '이 지역의 몬스터를 아직 보유하지 않았습니다 [원정에서 포획해 보세요]')),
+            : '이 권역의 몬스터를 아직 보유하지 않았습니다 [원정에서 포획해 보세요]')),
     slotUnlock
       ? (() => {
           const captured = Object.values(state.codex).filter((c) => c.captured).length;
