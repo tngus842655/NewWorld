@@ -270,29 +270,31 @@ describe('유물 합성 (GDD §4.5 — 카드 합성과 동일 규칙)', () => {
 });
 
 describe('지역 해금', () => {
-  it('지역 해금 — 조건 검사와 재료 소모', () => {
+  it('지역 해금 — 체인 전체를 순서대로: 조건 검사와 재료 소모 (조건 수는 콘텐츠에서 파생)', () => {
     const clock = makeCtx();
-    const { save } = saveWithParty(clock, [{ id: 'dune-pup' }]);
-    expect(canUnlockRegion(content, save, 'whispering-woods').ok).toBe(false);
-    const woodsNeed = content.regions.get('whispering-woods')!.unlock.codexCaptured!['misty-coast']!;
-    for (const monster of content.monsterList.filter((m) => m.habitat === 'misty-coast').slice(0, woodsNeed)) {
-      save.codex[monster.id] = { seen: true, captured: true, awakened: false };
-    }
-    expect(canUnlockRegion(content, save, 'whispering-woods').ok).toBe(true);
-    const next = unlockRegion(content, save, 'whispering-woods');
-    expect(canUnlockRegion(content, next, 'whispering-woods').ok).toBe(false); // 이미 해금
+    let { save } = saveWithParty(clock, [{ id: 'dune-pup' }]);
+    expect(canUnlockRegion(content, save, 'pearl-shallows').ok).toBe(false);
 
-    // 늪은 재료도 필요 — 도감 조건 수는 콘텐츠에서 파생 (밸런스 변경에 흔들리지 않게)
-    const marshNeed = content.regions.get('sunken-marsh')!.unlock.codexCaptured!['whispering-woods']!;
-    for (const monster of content.monsterList.filter((m) => m.habitat === 'whispering-woods').slice(0, marshNeed)) {
-      next.codex[monster.id] = { seen: true, captured: true, awakened: false };
+    for (const region of content.regionList.filter((r) => r.order > 1)) {
+      const [prevId, need] = Object.entries(region.unlock.codexCaptured!)[0]!;
+      const catchable = content.monsterList.filter(
+        (m) => m.habitat === prevId && m.rarity !== 'legendary' && m.rarity !== 'transcendent');
+      for (const monster of catchable.slice(0, need)) {
+        save.codex[monster.id] = { seen: true, captured: true, awakened: false };
+      }
+      const mats = region.unlock.materials ?? {};
+      if (Object.keys(mats).length > 0) {
+        // 티어 진입 관문 — 도감을 채워도 재료 없이는 열리지 않는다
+        expect(canUnlockRegion(content, save, region.id).ok, `${region.id} 재료 없이 해금`).toBe(false);
+        for (const [materialId, count] of Object.entries(mats)) save.wallet.materials[materialId] = count;
+      }
+      expect(canUnlockRegion(content, save, region.id).ok, region.id).toBe(true);
+      save = unlockRegion(content, save, region.id);
+      expect(canUnlockRegion(content, save, region.id).ok).toBe(false); // 이미 해금
+      for (const materialId of Object.keys(mats)) {
+        expect(save.wallet.materials[materialId], `${region.id} 해금의 ${materialId} 소모`).toBe(0);
+      }
     }
-    expect(canUnlockRegion(content, next, 'sunken-marsh').reason).toMatch(/이슬가지/);
-    const cost = content.regions.get('sunken-marsh')!.unlock.materials!;
-    next.wallet.materials['dew-branch'] = cost['dew-branch']!;
-    next.wallet.materials['spirit-moss'] = cost['spirit-moss']!;
-    const marsh = unlockRegion(content, next, 'sunken-marsh');
-    expect(marsh.wallet.materials['dew-branch']).toBe(0);
-    expect(teamCount(content, marsh)).toBe(3); // 군 시스템 (2026-08-23): 숲 2군 → 늪 3군
+    expect(teamCount(content, save)).toBe(4); // 군 시스템: 숲 2군 → 늪 3군 → 화산 4군
   });
 });

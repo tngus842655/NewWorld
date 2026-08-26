@@ -497,7 +497,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "misty-coast"
+              "misty-coast",
+              "pearl-shallows",
+              "storm-cape"
             ]
           },
           "do": {
@@ -526,7 +528,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "misty-coast"
+              "misty-coast",
+              "pearl-shallows",
+              "storm-cape"
             ]
           },
           "do": {
@@ -581,7 +585,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "whispering-woods"
+              "whispering-woods",
+              "moonlit-thicket",
+              "elder-canopy"
             ]
           },
           "do": {
@@ -610,7 +616,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "whispering-woods"
+              "whispering-woods",
+              "moonlit-thicket",
+              "elder-canopy"
             ]
           },
           "do": {
@@ -664,7 +672,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "sunken-marsh"
+              "sunken-marsh",
+              "peat-mire",
+              "frozen-abyss"
             ]
           },
           "do": {
@@ -693,7 +703,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "sunken-marsh"
+              "sunken-marsh",
+              "peat-mire",
+              "frozen-abyss"
             ]
           },
           "do": {
@@ -721,7 +733,9 @@
           "hook": "journalEnd",
           "when": {
             "region": [
-              "sunken-marsh"
+              "sunken-marsh",
+              "peat-mire",
+              "frozen-abyss"
             ]
           },
           "do": {
@@ -750,7 +764,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "ashen-volcano"
+              "ashen-volcano",
+              "lava-gorge",
+              "crater-heart"
             ]
           },
           "do": {
@@ -779,7 +795,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "ashen-volcano"
+              "ashen-volcano",
+              "lava-gorge",
+              "crater-heart"
             ]
           },
           "do": {
@@ -1328,7 +1346,9 @@
           "hook": "journalEnd",
           "when": {
             "region": [
-              "ashen-volcano"
+              "ashen-volcano",
+              "lava-gorge",
+              "crater-heart"
             ]
           },
           "do": {
@@ -1384,7 +1404,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "sunken-marsh"
+              "sunken-marsh",
+              "peat-mire",
+              "frozen-abyss"
             ]
           },
           "do": {
@@ -1490,7 +1512,9 @@
           "hook": "computeParty",
           "when": {
             "region": [
-              "whispering-woods"
+              "whispering-woods",
+              "moonlit-thicket",
+              "elder-canopy"
             ]
           },
           "do": {

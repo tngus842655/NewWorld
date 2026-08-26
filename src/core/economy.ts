@@ -24,9 +24,26 @@ export const RARITY_NEXT = Object.fromEntries(
   RARITIES.map((rarity, index) => [rarity, RARITIES[index + 1] ?? null]),
 ) as Record<MonsterRarity, MonsterRarity | null>;
 
-/** 최종 지역 — 초월 합성의 관문. 지역이 늘어나면 자동으로 따라온다 (별빛 폐허 등) */
-export function finalRegion(content: Content) {
-  return content.regionList[content.regionList.length - 1]!;
+/**
+ * 최종 티어(마지막 바이옴) — 초월 합성의 관문. 지역이 늘어나면 자동으로 따라온다 (별빛 폐허 등).
+ * 12지역 개편(2026-08-26)으로 "마지막 지역"이 소지역 하나가 아니라 묶음이 됐다 —
+ * 관문을 마지막 소지역으로 좁히면 재료 풀이 전설 6종 → 2종으로 줄어 의도보다 훨씬 조여진다.
+ */
+export function finalTier(content: Content): number {
+  return content.regionList[content.regionList.length - 1]!.tier;
+}
+
+/** 최종 티어의 진입 지역 — 관문 안내·해금 조건 표시용 ("잿빛 화산 권역") */
+export function finalTierEntry(content: Content) {
+  const tier = finalTier(content);
+  return content.regionList.find((r) => r.tier === tier)!;
+}
+
+/** 몬스터가 최종 티어 서식인가 — 초월 합성 재료 판정 */
+export function isFinalTierNative(content: Content, monsterId: string): boolean {
+  const monster = content.monsters.get(monsterId);
+  if (!monster) return false;
+  return content.regions.get(monster.habitat)?.tier === finalTier(content);
 }
 
 /** 초월로 올라가는 합성인가 — 최상위 등급이 결과인 경우 */
@@ -103,14 +120,14 @@ export function fuseMonsters(content: Content, save: SaveState, input: FusionInp
   }
   const nextRarity = RARITY_NEXT[rarity!];
   if (!nextRarity) throw new GameError('fusion-top', `${RARITY_LABEL[rarity!]} 카드는 더 합성할 수 없습니다`);
-  // 초월 도전은 최종 지역 서식 카드만 재료로 쓸 수 있다 (2026-08-25 사용자) — 엔드콘텐츠 관문
+  // 초월 도전은 최종 티어 서식 카드만 재료로 쓸 수 있다 (2026-08-25 사용자) — 엔드콘텐츠 관문
   if (isTranscendStep(nextRarity)) {
-    const last = finalRegion(content);
+    const entry = finalTierEntry(content);
     for (const material of input.materials) {
       const monster = content.monsters.get(material.monsterId)!;
-      if (monster.habitat !== last.id) {
+      if (!isFinalTierNative(content, monster.id)) {
         throw new GameError('fusion-region',
-          `${RARITY_LABEL[nextRarity]} 합성은 ${last.name} 서식 카드만 재료가 됩니다 (${monster.name}은 다른 지역)`);
+          `${RARITY_LABEL[nextRarity]} 합성은 ${entry.name} 권역 서식 카드만 재료가 됩니다 (${monster.name}은 다른 지역)`);
       }
     }
   }
@@ -209,11 +226,11 @@ export function fuseArtifacts(content: Content, save: SaveState, input: Artifact
   }
   const nextRarity = RARITY_NEXT[rarity!];
   if (!nextRarity) throw new GameError('fusion-top', `${RARITY_LABEL[rarity!]} 유물은 더 합성할 수 없습니다`);
-  // 유물에는 서식 지역이 없다 — 몬스터의 '최종 지역 재료' 규칙에 대응하는 등가로 최종 지역 해금을 요구한다
+  // 유물에는 서식 지역이 없다 — 몬스터의 '최종 티어 재료' 규칙에 대응하는 등가로 최종 티어 진입을 요구한다
   if (isTranscendStep(nextRarity)) {
-    const last = finalRegion(content);
-    if (!isRegionUnlocked(content, save, last.id)) {
-      throw new GameError('fusion-region', `${RARITY_LABEL[nextRarity]} 합성은 ${last.name}을 해금해야 도전할 수 있습니다`);
+    const entry = finalTierEntry(content);
+    if (!isRegionUnlocked(content, save, entry.id)) {
+      throw new GameError('fusion-region', `${RARITY_LABEL[nextRarity]} 합성은 ${entry.name} 권역을 해금해야 도전할 수 있습니다`);
     }
   }
   const chance = fusion.chance[rarity!] ?? 0;

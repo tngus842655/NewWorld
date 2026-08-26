@@ -69,7 +69,7 @@
       "encounters": 18,
       "crossroads": 2,
       "yieldMult": 1.35,
-      "legendaryChance": 0.05,
+      "legendaryChance": 0.02,
       "rareWeightMult": 2
     }
   },
@@ -123,11 +123,11 @@
     },
     {
       "count": 3,
-      "regionUnlocked": "sunken-marsh"
+      "regionUnlocked": "frozen-abyss"
     },
     {
       "count": 4,
-      "regionUnlocked": "ashen-volcano"
+      "regionUnlocked": "crater-heart"
     }
   ],
   "ads": {
@@ -645,7 +645,7 @@
       "common": 0.5,
       "uncommon": 0.25,
       "rare": 0.125,
-      "heroic": 0.0625,
+      "heroic": 0.04,
       "legendary": 0.03,
       "transcendent": 0
     }

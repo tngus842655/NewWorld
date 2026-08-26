@@ -13,11 +13,15 @@ export const RARITY_SCORE: Record<MonsterRarity, number> = {
 /** 파견 길이별 점수 — 시간 비례 + 위험 가중 (전멸 귀환은 절반) */
 export const TIER_SCORE: Record<Tier, number> = { scout: 1, standard: 6, deep: 30 };
 
-/** 종 기본점 = 등급점 × 지역 배수(order) — 도감·상세에 그대로 노출 */
+/**
+ * 종 기본점 = 등급점 × 지역 배수(tier) — 도감·상세에 그대로 노출.
+ * 12지역 개편(2026-08-26)부터 order가 1~12로 늘어 order를 그대로 쓰면 상위 지역 점수가
+ * 3배로 부풀고 같은 바이옴 안에서도 소지역별로 갈린다 — 배수는 난이도 계단인 tier(1~4)가 정본.
+ */
 export function monsterBaseScore(content: Content, monsterId: string): number {
   const monster = content.monsters.get(monsterId);
   if (!monster) return 0;
-  return RARITY_SCORE[monster.rarity] * (content.regions.get(monster.habitat)?.order ?? 1);
+  return RARITY_SCORE[monster.rarity] * (content.regions.get(monster.habitat)?.tier ?? 1);
 }
 
 /** 보유 종 점수 = 기본점 + 육성 가산 (레벨당 5%, 성급당 50%) */

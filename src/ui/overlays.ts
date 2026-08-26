@@ -5,7 +5,7 @@ import { content } from '../content';
 import { ELEMENTS, RARITY_LABEL, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
-import { finalRegion } from '../core/economy';
+import { finalTierEntry } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, save } from '../state/store';
@@ -411,7 +411,7 @@ function oddsSheet(): HTMLElement {
       el('div.small.muted', {},
         `· ${RARITY_LABEL.transcendent}은 오직 합성으로만 얻습니다 [조우·발굴·상점 뽑기에는 등장하지 않습니다]`),
       el('div.small.muted', {},
-        `· ${RARITY_LABEL.transcendent} 도전은 ${finalRegion(content).name} 서식 ${RARITY_LABEL.legendary} 카드만 재료가 됩니다`),
+        `· ${RARITY_LABEL.transcendent} 도전은 ${finalTierEntry(content).name} 권역 서식 ${RARITY_LABEL.legendary} 카드만 재료가 됩니다`),
     ),
   );
 

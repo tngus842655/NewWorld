@@ -104,8 +104,8 @@ describe('팀 효과 수집', () => {
     const none = collectTeamEffects(content, save, partyIds, []);
     expect(none.effects.some((e) => e.source.startsWith('milestone:'))).toBe(false);
 
-    save.milestones = ['coast-6'];
+    save.milestones = ['coast-9'];
     const withMs = collectTeamEffects(content, save, partyIds, []);
-    expect(withMs.effects.some((e) => e.source === 'milestone:coast-6')).toBe(true);
+    expect(withMs.effects.some((e) => e.source === 'milestone:coast-9')).toBe(true);
   });
 });

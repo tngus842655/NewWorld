@@ -100,7 +100,7 @@ describe('초월 등급 격리 (합성 전용)', () => {
    * 초월은 도감 사다리(서식종 축)를 밀지 않는다 (2026-08-25 사용자 결정).
    *
    * 초월의 habitat은 최종 지역이지만 그 지역에서 잡을 수 없다. 지역·총합 집계에 넣으면
-   * 서식종을 다 못 채운 유저가 "잿빛 화산 완전 정복"·"신대륙 도감의 완성"을 받는다.
+   * 서식종을 다 못 채운 유저가 "분화구 심장부 완전 정복"·"신대륙 도감의 완성"을 받는다.
    */
   describe('서식종 축 집계에서 분리된다', () => {
     const volcano = content.regionList[content.regionList.length - 1]!;
@@ -117,21 +117,22 @@ describe('초월 등급 격리 (합성 전용)', () => {
     };
 
     it('초월 3종은 지역·총합 집계에 잡히지 않는다', () => {
-      const counts = capturedCounts(content, saveWith(51));
-      expect(counts.byRegion.get(volcano.id), `${volcano.name} 서식종`).toBe(51);
-      expect(counts.total, '총합(서식종)').toBe(51);
+      // 15 = 최종 지역 서식 18종에서 초월 수(3)만큼 모자란 상태 — 초월이 새면 18로 보인다
+      const counts = capturedCounts(content, saveWith(15));
+      expect(counts.byRegion.get(volcano.id), `${volcano.name} 서식종`).toBe(15);
+      expect(counts.total, '총합(서식종)').toBe(15);
       expect(counts.byRarity.get(TOP), '등급 집계는 초월을 센다').toBe(content.transcendentList.length);
     });
 
-    it('서식종 51종 + 초월 3종으로는 "완전 정복"이 터지지 않는다', () => {
-      const awarded = evaluateNewMilestones(content, saveWith(51));
-      expect(awarded, '54 계단이 3종 모자란 채로 터지면 안 된다').not.toContain('volcano-54');
+    it('서식종 15종 + 초월 3종으로는 "완전 정복"이 터지지 않는다', () => {
+      const awarded = evaluateNewMilestones(content, saveWith(15));
+      expect(awarded, '18 계단이 3종 모자란 채로 터지면 안 된다').not.toContain('crater-18');
       expect(awarded, '초월 축은 별개로 터진다').toContain('transcend-3');
     });
 
     it('서식종을 다 채우면 그때 터진다', () => {
       const natives = content.nativeList.filter((m) => m.habitat === volcano.id).length;
-      expect(evaluateNewMilestones(content, saveWith(natives))).toContain('volcano-54');
+      expect(evaluateNewMilestones(content, saveWith(natives))).toContain('crater-18');
     });
   });
 

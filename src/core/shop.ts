@@ -86,10 +86,15 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
     if (goods.lures > 0) granted.lures = goods.lures;
   } else if (goods.kind === 'materialsAll') {
     // 해금한 모든 지역의 재료를 각 n개 (+골드) — 지역 선택 없음 (2026-08-23)
+    // 같은 티어의 소지역 3개는 재료 풀을 공유한다 (2026-08-26 12지역) — 지역이 아니라
+    // 재료 종 단위로 지급해야 티어를 다 연 유저가 3배로 받는 사고가 없다
     granted.materials = [];
+    const grantedIds = new Set<string>();
     for (const unlockedRegion of content.regionList) {
       if (!isRegionUnlocked(content, next, unlockedRegion.id)) continue;
       for (const materialId of unlockedRegion.materials) {
+        if (grantedIds.has(materialId)) continue;
+        grantedIds.add(materialId);
         next.wallet.materials[materialId] = (next.wallet.materials[materialId] ?? 0) + goods.countEach;
         granted.materials.push({ materialId, count: goods.countEach });
       }

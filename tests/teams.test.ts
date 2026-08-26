@@ -17,10 +17,11 @@ describe('군 프리셋 (2026-08-23 군 시스템)', () => {
     expect(two.teams).toHaveLength(2);
     expect(two.teams[1]).toEqual({ id: 'team-2', name: '원정대 2', partyIds: [], artifactIds: [] });
 
-    two.profile.flags[regionFlagKey('sunken-marsh')] = true;
-    two.profile.flags[regionFlagKey('ashen-volcano')] = true;
+    // 3군·4군 게이트는 권역 심부다 (2026-08-26 12지역 — 티어 진입이 아니라 심연·심장부 해금)
+    two.profile.flags[regionFlagKey('frozen-abyss')] = true;
+    two.profile.flags[regionFlagKey('crater-heart')] = true;
     const four = ensureTeams(content, two);
-    expect(four.teams).toHaveLength(4); // 화산까지 → 4군
+    expect(four.teams).toHaveLength(4); // 심장부까지 → 4군
   });
 
   it('군 간 카드 배타 — 카드 1장은 한 군만, 2장이면 두 군 편성 가능', () => {
@@ -65,13 +66,14 @@ describe('군 프리셋 (2026-08-23 군 시스템)', () => {
     ];
     const auto = autoLoadout(content, save, 'team-1');
     expect(auto.partyIds).toHaveLength(3);
-    expect(auto.partyIds[0]).toBe('bubble-crab'); // 최고 CP 선두
+    // tide-snail은 심부 소지역(폭풍의 곶) 서식이라 기본 스탯이 ×2.5 — 성장 차를 뒤집는다 (2026-08-26 스탯 램프)
+    expect(auto.partyIds[0]).toBe('tide-snail'); // 최고 CP 선두
     expect(auto.partyIds).not.toContain('dune-pup'); // 최저 CP 탈락
 
     // 다른 군이 최고 CP 종의 카드를 다 쓰면 후보에서 빠진다
-    save.teams[1]!.partyIds = ['bubble-crab'];
+    save.teams[1]!.partyIds = ['tide-snail'];
     const excluded = autoLoadout(content, save, 'team-1');
-    expect(excluded.partyIds).not.toContain('bubble-crab');
+    expect(excluded.partyIds).not.toContain('tide-snail');
     expect(excluded.partyIds).toContain('dune-pup'); // 남은 3종이 전부 편성
   });
 

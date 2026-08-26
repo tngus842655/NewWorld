@@ -447,8 +447,10 @@ describe('귀환 정산', () => {
   });
 
   it('포획으로 도감 마일스톤이 달성되면 보상이 지급된다', () => {
-    const coastCommons = content.monsterList.filter((m) => m.habitat === 'misty-coast' && m.rarity === 'common');
-    const preCaptured = coastCommons.slice(0, 5).map((m) => m.id);
+    // 8종 사전 포획 → 9종째 포획이 coast-9 계단을 넘는다 (12지역 개편으로 사다리가 2/5/9/12/16/18)
+    const coastNatives = content.monsterList.filter(
+      (m) => m.habitat === 'misty-coast' && m.rarity !== 'legendary' && m.rarity !== 'transcendent');
+    const preCaptured = coastNatives.slice(0, 8).map((m) => m.id);
 
     const trial = (seed: string): { captured: number } => {
       const clock = makeCtx();
@@ -470,11 +472,11 @@ describe('귀환 정산', () => {
     const goldBefore = save.wallet.gold;
     const { save: after, journal, newMilestones } = claimExpedition(content, save, expedition.id, clock.ctx);
 
-    expect(newMilestones).toContain('coast-6');
-    // 5종 사전 포획 상태라 coast-2·coast-4도 함께 달성된다 — 새로 달성된 전체 보상 합으로 검증
+    expect(newMilestones).toContain('coast-9');
+    // 8종 사전 포획 상태라 coast-2·coast-5도 함께 달성된다 — 새로 달성된 전체 보상 합으로 검증
     const rewardGold = newMilestones.reduce(
       (sum, id) => sum + (content.milestones.find((m) => m.id === id)?.reward.gold ?? 0), 0);
     expect(after.wallet.gold).toBe(goldBefore + journal.totals.gold + rewardGold);
-    expect(after.milestones).toContain('coast-6');
+    expect(after.milestones).toContain('coast-9');
   });
 });

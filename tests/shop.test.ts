@@ -86,10 +86,10 @@ describe('상점 (GDD §9.4)', () => {
     expect(one.granted.materials!.map((m) => m.materialId).sort())
       .toEqual([...content.regions.get('misty-coast')!.materials].sort());
 
-    // 전 지역 해금 — 모든 지역 재료가 각 n개씩
+    // 전 지역 해금 — 모든 재료가 각 n개씩 (같은 티어 소지역은 재료를 공유하므로 지역 수가 아니라 재료 종 수)
     const { save: unlockedSave } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }], { gold: 50_000, unlockAll: true });
     const all = buyShopProduct(content, unlockedSave, { productId: 'gold-materials' }, fixedCtx());
-    expect(all.granted.materials).toHaveLength(content.regionList.length * 2);
+    expect(all.granted.materials).toHaveLength(content.materials.size);
     for (const { materialId, count } of all.granted.materials!) {
       expect(count).toBe(goods.countEach);
       expect(all.save.wallet.materials[materialId]).toBe(goods.countEach);

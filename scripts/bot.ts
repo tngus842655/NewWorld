@@ -560,12 +560,15 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         const power = partyPowerOf(content, save, party, artifacts, r.id, tier);
         if (power >= r.recommendedCp * strategy.safety) region = r;
       }
-      // 도감 우선 모드(--codex): 감당 가능한 지역 중 24종 미달인 가장 앞 지역을 돈다 (실유저의 도감 채우기 행동)
+      // 도감 우선 모드(--codex): 감당 가능한 지역 중 서식종 3/4 미달인 가장 앞 지역을 돈다 (실유저의 도감 채우기 행동)
+      // 12지역 개편(2026-08-26)으로 지역 모수가 54 → 18종이 되어 고정 24가 아니라 비율로 본다
       if (codexMode) {
         const counts = capturedCounts(content, save);
+        const nativeOf = (regionId: string) =>
+          content.monsterList.filter((m) => m.habitat === regionId && m.rarity !== 'transcendent').length;
         const target = unlocked.find(
           (r) =>
-            (counts.byRegion.get(r.id) ?? 0) < 24 &&
+            (counts.byRegion.get(r.id) ?? 0) < Math.ceil(nativeOf(r.id) * 0.75) &&
             partyPowerOf(content, save, party, artifacts, r.id, tier) >= r.recommendedCp * strategy.safety,
         );
         if (target) region = target;
@@ -652,7 +655,8 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         topCp,
         wipes,
         runs,
-        unlocked: content.regionList.filter((r) => isRegionUnlocked(content, save, r.id)).map((r) => r.order).join(''),
+        // 12지역부터 order 나열('1234…')은 읽을 수 없다 — "해금 수/전체"로 표기 (2026-08-26)
+        unlocked: `${content.regionList.filter((r) => isRegionUnlocked(content, save, r.id)).length}/${content.regionList.length}`,
         // 지역별 도감 수 — 업적 계단 도달 일차 측정용 (2026-08-23)
         byRegion: Object.fromEntries(content.regionList.map((r) => [r.id, counts.byRegion.get(r.id) ?? 0])),
         partySlots: save.profile.partySlots,

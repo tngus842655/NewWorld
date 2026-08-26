@@ -4,7 +4,7 @@
  */
 import { content } from '../content';
 import type { MonsterRarity } from '../content/schema';
-import { RARITY_NEXT, finalRegion, type FusionInput, type FusionResult } from '../core/economy';
+import { RARITY_NEXT, finalTierEntry, isFinalTierNative, type FusionInput, type FusionResult } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import type { SaveState } from '../core/types';
 import { batch, signal } from '../state/signal';
@@ -45,13 +45,13 @@ export function resetFusion(): void {
 // ── 여분 계산·자동 재료 계획 ─────────────────────────────────────────────────
 
 /**
- * 초월 도전은 최종 지역 서식 카드만 재료가 된다 (2026-08-25 사용자).
+ * 초월 도전은 최종 티어(권역) 서식 카드만 재료가 된다 (2026-08-25 사용자, 2026-08-26 티어화).
  * 코어(economy.ts)가 거절하므로, 시트도 같은 기준으로 세지 않으면
  * "최대 4회 가능"이라고 해놓고 눌러도 0회 합성되는 조용한 실패가 난다.
  */
 function isUsableMaterial(monsterId: string, nextRarity: MonsterRarity): boolean {
   if (FUSION_NEXT[nextRarity] !== null) return true; // 초월로 가는 단계가 아니면 제한 없음
-  return content.monsters.get(monsterId)!.habitat === finalRegion(content).id;
+  return isFinalTierNative(content, monsterId);
 }
 
 function spareMap(state: SaveState, rarity: MonsterRarity): Map<string, number> {
@@ -192,12 +192,12 @@ export function fusionSheet(): HTMLElement {
       total > 0
         ? `${MONSTER_RARITY_LABEL[rarity]} 여분 ${total}장 [최대 ${maxRounds}회 합성 가능]`
         : restricted
-          ? `${finalRegion(content).name} 서식 ${MONSTER_RARITY_LABEL[rarity]}의 여분 카드가 없습니다`
+          ? `${finalTierEntry(content).name} 권역 서식 ${MONSTER_RARITY_LABEL[rarity]}의 여분 카드가 없습니다`
           : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 [중복 포획으로 모아보세요]`),
     // 초월 단계에서는 재료 조건이 다르다는 것을 눌러보기 전에 알려준다 (2026-08-25)
     restricted
       ? el('div.center.small.muted', {},
-          `⚠️ ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${finalRegion(content).name} 서식 카드만 재료가 됩니다`)
+          `⚠️ ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${finalTierEntry(content).name} 권역 서식 카드만 재료가 됩니다`)
       : null,
 
     el('div.card.stack-sm', {},

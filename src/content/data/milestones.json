@@ -2,484 +2,1321 @@
   {
     "id": "coast-2",
     "name": "첫 발자국",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 2 },
-    "reward": { "gold": 300 }
-  },
-  {
-    "id": "coast-4",
-    "name": "물안개를 걷는 자",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 4 },
-    "reward": { "gold": 500 }
-  },
-  {
-    "id": "coast-6",
-    "name": "해안 채집가",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 6 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 2
+    },
     "reward": {
-      "gold": 800,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
+      "gold": 800
+    }
+  },
+  {
+    "id": "coast-5",
+    "name": "갯내음에 익숙한 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 5
+    },
+    "reward": {
+      "gold": 1200,
+      "dust": 40
     }
   },
   {
     "id": "coast-9",
     "name": "갯벌의 친구",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 9 },
-    "reward": { "gold": 1200, "dust": 50 }
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 9
+    },
+    "reward": {
+      "gold": 1900,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.03
+          }
+        }
+      ]
+    }
   },
   {
     "id": "coast-12",
     "name": "해안의 주인",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 12 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 12
+    },
     "reward": {
-      "gold": 2500,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
+      "gold": 3000
     }
-  },
-  {
-    "id": "coast-14",
-    "name": "해안 순찰자",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 14 },
-    "reward": { "gold": 3200 }
   },
   {
     "id": "coast-16",
     "name": "파도의 기록가",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 16 },
-    "reward": { "dust": 120 }
-  },
-  {
-    "id": "coast-20",
-    "name": "심해의 초대",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 20 },
-    "reward": { "gold": 4500 }
-  },
-  {
-    "id": "coast-24",
-    "name": "해안의 전설",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 24 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 16
+    },
     "reward": {
-      "gold": 6000,
-      "effects": [{ "hook": "captureRoll", "do": { "kind": "captureAdd", "value": 0.02 } }]
+      "gold": 4500,
+      "dust": 70
     }
   },
   {
-    "id": "coast-26",
-    "name": "해무를 꿰뚫는 자",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 26 },
-    "reward": { "gold": 8000 }
-  },
-  {
-    "id": "coast-34",
-    "name": "썰물의 목격자",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 34 },
-    "reward": { "gold": 10000 }
-  },
-  {
-    "id": "coast-44",
-    "name": "해도의 완성자",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 44 },
-    "reward": { "gold": 12000, "dust": 200 }
-  },
-  {
-    "id": "coast-54",
+    "id": "coast-18",
     "name": "물안개 해안 완전 정복",
-    "condition": { "kind": "regionCaptured", "region": "misty-coast", "count": 54 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "misty-coast",
+      "count": 18
+    },
     "reward": {
-      "gold": 16000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.03 } }]
+      "gold": 6800,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.03
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pearl-2",
+    "name": "조개 줍는 손",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 2
+    },
+    "reward": {
+      "gold": 900
+    }
+  },
+  {
+    "id": "pearl-5",
+    "name": "갯벌 산책자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 5
+    },
+    "reward": {
+      "gold": 1400,
+      "dust": 40
+    }
+  },
+  {
+    "id": "pearl-9",
+    "name": "진주를 품은 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 9
+    },
+    "reward": {
+      "gold": 2200
+    }
+  },
+  {
+    "id": "pearl-12",
+    "name": "갯벌의 터줏대감",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 12
+    },
+    "reward": {
+      "gold": 3600,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pearl-16",
+    "name": "썰물의 목격자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 16
+    },
+    "reward": {
+      "gold": 5300,
+      "dust": 80
+    }
+  },
+  {
+    "id": "pearl-18",
+    "name": "진주 갯벌 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "pearl-shallows",
+      "count": 18
+    },
+    "reward": {
+      "gold": 8000
+    }
+  },
+  {
+    "id": "cape-2",
+    "name": "바람맞이 손님",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 2
+    },
+    "reward": {
+      "gold": 1100
+    }
+  },
+  {
+    "id": "cape-5",
+    "name": "돌풍을 걷는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 5
+    },
+    "reward": {
+      "gold": 1700,
+      "dust": 50
+    }
+  },
+  {
+    "id": "cape-9",
+    "name": "등대지기의 벗",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 9
+    },
+    "reward": {
+      "gold": 2600
+    }
+  },
+  {
+    "id": "cape-12",
+    "name": "폭풍의 단골",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 12
+    },
+    "reward": {
+      "gold": 4200
+    }
+  },
+  {
+    "id": "cape-16",
+    "name": "해도의 완성자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 16
+    },
+    "reward": {
+      "gold": 6300,
+      "dust": 90,
+      "effects": [
+        {
+          "hook": "captureRoll",
+          "do": {
+            "kind": "captureAdd",
+            "value": 0.02
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cape-18",
+    "name": "폭풍의 곶 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "storm-cape",
+      "count": 18
+    },
+    "reward": {
+      "gold": 9500
     }
   },
   {
     "id": "woods-2",
     "name": "숲의 손님",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 2 },
-    "reward": { "gold": 700 }
-  },
-  {
-    "id": "woods-4",
-    "name": "가지 사이의 눈",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 4 },
-    "reward": { "gold": 1100 }
-  },
-  {
-    "id": "woods-6",
-    "name": "숲의 친구",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 6 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 2
+    },
     "reward": {
-      "gold": 1500,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
+      "gold": 1400
+    }
+  },
+  {
+    "id": "woods-5",
+    "name": "가지 사이의 눈",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 5
+    },
+    "reward": {
+      "gold": 2200,
+      "dust": 60
     }
   },
   {
     "id": "woods-9",
     "name": "이끼 냄새를 아는 자",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 9 },
-    "reward": { "gold": 2800, "dust": 80 }
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 9
+    },
+    "reward": {
+      "gold": 3400,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.03
+          }
+        }
+      ]
+    }
   },
   {
     "id": "woods-12",
     "name": "숲의 목소리",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 12 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 12
+    },
     "reward": {
-      "gold": 4000,
-      "effects": [{ "hook": "captureRoll", "do": { "kind": "captureAdd", "value": 0.02 } }]
+      "gold": 5500
     }
-  },
-  {
-    "id": "woods-14",
-    "name": "숲길 개척자",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 14 },
-    "reward": { "gold": 5500 }
   },
   {
     "id": "woods-16",
     "name": "수풀의 언어",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 16 },
-    "reward": { "dust": 200 }
-  },
-  {
-    "id": "woods-20",
-    "name": "고목의 신뢰",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 20 },
-    "reward": { "gold": 8000 }
-  },
-  {
-    "id": "woods-24",
-    "name": "숲의 어른",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 24 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 16
+    },
     "reward": {
-      "gold": 9000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.05 } }]
+      "gold": 8200,
+      "dust": 110
     }
   },
   {
-    "id": "woods-26",
-    "name": "속삭임을 알아듣는 자",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 26 },
-    "reward": { "gold": 15000 }
-  },
-  {
-    "id": "woods-34",
-    "name": "우듬지의 손님",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 34 },
-    "reward": { "gold": 18000 }
-  },
-  {
-    "id": "woods-44",
-    "name": "숲그늘의 안내자",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 44 },
-    "reward": { "gold": 22000, "dust": 350 }
-  },
-  {
-    "id": "woods-54",
+    "id": "woods-18",
     "name": "속삭이는 숲 완전 정복",
-    "condition": { "kind": "regionCaptured", "region": "whispering-woods", "count": 54 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "whispering-woods",
+      "count": 18
+    },
     "reward": {
-      "gold": 30000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.03 } }]
+      "gold": 12300,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.03
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "thicket-2",
+    "name": "달빛 아래 첫걸음",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 2
+    },
+    "reward": {
+      "gold": 1600
+    }
+  },
+  {
+    "id": "thicket-5",
+    "name": "덤불 헤치는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 5
+    },
+    "reward": {
+      "gold": 2600,
+      "dust": 70
+    }
+  },
+  {
+    "id": "thicket-9",
+    "name": "반딧불 길잡이",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 9
+    },
+    "reward": {
+      "gold": 4000
+    }
+  },
+  {
+    "id": "thicket-12",
+    "name": "달빛의 벗",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 12
+    },
+    "reward": {
+      "gold": 6400,
+      "effects": [
+        {
+          "hook": "captureRoll",
+          "do": {
+            "kind": "captureAdd",
+            "value": 0.02
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "thicket-16",
+    "name": "밤숲의 언어",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 16
+    },
+    "reward": {
+      "gold": 9700,
+      "dust": 140
+    }
+  },
+  {
+    "id": "thicket-18",
+    "name": "달빛 덤불 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "moonlit-thicket",
+      "count": 18
+    },
+    "reward": {
+      "gold": 14500
+    }
+  },
+  {
+    "id": "canopy-2",
+    "name": "우듬지의 손님",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 2
+    },
+    "reward": {
+      "gold": 1900
+    }
+  },
+  {
+    "id": "canopy-5",
+    "name": "나이테를 읽는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 5
+    },
+    "reward": {
+      "gold": 3000,
+      "dust": 90
+    }
+  },
+  {
+    "id": "canopy-9",
+    "name": "고목의 신뢰",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 9
+    },
+    "reward": {
+      "gold": 4800
+    }
+  },
+  {
+    "id": "canopy-12",
+    "name": "숲그늘의 안내자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 12
+    },
+    "reward": {
+      "gold": 7600
+    }
+  },
+  {
+    "id": "canopy-16",
+    "name": "숲의 어른",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 16
+    },
+    "reward": {
+      "gold": 11400,
+      "dust": 160,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "canopy-18",
+    "name": "고목의 우듬지 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "elder-canopy",
+      "count": 18
+    },
+    "reward": {
+      "gold": 17100
     }
   },
   {
     "id": "marsh-2",
     "name": "늪가의 방문자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 2 },
-    "reward": { "gold": 1500 }
-  },
-  {
-    "id": "marsh-4",
-    "name": "안개 속 발걸음",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 4 },
-    "reward": { "gold": 2400 }
-  },
-  {
-    "id": "marsh-6",
-    "name": "늪을 걷는 자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 6 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 2
+    },
     "reward": {
-      "gold": 3000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
+      "gold": 2300
+    }
+  },
+  {
+    "id": "marsh-5",
+    "name": "안개 속 발걸음",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 5
+    },
+    "reward": {
+      "gold": 3600,
+      "dust": 110
     }
   },
   {
     "id": "marsh-9",
     "name": "가라앉은 것들의 벗",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 9 },
-    "reward": { "gold": 5500, "dust": 150 }
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 9
+    },
+    "reward": {
+      "gold": 5700,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.05
+          }
+        }
+      ]
+    }
   },
   {
     "id": "marsh-12",
     "name": "심연의 안내자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 12 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 12
+    },
     "reward": {
-      "gold": 6000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "atk", "value": 0.05 } }]
+      "gold": 9100
     }
-  },
-  {
-    "id": "marsh-14",
-    "name": "습지 답사자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 14 },
-    "reward": { "gold": 9000 }
   },
   {
     "id": "marsh-16",
     "name": "차가운 물의 친구",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 16 },
-    "reward": { "dust": 350 }
-  },
-  {
-    "id": "marsh-20",
-    "name": "심연을 들여다본 자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 20 },
-    "reward": { "gold": 13000 }
-  },
-  {
-    "id": "marsh-24",
-    "name": "늪의 지배자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 24 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 16
+    },
     "reward": {
-      "gold": 14000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.08 } }]
+      "gold": 13600,
+      "dust": 200
     }
   },
   {
-    "id": "marsh-26",
-    "name": "늪의 오랜 벗",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 26 },
-    "reward": { "gold": 25000 }
-  },
-  {
-    "id": "marsh-34",
-    "name": "이탄 밑을 아는 자",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 34 },
-    "reward": { "gold": 30000 }
-  },
-  {
-    "id": "marsh-44",
-    "name": "가라앉은 왕국의 사관",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 44 },
-    "reward": { "gold": 36000, "dust": 600 }
-  },
-  {
-    "id": "marsh-54",
+    "id": "marsh-18",
     "name": "가라앉은 늪 완전 정복",
-    "condition": { "kind": "regionCaptured", "region": "sunken-marsh", "count": 54 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "sunken-marsh",
+      "count": 18
+    },
     "reward": {
-      "gold": 50000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
+      "gold": 20400,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "mire-2",
+    "name": "이탄길 답사자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 2
+    },
+    "reward": {
+      "gold": 2700
+    }
+  },
+  {
+    "id": "mire-5",
+    "name": "도깨비불을 쫓는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 5
+    },
+    "reward": {
+      "gold": 4300,
+      "dust": 130
+    }
+  },
+  {
+    "id": "mire-9",
+    "name": "늪을 걷는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 9
+    },
+    "reward": {
+      "gold": 6700
+    }
+  },
+  {
+    "id": "mire-12",
+    "name": "이탄 밑을 아는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 12
+    },
+    "reward": {
+      "gold": 10700,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "mire-16",
+    "name": "습지의 오랜 벗",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 16
+    },
+    "reward": {
+      "gold": 16100,
+      "dust": 240
+    }
+  },
+  {
+    "id": "mire-18",
+    "name": "안개 이탄늪 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "peat-mire",
+      "count": 18
+    },
+    "reward": {
+      "gold": 24100
+    }
+  },
+  {
+    "id": "abyss-2",
+    "name": "살얼음 위의 손님",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 2
+    },
+    "reward": {
+      "gold": 3200
+    }
+  },
+  {
+    "id": "abyss-5",
+    "name": "한기를 견디는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 5
+    },
+    "reward": {
+      "gold": 5100,
+      "dust": 150
+    }
+  },
+  {
+    "id": "abyss-9",
+    "name": "심연을 들여다본 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 9
+    },
+    "reward": {
+      "gold": 7900
+    }
+  },
+  {
+    "id": "abyss-12",
+    "name": "얼음 밑의 목격자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 12
+    },
+    "reward": {
+      "gold": 12600
+    }
+  },
+  {
+    "id": "abyss-16",
+    "name": "가라앉은 왕국의 사관",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 16
+    },
+    "reward": {
+      "gold": 19000,
+      "dust": 280,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.08
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "abyss-18",
+    "name": "얼어붙은 심연 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "frozen-abyss",
+      "count": 18
+    },
+    "reward": {
+      "gold": 28500
     }
   },
   {
     "id": "volcano-2",
     "name": "잿길의 입문자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 2 },
-    "reward": { "gold": 2500 }
-  },
-  {
-    "id": "volcano-4",
-    "name": "열기를 견디는 자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 4 },
-    "reward": { "gold": 4000 }
-  },
-  {
-    "id": "volcano-6",
-    "name": "불길을 지나는 자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 6 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 2
+    },
     "reward": {
-      "gold": 5000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.05 } }]
+      "gold": 3600
+    }
+  },
+  {
+    "id": "volcano-5",
+    "name": "열기를 견디는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 5
+    },
+    "reward": {
+      "gold": 5800,
+      "dust": 180
     }
   },
   {
     "id": "volcano-9",
     "name": "재투성이 수집가",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 9 },
-    "reward": { "gold": 9000, "dust": 250 }
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 9
+    },
+    "reward": {
+      "gold": 9100,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "damageReduce",
+            "value": 0.05
+          }
+        }
+      ]
+    }
   },
   {
     "id": "volcano-12",
     "name": "화산의 정복자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 12 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 12
+    },
     "reward": {
-      "gold": 12000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
+      "gold": 14600
     }
-  },
-  {
-    "id": "volcano-14",
-    "name": "용암길 답파자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 14 },
-    "reward": { "gold": 15000 }
   },
   {
     "id": "volcano-16",
     "name": "불꽃의 기록가",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 16 },
-    "reward": { "dust": 600 }
-  },
-  {
-    "id": "volcano-20",
-    "name": "화구의 도전자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 20 },
-    "reward": { "gold": 22000 }
-  },
-  {
-    "id": "volcano-24",
-    "name": "화산의 심장을 본 자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 24 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 16
+    },
     "reward": {
-      "gold": 20000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.05 } }]
+      "gold": 21900,
+      "dust": 340
     }
   },
   {
-    "id": "volcano-26",
-    "name": "재의 순례자",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 26 },
-    "reward": { "gold": 40000 }
-  },
-  {
-    "id": "volcano-34",
-    "name": "용암길의 단골",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 34 },
-    "reward": { "gold": 48000 }
-  },
-  {
-    "id": "volcano-44",
-    "name": "분화구의 초대 손님",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 44 },
-    "reward": { "gold": 56000, "dust": 1000 }
-  },
-  {
-    "id": "volcano-54",
+    "id": "volcano-18",
     "name": "잿빛 화산 완전 정복",
-    "condition": { "kind": "regionCaptured", "region": "ashen-volcano", "count": 54 },
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "ashen-volcano",
+      "count": 18
+    },
     "reward": {
-      "gold": 80000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.03 } }]
+      "gold": 32800,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "cp",
+            "value": 0.03
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "gorge-2",
+    "name": "협곡의 첫 손님",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 2
+    },
+    "reward": {
+      "gold": 4300
+    }
+  },
+  {
+    "id": "gorge-5",
+    "name": "용암길 답파자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 5
+    },
+    "reward": {
+      "gold": 6900,
+      "dust": 210
+    }
+  },
+  {
+    "id": "gorge-9",
+    "name": "불길을 지나는 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 9
+    },
+    "reward": {
+      "gold": 10700
+    }
+  },
+  {
+    "id": "gorge-12",
+    "name": "용암길의 단골",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 12
+    },
+    "reward": {
+      "gold": 17200,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "cp",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "gorge-16",
+    "name": "대장간의 친구",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 16
+    },
+    "reward": {
+      "gold": 25800,
+      "dust": 400
+    }
+  },
+  {
+    "id": "gorge-18",
+    "name": "용암 협곡 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "lava-gorge",
+      "count": 18
+    },
+    "reward": {
+      "gold": 38600
+    }
+  },
+  {
+    "id": "crater-2",
+    "name": "화구의 도전자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 2
+    },
+    "reward": {
+      "gold": 5100
+    }
+  },
+  {
+    "id": "crater-5",
+    "name": "재의 순례자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 5
+    },
+    "reward": {
+      "gold": 8100,
+      "dust": 250
+    }
+  },
+  {
+    "id": "crater-9",
+    "name": "분화구의 초대 손님",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 9
+    },
+    "reward": {
+      "gold": 12700
+    }
+  },
+  {
+    "id": "crater-12",
+    "name": "화산의 심장을 본 자",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 12
+    },
+    "reward": {
+      "gold": 20300
+    }
+  },
+  {
+    "id": "crater-16",
+    "name": "심장부의 기록가",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 16
+    },
+    "reward": {
+      "gold": 30400,
+      "dust": 470,
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "damageReduce",
+            "value": 0.05
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "crater-18",
+    "name": "분화구 심장부 완전 정복",
+    "condition": {
+      "kind": "regionCaptured",
+      "region": "crater-heart",
+      "count": 18
+    },
+    "reward": {
+      "gold": 45700
     }
   },
   {
     "id": "beast-tamer",
     "name": "야수 조련사",
-    "condition": { "kind": "tribeCaptured", "tribe": "beast", "count": 5 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "beast",
+      "count": 5
+    },
     "reward": {
       "gold": 1200,
-      "effects": [{ "hook": "computeParty", "when": { "tribe": "beast" }, "do": { "kind": "statMult", "stat": "atk", "value": 0.04 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "when": {
+            "tribe": "beast"
+          },
+          "do": {
+            "kind": "statMult",
+            "stat": "atk",
+            "value": 0.04
+          }
+        }
+      ]
     }
   },
   {
     "id": "wave-rider",
     "name": "파도를 타는 자",
-    "condition": { "kind": "tribeCaptured", "tribe": "aquatic", "count": 5 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "aquatic",
+      "count": 5
+    },
     "reward": {
       "gold": 1200,
-      "effects": [{ "hook": "computeParty", "when": { "tribe": "aquatic" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.05 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "when": {
+            "tribe": "aquatic"
+          },
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.05
+          }
+        }
+      ]
     }
   },
   {
     "id": "sky-watcher",
     "name": "하늘지기",
-    "condition": { "kind": "tribeCaptured", "tribe": "flying", "count": 5 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "flying",
+      "count": 5
+    },
     "reward": {
       "gold": 1200,
-      "effects": [{ "hook": "beforeEncounter", "do": { "kind": "trapAvoid", "chance": 0.15 } }]
+      "effects": [
+        {
+          "hook": "beforeEncounter",
+          "do": {
+            "kind": "trapAvoid",
+            "chance": 0.15
+          }
+        }
+      ]
     }
   },
   {
     "id": "spirit-whisperer",
     "name": "정령과 말하는 자",
-    "condition": { "kind": "tribeCaptured", "tribe": "spirit", "count": 8 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "spirit",
+      "count": 8
+    },
     "reward": {
       "gold": 2500,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "healReceivedMult", "value": 1.2 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "healReceivedMult",
+            "value": 1.2
+          }
+        }
+      ]
     }
   },
   {
     "id": "grave-keeper",
     "name": "무덤지기",
-    "condition": { "kind": "tribeCaptured", "tribe": "undead", "count": 8 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "undead",
+      "count": 8
+    },
     "reward": {
       "gold": 2500,
-      "effects": [{ "hook": "computeParty", "when": { "tribe": "undead" }, "do": { "kind": "statMult", "stat": "hp", "value": 0.06 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "when": {
+            "tribe": "undead"
+          },
+          "do": {
+            "kind": "statMult",
+            "stat": "hp",
+            "value": 0.06
+          }
+        }
+      ]
     }
   },
   {
     "id": "machine-friend",
     "name": "태엽의 친구",
-    "condition": { "kind": "tribeCaptured", "tribe": "construct", "count": 8 },
+    "condition": {
+      "kind": "tribeCaptured",
+      "tribe": "construct",
+      "count": 8
+    },
     "reward": {
       "gold": 2500,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "damageReduce", "value": 0.03 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "damageReduce",
+            "value": 0.03
+          }
+        }
+      ]
     }
   },
   {
     "id": "codex-10",
     "name": "신참 기록가",
-    "condition": { "kind": "totalCaptured", "count": 10 },
-    "reward": { "gold": 1500 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 10
+    },
+    "reward": {
+      "gold": 1500
+    }
   },
   {
     "id": "codex-25",
     "name": "숙련 기록가",
-    "condition": { "kind": "totalCaptured", "count": 25 },
-    "reward": { "gold": 4000, "dust": 100 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 25
+    },
+    "reward": {
+      "gold": 4000,
+      "dust": 100
+    }
   },
   {
     "id": "codex-40",
     "name": "수석 기록가",
-    "condition": { "kind": "totalCaptured", "count": 40 },
-    "reward": { "gold": 10000 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 40
+    },
+    "reward": {
+      "gold": 10000
+    }
   },
   {
     "id": "codex-52",
     "name": "대륙의 절반을 아는 자",
-    "condition": { "kind": "totalCaptured", "count": 52 },
-    "reward": { "gold": 12000 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 52
+    },
+    "reward": {
+      "gold": 12000
+    }
   },
   {
     "id": "codex-70",
     "name": "노련한 개척자",
-    "condition": { "kind": "totalCaptured", "count": 70 },
-    "reward": { "gold": 18000, "dust": 200 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 70
+    },
+    "reward": {
+      "gold": 18000,
+      "dust": 200
+    }
   },
   {
     "id": "codex-104",
     "name": "첫 도감을 채운 자",
-    "condition": { "kind": "totalCaptured", "count": 104 },
-    "reward": { "gold": 30000 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 104
+    },
+    "reward": {
+      "gold": 30000
+    }
   },
   {
     "id": "codex-130",
     "name": "대륙이 기억하는 이름",
-    "condition": { "kind": "totalCaptured", "count": 130 },
-    "reward": { "gold": 40000 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 130
+    },
+    "reward": {
+      "gold": 40000
+    }
   },
   {
     "id": "codex-170",
     "name": "걸어 다니는 박물지",
-    "condition": { "kind": "totalCaptured", "count": 170 },
-    "reward": { "gold": 55000, "dust": 400 }
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 170
+    },
+    "reward": {
+      "gold": 55000,
+      "dust": 400
+    }
   },
   {
     "id": "codex-216",
     "name": "신대륙 도감의 완성",
-    "condition": { "kind": "totalCaptured", "count": 216 },
+    "condition": {
+      "kind": "totalCaptured",
+      "count": 216
+    },
     "reward": {
       "gold": 80000,
-      "effects": [{ "hook": "computeParty", "do": { "kind": "statMult", "stat": "cp", "value": 0.05 } }]
+      "effects": [
+        {
+          "hook": "computeParty",
+          "do": {
+            "kind": "statMult",
+            "stat": "cp",
+            "value": 0.05
+          }
+        }
+      ]
     }
   },
   {
     "id": "transcend-1",
     "name": "초월에 닿은 자",
-    "condition": { "kind": "rarityCaptured", "rarity": "transcendent", "count": 1 },
-    "reward": { "gold": 120000, "dust": 1500 }
+    "condition": {
+      "kind": "rarityCaptured",
+      "rarity": "transcendent",
+      "count": 1
+    },
+    "reward": {
+      "gold": 120000,
+      "dust": 1500
+    }
   },
   {
     "id": "transcend-3",
     "name": "세 초월을 거느린 자",
-    "condition": { "kind": "rarityCaptured", "rarity": "transcendent", "count": 3 },
-    "reward": { "gold": 300000, "dust": 4000 }
+    "condition": {
+      "kind": "rarityCaptured",
+      "rarity": "transcendent",
+      "count": 3
+    },
+    "reward": {
+      "gold": 300000,
+      "dust": 4000
+    }
   }
 ]

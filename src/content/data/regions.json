@@ -4,6 +4,7 @@
     "name": "물안개 해안",
     "icon": "🌊",
     "order": 1,
+    "tier": 1,
     "growthCostMult": 1,
     "element": "nature",
     "recommendedCp": 100,
@@ -14,12 +15,8 @@
       "tide-shell"
     ],
     "legendary": [
-      "leviathan-calf",
-      "ancient-whale",
-      "mirage-admiral",
-      "tide-empress",
       "coral-colossus",
-      "abyss-angler"
+      "ancient-whale"
     ],
     "encounterMix": {
       "monster": 72,
@@ -37,6 +34,14 @@
         "weight": 15
       },
       {
+        "monster": "clam-clapper",
+        "weight": 15
+      },
+      {
+        "monster": "lantern-shrimp",
+        "weight": 15
+      },
+      {
         "monster": "dune-pup",
         "weight": 15
       },
@@ -45,43 +50,19 @@
         "weight": 15
       },
       {
-        "monster": "tide-snail",
-        "weight": 15
-      },
-      {
-        "monster": "driftwood-golem",
-        "weight": 9
-      },
-      {
-        "monster": "moon-jelly",
-        "weight": 6
-      },
-      {
-        "monster": "hermit-scuttler",
-        "weight": 15
-      },
-      {
         "monster": "puffer-balloon",
         "weight": 9
-      },
-      {
-        "monster": "starfish-cadet",
-        "weight": 15
       },
       {
         "monster": "sand-burrower",
         "weight": 9
       },
       {
-        "monster": "mist-duckling",
-        "weight": 15
-      },
-      {
-        "monster": "buoy-bot",
+        "monster": "kelp-sprout",
         "weight": 9
       },
       {
-        "monster": "kelp-sprout",
+        "monster": "compass-crab",
         "weight": 9
       },
       {
@@ -93,39 +74,55 @@
         "weight": 6
       },
       {
-        "monster": "reef-guardian",
+        "monster": "beacon-crane",
         "weight": 6
       },
       {
-        "monster": "moonlit-seal",
+        "monster": "moon-jelly",
         "weight": 6
-      },
-      {
-        "monster": "thunder-ray",
-        "weight": 2
-      },
-      {
-        "monster": "siren-conch",
-        "weight": 9
       },
       {
         "monster": "storm-petrel",
         "weight": 3
       },
       {
-        "monster": "storm-albatross",
-        "weight": 2
-      },
+        "monster": "squall-serpent",
+        "weight": 3
+      }
+    ]
+  },
+  {
+    "id": "pearl-shallows",
+    "name": "진주 갯벌",
+    "icon": "🐚",
+    "order": 2,
+    "tier": 1,
+    "growthCostMult": 1,
+    "element": "nature",
+    "recommendedCp": 160,
+    "rewardScale": 1,
+    "unlock": {
+      "codexCaptured": {
+        "misty-coast": 6
+      }
+    },
+    "materials": [
+      "salt-bloom",
+      "tide-shell"
+    ],
+    "legendary": [
+      "tide-empress",
+      "mirage-admiral"
+    ],
+    "encounterMix": {
+      "monster": 72,
+      "treasure": 12,
+      "trap": 10,
+      "gather": 6
+    },
+    "spawns": [
       {
-        "monster": "maelstrom-turtle",
-        "weight": 7
-      },
-      {
-        "monster": "coast-wyrm",
-        "weight": 7
-      },
-      {
-        "monster": "coral-pup",
+        "monster": "hermit-scuttler",
         "weight": 15
       },
       {
@@ -133,9 +130,93 @@
         "weight": 15
       },
       {
-        "monster": "clam-clapper",
+        "monster": "starfish-cadet",
         "weight": 15
       },
+      {
+        "monster": "mist-duckling",
+        "weight": 15
+      },
+      {
+        "monster": "coral-pup",
+        "weight": 15
+      },
+      {
+        "monster": "driftwood-golem",
+        "weight": 9
+      },
+      {
+        "monster": "buoy-bot",
+        "weight": 9
+      },
+      {
+        "monster": "siren-conch",
+        "weight": 9
+      },
+      {
+        "monster": "ripple-imp",
+        "weight": 9
+      },
+      {
+        "monster": "tidal-organist",
+        "weight": 7
+      },
+      {
+        "monster": "anchor-warden",
+        "weight": 6
+      },
+      {
+        "monster": "pearl-otter",
+        "weight": 6
+      },
+      {
+        "monster": "moonlit-seal",
+        "weight": 6
+      },
+      {
+        "monster": "harbor-ghost",
+        "weight": 3
+      },
+      {
+        "monster": "tsunami-rider",
+        "weight": 2
+      },
+      {
+        "monster": "lighthouse-golem",
+        "weight": 3
+      }
+    ]
+  },
+  {
+    "id": "storm-cape",
+    "name": "폭풍의 곶",
+    "icon": "🌩️",
+    "order": 3,
+    "tier": 1,
+    "growthCostMult": 1,
+    "element": "nature",
+    "recommendedCp": 250,
+    "rewardScale": 1,
+    "unlock": {
+      "codexCaptured": {
+        "pearl-shallows": 8
+      }
+    },
+    "materials": [
+      "salt-bloom",
+      "tide-shell"
+    ],
+    "legendary": [
+      "abyss-angler",
+      "leviathan-calf"
+    ],
+    "encounterMix": {
+      "monster": 72,
+      "treasure": 12,
+      "trap": 10,
+      "gather": 6
+    },
+    "spawns": [
       {
         "monster": "spray-finch",
         "weight": 15
@@ -153,24 +234,8 @@
         "weight": 15
       },
       {
-        "monster": "lantern-shrimp",
+        "monster": "tide-snail",
         "weight": 15
-      },
-      {
-        "monster": "foam-pony",
-        "weight": 9
-      },
-      {
-        "monster": "compass-crab",
-        "weight": 9
-      },
-      {
-        "monster": "mist-heron",
-        "weight": 9
-      },
-      {
-        "monster": "ripple-imp",
-        "weight": 9
       },
       {
         "monster": "barnacle-bandit",
@@ -181,43 +246,39 @@
         "weight": 9
       },
       {
-        "monster": "tidal-organist",
+        "monster": "foam-pony",
+        "weight": 9
+      },
+      {
+        "monster": "mist-heron",
+        "weight": 9
+      },
+      {
+        "monster": "maelstrom-turtle",
         "weight": 7
-      },
-      {
-        "monster": "beacon-crane",
-        "weight": 6
-      },
-      {
-        "monster": "anchor-warden",
-        "weight": 6
-      },
-      {
-        "monster": "pearl-otter",
-        "weight": 6
-      },
-      {
-        "monster": "squall-serpent",
-        "weight": 3
       },
       {
         "monster": "driftnet-phantom",
         "weight": 6
       },
       {
-        "monster": "harbor-ghost",
-        "weight": 3
+        "monster": "coast-wyrm",
+        "weight": 7
       },
       {
-        "monster": "tsunami-rider",
-        "weight": 2
-      },
-      {
-        "monster": "lighthouse-golem",
-        "weight": 3
+        "monster": "reef-guardian",
+        "weight": 6
       },
       {
         "monster": "pelican-corsair",
+        "weight": 2
+      },
+      {
+        "monster": "thunder-ray",
+        "weight": 2
+      },
+      {
+        "monster": "storm-albatross",
         "weight": 2
       }
     ]
@@ -226,14 +287,19 @@
     "id": "whispering-woods",
     "name": "속삭이는 숲",
     "icon": "🌲",
-    "order": 2,
+    "order": 4,
+    "tier": 2,
     "growthCostMult": 2.4,
     "element": "nature",
     "recommendedCp": 400,
     "rewardScale": 2.4,
     "unlock": {
       "codexCaptured": {
-        "misty-coast": 10
+        "storm-cape": 9
+      },
+      "materials": {
+        "salt-bloom": 12,
+        "tide-shell": 12
       }
     },
     "materials": [
@@ -241,11 +307,7 @@
       "spirit-moss"
     ],
     "legendary": [
-      "verdant-phoenix",
       "ancient-sloth",
-      "moon-sovereign",
-      "thorn-emperor",
-      "nightmare-stalker",
       "worldroot-turtle"
     ],
     "encounterMix": {
@@ -256,11 +318,27 @@
     },
     "spawns": [
       {
+        "monster": "berry-mole",
+        "weight": 15
+      },
+      {
         "monster": "thorn-wolf",
         "weight": 15
       },
       {
-        "monster": "acorn-golem",
+        "monster": "hedge-hoglet",
+        "weight": 15
+      },
+      {
+        "monster": "mush-bouncer",
+        "weight": 15
+      },
+      {
+        "monster": "pinecone-knight",
+        "weight": 15
+      },
+      {
+        "monster": "mossy-snail",
         "weight": 15
       },
       {
@@ -272,95 +350,75 @@
         "weight": 9
       },
       {
-        "monster": "bramble-boar",
-        "weight": 9
-      },
-      {
-        "monster": "dew-fairy",
-        "weight": 9
-      },
-      {
-        "monster": "shade-ferret",
-        "weight": 9
-      },
-      {
-        "monster": "hedge-hoglet",
-        "weight": 15
-      },
-      {
-        "monster": "mush-bouncer",
-        "weight": 15
-      },
-      {
-        "monster": "twig-sprite",
-        "weight": 15
-      },
-      {
-        "monster": "honey-cub",
-        "weight": 15
-      },
-      {
-        "monster": "lantern-beetle",
-        "weight": 15
-      },
-      {
-        "monster": "night-raven",
-        "weight": 6
-      },
-      {
-        "monster": "root-tortoise",
-        "weight": 15
-      },
-      {
-        "monster": "elder-owlbear",
-        "weight": 7
-      },
-      {
-        "monster": "spore-shaman",
-        "weight": 3
-      },
-      {
-        "monster": "moss-drake",
-        "weight": 6
-      },
-      {
         "monster": "moonpetal-fox",
         "weight": 9
       },
       {
-        "monster": "bramble-golem",
-        "weight": 3
-      },
-      {
-        "monster": "wind-piper",
-        "weight": 6
+        "monster": "owl-postman",
+        "weight": 9
       },
       {
         "monster": "ancient-ent",
         "weight": 7
       },
       {
-        "monster": "sylvan-stag",
-        "weight": 2
+        "monster": "elder-owlbear",
+        "weight": 7
       },
       {
-        "monster": "aurora-unicorn",
-        "weight": 2
+        "monster": "hollow-puppeteer",
+        "weight": 6
       },
       {
-        "monster": "dream-weaver",
+        "monster": "glowvine-serpent",
+        "weight": 6
+      },
+      {
+        "monster": "bramble-golem",
         "weight": 3
       },
       {
-        "monster": "berry-mole",
+        "monster": "ironwood-golem",
+        "weight": 3
+      }
+    ]
+  },
+  {
+    "id": "moonlit-thicket",
+    "name": "달빛 덤불",
+    "icon": "🌙",
+    "order": 5,
+    "tier": 2,
+    "growthCostMult": 2.4,
+    "element": "nature",
+    "recommendedCp": 580,
+    "rewardScale": 2.4,
+    "unlock": {
+      "codexCaptured": {
+        "whispering-woods": 10
+      }
+    },
+    "materials": [
+      "dew-branch",
+      "spirit-moss"
+    ],
+    "legendary": [
+      "thorn-emperor",
+      "moon-sovereign"
+    ],
+    "encounterMix": {
+      "monster": 72,
+      "treasure": 12,
+      "trap": 10,
+      "gather": 6
+    },
+    "spawns": [
+      {
+        "monster": "lantern-beetle",
         "weight": 15
       },
       {
-        "monster": "pinecone-knight",
-        "weight": 15
-      },
-      {
-        "monster": "whistle-cricket",
+        "monster": "root-tortoise",
         "weight": 15
       },
       {
@@ -372,27 +430,15 @@
         "weight": 15
       },
       {
-        "monster": "dusk-firefly",
-        "weight": 15
-      },
-      {
         "monster": "acorn-thief",
         "weight": 15
       },
       {
-        "monster": "mossy-snail",
-        "weight": 15
-      },
-      {
-        "monster": "willow-harpist",
+        "monster": "bramble-boar",
         "weight": 9
       },
       {
         "monster": "thorn-lancer",
-        "weight": 9
-      },
-      {
-        "monster": "owl-postman",
         "weight": 9
       },
       {
@@ -404,43 +450,27 @@
         "weight": 9
       },
       {
-        "monster": "moonwell-newt",
-        "weight": 9
+        "monster": "frost-fawn",
+        "weight": 6
       },
       {
         "monster": "fern-sage",
         "weight": 7
       },
       {
+        "monster": "night-raven",
+        "weight": 6
+      },
+      {
         "monster": "antler-archer",
         "weight": 6
       },
       {
-        "monster": "glowvine-serpent",
-        "weight": 6
+        "monster": "spore-shaman",
+        "weight": 3
       },
       {
-        "monster": "hollow-puppeteer",
-        "weight": 6
-      },
-      {
-        "monster": "night-chanter",
-        "weight": 7
-      },
-      {
-        "monster": "frost-fawn",
-        "weight": 6
-      },
-      {
-        "monster": "grove-matriarch",
-        "weight": 6
-      },
-      {
-        "monster": "starfall-owl",
-        "weight": 2
-      },
-      {
-        "monster": "ironwood-golem",
+        "monster": "dream-weaver",
         "weight": 3
       },
       {
@@ -450,21 +480,118 @@
     ]
   },
   {
+    "id": "elder-canopy",
+    "name": "고목의 우듬지",
+    "icon": "🍂",
+    "order": 6,
+    "tier": 2,
+    "growthCostMult": 2.4,
+    "element": "nature",
+    "recommendedCp": 830,
+    "rewardScale": 2.4,
+    "unlock": {
+      "codexCaptured": {
+        "moonlit-thicket": 12
+      }
+    },
+    "materials": [
+      "dew-branch",
+      "spirit-moss"
+    ],
+    "legendary": [
+      "nightmare-stalker",
+      "verdant-phoenix"
+    ],
+    "encounterMix": {
+      "monster": 72,
+      "treasure": 12,
+      "trap": 10,
+      "gather": 6
+    },
+    "spawns": [
+      {
+        "monster": "acorn-golem",
+        "weight": 15
+      },
+      {
+        "monster": "honey-cub",
+        "weight": 15
+      },
+      {
+        "monster": "dusk-firefly",
+        "weight": 15
+      },
+      {
+        "monster": "whistle-cricket",
+        "weight": 15
+      },
+      {
+        "monster": "twig-sprite",
+        "weight": 15
+      },
+      {
+        "monster": "moonwell-newt",
+        "weight": 9
+      },
+      {
+        "monster": "willow-harpist",
+        "weight": 9
+      },
+      {
+        "monster": "dew-fairy",
+        "weight": 9
+      },
+      {
+        "monster": "shade-ferret",
+        "weight": 9
+      },
+      {
+        "monster": "grove-matriarch",
+        "weight": 6
+      },
+      {
+        "monster": "night-chanter",
+        "weight": 7
+      },
+      {
+        "monster": "wind-piper",
+        "weight": 6
+      },
+      {
+        "monster": "moss-drake",
+        "weight": 6
+      },
+      {
+        "monster": "aurora-unicorn",
+        "weight": 2
+      },
+      {
+        "monster": "starfall-owl",
+        "weight": 2
+      },
+      {
+        "monster": "sylvan-stag",
+        "weight": 2
+      }
+    ]
+  },
+  {
     "id": "sunken-marsh",
     "name": "가라앉은 늪",
     "icon": "🪷",
-    "order": 3,
+    "order": 7,
+    "tier": 3,
     "growthCostMult": 5.5,
     "element": "frost",
     "recommendedCp": 1200,
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": {
-        "whispering-woods": 24
+        "elder-canopy": 14
       },
       "materials": {
-        "dew-branch": 16,
-        "spirit-moss": 16
+        "dew-branch": 20,
+        "spirit-moss": 20
       }
     },
     "materials": [
@@ -473,10 +600,6 @@
     ],
     "legendary": [
       "lich-of-depths",
-      "black-lotus-regent",
-      "drowned-emperor",
-      "mist-leviathan",
-      "sorrow-queen",
       "bone-orchard-king"
     ],
     "encounterMix": {
@@ -499,111 +622,7 @@
         "weight": 15
       },
       {
-        "monster": "rot-rat",
-        "weight": 15
-      },
-      {
-        "monster": "chill-leech",
-        "weight": 15
-      },
-      {
-        "monster": "gravemoss-crawler",
-        "weight": 9
-      },
-      {
-        "monster": "mist-widow",
-        "weight": 6
-      },
-      {
-        "monster": "sunken-doll",
-        "weight": 15
-      },
-      {
-        "monster": "fungal-shambler",
-        "weight": 9
-      },
-      {
-        "monster": "eel-lurker",
-        "weight": 9
-      },
-      {
-        "monster": "candle-ghost",
-        "weight": 15
-      },
-      {
-        "monster": "swamp-serpent",
-        "weight": 9
-      },
-      {
-        "monster": "gloom-frogling",
-        "weight": 15
-      },
-      {
-        "monster": "weeping-willow",
-        "weight": 9
-      },
-      {
-        "monster": "drowned-knight",
-        "weight": 2
-      },
-      {
-        "monster": "marsh-siren",
-        "weight": 6
-      },
-      {
-        "monster": "plague-heron",
-        "weight": 6
-      },
-      {
-        "monster": "hollow-armor",
-        "weight": 7
-      },
-      {
-        "monster": "bog-witch",
-        "weight": 6
-      },
-      {
-        "monster": "carrion-moth",
-        "weight": 6
-      },
-      {
-        "monster": "bone-colossus",
-        "weight": 3
-      },
-      {
-        "monster": "frost-hydra",
-        "weight": 2
-      },
-      {
-        "monster": "plague-doctor",
-        "weight": 3
-      },
-      {
-        "monster": "glacier-serpent",
-        "weight": 2
-      },
-      {
-        "monster": "peat-imp",
-        "weight": 15
-      },
-      {
-        "monster": "rusty-lantern",
-        "weight": 15
-      },
-      {
         "monster": "sludge-pup",
-        "weight": 15
-      },
-      {
-        "monster": "gnat-cloud",
-        "weight": 15
-      },
-      {
-        "monster": "cold-minnow",
-        "weight": 15
-      },
-      {
-        "monster": "grave-cricket",
         "weight": 15
       },
       {
@@ -611,7 +630,99 @@
         "weight": 15
       },
       {
+        "monster": "gnat-cloud",
+        "weight": 15
+      },
+      {
+        "monster": "fungal-shambler",
+        "weight": 9
+      },
+      {
+        "monster": "mud-golem",
+        "weight": 9
+      },
+      {
+        "monster": "swamp-serpent",
+        "weight": 9
+      },
+      {
+        "monster": "weeping-willow",
+        "weight": 9
+      },
+      {
+        "monster": "hollow-armor",
+        "weight": 7
+      },
+      {
+        "monster": "lantern-titan",
+        "weight": 7
+      },
+      {
+        "monster": "tombstone-golem",
+        "weight": 6
+      },
+      {
+        "monster": "mist-widow",
+        "weight": 6
+      },
+      {
+        "monster": "bone-colossus",
+        "weight": 3
+      },
+      {
+        "monster": "drowned-knight",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "peat-mire",
+    "name": "안개 이탄늪",
+    "icon": "🌫️",
+    "order": 8,
+    "tier": 3,
+    "growthCostMult": 5.5,
+    "element": "frost",
+    "recommendedCp": 1650,
+    "rewardScale": 5.5,
+    "unlock": {
+      "codexCaptured": {
+        "sunken-marsh": 16
+      }
+    },
+    "materials": [
+      "grave-reed",
+      "chill-amber"
+    ],
+    "legendary": [
+      "mist-leviathan",
+      "drowned-emperor"
+    ],
+    "encounterMix": {
+      "monster": 74,
+      "treasure": 11,
+      "trap": 10,
+      "gather": 5
+    },
+    "spawns": [
+      {
+        "monster": "peat-imp",
+        "weight": 15
+      },
+      {
+        "monster": "rot-rat",
+        "weight": 15
+      },
+      {
+        "monster": "rusty-lantern",
+        "weight": 15
+      },
+      {
         "monster": "wilted-sprite",
+        "weight": 15
+      },
+      {
+        "monster": "cold-minnow",
         "weight": 15
       },
       {
@@ -619,15 +730,7 @@
         "weight": 9
       },
       {
-        "monster": "marsh-lurker",
-        "weight": 9
-      },
-      {
-        "monster": "whisper-moth",
-        "weight": 9
-      },
-      {
-        "monster": "mud-golem",
+        "monster": "gravemoss-crawler",
         "weight": 9
       },
       {
@@ -639,11 +742,11 @@
         "weight": 9
       },
       {
-        "monster": "banshee-widow",
-        "weight": 2
+        "monster": "frostbite-eel",
+        "weight": 6
       },
       {
-        "monster": "tombstone-golem",
+        "monster": "marsh-siren",
         "weight": 6
       },
       {
@@ -651,32 +754,116 @@
         "weight": 6
       },
       {
-        "monster": "frostbite-eel",
+        "monster": "bog-witch",
         "weight": 6
       },
       {
-        "monster": "crow-keeper",
-        "weight": 7
+        "monster": "glacier-serpent",
+        "weight": 2
+      },
+      {
+        "monster": "plague-doctor",
+        "weight": 2
+      },
+      {
+        "monster": "dread-ferryman",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "frozen-abyss",
+    "name": "얼어붙은 심연",
+    "icon": "❄️",
+    "order": 9,
+    "tier": 3,
+    "growthCostMult": 5.5,
+    "element": "frost",
+    "recommendedCp": 2250,
+    "rewardScale": 5.5,
+    "unlock": {
+      "codexCaptured": {
+        "peat-mire": 16
+      }
+    },
+    "materials": [
+      "grave-reed",
+      "chill-amber"
+    ],
+    "legendary": [
+      "sorrow-queen",
+      "black-lotus-regent"
+    ],
+    "encounterMix": {
+      "monster": 74,
+      "treasure": 11,
+      "trap": 10,
+      "gather": 5
+    },
+    "spawns": [
+      {
+        "monster": "grave-cricket",
+        "weight": 15
+      },
+      {
+        "monster": "gloom-frogling",
+        "weight": 15
+      },
+      {
+        "monster": "candle-ghost",
+        "weight": 15
+      },
+      {
+        "monster": "sunken-doll",
+        "weight": 15
+      },
+      {
+        "monster": "chill-leech",
+        "weight": 15
+      },
+      {
+        "monster": "marsh-lurker",
+        "weight": 9
+      },
+      {
+        "monster": "whisper-moth",
+        "weight": 9
+      },
+      {
+        "monster": "eel-lurker",
+        "weight": 9
       },
       {
         "monster": "swamp-chimera",
         "weight": 9
       },
       {
-        "monster": "dread-ferryman",
-        "weight": 3
+        "monster": "requiem-harpy",
+        "weight": 7
       },
       {
-        "monster": "lantern-titan",
+        "monster": "crow-keeper",
         "weight": 7
+      },
+      {
+        "monster": "carrion-moth",
+        "weight": 6
+      },
+      {
+        "monster": "plague-heron",
+        "weight": 6
+      },
+      {
+        "monster": "banshee-widow",
+        "weight": 2
       },
       {
         "monster": "venom-matriarch",
-        "weight": 3
+        "weight": 2
       },
       {
-        "monster": "requiem-harpy",
-        "weight": 7
+        "monster": "frost-hydra",
+        "weight": 2
       }
     ]
   },
@@ -684,14 +871,15 @@
     "id": "ashen-volcano",
     "name": "잿빛 화산",
     "icon": "🌋",
-    "order": 4,
+    "order": 10,
+    "tier": 4,
     "growthCostMult": 12,
     "element": "fire",
     "recommendedCp": 3000,
     "rewardScale": 12,
     "unlock": {
       "codexCaptured": {
-        "sunken-marsh": 40
+        "frozen-abyss": 16
       },
       "materials": {
         "grave-reed": 24,
@@ -704,11 +892,7 @@
     ],
     "legendary": [
       "ember-dragon-king",
-      "solar-roc",
-      "obsidian-overlord",
-      "sun-forger",
-      "ashen-behemoth",
-      "crater-empress"
+      "solar-roc"
     ],
     "encounterMix": {
       "monster": 74,
@@ -722,39 +906,19 @@
         "weight": 15
       },
       {
-        "monster": "lava-crab",
+        "monster": "ash-bunny",
         "weight": 15
       },
       {
-        "monster": "magma-hound",
+        "monster": "sulfur-slime",
         "weight": 15
       },
       {
-        "monster": "ash-wraith",
-        "weight": 9
-      },
-      {
-        "monster": "obsidian-beetle",
-        "weight": 9
-      },
-      {
-        "monster": "spark-monkey",
-        "weight": 9
-      },
-      {
-        "monster": "soot-bat",
-        "weight": 9
-      },
-      {
-        "monster": "coal-golem",
+        "monster": "pumice-pup",
         "weight": 15
       },
       {
-        "monster": "pepper-sprite",
-        "weight": 15
-      },
-      {
-        "monster": "smoke-serpent",
+        "monster": "magma-slug",
         "weight": 15
       },
       {
@@ -762,15 +926,19 @@
         "weight": 15
       },
       {
+        "monster": "ember-chick",
+        "weight": 9
+      },
+      {
+        "monster": "ash-wraith",
+        "weight": 9
+      },
+      {
         "monster": "cinder-moth",
         "weight": 9
       },
       {
-        "monster": "magma-slug",
-        "weight": 15
-      },
-      {
-        "monster": "ember-chick",
+        "monster": "ember-eel",
         "weight": 9
       },
       {
@@ -778,19 +946,7 @@
         "weight": 7
       },
       {
-        "monster": "flame-dancer",
-        "weight": 6
-      },
-      {
-        "monster": "pyro-drake",
-        "weight": 6
-      },
-      {
-        "monster": "forge-priest",
-        "weight": 6
-      },
-      {
-        "monster": "obsidian-panther",
+        "monster": "cannon-crab",
         "weight": 6
       },
       {
@@ -798,23 +954,59 @@
         "weight": 7
       },
       {
+        "monster": "flame-dancer",
+        "weight": 6
+      },
+      {
         "monster": "volcanic-titan",
-        "weight": 3
-      },
-      {
-        "monster": "inferno-lion",
         "weight": 2
       },
       {
-        "monster": "ash-phoenix",
-        "weight": 3
-      },
-      {
-        "monster": "hell-warden",
+        "monster": "magma-colossus",
         "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "lava-gorge",
+    "name": "용암 협곡",
+    "icon": "♨️",
+    "order": 11,
+    "tier": 4,
+    "growthCostMult": 12,
+    "element": "fire",
+    "recommendedCp": 4100,
+    "rewardScale": 12,
+    "unlock": {
+      "codexCaptured": {
+        "ashen-volcano": 16
+      }
+    },
+    "materials": [
+      "ember-core",
+      "obsidian-shard"
+    ],
+    "legendary": [
+      "obsidian-overlord",
+      "sun-forger"
+    ],
+    "encounterMix": {
+      "monster": 74,
+      "treasure": 12,
+      "trap": 9,
+      "gather": 5
+    },
+    "spawns": [
+      {
+        "monster": "soot-sparrow",
+        "weight": 15
       },
       {
-        "monster": "ash-bunny",
+        "monster": "lava-crab",
+        "weight": 15
+      },
+      {
+        "monster": "furnace-mouse",
         "weight": 15
       },
       {
@@ -826,39 +1018,7 @@
         "weight": 15
       },
       {
-        "monster": "soot-sparrow",
-        "weight": 15
-      },
-      {
-        "monster": "pumice-pup",
-        "weight": 15
-      },
-      {
-        "monster": "furnace-mouse",
-        "weight": 15
-      },
-      {
-        "monster": "tin-soldier",
-        "weight": 15
-      },
-      {
-        "monster": "sulfur-slime",
-        "weight": 15
-      },
-      {
-        "monster": "vent-imp",
-        "weight": 9
-      },
-      {
-        "monster": "coal-raven",
-        "weight": 9
-      },
-      {
         "monster": "anvil-tortoise",
-        "weight": 9
-      },
-      {
-        "monster": "blaze-lizard",
         "weight": 9
       },
       {
@@ -866,24 +1026,20 @@
         "weight": 9
       },
       {
-        "monster": "ember-eel",
+        "monster": "obsidian-beetle",
         "weight": 9
+      },
+      {
+        "monster": "vent-imp",
+        "weight": 9
+      },
+      {
+        "monster": "forge-priest",
+        "weight": 6
       },
       {
         "monster": "lava-shepherd",
         "weight": 7
-      },
-      {
-        "monster": "obsidian-raptor",
-        "weight": 6
-      },
-      {
-        "monster": "cannon-crab",
-        "weight": 6
-      },
-      {
-        "monster": "firebrand-falcon",
-        "weight": 6
       },
       {
         "monster": "molten-knight",
@@ -894,20 +1050,112 @@
         "weight": 6
       },
       {
-        "monster": "caldera-tyrant",
-        "weight": 3
+        "monster": "hell-warden",
+        "weight": 1
       },
       {
         "monster": "cinder-reaper",
-        "weight": 2
+        "weight": 1
       },
       {
-        "monster": "magma-colossus",
-        "weight": 3
+        "monster": "ash-phoenix",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "crater-heart",
+    "name": "분화구 심장부",
+    "icon": "☄️",
+    "order": 12,
+    "tier": 4,
+    "growthCostMult": 12,
+    "element": "fire",
+    "recommendedCp": 5500,
+    "rewardScale": 12,
+    "unlock": {
+      "codexCaptured": {
+        "lava-gorge": 16
+      }
+    },
+    "materials": [
+      "ember-core",
+      "obsidian-shard"
+    ],
+    "legendary": [
+      "ashen-behemoth",
+      "crater-empress"
+    ],
+    "encounterMix": {
+      "monster": 74,
+      "treasure": 12,
+      "trap": 9,
+      "gather": 5
+    },
+    "spawns": [
+      {
+        "monster": "tin-soldier",
+        "weight": 15
+      },
+      {
+        "monster": "pepper-sprite",
+        "weight": 15
+      },
+      {
+        "monster": "magma-hound",
+        "weight": 15
+      },
+      {
+        "monster": "coal-golem",
+        "weight": 15
+      },
+      {
+        "monster": "smoke-serpent",
+        "weight": 15
+      },
+      {
+        "monster": "blaze-lizard",
+        "weight": 9
+      },
+      {
+        "monster": "coal-raven",
+        "weight": 9
+      },
+      {
+        "monster": "spark-monkey",
+        "weight": 9
+      },
+      {
+        "monster": "soot-bat",
+        "weight": 9
+      },
+      {
+        "monster": "obsidian-raptor",
+        "weight": 6
+      },
+      {
+        "monster": "firebrand-falcon",
+        "weight": 6
+      },
+      {
+        "monster": "obsidian-panther",
+        "weight": 6
+      },
+      {
+        "monster": "pyro-drake",
+        "weight": 6
+      },
+      {
+        "monster": "caldera-tyrant",
+        "weight": 1
       },
       {
         "monster": "volcano-heart",
-        "weight": 2
+        "weight": 1
+      },
+      {
+        "monster": "inferno-lion",
+        "weight": 1
       }
     ]
   }

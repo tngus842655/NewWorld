@@ -7,65 +7,90 @@ describe('콘텐츠 무결성', () => {
     expect(content.monsterList.length).toBeGreaterThan(0);
   });
 
-  it('도감은 219종 — 지역 4 × (일반16 + 고급12 + 희귀12 + 영웅8 + 전설6) + 초월 3 (합성 전용)', () => {
+  it('도감은 219종 — 티어 4 × (일반16 + 고급12 + 희귀12 + 영웅8 + 전설6) + 초월 3 (합성 전용)', () => {
     expect(content.monsterList).toHaveLength(219);
     // 초월 3종은 최종 지역 소속이지만 어느 지역의 출현 테이블에도 없다 (2026-08-25 사용자)
     const transcendent = content.monsterList.filter((m) => m.rarity === 'transcendent');
     expect(transcendent).toHaveLength(3);
     const last = content.regionList[content.regionList.length - 1]!;
     for (const m of transcendent) expect(m.habitat, m.id).toBe(last.id);
+    // 소지역: 서식 18종 (포획 가능 16 + 심층 전설 2) — 12지역 개편 (2026-08-26)
     for (const region of content.regionList) {
       const natives = content.monsterList.filter((m) => m.habitat === region.id && m.rarity !== 'transcendent');
-      expect(natives, region.id).toHaveLength(54);
+      expect(natives, region.id).toHaveLength(18);
+      expect(natives.filter((m) => m.rarity !== 'legendary'), region.id).toHaveLength(16);
+      expect(region.spawns, region.id).toHaveLength(16);
+      expect(region.legendary, region.id).toHaveLength(2);
+    }
+    // 티어: 등급 구성은 구 4지역 시절 그대로 (일반16 + 고급12 + 희귀12 + 영웅8 + 전설6 = 54)
+    for (const tier of [1, 2, 3, 4]) {
+      const regionIds = new Set(content.regionList.filter((r) => r.tier === tier).map((r) => r.id));
+      const natives = content.monsterList.filter((m) => regionIds.has(m.habitat) && m.rarity !== 'transcendent');
       const by = (rarity: string) => natives.filter((m) => m.rarity === rarity).length;
-      expect(by('common'), region.id).toBe(16);
-      expect(by('uncommon'), region.id).toBe(12);
-      expect(by('rare'), region.id).toBe(12);
-      expect(by('heroic'), region.id).toBe(8);
-      expect(by('legendary'), region.id).toBe(6);
-      // 비전설 48종은 전부 출현 테이블에, 전설 6종은 legendary 필드에
-      expect(region.spawns, region.id).toHaveLength(48);
-      expect(region.legendary, region.id).toHaveLength(6);
+      expect(by('common'), `tier ${tier}`).toBe(16);
+      expect(by('uncommon'), `tier ${tier}`).toBe(12);
+      expect(by('rare'), `tier ${tier}`).toBe(12);
+      expect(by('heroic'), `tier ${tier}`).toBe(8);
+      expect(by('legendary'), `tier ${tier}`).toBe(6);
     }
   });
 
-  it('지역은 4개, order 순 정렬, 첫 지역은 해금 조건 없음', () => {
-    expect(content.regionList).toHaveLength(4);
-    expect(content.regionList.map((r) => r.order)).toEqual([1, 2, 3, 4]);
+  it('지역은 12개 (티어 4 × 소지역 3), order 순 정렬, 첫 지역은 해금 조건 없음', () => {
+    expect(content.regionList).toHaveLength(12);
+    expect(content.regionList.map((r) => r.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(content.regionList.map((r) => r.tier)).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4]);
     const first = content.regionList[0]!;
     expect(first.unlock.codexCaptured).toBeUndefined();
   });
 
-  it('지역 해금·권장 CP 곡선은 단조 증가한다', () => {
+  it('티어 진입 지역은 구 4지역 id를 유지한다 — 세이브·재료·팀 해금 참조 보존 (2026-08-26)', () => {
+    const entries = content.regionList.filter((r, i, list) => i === 0 || list[i - 1]!.tier !== r.tier);
+    expect(entries.map((r) => r.id)).toEqual(['misty-coast', 'whispering-woods', 'sunken-marsh', 'ashen-volcano']);
+  });
+
+  it('권장 CP는 단조 증가, 경제 배수(성장·보상)는 티어 안에서 같고 티어 경계에서만 오른다', () => {
     const cps = content.regionList.map((r) => r.recommendedCp);
     for (let i = 1; i < cps.length; i++) expect(cps[i]!).toBeGreaterThan(cps[i - 1]!);
-    const scales = content.regionList.map((r) => r.rewardScale);
-    for (let i = 1; i < scales.length; i++) expect(scales[i]!).toBeGreaterThan(scales[i - 1]!);
+    for (let i = 1; i < content.regionList.length; i++) {
+      const prev = content.regionList[i - 1]!;
+      const cur = content.regionList[i]!;
+      if (prev.tier === cur.tier) {
+        expect(cur.rewardScale, cur.id).toBe(prev.rewardScale);
+        expect(cur.growthCostMult, cur.id).toBe(prev.growthCostMult);
+      } else {
+        expect(cur.rewardScale, cur.id).toBeGreaterThan(prev.rewardScale);
+        expect(cur.growthCostMult, cur.id).toBeGreaterThan(prev.growthCostMult);
+      }
+    }
   });
 
   /**
-   * 해금 조건 사다리 (2026-08-25 재조정)
+   * 해금 조건 사다리 (2026-08-26 12지역 개편)
    *
-   * 몬스터를 지역당 54종으로 확장하면서 도감 조건(8/20/20)이 상대적으로 헐거워져 있었다 —
-   * 시뮬 계측상 재료 조건이 늘 먼저 걸려서 **도감 조건은 한 번도 제동이 되지 못했다**.
-   * 도감을 주 제동으로 되돌리고(앞 지역의 약 20% → 44% → 74%), 재료는 값(비용)으로 남긴다.
+   * 게이트는 11개 체인이다. 티어 안과 티어 진입의 역할을 갈라 둔다:
+   * - **도감 = 제동, 재료 = 값** (2026-08-25 원칙 유지). 재료는 티어 진입 관문에만, 앞 티어 재료 2종 대칭으로 건다
+   * - 티어 내 관문은 도감 단독(한 축) — 게이트 둘을 겹치면 곱으로 작용하기 때문
+   * - 관문 깊이(앞 지역 포획 가능 16종 대비)는 티어 진입끼리 단조 증가 — 초반 촘촘, 후반 묵직
    * 숫자 조정은 scripts/unlock-sweep.ts 로 계측한다.
    */
   describe('지역 해금 조건', () => {
     const gated = content.regionList.filter((r) => r.order > 1);
-    const nativeCount = (regionId: string) =>
-      content.monsterList.filter((m) => m.habitat === regionId && m.rarity !== 'transcendent').length;
     /** 전설은 심층 한정 + 포획률 1.5%라, 전설 없이 달성 가능해야 한다 */
     const catchableCount = (regionId: string) =>
       content.monsterList.filter((m) => m.habitat === regionId && m.rarity !== 'transcendent' && m.rarity !== 'legendary').length;
 
-    it('바로 앞 지역만 조건으로 건다 — 건너뛴 참조는 순서를 무너뜨린다', () => {
+    it('바로 앞 지역만 조건으로 걸고, 재료는 티어 진입 관문에만 앞 티어 재료 2종 대칭으로 건다', () => {
       for (const region of gated) {
         const prev = content.regionList[region.order - 2]!;
         const refs = Object.keys(region.unlock.codexCaptured ?? {});
         expect(refs, `${region.name} 도감 조건`).toEqual([prev.id]);
-        for (const materialId of Object.keys(region.unlock.materials ?? {})) {
-          expect(content.materials.get(materialId)!.region, `${region.name} 재료 조건`).toBe(prev.id);
+        const mats = Object.keys(region.unlock.materials ?? {});
+        if (region.tier === prev.tier) {
+          expect(mats, `${region.name}는 티어 내 관문 — 도감 단독이어야 한다`).toHaveLength(0);
+        } else {
+          expect([...mats].sort(), `${region.name} 재료 조건은 앞 티어 재료 2종`).toEqual([...prev.materials].sort());
+          const counts = Object.values(region.unlock.materials ?? {});
+          expect(new Set(counts).size, `${region.name} 재료 2종은 같은 수 (수급·소비 대칭 규칙)`).toBe(1);
         }
       }
     });
@@ -79,20 +104,22 @@ describe('콘텐츠 무결성', () => {
       }
     });
 
-    it('깊은 지역일수록 앞 지역을 더 많이 채우게 한다 — 비율이 단조 증가', () => {
-      const ratios = gated.map((region) => {
+    it('티어 진입 관문일수록 앞 지역을 더 많이 채우게 한다 — 진입 관문 비율 단조 증가', () => {
+      const ratioOf = (region: (typeof gated)[number]) => {
         const [prevId, need] = Object.entries(region.unlock.codexCaptured ?? {})[0]!;
-        return { name: region.name, ratio: need / nativeCount(prevId), need };
-      });
-      for (let i = 1; i < ratios.length; i++) {
-        expect(ratios[i]!.ratio, `${ratios[i]!.name}(${(ratios[i]!.ratio * 100).toFixed(0)}%)가 ${ratios[i - 1]!.name}(${(ratios[i - 1]!.ratio * 100).toFixed(0)}%)보다 커야 한다`)
-          .toBeGreaterThan(ratios[i - 1]!.ratio);
+        return need / catchableCount(prevId);
+      };
+      const entries = gated.filter((r) => content.regionList[r.order - 2]!.tier !== r.tier);
+      for (let i = 1; i < entries.length; i++) {
+        expect(ratioOf(entries[i]!), `${entries[i]!.name} 진입 관문이 ${entries[i - 1]!.name}보다 얕다`)
+          .toBeGreaterThanOrEqual(ratioOf(entries[i - 1]!));
       }
-      // 첫 관문은 맛보기(10~30%), 마지막 관문은 그 지역을 거의 채우는 수준(60~85%)
-      expect(ratios[0]!.ratio).toBeGreaterThanOrEqual(0.1);
-      expect(ratios[0]!.ratio).toBeLessThanOrEqual(0.3);
-      expect(ratios[ratios.length - 1]!.ratio).toBeGreaterThanOrEqual(0.6);
-      expect(ratios[ratios.length - 1]!.ratio).toBeLessThanOrEqual(0.85);
+      // 모든 관문은 맛보기 아래로 내려가지 않고(≥25%), 마지막 관문은 앞 지역을 거의 채우는 수준(≥75%)
+      for (const region of gated) {
+        expect(ratioOf(region), `${region.name} 관문`).toBeGreaterThanOrEqual(0.25);
+        expect(ratioOf(region), `${region.name} 관문`).toBeLessThanOrEqual(1);
+      }
+      expect(ratioOf(gated[gated.length - 1]!)).toBeGreaterThanOrEqual(0.75);
     });
 
     it('재료 조건은 제동이 아니라 값이다 — 도감 조건보다 가볍게 유지한다', () => {

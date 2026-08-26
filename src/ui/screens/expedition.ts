@@ -95,7 +95,7 @@ function panelHandle(open: boolean): HTMLElement {
   return handle;
 }
 
-function regionRow(regionId: string): HTMLElement {
+function regionRow(regionId: string, compact = false): HTMLElement {
   const state = save();
   const region = content.regions.get(regionId)!;
   const unlocked = isRegionUnlocked(content, state, regionId);
@@ -107,6 +107,12 @@ function regionRow(regionId: string): HTMLElement {
         el('span.region-elem', { title: `우세 속성 ${ELEMENT_LABEL[region.element]} — 같거나 이기는 속성이 유리` }, ` ${ELEMENT_EMOJI[region.element]}`),
       ),
       el('div.muted.small', {}, `권장 CP ${fmtGold(region.recommendedCp)}`),
+    );
+  }
+  // 다음 관문이 아닌 먼 잠김 지역은 이름만 — 12지역에서 잠김 조건 11줄이 목록을 덮는 것을 막는다 (2026-08-26)
+  if (compact) {
+    return el('div.region-row.locked', { title: '앞 지역을 해금하면 열립니다' },
+      el('div.region-name.muted', {}, `🔒 ${region.icon} ${region.name}`),
     );
   }
   const check = canUnlockRegion(content, state, regionId);
@@ -175,7 +181,9 @@ function teamCard(team: TeamLoadout): HTMLElement {
 
 /** 아직 잠긴 군 안내 카드 */
 function lockedTeamCards(state: SaveState): HTMLElement[] {
-  const current = teamCount(content, state);
+  // 군 게이트가 뒤로 이동해도(2026-08-26 심부 이동) 이미 만들어진 프리셋은 회수하지 않는다 —
+  // 프리셋 카드가 있는 군에 잠금 카드를 겹쳐 보여주지 않는다
+  const current = Math.max(teamCount(content, state), state.teams.length);
   return content.balance.teams
     .filter((u) => u.count > current && u.regionUnlocked)
     .map((u) => {
@@ -231,7 +239,11 @@ export function renderExpedition(): HTMLElement {
 
   return el('div.screen', {},
     el('h2.section-title', {}, '지역'),
-    el('div.card.stack-sm', {}, ...content.regionList.map((r) => regionRow(r.id))),
+    el('div.card.stack-sm', {}, ...(() => {
+      // 잠김 지역 중 첫 번째(다음 관문)만 조건을 펼친다 — 나머지는 이름만 보여 목표는 보이되 목록은 짧게
+      const nextGate = content.regionList.find((r) => !isRegionUnlocked(content, state, r.id))?.id;
+      return content.regionList.map((r) => regionRow(r.id, r.id !== nextGate && !isRegionUnlocked(content, state, r.id)));
+    })()),
 
     el('h2.section-title', {}, '원정대'),
     ...state.teams.map((t) => teamCard(t)),

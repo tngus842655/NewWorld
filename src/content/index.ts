@@ -119,6 +119,30 @@ export function loadContent(): Content {
     if (def) synergies.set(tribe as Tribe, def);
   }
 
+  // ── 티어(바이옴) 구조 (2026-08-26 12지역 개편) ──
+  // order 순으로 tier가 1부터 빈틈없이 이어지고, 같은 tier는 바이옴 계단(속성·재료·경제 배수)을 공유한다.
+  // 코어가 "같은 티어 = 같은 재료 풀"(해금 예약·수급 대칭)을 전제하므로 데이터가 아니라 로더가 막는다.
+  {
+    let expected = 1;
+    const entries = new Map<number, Region>();
+    for (const region of regionList) {
+      if (region.tier !== expected && region.tier !== expected + 1) {
+        fail(`지역 tier가 order 순으로 이어지지 않음: ${region.id} (tier ${region.tier}, 기대 ${expected}~${expected + 1})`);
+      }
+      expected = region.tier;
+      const entry = entries.get(region.tier);
+      if (!entry) {
+        entries.set(region.tier, region);
+        continue;
+      }
+      if (entry.element !== region.element) fail(`같은 티어의 속성 불일치: ${entry.id} vs ${region.id}`);
+      if (entry.materials.join() !== region.materials.join()) fail(`같은 티어의 재료 불일치: ${entry.id} vs ${region.id}`);
+      if (entry.growthCostMult !== region.growthCostMult) fail(`같은 티어의 성장 배수 불일치: ${entry.id} vs ${region.id}`);
+      if (entry.rewardScale !== region.rewardScale) fail(`같은 티어의 보상 배수 불일치: ${entry.id} vs ${region.id}`);
+    }
+    if (regionList[0] && regionList[0].tier !== 1) fail('첫 지역의 tier가 1이 아님');
+  }
+
   // ── 참조 무결성 ──
   for (const region of regionList) {
     for (const spawn of region.spawns) {

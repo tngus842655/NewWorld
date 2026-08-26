@@ -10,7 +10,7 @@ import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';
 import { ARTIFACT_RARITY_LABEL, SLOT_LABEL, el } from './kit';
-import { finalRegion } from '../core/economy';
+import { finalTierEntry } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import { FUSABLE_RARITIES, FUSION_NEXT, ritualCircle } from './fusionSheet';
 import { pct1, sheetShell } from './overlays';
@@ -123,10 +123,10 @@ export function artifactFusionSheet(): HTMLElement {
   if (phase === 'result') return resultView(rarity, nextRarity);
 
   // ── setup ──
-  // 초월 단계는 최종 지역 해금이 관문이다 (유물엔 서식 지역이 없어 몬스터의 '최종 지역 재료' 규칙에 대응하는 등가).
+  // 초월 단계는 최종 티어(권역) 진입이 관문이다 (유물엔 서식 지역이 없어 몬스터의 '최종 티어 재료' 규칙에 대응하는 등가).
   // 코어가 거절하므로 시트에서도 막지 않으면 눌러도 0회 합성되는 조용한 실패가 난다 (2026-08-25)
   const restricted = FUSION_NEXT[nextRarity] === null;
-  const last = finalRegion(content);
+  const last = finalTierEntry(content);
   const gateOpen = !restricted || isRegionUnlocked(content, state, last.id);
   const spares = spareMap(state, rarity);
   const total = sumOf(spares);
@@ -163,7 +163,7 @@ export function artifactFusionSheet(): HTMLElement {
       ? el('div.center.small.muted', {},
           gateOpen
             ? `⚠️ ${ARTIFACT_RARITY_LABEL[nextRarity]}은 합성으로만 얻습니다 [발굴·상점 뽑기에는 등장하지 않습니다]`
-            : `🔒 ${ARTIFACT_RARITY_LABEL[nextRarity]} 도전은 ${last.name}을 해금해야 열립니다`)
+            : `🔒 ${ARTIFACT_RARITY_LABEL[nextRarity]} 도전은 ${last.name} 권역을 해금해야 열립니다`)
       : null,
 
     el('div.card.stack-sm', {},
@@ -192,7 +192,7 @@ export function artifactFusionSheet(): HTMLElement {
         disabled: maxRounds < 1 || !gateOpen,
         onclick: () => startRitual(rarity, rounds),
       }, !gateOpen
-        ? `${last.name} 해금이 필요합니다`
+        ? `${last.name} 권역 해금이 필요합니다`
         : maxRounds < 1
           ? '여분 유물이 부족합니다'
           : `💠 합성 시작 [${ARTIFACT_RARITY_LABEL[rarity]} → ${ARTIFACT_RARITY_LABEL[nextRarity]} ${rounds}회]`),

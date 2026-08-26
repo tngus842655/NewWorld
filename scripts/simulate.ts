@@ -4,7 +4,8 @@
  *
  *   npx tsx scripts/simulate.ts [--days 7] [--json <출력경로>] [--codex] [--gates]
  *
- * 목표 곡선(GDD §9.1, "보통" 기준): 숲 D1~2 → 늪 D6~8 → 화산 D10~14 (하드코어 약 2배 속도)
+ * 목표 곡선(GDD §9.1, 2026-08-26 12지역 개편 — "보통" 기준):
+ *   티어1 D1~4 → 티어2 진입 D4~7 → 티어3 진입 D10~16 → 티어4 진입 D26~36 → 최종 D40~56
  * 봇 로직 자체는 scripts/bot.ts — 해금 조건을 바꿔가며 재는 unlock-sweep.ts와 공유한다.
  */
 import { content } from '../src/content';
@@ -21,14 +22,20 @@ const SHOW_GATES = args.includes('--gates'); // 해금 게이트 중 무엇이 �
 const results = STRATEGIES.map((strategy) => simulate(content, strategy, { days: DAYS, codexMode: CODEX_MODE }));
 
 const REGION_LABEL: Record<string, string> = {
-  'whispering-woods': '숲', 'sunken-marsh': '늪', 'ashen-volcano': '화산',
+  'misty-coast': '해안', 'pearl-shallows': '갯벌', 'storm-cape': '곶',
+  'whispering-woods': '숲', 'moonlit-thicket': '덤불', 'elder-canopy': '우듬지',
+  'sunken-marsh': '늪', 'peat-mire': '이탄', 'frozen-abyss': '심연',
+  'ashen-volcano': '화산', 'lava-gorge': '협곡', 'crater-heart': '심장부',
 };
-/** "보통" 유저 기준 목표 (GDD §9.1). 하드코어는 하한의 절반까지 허용으로 본다. */
+/** "보통" 유저 기준 목표 (GDD §9.1, 2026-08-26 12지역). 하드코어는 하한의 절반까지 허용으로 본다. */
 const GOAL: Record<string, [number, number]> = {
-  'whispering-woods': [1, 2], 'sunken-marsh': [6, 8], 'ashen-volcano': [10, 14],
+  'pearl-shallows': [1, 2], 'storm-cape': [2, 4],
+  'whispering-woods': [4, 7], 'moonlit-thicket': [6, 9], 'elder-canopy': [7, 12],
+  'sunken-marsh': [10, 16], 'peat-mire': [14, 22], 'frozen-abyss': [21, 28],
+  'ashen-volcano': [26, 36], 'lava-gorge': [30, 45], 'crater-heart': [38, 56],
 };
-/** 파티 슬롯 목표 창 ("보통" 기준, GDD §9.1 — 2026-08-25 219종 재조정) */
-const SLOT_GOAL: Record<number, [number, number]> = { 4: [3, 6], 5: [9, 14] };
+/** 파티 슬롯 목표 창 ("보통" 기준 — 12지역 개편 후 잠정, slot-sweep 재계측 전) */
+const SLOT_GOAL: Record<number, [number, number]> = { 4: [4, 9], 5: [18, 32] };
 
 console.log(`\n=== NewWorld ${DAYS}일 진행 시뮬레이션 ===`);
 for (const result of results) {
@@ -70,14 +77,14 @@ for (const result of results) {
     return `${slots}칸 D${obs.buyDay}(목표 D${lo}~${hi}) ${mark} 제동=${brake}(도감 ${obs.capturedAtBuy}종)`;
   });
   console.log(`  파티 슬롯: ${slots.length > 0 ? slots.join(' · ') : '없음'}`);
-  // 지역 도감 24종(업적 9단계, 완전 정복 제외) 도달 일차
+  // 지역 도감 16종(포획 가능 완채 — 업적 16계단) 도달 일차
   const codexGoals = content.regionList.map((region) => {
-    const label = region.id === 'misty-coast' ? '해안' : (REGION_LABEL[region.id] ?? region.id);
-    const hit = result.days.find((row) => (row.byRegion[region.id] ?? 0) >= 24);
+    const label = REGION_LABEL[region.id] ?? region.id;
+    const hit = result.days.find((row) => (row.byRegion[region.id] ?? 0) >= 16);
     const last = result.days[result.days.length - 1];
-    return `${label} ${hit ? `D${hit.day}` : `미달(${last?.byRegion[region.id] ?? 0}/24)`}`;
+    return `${label} ${hit ? `D${hit.day}` : `미달(${last?.byRegion[region.id] ?? 0}/16)`}`;
   });
-  console.log(`  도감 24종 도달: ${codexGoals.join(' · ')}`);
+  console.log(`  도감 16종 도달: ${codexGoals.join(' · ')}`);
   console.log(`  총계: 런 ${result.totals.runs} · 전멸 ${result.totals.wipes} · 유물 ${result.totals.artifacts} · 전설 목격 ${result.totals.legendarySeen ? 'O' : 'X'}`);
 }
 

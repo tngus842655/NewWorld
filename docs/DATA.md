@@ -9,7 +9,7 @@
 
 로드 시 zod로 전수 검증. id는 전부 kebab-case 문자열, 참조 무결성 테스트로 보증.
 
-### 1.1 monsters.json — 219종 *(2026-08-24 재확장 — 비전설 2배·전설 지역당 2→6)*
+### 1.1 monsters.json — 219종 *(2026-08-24 재확장 · 2026-08-26 12지역 재배치 — 소지역당 서식 18종)*
 
 ```jsonc
 {
@@ -28,34 +28,38 @@
 }
 ```
 
-- 기본 CP 밴드는 **지역별로 스케일**된다 — 지역 권장 CP 대비 대략 일반·고급 25~35% / 희귀 45~55% /
-  영웅 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정, 조정은 데이터 수정으로만
+- 기본 CP 밴드는 **소지역별로 스케일**된다 — 소지역 권장 CP 대비 대략 일반·고급 25~35% / 희귀 45~55% /
+  영웅 70~90%, 전설은 권장 CP 상회. 개체값은 monsters.json에 확정, 조정은 데이터 수정으로만.
+  *(2026-08-26 12지역: 같은 권역이라도 심부 소지역 서식종은 진입 대비 최대 ×1.8~2.5 강하다 —
+  이 램프가 권역 내 진행의 실제 제동이고, 티어 진입 소지역 스탯은 구 지역 값 그대로다)*
 - `unique`는 유물 고유 능력과 같은 Effect 문법·훅을 그대로 쓴다. 로더가 전설=필수·비전설=금지를 강제하고,
   `collectTeamEffects`가 파티의 전설 몬스터에서 `monster:{id}` 출처로 수집한다
 - `tags`가 v1의 확장 여지: 스킬/장비 시스템이 와도 스키마 파괴 없이 증축
 
-### 1.2 regions.json — 지역 4+1
+### 1.2 regions.json — 지역 12 (권역 4 × 소지역 3) + 예약 1권역 *(2026-08-26 12지역 개편)*
 
 ```jsonc
 {
   "id": "whispering-woods",
   "name": "속삭이는 숲",
   "icon": "🌲",                           // 지역 고유 아이콘 (몬스터 출신 배지·지역 목록 — 속성 이모지와 별개)
-  "order": 2,
-  "element": "nature",                    // 지역 우세 속성 (파티 상성 보정)
-  "recommendedCp": 400,
-  "unlock": { "codexCaptured": { "misty-coast": 10 } },  // 재료도 걸리는 예: 늪 = { "whispering-woods": 24 } + materials { dew-branch: 16, spirit-moss: 16 }
-  "materials": ["dew-branch", "spirit-moss"],
+  "order": 4,                             // 1~12 연속 (권역 진입 소지역 = 구 4지역 id 유지: misty-coast/whispering-woods/sunken-marsh/ashen-volcano)
+  "tier": 2,                              // 권역(바이옴) — 같은 tier는 element·materials·경제 배수를 공유 (로더가 강제)
+  "element": "nature",                    // 권역 우세 속성 (파티 상성 보정)
+  "recommendedCp": 400,                   // 소지역 램프: 해안 100/160/250 · 숲 400/580/830 · 늪 1200/1650/2250 · 화산 3000/4100/5500
+  "unlock": { "codexCaptured": { "storm-cape": 9 },      // 도감 = 제동 (항상 바로 앞 소지역)
+              "materials": { "salt-bloom": 12, "tide-shell": 12 } },  // 재료 = 값 — 권역 진입 관문에만, 앞 권역 재료 2종 대칭
+  "materials": ["dew-branch", "spirit-moss"],  // 권역 공유 — 같은 tier 3소지역이 동일
   "spawns": [                              // 조우 출현 테이블 (가중치)
-    { "monster": "thorn-wolf", "weight": 15 },
-    { "monster": "gale-owl",   "weight": 9 }
-    // ... 지역당 일반16 고급12 희귀12 영웅8 (전설 6은 legendary 필드)
+    { "monster": "thorn-wolf", "weight": 15 }
+    // ... 소지역당 포획 가능 16종: 일반 6|5|5 · 고급 4 · 희귀 4 · 영웅 2|3|3 (전설 2는 legendary 필드)
+    // 영웅 가중치 계단: 기본 2~3 · 늪 심부/화산 진입 2 · 화산 심부 1 (후반 관문의 러닝타임 다이얼 — GDD §6)
   ],
-  "legendary": ["verdant-phoenix", "moon-sovereign"], // 심층 한정 전설 (지역당 6종, 조우 시 시드로 1종 선택 — balance.json)
+  "legendary": ["verdant-phoenix", "ancient-sloth"], // 심층 한정 전설 (소지역당 2종, 조우 시 시드로 1종 선택 — balance.json)
   "encounterMix": { "monster": 72, "treasure": 12, "trap": 10, "gather": 6 },  // %
-  "growthCostMult": 2.4,                  // 이 지역 몬스터의 레벨업·각성 골드 배수
-  "rewardScale": 2.4                      // 골드 보상 배수 (재료·카드에는 안 붙는다)
-  // 티어별 보정(rareWeightMult 등)은 지역이 아니라 balance.json tiers에 있다
+  "growthCostMult": 2.4,                  // 이 지역 몬스터의 레벨업·각성 골드 배수 (권역 공유)
+  "rewardScale": 2.4                      // 골드 보상 배수 (재료·카드에는 안 붙는다, 권역 공유)
+  // 파견 길이별 보정(rareWeightMult 등)은 지역이 아니라 balance.json tiers에 있다
 }
 ```
 

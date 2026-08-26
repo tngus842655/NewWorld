@@ -136,6 +136,12 @@ export const RegionSchema = z.object({
   name: z.string(),
   icon: z.string().min(1), // 지역 고유 아이콘 — 몬스터 출신 표기·지역 목록에 사용 (속성 이모지와 별개)
   order: z.number().int().positive(),
+  /**
+   * 난이도 묶음 (2026-08-26 12지역 개편) — 같은 tier의 소지역 3개는 바이옴·경제 계단
+   * (element·materials·growthCostMult·rewardScale)을 공유한다. 묶음의 첫 소지역(구 지역 id)이
+   * 진입 지역이고, 랭킹 지역 배수·초월 합성 관문("마지막 지역")은 order가 아니라 tier를 본다.
+   */
+  tier: z.number().int().positive(),
   growthCostMult: z.number().positive(), // 출신 몬스터의 레벨업·각성 골드 배수 (원정 단계 비례 — rewardScale과 같은 계단)
   element: ElementSchema,
   recommendedCp: z.number().positive(),

@@ -58,7 +58,8 @@ console.log(`\n=== 도감 완성 추정 (${DAYS}일 · 시드 ${SEEDS}개) ===`)
 console.log(`목표 ${TARGET}종 (초월 3종 제외) · 그중 전설 ${LEGENDARY_TOTAL}종이 꼬리`);
 console.log(`완성 행동: 합성(등급 사다리) · 도감 덜 찬 지역 순회 · 항상 심층 · 골드 상점 · 출석 · 모래시계\n`);
 
-const MARKS = [100, 150, 180, 192, 200, 210, TARGET];
+// 197 = 전체 219종의 90% (초월 3종은 합성 전용이라 봇이 못 얻는다 — 서식종만으로 도달해야 하는 선)
+const MARKS = [100, 150, 180, 192, 197, 200, 210, TARGET];
 
 for (const strategy of styles) {
   const results = Array.from({ length: SEEDS }, (_, i) => run(strategy, `-c${i}`));
