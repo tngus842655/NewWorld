@@ -373,27 +373,38 @@ body {
 .region-name { font-weight: 600; white-space: nowrap; }
 .region-req { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .region-elem { font-size: 12px; font-weight: 400; }
-/* ── 군 카드 (원정대 — 2×2 미리보기 + 요약) ── */
+/* ── 군 카드 (원정대 — 2열 그리드, 슬롯 수만큼 미리보기 + 유물 줄 + 이름·CP) ──
+ * 지역·원정대·파견 패널이 375px 한 화면에 들어가도록 카드를 반폭 세로형으로 (2026-08-27) */
+.team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .team-card {
-  display: flex; gap: 12px; align-items: center; text-align: left; width: 100%;
-  cursor: pointer; color: var(--text); font: inherit;
+  display: flex; flex-direction: column; gap: 6px; align-items: stretch; text-align: left;
+  cursor: pointer; color: var(--text); font: inherit; padding: 10px 12px; min-width: 0;
 }
 .team-card.team-busy { border-color: var(--accent); }
-.team-card.team-locked { opacity: 0.55; cursor: default; }
-.team-row { display: flex; gap: 4px; flex: none; position: relative; align-items: center; }
-.team-cell { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
-.team-cell .micon { width: 44px; height: 44px; }
+.team-row { display: flex; gap: 4px; align-items: center; }
+/* 반폭 카드에 3~5칸이 다 들어가게 칸이 폭을 나눠 갖는다 (편성 시트 party-slot과 같은 방식) */
+.team-cell {
+  flex: 1 1 0; min-width: 0; max-width: 44px; aspect-ratio: 1 / 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.team-cell .micon { width: 100%; height: 100%; }
 .team-cell-empty {
   border: 1.5px dashed var(--line); border-radius: 11px; color: var(--muted);
   font-size: 16px;
 }
-.team-more {
-  position: absolute; right: -8px; bottom: -4px; font-size: 10px; font-weight: 700;
-  background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 1px 5px; color: var(--accent-2);
+/* ~27px 칸에서는 서식지 뱃지·이모지 폴백이 아이콘을 덮는다 — 요약 카드는 등급 테두리만 남긴다 */
+.team-card .micon-region { display: none; }
+.team-card .micon-fallback { font-size: 15px; }
+.team-arte-row { display: flex; gap: 3px; }
+.team-arte-row .micon { width: 20px; height: 20px; border-radius: 6px; }
+.team-arte-row .micon-fallback { font-size: 11px; }
+.team-foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; }
+.team-name-sm { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.team-cp { font-weight: 700; color: var(--accent-2); font-size: 13px; white-space: nowrap; }
+.team-locked-line {
+  border: 1.5px dashed var(--line); border-radius: 12px; padding: 8px 12px;
+  color: var(--muted); font-size: 12px;
 }
-.team-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin-left: auto; align-items: flex-end; }
-.team-name { font-weight: 700; display: flex; gap: 8px; align-items: center; }
-.team-cp { font-weight: 700; color: var(--accent-2); font-size: 15px; }
 
 /* ── 큰 탭 (편성 시트 몬스터/유물 등 목록 전환) ── */
 .big-tabs {

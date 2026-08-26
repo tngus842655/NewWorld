@@ -170,6 +170,17 @@ export function josa(word: string, withFinal: string, withoutFinal: string): str
   return `${word}${hasFinalConsonant ? withFinal : withoutFinal}`;
 }
 
+/**
+ * '(으)로' 전용 — 받침 유무만으로는 안 된다: ㄹ 받침은 '로'를 쓴다 (서울로, 갯벌로, 덤불로).
+ * 지역명이 '갯벌'(ㄹ)·'우듬지'(없음)·'심연'(ㄴ)으로 다 달라 josa()로는 커버가 안 된다 (2026-08-27).
+ */
+export function josaRo(word: string): string {
+  const code = word.charCodeAt(word.length - 1);
+  const isHangulSyllable = code >= 0xac00 && code <= 0xd7a3;
+  const jong = isHangulSyllable ? (code - 0xac00) % 28 : 0; // 8 = ㄹ
+  return `${word}${jong !== 0 && jong !== 8 ? '으로' : '로'}`;
+}
+
 export function fmtPct(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }

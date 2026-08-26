@@ -3,21 +3,59 @@
  * 편성은 군 카드를 눌러 여는 편성 시트에서, 파견은 군 단위로.
  */
 import { content } from '../../content';
-import type { Tier } from '../../content/schema';
+import type { Region, Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
-import { signal } from '../../state/signal';
+import { batch, signal } from '../../state/signal';
 import { dispatchTeam, save, unlock } from '../../state/store';
-import { monsterIconBadged, ownedCp } from '../components';
-import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { artifactIcon, monsterIconBadged, ownedCp } from '../components';
+import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, josaRo } from '../kit';
 import { resetTeamSheet } from '../teamSheet';
+import { tabBar } from '../panels';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
-const selRegion = signal<string>(content.regionList[0]!.id);
+/** 권역(tier)별 소지역 묶음 — regionList가 order 정렬이라 각 묶음의 첫 지역이 권역 진입 지역이다 */
+const regionTiers: { tier: number; regions: Region[] }[] = (() => {
+  const byTier = new Map<number, Region[]>();
+  for (const region of content.regionList) {
+    const bucket = byTier.get(region.tier) ?? [];
+    bucket.push(region);
+    byTier.set(region.tier, bucket);
+  }
+  return [...byTier.entries()].sort((a, b) => a[0] - b[0]).map(([tier, regions]) => ({ tier, regions }));
+})();
+
+/** 권역 탭 라벨 — 진입 지역 이름의 마지막 어절 (물안개 해안→해안, 잿빛 화산→화산) */
+function tierShortName(regions: Region[]): string {
+  const entry = regions[0]!;
+  return entry.name.split(' ').at(-1) ?? entry.name;
+}
+
+function deepestUnlockedRegionId(state: SaveState): string {
+  let last = content.regionList[0]!.id;
+  for (const region of content.regionList) if (isRegionUnlocked(content, state, region.id)) last = region.id;
+  return last;
+}
+
+// 12지역에서 첫 지역 고정 시작은 진행 유저에게 매번 스크롤 — 접속하면 가장 깊은 해금 지역에서 시작 (2026-08-27)
+const selRegion = signal<string>(deepestUnlockedRegionId(save()));
+const selTierView = signal<number>(content.regions.get(selRegion())!.tier);
 const selTier = signal<Tier>('scout');
+
+/** 권역 탭 선택 — 해금 소지역이 있으면 그중 가장 깊은 곳을 출발 대상으로. 전부 잠긴 권역은 구경만 */
+function pickTier(tier: number): void {
+  const state = save();
+  const bucket = regionTiers.find((t) => t.tier === tier);
+  if (!bucket) return;
+  const deepest = [...bucket.regions].reverse().find((r) => isRegionUnlocked(content, state, r.id));
+  batch(() => {
+    selTierView.set(tier);
+    if (deepest) selRegion.set(deepest.id);
+  });
+}
 const selTeamId = signal<string>('team-1');
 // 하단 파견 패널 접힘 상태 — 접은 채로 종료해도 다음 접속에 유지 (세이브와 무관한 기기 UI 취향이라 localStorage 별도 키)
 const PANEL_OPEN_KEY = 'newworld-ui-dispatch-open';
@@ -95,11 +133,11 @@ function panelHandle(open: boolean): HTMLElement {
   return handle;
 }
 
-function regionRow(regionId: string, compact = false): HTMLElement {
+function regionRow(regionId: string, opts: { selected: boolean; compact: boolean }): HTMLElement {
   const state = save();
   const region = content.regions.get(regionId)!;
   const unlocked = isRegionUnlocked(content, state, regionId);
-  const selected = selRegion() === regionId;
+  const { selected, compact } = opts;
   if (unlocked) {
     return el(`button.region-row${selected ? '.selected' : ''}`, { onclick: () => selRegion.set(regionId) },
       el('div.region-name', {},
@@ -130,20 +168,22 @@ function regionRow(regionId: string, compact = false): HTMLElement {
   return el('div.region-row.locked', { title: check.reason ?? '' },
     el('div.region-name', {}, `🔒 ${region.icon} ${region.name}`),
     el('div.muted.small.region-req', {}, check.ok ? '해금 조건 달성!' : requirements.join(' ')),
-    check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => unlock(regionId) }, '해금') : null,
+    // 해금하면 바로 출발 대상으로 — 방금 연 지역이 다음 목적지다
+    check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => { unlock(regionId); selRegion.set(regionId); } }, '해금') : null,
   );
 }
 
-/** 군 카드 — 2×2 몬스터 미리보기 + 요약(CP·속성·유물). 클릭하면 편성 시트 */
+/** 군 카드 — 파티 슬롯 수만큼 미리보기 + 유물 줄 + 이름·CP. 클릭하면 편성 시트 */
 function teamCard(team: TeamLoadout): HTMLElement {
   const state = save();
   const busy = busyTeamIds(state).has(team.id);
   const party = teamParty(state, team);
   const artifacts = teamArtifacts(state, team);
 
-  // 아이콘 한 줄 4마리 + CP만 — 상세는 카드·편성 시트에 있으니 요약 최소화 (2026-08-23 사용자)
+  // 해금한 슬롯 수만큼 칸을 그린다 — 4칸 고정은 5칸 편성의 다섯째 몬스터를 숨겼다 (2026-08-27 사용자)
+  const slots = state.profile.partySlots;
   const iconCells: HTMLElement[] = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < slots; i++) {
     const monsterId = party[i];
     if (monsterId) {
       const owned = state.roster.find((m) => m.monsterId === monsterId)!;
@@ -152,6 +192,17 @@ function teamCard(team: TeamLoadout): HTMLElement {
       iconCells.push(el('div.team-cell.team-cell-empty', {}, '+'));
     }
   }
+
+  // 장착 유물 줄 — 이름·수치는 툴팁과 편성 시트로, 여기서는 등급 테두리만
+  const arteRow = artifacts.length > 0
+    ? el('div.team-arte-row', {}, ...artifacts.map((itemId) => {
+        const def = content.artifacts.get(itemId);
+        const owned = state.artifacts.find((a) => a.itemId === itemId);
+        const icon = artifactIcon(itemId);
+        if (def) icon.title = `${def.name}${owned && owned.enhance > 0 ? ` +${owned.enhance}` : ''}`;
+        return icon;
+      }))
+    : null;
 
   const totalCp = party.reduce((sum, id) => {
     const owned = state.roster.find((m) => m.monsterId === id);
@@ -166,42 +217,37 @@ function teamCard(team: TeamLoadout): HTMLElement {
       overlay.set({ kind: 'teamEdit', teamId: team.id });
     },
   },
-    el('div.team-row', {},
-      ...iconCells,
-      party.length > 4 ? el('span.team-more', {}, `+${party.length - 4}`) : null,
-    ),
-    el('div.team-info', {},
-      busy ? el('span.tag.busy-tag', {}, '🧭 원정 중') : null,
+    el('div.team-row', {}, ...iconCells),
+    arteRow,
+    el('div.team-foot', {},
+      el('span.team-name-sm', {}, busy ? `🧭 ${team.name}` : team.name), // 파견 중은 칩과 같은 🧭 접두
       party.length > 0
-        ? el('div.team-cp', {}, `CP ${fmtGold(totalCp)}`)
-        : el('div.muted.small', {}, '편성 비어 있음'),
+        ? el('span.team-cp', {}, `CP ${fmtGold(totalCp)}`)
+        : el('span.muted.small', {}, '비어 있음'),
     ),
   );
 }
 
-/** 아직 잠긴 군 안내 카드 */
-function lockedTeamCards(state: SaveState): HTMLElement[] {
+/** 아직 잠긴 군 — 카드 대신 한 줄 (12지역 개편으로 화면이 길어져 세로 압축, 2026-08-27) */
+function lockedTeamLines(state: SaveState): HTMLElement[] {
   // 군 게이트가 뒤로 이동해도(2026-08-26 심부 이동) 이미 만들어진 프리셋은 회수하지 않는다 —
-  // 프리셋 카드가 있는 군에 잠금 카드를 겹쳐 보여주지 않는다
+  // 프리셋 카드가 있는 군에 잠금 줄을 겹쳐 보여주지 않는다
   const current = Math.max(teamCount(content, state), state.teams.length);
   return content.balance.teams
     .filter((u) => u.count > current && u.regionUnlocked)
     .map((u) => {
       const region = content.regions.get(u.regionUnlocked!);
-      return el('div.card.team-card.team-locked', {
-        title: `${region?.name ?? ''} 해금 시 편성 가능`, // 설명은 툴팁으로만 (2026-08-23 사용자)
-      },
-        el('div.team-row', {}, ...Array.from({ length: 4 }, () => el('div.team-cell.team-cell-empty', {}, ''))),
-        el('div.team-info', {},
-          el('div.team-name.muted', {}, `🔒 원정대 ${u.count}`),
-        ),
-      );
+      return el('div.team-locked-line', { title: `${region?.name ?? ''} 해금 시 편성 가능` },
+        `🔒 원정대 ${u.count} — ${region?.icon ?? ''} ${region?.name ?? ''} 해금 시`);
     });
 }
 
 export function renderExpedition(): HTMLElement {
   const state = save();
-  const regionId = selRegion();
+  // 리셋·세이브 붙여넣기로 선택 지역이 잠겼을 수 있다 — 시그널은 두고 이번 렌더의 출발 대상만 보정
+  const regionId = isRegionUnlocked(content, state, selRegion())
+    ? selRegion()
+    : deepestUnlockedRegionId(state);
   const region = content.regions.get(regionId)!;
   const tier = selTier();
   const busy = busyTeamIds(state);
@@ -237,17 +283,36 @@ export function renderExpedition(): HTMLElement {
     tierDef.legendaryChance > 0 ? '⭐ 전설과 만날 수 있다' : null,
   ].filter(Boolean).join(' · ');
 
+  // 권역 탭 — 12행을 탭 4개 + 소지역 3행으로 접는다. 완료 ✓ · 진행 n/3 · 미개방 🔒,
+  // 지금 해금을 실행할 수 있는 관문이 있으면 알림 점(탭 점 관용: '보유'가 아니라 '실행 가능')
+  const viewTier = selTierView();
+  const tierTabs = tabBar(
+    regionTiers.map(({ tier: t, regions }) => {
+      const unlockedCount = regions.filter((r) => isRegionUnlocked(content, state, r.id)).length;
+      const mark = unlockedCount === regions.length ? '✓' : unlockedCount === 0 ? '🔒' : `${unlockedCount}/${regions.length}`;
+      return {
+        key: String(t),
+        label: `${regions[0]!.icon} ${tierShortName(regions)} ${mark}`,
+        title: `${regions[0]!.name} 권역 — 소지역 ${unlockedCount}/${regions.length} 해금`,
+        dot: regions.some((r) => !isRegionUnlocked(content, state, r.id) && canUnlockRegion(content, state, r.id).ok),
+      };
+    }),
+    { active: String(viewTier), onPick: (key) => pickTier(Number(key)) },
+  );
+  const viewRegions = (regionTiers.find((t) => t.tier === viewTier) ?? regionTiers[0]!).regions;
+  // 잠김 지역 중 첫 번째(다음 관문)만 조건을 펼친다 — 나머지는 이름만 보여 목표는 보이되 목록은 짧게
+  const nextGate = content.regionList.find((r) => !isRegionUnlocked(content, state, r.id))?.id;
+
   return el('div.screen', {},
-    el('h2.section-title', {}, '지역'),
-    el('div.card.stack-sm', {}, ...(() => {
-      // 잠김 지역 중 첫 번째(다음 관문)만 조건을 펼친다 — 나머지는 이름만 보여 목표는 보이되 목록은 짧게
-      const nextGate = content.regionList.find((r) => !isRegionUnlocked(content, state, r.id))?.id;
-      return content.regionList.map((r) => regionRow(r.id, r.id !== nextGate && !isRegionUnlocked(content, state, r.id)));
-    })()),
+    tierTabs,
+    el('div.card.stack-sm', {}, ...viewRegions.map((r) => regionRow(r.id, {
+      selected: r.id === regionId,
+      compact: r.id !== nextGate && !isRegionUnlocked(content, state, r.id),
+    }))),
 
     el('h2.section-title', {}, '원정대'),
-    ...state.teams.map((t) => teamCard(t)),
-    ...lockedTeamCards(state),
+    el('div.team-grid', {}, ...state.teams.map((t) => teamCard(t))),
+    ...lockedTeamLines(state),
 
     el(`div.card.dispatch-panel${panelOpen() ? '' : '.collapsed'}`, {},
       panelHandle(panelOpen()),
@@ -286,7 +351,7 @@ export function renderExpedition(): HTMLElement {
         ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})`
         : party.length === 0
           ? `${team.name} 편성이 비어 있습니다 [카드를 눌러 편성하세요]`
-          : `🧭 ${region.name}으로 출발`),
+          : `🧭 ${josaRo(region.name)} 출발`), // 갯벌로·우듬지로·심연으로 — '으로' 고정 금지
     ),
   );
 }
