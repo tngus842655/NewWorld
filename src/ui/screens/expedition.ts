@@ -3,45 +3,23 @@
  * 편성은 군 카드를 눌러 여는 편성 시트에서, 파견은 군 단위로.
  */
 import { content } from '../../content';
-import type { Region, Tier } from '../../content/schema';
+import type { Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
-import { canUnlockRegion, capturedCounts, isRegionUnlocked, teamCount } from '../../core/progression';
+import { canUnlockRegion, capturedCounts, deepestUnlockedRegion, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { batch, signal } from '../../state/signal';
 import { dispatchTeam, save, unlock } from '../../state/store';
 import { artifactIcon, monsterIconBadged, ownedCp } from '../components';
 import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, josaRo } from '../kit';
+import { regionTiers, tierShortName } from '../regionTiers';
 import { resetTeamSheet } from '../teamSheet';
 import { tabBar } from '../panels';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
-/** 권역(tier)별 소지역 묶음 — regionList가 order 정렬이라 각 묶음의 첫 지역이 권역 진입 지역이다 */
-const regionTiers: { tier: number; regions: Region[] }[] = (() => {
-  const byTier = new Map<number, Region[]>();
-  for (const region of content.regionList) {
-    const bucket = byTier.get(region.tier) ?? [];
-    bucket.push(region);
-    byTier.set(region.tier, bucket);
-  }
-  return [...byTier.entries()].sort((a, b) => a[0] - b[0]).map(([tier, regions]) => ({ tier, regions }));
-})();
-
-/** 권역 탭 라벨 — 진입 지역 이름의 마지막 어절 (물안개 해안→해안, 잿빛 화산→화산) */
-function tierShortName(regions: Region[]): string {
-  const entry = regions[0]!;
-  return entry.name.split(' ').at(-1) ?? entry.name;
-}
-
-function deepestUnlockedRegionId(state: SaveState): string {
-  let last = content.regionList[0]!.id;
-  for (const region of content.regionList) if (isRegionUnlocked(content, state, region.id)) last = region.id;
-  return last;
-}
-
 // 12지역에서 첫 지역 고정 시작은 진행 유저에게 매번 스크롤 — 접속하면 가장 깊은 해금 지역에서 시작 (2026-08-27)
-const selRegion = signal<string>(deepestUnlockedRegionId(save()));
+const selRegion = signal<string>(deepestUnlockedRegion(content, save()).id);
 const selTierView = signal<number>(content.regions.get(selRegion())!.tier);
 const selTier = signal<Tier>('scout');
 
@@ -247,7 +225,7 @@ export function renderExpedition(): HTMLElement {
   // 리셋·세이브 붙여넣기로 선택 지역이 잠겼을 수 있다 — 시그널은 두고 이번 렌더의 출발 대상만 보정
   const regionId = isRegionUnlocked(content, state, selRegion())
     ? selRegion()
-    : deepestUnlockedRegionId(state);
+    : deepestUnlockedRegion(content, state).id;
   const region = content.regions.get(regionId)!;
   const tier = selTier();
   const busy = busyTeamIds(state);

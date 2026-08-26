@@ -1,28 +1,31 @@
 /**
  * 도감 — 몬스터/유물/업적 3탭 (모바일 스크롤 최소화, 2026-08-23).
- * 몬스터: 지역별 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 종족·등급 필터.
+ * 몬스터: 권역 칩 → 소지역 3카드 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 종족·등급 필터.
  * 유물: 등급별 그리드 — 획득 이력(v7) 기반, 종이 사라진 과거 세이브(분해 제거 전)도 도감에는 남는다.
- * 업적: 지역 4탭 + 공통.
+ * 업적: 권역 4칩 + 공통 (12지역 개편으로 지역 13칩이 네 줄을 덮던 것을 압축, 2026-08-27).
  */
 import { content } from '../../content';
 import { ARTIFACT_RARITIES, type ArtifactRarity, type Monster } from '../../content/schema';
-import { capturedCounts, type CapturedCounts } from '../../core/progression';
+import { capturedCounts, deepestUnlockedRegion, type CapturedCounts } from '../../core/progression';
 import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { artifactIcon, artifactIconBadged, monsterIcon } from '../components';
 import { describeEffect } from '../effectText';
 import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, RARITY_ORDER, TRIBE_LABEL, el, fmtGold } from '../kit';
 import { filterChips } from '../panels';
+import { regionTiers, tierShortName } from '../regionTiers';
 import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 상태 (GDD §11)
 const codexTab = signal<'monster' | 'artifact' | 'achieve'>('monster');
 const tribeFilter = signal<Monster['tribe'] | null>(null);
 const rarityFilter = signal<Monster['rarity'] | null>(null);
-// 접힘 상태 (기본 접힘 — 캠프와 동일 패턴) + 업적 지역 탭 (2026-08-23)
+// 접힘 상태 (기본 접힘 — 캠프와 동일 패턴) + 권역 선택 (2026-08-27 원정과 같은 권역 축)
 const openCodexRegions = signal<Record<string, boolean>>({});
 const openArtifactRarities = signal<Record<string, boolean>>({});
-const achieveTab = signal<string>(content.regionList[0]!.id); // 지역 id 또는 'common'
+// 접속 기본값은 가장 깊은 해금 권역 — 원정 화면과 같은 이유 (null = 전체, 등급 필터로 전 지역 훑을 때)
+const codexTierView = signal<number | null>(deepestUnlockedRegion(content, save()).tier);
+const achieveTab = signal<string>(String(deepestUnlockedRegion(content, save()).tier)); // 권역 번호 문자열 또는 'common'
 
 // 필터 칩은 ui/panels.ts로 이전 (2026-08-25) — 편성 시트·캠프와 같은 구현을 쓴다.
 
@@ -72,7 +75,12 @@ function monsterTab(state: Save): HTMLElement[] {
     return icon;
   };
 
-  const sections = content.regionList.map((region) => {
+  // 권역 칩이 소지역 3카드만 남긴다 — 12카드 나열은 화면 두 개 분량 (2026-08-27). '전체'는 등급 필터용 훑기.
+  const view = codexTierView();
+  const viewRegions = view === null
+    ? content.regionList
+    : (regionTiers.find((t) => t.tier === view) ?? regionTiers[0]!).regions;
+  const sections = viewRegions.map((region) => {
     const allNatives = content.monsterList.filter((m) => m.habitat === region.id);
     const regionCaptured = allNatives.filter((m) => state.codex[m.id]?.captured).length;
     const natives = allNatives
@@ -139,16 +147,29 @@ function monsterTab(state: Save): HTMLElement[] {
   });
   const visibleSections = sections.filter((s): s is HTMLElement => s !== null);
 
-  // 필터가 걸리면 '보이는 수'를 병기 — 헤더 진행도(필터 전)와 그리드(필터 후)가 어긋나 보이던 지점
+  // 필터가 걸리면 '보이는 수'를 병기 — 헤더 진행도(필터 전)와 그리드(필터 후)가 어긋나 보이던 지점.
+  // 권역 칩 도입 후에는 보이는 권역 안에서 센다 (전체 모수로 세면 또 어긋난다)
   const shownCount = content.monsterList.filter(
-    (m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
+    (m) => viewRegions.some((r) => r.id === m.habitat)
+      && (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
   ).length;
   const filtered = tribe !== null || rarity !== null;
+
+  // 권역 칩 — 진행(포획/전체)을 함께. 집계는 섹션 헤더와 같은 기준(habitat, 초월 포함)이라 합이 어긋나지 않는다
+  const tierChips = filterChips(
+    regionTiers.map(({ tier, regions }) => {
+      const natives = content.monsterList.filter((m) => regions.some((r) => r.id === m.habitat));
+      const done = natives.filter((m) => state.codex[m.id]?.captured).length;
+      return { key: String(tier), label: `${regions[0]!.icon} ${tierShortName(regions)} ${done}/${natives.length}` };
+    }),
+    { active: view === null ? null : String(view), onPick: (v) => codexTierView.set(v === null ? null : Number(v)) },
+  );
 
   return [
     // 포획 수는 탭 라벨('몬스터 n/216')이 이미 말한다 — 중복 요약 카드를 지우고
     // 보조 수치만 필터 카드에 한 줄로 (탭 라벨과 겹치는 타이틀 금지 규칙, 2026-08-25)
     el('div.card.stack-sm', {},
+      tierChips,
       el('div.muted.small', {},
         `목격 ${seen} · 도감 점수 ${score}${filtered ? ` · 필터 ${shownCount}종 표시` : ''}`),
       filterChips(
@@ -237,29 +258,27 @@ function artifactTab(state: Save): HTMLElement[] {
 
 // ── 업적 탭 ──────────────────────────────────────────────────────────────────
 function achieveTab_(state: Save): HTMLElement[] {
-  // 업적(구 마일스톤) — 지역 4탭 + 공통, 달성 수 표시 (2026-08-23 사용자)
+  // 업적(구 마일스톤) — 권역 4칩 + 공통 (2026-08-27: 12지역 개편으로 지역 13칩이 네 줄을 덮었다).
+  // 권역 안에서는 소지역별 헤더로 사다리를 구분한다.
   const counts = capturedCounts(content, state);
-  const achievementGroups = [
-    ...content.regionList.map((region) => ({
-      key: region.id,
-      label: `${region.icon} ${region.name.split(' ').pop()}`,
-      items: content.milestones.filter((m) => m.condition.kind === 'regionCaptured' && m.condition.region === region.id),
-    })),
-    {
-      key: 'common',
-      label: '🏅 공통',
-      items: content.milestones.filter((m) => m.condition.kind !== 'regionCaptured'),
-    },
-  ];
-  const currentGroup = achievementGroups.find((g) => g.key === achieveTab()) ?? achievementGroups[0]!;
   const doneCount = (items: typeof content.milestones) => items.filter((m) => state.milestones.includes(m.id)).length;
+  const regionItems = (regionId: string) =>
+    content.milestones.filter((m) => m.condition.kind === 'regionCaptured' && m.condition.region === regionId);
+  const commonItems = content.milestones.filter((m) => m.condition.kind !== 'regionCaptured');
 
-  const achievementTabs = el('div.chips-wrap', {}, ...achievementGroups.map((group) =>
-    el(`button.chip${currentGroup.key === group.key ? '.active' : ''}`, {
-      onclick: () => achieveTab.set(group.key),
-    }, `${group.label} ${doneCount(group.items)}/${group.items.length}`)));
+  const current = achieveTab();
+  const achievementTabs = filterChips(
+    [
+      ...regionTiers.map(({ tier, regions }) => {
+        const items = regions.flatMap((r) => regionItems(r.id));
+        return { key: String(tier), label: `${regions[0]!.icon} ${tierShortName(regions)} ${doneCount(items)}/${items.length}` };
+      }),
+      { key: 'common', label: `🏅 공통 ${doneCount(commonItems)}/${commonItems.length}` },
+    ],
+    { active: current, onPick: (v) => { if (v !== null) achieveTab.set(v); }, allLabel: null },
+  );
 
-  const achievementRows = currentGroup.items.map((milestone) => {
+  const row = (milestone: (typeof content.milestones)[number]): HTMLElement => {
     const done = state.milestones.includes(milestone.id);
     const { need, have } = milestoneProgress(milestone.condition, counts);
     const rewardBits = [
@@ -279,12 +298,26 @@ function achieveTab_(state: Save): HTMLElement[] {
         ? el('div.milestone-reward', {}, ...rewardBits.map((bit) => el('div.muted.small', {}, bit)))
         : null,
     );
-  });
+  };
+
+  const body = current === 'common'
+    ? commonItems.map(row)
+    : ((regionTiers.find((t) => t.tier === Number(current)) ?? regionTiers[0]!).regions).flatMap((region) => {
+        const items = regionItems(region.id);
+        if (items.length === 0) return [];
+        return [
+          el('div.info-group-head', {},
+            el('span', {}, `${region.icon} ${region.name}`),
+            el('span.muted.small', {}, `${doneCount(items)}/${items.length}`),
+          ),
+          ...items.map(row),
+        ];
+      });
 
   return [
     el('div.card.stack-sm', {},
       achievementTabs,
-      ...achievementRows,
+      ...body,
     ),
   ];
 }

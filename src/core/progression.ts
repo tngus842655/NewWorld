@@ -2,7 +2,7 @@
  * 진행·해금 판정 — 도감 집계, 지역/팀/슬롯 해금. 파생값은 저장하지 않고 여기서 계산한다.
  */
 import type { Content } from '../content';
-import type { MonsterRarity } from '../content/schema';
+import type { MonsterRarity, Region } from '../content/schema';
 import type { SaveState } from './types';
 import { GameError } from './types';
 
@@ -44,6 +44,13 @@ export function capturedCounts(content: Content, save: SaveState): CapturedCount
 
 export function regionFlagKey(regionId: string): string {
   return `region:${regionId}`;
+}
+
+/** 가장 깊은(order 최대) 해금 지역 — 원정 기본 선택·도감 기본 권역의 시작점 (2026-08-27) */
+export function deepestUnlockedRegion(content: Content, save: SaveState): Region {
+  let last = content.regionList[0]!;
+  for (const region of content.regionList) if (isRegionUnlocked(content, save, region.id)) last = region;
+  return last;
 }
 
 /** 첫 지역은 항상 열려 있고, 나머지는 unlockRegion으로 해금한 플래그를 본다 */
