@@ -141,6 +141,17 @@ export function fmtCompact(value: number): string {
   return n < 99.95 ? `${n.toFixed(1)}${suffix}` : `${Math.round(n)}${suffix}`;
 }
 
+/** 최대 두 단위, 초 단위 생략 — 한 줄 요약처럼 폭이 빠듯하고 매초 출렁이면 안 되는 자리 (2026-08-27) */
+export function fmtRemainShort(ms: number): string {
+  if (ms <= 0) return '완료';
+  const totalSec = Math.ceil(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (h > 0) return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+  if (m > 0) return `${m}분`;
+  return `${totalSec}초`;
+}
+
 export function fmtRemain(ms: number): string {
   if (ms <= 0) return '완료!';
   const totalSec = Math.ceil(ms / 1000);
@@ -160,10 +171,17 @@ export function fmtRemain(ms: number): string {
  *
  *   josa('30분', '은', '는') → '30분은'
  *   josa('13초', '은', '는') → '13초는'
+ *   josa('원정대 1', '이', '가') → '원정대 1이' (일 — ㄹ 받침)
  *
- * 한글 음절로 끝나지 않으면(숫자·영문) 받침 없는 형태를 쓴다 — 이 코드베이스의 표기는 항상 한글로 끝난다.
+ * 숫자로 끝나면 독음의 받침을 따른다 (군 이름 '원정대 N'이 이 경로를 처음 탔다 — 2026-08-27).
+ * 그 밖의 비한글(영문 등)은 받침 없는 형태를 쓴다.
  */
 export function josa(word: string, withFinal: string, withoutFinal: string): string {
+  const last = word[word.length - 1] ?? '';
+  if (last >= '0' && last <= '9') {
+    // 영·일·삼·육·칠·팔은 받침, 이·사·오·구는 없음
+    return `${word}${'013678'.includes(last) ? withFinal : withoutFinal}`;
+  }
   const code = word.charCodeAt(word.length - 1);
   const isHangulSyllable = code >= 0xac00 && code <= 0xd7a3;
   const hasFinalConsonant = isHangulSyllable && (code - 0xac00) % 28 !== 0;

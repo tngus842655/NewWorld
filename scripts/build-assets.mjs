@@ -6,7 +6,7 @@
  *
  * 원본은 저장소에 넣지 않는다(IconScout 라이선스). 매핑 대장: scripts/assets-manifest.json
  */
-import { mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -27,12 +27,18 @@ const groups = [
   { name: 'monsters', ids: Object.keys(manifest.monsters) },
   { name: 'artifacts', ids: Object.keys(manifest.artifacts ?? {}) },
   { name: 'hourglasses', ids: Object.keys(manifest.hourglasses ?? {}) },
+  { name: 'ui', ids: Object.keys(manifest.ui ?? {}) }, // 앱바 지도 아이콘 등 UI 에셋 (2026-08-27)
 ];
 
 const missing = [];
 for (const group of groups) {
   const rawDir = join(RAW_ROOT, group.name);
   const outDir = join(OUT_ROOT, group.name);
+  // 원본 폴더가 통째로 없는 그룹은 건너뛴다 — 일부 그룹만 BAK에 있는 기기에서도 나머지는 변환되게
+  if (!existsSync(rawDir)) {
+    console.warn(`${group.name}: 원본 폴더 없음 (${rawDir}) — 건너뜀`);
+    continue;
+  }
   mkdirSync(outDir, { recursive: true });
   const rawFiles = new Set(readdirSync(rawDir));
   let done = 0;

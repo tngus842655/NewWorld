@@ -158,11 +158,102 @@ body {
 
 /* ── 홈 ── */
 .banner { border-color: #6b5326; background: linear-gradient(180deg, #2a2313, #1a1d29); display: flex; flex-direction: column; gap: 8px; }
-.exp-card { display: flex; flex-direction: column; gap: 9px; }
-.exp-head { display: flex; justify-content: space-between; align-items: center; }
-.exp-title { font-weight: 700; font-size: 16px; }
-.exp-party { display: flex; gap: 6px; }
-.exp-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* ── 홈 · 원정 지도 (2026-08-27) — 여정 시각화. 정적 SVG + HTML 마커(% 좌표) 오버레이 ── */
+.map-card { padding: 5px; }
+.map-wrap { position: relative; overflow: hidden; border-radius: 11px; }
+.map-wrap svg { display: block; width: 100%; height: auto; }
+.map-ground { fill: #10131e; }
+.map-ridge { fill: none; stroke: var(--line); stroke-width: 1; opacity: 0.55; }
+.map-trail { fill: none; stroke: #454c66; stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.map-route {
+  fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-dasharray: 3 7; stroke-linecap: round;
+  opacity: 0.9; filter: drop-shadow(0 0 3px rgba(232, 163, 61, 0.55));
+  animation: map-route-flow 1.8s linear infinite;
+}
+@keyframes map-route-flow { to { stroke-dashoffset: -10; } }
+/* 같은 지역 중복 파견의 두 번째 경로 — 좌표 측정용으로만 남긴다 (겹쳐 그리면 글로우가 두 배) */
+.map-route-dup { opacity: 0; animation: none; filter: none; }
+.map-node-plate { fill: rgba(19, 23, 37, 0.92); stroke: var(--line); stroke-width: 1.2; }
+.map-node-icon { font-size: 14px; }
+/* SVG 텍스트는 viewBox(360) 스케일을 탄다 — 375px 실폭 335px에서 ×0.93이므로
+   앱 최소 가독선 10px을 지키려면 11px 이상이어야 한다 (리뷰 2026-08-27) */
+.map-node-name { font-size: 11px; fill: var(--muted); }
+.map-node-lock { font-size: 10px; }
+.map-node.locked { opacity: 0.55; }
+.map-node.target .map-node-plate { stroke: var(--accent); }
+.map-node.target .map-node-name { fill: var(--accent-2); }
+.map-camp-plate { stroke: var(--accent); stroke-width: 1.4; }
+.map-camp-icon { font-size: 15px; }
+.map-band-label { font-size: 11px; fill: var(--muted); opacity: 0.85; letter-spacing: 2px; }
+.map-fog-label { font-size: 12px; fill: #9aa2b8; letter-spacing: 3px; }
+.map-deco-wave { fill: none; stroke: #4d7f9e; stroke-width: 1.2; opacity: 0.4; stroke-linecap: round; }
+.map-deco-tree { fill: #3f6b46; opacity: 0.5; }
+.map-deco-mist { fill: #6b7fae; opacity: 0.16; }
+.map-deco-peak { fill: #6e3a30; opacity: 0.3; }
+.map-deco-ember { fill: #d96a4a; opacity: 0.55; }
+/* 파견 마커 — 파티 선두 얼굴. left/top 전환이 1초 틱 사이를 이어 걷는 느낌을 만든다 (진행바 0.6s와 같은 수법) */
+.map-marker {
+  position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; padding: 0;
+  border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); cursor: pointer; z-index: 3;
+  transition: left 1.05s linear, top 1.05s linear;
+  box-shadow: 0 0 10px rgba(232, 163, 61, 0.45), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.map-marker.map-snap { transition: none; } /* 첫 배치·가속 점프는 스윕 없이 순간이동 */
+.map-marker img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.map-marker-fallback { font-size: 15px; line-height: 26px; }
+.map-marker-team {
+  position: absolute; left: -5px; top: -5px; width: 15px; height: 15px; line-height: 15px;
+  border-radius: 50%; background: var(--accent); color: #1a1206; font-size: 10px; font-weight: 800; text-align: center;
+}
+.map-marker-q { position: absolute; right: -7px; top: -7px; font-size: 11px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8)); }
+/* 회군 마커·경로 — 색을 죽이고 점선 흐름을 캠프 방향으로 되돌린다 */
+.map-marker.recalled { border-color: var(--muted); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.map-route.recalled { opacity: 0.4; filter: none; animation-direction: reverse; }
+.exp-row-recalled .exp-row-title { opacity: 0.75; }
+.exp-row-recalled .progress-fill { background: linear-gradient(90deg, #6a6f85, #8b8fa3); }
+.map-marker.done { border-color: var(--accent-2); animation: map-done-bounce 1.4s ease-in-out infinite; }
+.map-marker.done::after {
+  content: '📜'; position: absolute; right: -8px; top: -9px; font-size: 12px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+@keyframes map-done-bounce { 0%, 100% { transform: none; } 50% { transform: translateY(-4px); } }
+/* 섹션 타이틀 + 우측 진입 아이콘 한 줄 — 원정 현황의 지도 아이콘 (2026-08-27) */
+.section-head { display: flex; justify-content: space-between; align-items: center; margin: 8px 2px 0; }
+.section-head .section-title { margin: 0; }
+.map-entry-btn { background: none; border: none; padding: 0 2px; cursor: pointer; line-height: 1; font-size: 22px; }
+.map-entry-btn img { width: 28px; height: 28px; display: block; object-fit: contain; }
+
+/* 홈 원정 현황 카드 — 원정별 한 줄 요약. 탭하면 아래로 펼쳐져 액션(가속·갈림길·회군·지도)이 나온다 */
+.map-lines-card { padding: 3px 14px; }
+.map-lines { display: flex; flex-direction: column; }
+.map-line-item + .map-line-item { border-top: 1px solid var(--line); }
+.map-line {
+  display: flex; align-items: center; gap: 7px; padding: 9px 4px;
+  cursor: pointer; min-width: 0;
+}
+.map-line-chev { flex: none; font-size: 10px; color: var(--muted); }
+.map-line-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 4px 10px; }
+.map-line-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-line-team {
+  flex: none; width: 15px; height: 15px; line-height: 15px; border-radius: 50%;
+  background: var(--accent); color: #1a1206; font-size: 10px; font-weight: 800; text-align: center;
+}
+.map-line-status { margin-left: auto; flex: none; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.map-line-claim { margin-left: auto; flex: none; padding: 5px 10px; font-size: 12px; }
+.map-line-recalled .map-line-name { opacity: 0.7; }
+.map-line-empty { cursor: default; justify-content: space-between; }
+
+/* 원정 요약 행 — 여정 표현은 지도 몫이라 여기는 상태 한 줄과 액션만 (지도 시트 전용) */
+.exp-list { padding-top: 6px; padding-bottom: 6px; }
+.exp-row { display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-radius: 8px; }
+.exp-row + .exp-row { border-top: 1px solid var(--line); }
+.exp-row-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.exp-row-title { font-weight: 700; font-size: 15px; }
+.exp-row-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.exp-status { font-size: 12.5px; }
+/* 지도 마커 탭 → 행 하이라이트 */
+.exp-flash { animation: exp-flash 0.9s ease-out; }
+@keyframes exp-flash { 0% { background: rgba(232, 163, 61, 0.22); } 100% { background: transparent; } }
 .progress { height: 8px; border-radius: 99px; background: var(--bg3); overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #b97f1e, #f0c060); border-radius: 99px; transition: width 0.6s; }
 .goal-card { display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
@@ -868,6 +959,9 @@ body.overlay-open .container { overflow: hidden; }
   .acard.rar-transcendent::after { display: none; }
   .micon.rar-transcendent { box-shadow: 0 0 16px rgba(255, 45, 79, 0.6); }
   .acard.rar-transcendent .acard-name { animation: none; }
+  /* 원정 지도 — 경로 흐름·바운스를 멈추고 마커는 틱마다 제자리 이동 (위치 정보는 유지) */
+  .map-route, .map-marker.done { animation: none; }
+  .map-marker { transition: none; }
 }
 
 /* ── 영구 보너스 (조련·공명, GDD §4.6) ── */

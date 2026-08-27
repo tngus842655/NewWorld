@@ -4,8 +4,12 @@ import {
   chooseCrossroad,
   claimExpedition,
   createExpedition,
+  isExpeditionOut,
+  recallExpedition,
+  recallReturnEndsAt,
   resolveExpedition,
   rollArtifact,
+  TRAVEL_FRACTION,
   useHourglass,
 } from '../src/core/expedition';
 import { streamRng } from '../src/core/rng';
@@ -394,6 +398,97 @@ describe('모래시계 사용', () => {
     expect(() => useHourglass(content, dispatched, expedition.id, 'hourglass-60', clock.ctx.now())).toThrow(/없습니다/);
     clock.set(expedition.endsAt + 1);
     expect(() => useHourglass(content, dispatched, expedition.id, 'hourglass-15', clock.ctx.now())).toThrow(/이미 돌아온/);
+  });
+});
+
+describe('회군', () => {
+  it('recallAt만 기록하고 적재 미끼를 즉시 돌려준다 — 복귀 소요 = min(경과, 편도 22%)', () => {
+    const clock = makeCtx();
+    const { save, partyIds } = saveWithParty(clock, STARTERS, { lures: 2 });
+    const { save: dispatched, expedition } = createExpedition(
+      content,
+      save,
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactIds: [] },
+      clock.ctx,
+    );
+    expect(dispatched.wallet.lures).toBe(2 - expedition.luresLoaded);
+    const total = expedition.endsAt - expedition.startedAt;
+
+    // 이동 구간(앞 22%) 회군 — 온 만큼(10분) 걸어 돌아온다
+    clock.advance(10 * 60_000);
+    const early = recallExpedition(dispatched, expedition.id, clock.ctx.now());
+    const earlyExp = early.expeditions[0]!;
+    expect(earlyExp.recallAt).toBe(clock.ctx.now());
+    expect(early.wallet.lures).toBe(2);
+    expect(recallReturnEndsAt(earlyExp)).toBe(clock.ctx.now() + 10 * 60_000);
+    expect(early.stats).toEqual(dispatched.stats);
+    expect(early.journalArchive).toEqual(dispatched.journalArchive);
+
+    // 탐사 구간 회군 — 지역에서 캠프까지 편도(총 소요의 22%)만큼 걸어 돌아온다
+    clock.advance(50 * 60_000); // 출발 60분 뒤 (진행률 0.5)
+    const mid = recallExpedition(dispatched, expedition.id, clock.ctx.now());
+    expect(recallReturnEndsAt(mid.expeditions[0]!)).toBe(clock.ctx.now() + Math.round(total * TRAVEL_FRACTION));
+  });
+
+  it('복귀가 끝나야 군이 풀리고, 다음 파견이 기록을 청소한다', () => {
+    const clock = makeCtx();
+    const { save, partyIds } = saveWithParty(clock, STARTERS);
+    const { save: dispatched, expedition } = createExpedition(
+      content,
+      save,
+      { regionId: 'misty-coast', tier: 'deep', partyIds, artifactIds: [] },
+      clock.ctx,
+    );
+
+    clock.advance(120 * 60_000); // 탐사 중 (진행률 0.25)
+    const recalled = recallExpedition(dispatched, expedition.id, clock.ctx.now());
+    const returnEnds = recallReturnEndsAt(recalled.expeditions[0]!)!;
+
+    // 복귀 중 — 군은 여전히 잠긴다 (1군 체제 team-limit)
+    expect(isExpeditionOut(recalled.expeditions[0]!, clock.ctx.now())).toBe(true);
+    expect(() =>
+      createExpedition(content, recalled, { regionId: 'misty-coast', tier: 'scout', partyIds, artifactIds: [] }, clock.ctx),
+    ).toThrow(/가득/);
+
+    // 복귀 완료 — 잠금이 풀리고, 재파견이 회군 기록을 청소한다
+    clock.set(returnEnds);
+    expect(isExpeditionOut(recalled.expeditions[0]!, clock.ctx.now())).toBe(false);
+    const again = createExpedition(
+      content,
+      recalled,
+      { regionId: 'misty-coast', tier: 'scout', partyIds, artifactIds: [] },
+      clock.ctx,
+    );
+    expect(again.save.expeditions).toHaveLength(1);
+    expect(again.save.expeditions[0]!.recallAt).toBeUndefined();
+  });
+
+  it('귀환 단계·재회군·이미 귀환·없는 원정은 거부하고, 회군 원정은 정산·가속·갈림길이 막힌다', () => {
+    const clock = makeCtx();
+    const { save, partyIds } = saveWithParty(clock, STARTERS);
+    expect(() => recallExpedition(save, 'no-such', clock.ctx.now())).toThrow(/진행 중인 원정/);
+
+    const { save: dispatched, expedition } = createExpedition(
+      content,
+      save,
+      { regionId: 'misty-coast', tier: 'standard', partyIds, artifactIds: [] },
+      clock.ctx,
+    );
+    const total = expedition.endsAt - expedition.startedAt;
+
+    // 귀환 단계(뒤 22%)의 회군은 무의미 — 도착 시간은 같고 보상만 사라진다
+    clock.set(expedition.startedAt + Math.round(total * 0.9));
+    expect(() => recallExpedition(dispatched, expedition.id, clock.ctx.now())).toThrow(/귀환길/);
+
+    clock.set(expedition.endsAt);
+    expect(() => recallExpedition(dispatched, expedition.id, clock.ctx.now())).toThrow(/이미 돌아온/);
+
+    clock.set(expedition.startedAt + 30 * 60_000);
+    const recalled = recallExpedition(dispatched, expedition.id, clock.ctx.now());
+    expect(() => recallExpedition(recalled, expedition.id, clock.ctx.now())).toThrow(/이미 회군/);
+    expect(() => claimExpedition(content, recalled, expedition.id, clock.ctx)).toThrow(/일지가 없습니다/);
+    expect(() => accelerateExpedition(recalled, expedition.id, 60_000, clock.ctx.now())).toThrow(/가속할 수 없습니다/);
+    expect(() => chooseCrossroad(recalled, expedition.id, 0, 'safe')).toThrow(/회군 중/);
   });
 });
 

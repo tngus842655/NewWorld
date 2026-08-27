@@ -22,6 +22,8 @@ import {
   claimExpedition,
   createExpedition,
   previewCrossroads,
+  recallExpedition,
+  recallReturnEndsAt,
   useHourglass,
   type ExpeditionInput,
   type UseHourglassResult,
@@ -33,7 +35,7 @@ import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/s
 import { ensureTeams, setTeamLoadout } from '../core/teams';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
 import { describeEffect } from '../ui/effectText';
-import { toast } from '../ui/kit';
+import { fmtRemain, josa, toast } from '../ui/kit';
 import * as clock from './clock';
 import { submitScore } from './ranking';
 import { loadSave, persistSave } from './save';
@@ -132,6 +134,19 @@ export function claim(expeditionId: string): { journal: Journal; newMilestones: 
     notifyNewTasks(prev, next);
     void submitScore(next); // 랭킹 갱신 — 실패는 조용히 무시 (오프라인 무관)
     return { journal: result.journal, newMilestones: result.newMilestones };
+  });
+}
+
+/** 회군 — 보상 없이 귀로에 올린다. 복귀 소요는 현 위치 기준, 적재 미끼는 즉시 환급 (확인 다이얼로그는 UI 담당) */
+export function recall(expeditionId: string): void {
+  act(() => {
+    const state = save();
+    const expedition = state.expeditions.find((e) => e.id === expeditionId && !e.claimed);
+    const teamName = expedition?.teamId ? state.teams.find((t) => t.id === expedition.teamId)?.name : null;
+    const next = recallExpedition(state, expeditionId, ctx.now());
+    save.set(next);
+    const returnEnds = recallReturnEndsAt(next.expeditions.find((e) => e.id === expeditionId)!)!;
+    toast(`🏳️ ${josa(teamName ?? '원정대', '이', '가')} 회군합니다 — ${fmtRemain(returnEnds - ctx.now())} 후 복귀`, 'ok');
   });
 }
 

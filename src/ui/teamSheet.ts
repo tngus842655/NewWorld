@@ -5,7 +5,9 @@
  */
 import { content } from '../content';
 import { SLOTS, type MonsterRarity, type Slot, type Tribe } from '../content/schema';
+import { isExpeditionOut } from '../core/expedition';
 import { artifactsUsedByTeams, autoLoadout, speciesUsedByTeams } from '../core/teams';
+import * as clock from '../state/clock';
 import type { OwnedArtifact } from '../core/types';
 import { signal } from '../state/signal';
 import { save, setTeam } from '../state/store';
@@ -59,7 +61,7 @@ export function teamSheet(teamId: string): HTMLElement | null {
   const state = save();
   const team = state.teams.find((t) => t.id === teamId);
   if (!team) return null;
-  const busy = state.expeditions.some((e) => !e.claimed && e.teamId === teamId);
+  const busy = state.expeditions.some((e) => isExpeditionOut(e, clock.now()) && e.teamId === teamId);
   const slots = state.profile.partySlots;
   const party = team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
   const artifacts = team.artifactIds.filter((itemId) => state.artifacts.some((a) => a.itemId === itemId));

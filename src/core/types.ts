@@ -43,6 +43,8 @@ export interface ActiveExpedition {
   luresLoaded: number;
   choices: (CrossroadChoice | null)[]; // null = 미선택 (정산 시 safe 처리)
   claimed: boolean;
+  /** 회군 시각 (2026-08-27) — 있으면 보상 없이 귀로. 복귀 완료 시각은 저장하지 않고 파생(recallReturnEndsAt) */
+  recallAt?: number;
 }
 
 // ── 도감 ─────────────────────────────────────────────────────────────────────

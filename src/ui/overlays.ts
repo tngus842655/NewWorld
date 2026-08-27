@@ -6,11 +6,13 @@ import { ELEMENTS, RARITY_LABEL, type MonsterRarity, type Region } from '../cont
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { finalTierEntry } from '../core/economy';
+import { isExpeditionOut } from '../core/expedition';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
 import { awaken, choose, claim, crossroadsOf, enhance, levelUp, save } from '../state/store';
 import { accelerateSheet } from './accelerateSheet';
 import { artifactFusionSheet } from './artifactFusionSheet';
+import { mapSheet } from './expeditionMap';
 import { FUSABLE_RARITIES, FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
@@ -59,6 +61,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
                   ? artifactFusionSheet()
                 : current.kind === 'teamEdit'
                   ? teamSheet(current.teamId)
+                : current.kind === 'map'
+                  ? mapSheet()
                 : current.kind === 'odds'
                   ? oddsSheet()
                 : current.kind === 'elementInfo'
@@ -120,7 +124,7 @@ function monsterSheet(monsterId: string): HTMLElement | null {
   const maxStar = owned.star >= balance.star.max;
   const upCost = maxLevel ? 0 : monsterLevelUpCost(content, monsterId, owned.level);
   const starCost = maxStar ? 0 : monsterStarUpCost(content, monsterId, owned.star);
-  const busy = state.expeditions.some((e) => !e.claimed && e.partyIds.includes(monsterId));
+  const busy = state.expeditions.some((e) => isExpeditionOut(e, clock.now()) && e.partyIds.includes(monsterId));
 
   // 다음 레벨 미리보기 — "레벨업하면 얼마나 오르나"가 버튼 옆에 바로 보이게
   const nextAtkStat = statAt(monster.baseAtk, owned.level + 1, owned.star, balance);

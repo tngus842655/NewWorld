@@ -56,7 +56,9 @@ export function createExpedition(
   if (!region) throw new GameError('region-missing', `없는 지역: ${input.regionId}`);
   if (!isRegionUnlocked(content, save, region.id)) throw new GameError('region-locked', `${region.name}은(는) 아직 잠겨 있습니다`);
 
-  const running = save.expeditions.filter((e) => !e.claimed);
+  const now = ctx.now();
+  // 회군 복귀가 끝난 원정은 잠금에서 빠진다 — 기록 자체는 아래 클론에서 청소
+  const running = save.expeditions.filter((e) => isExpeditionOut(e, now));
   if (running.length >= teamCount(content, save)) {
     throw new GameError('team-limit', '동시에 보낼 수 있는 원정대가 가득 찼습니다');
   }
@@ -113,7 +115,6 @@ export function createExpedition(
   }
   timeMult = Math.max(timeMult, content.balance.artifacts.effectCaps.timeMultMin);
 
-  const now = ctx.now();
   const luresLoaded = Math.min(content.balance.lures.maxLoad, save.wallet.lures);
   const expedition: ActiveExpedition = {
     id: ctx.newUid(),
@@ -131,6 +132,8 @@ export function createExpedition(
   };
 
   const next = structuredClone(save);
+  // 복귀가 끝난 회군 기록 청소 — 자동 틱이 없는 구조라 상태를 바꾸는 이 액션에서 기회적으로 정리한다
+  next.expeditions = next.expeditions.filter((e) => isExpeditionOut(e, now));
   next.wallet.lures -= luresLoaded;
   next.expeditions.push(expedition);
   // 최고 유효 전투력 기록 — 랭킹 전투력 카테고리 (GDD §9.3)
@@ -145,6 +148,7 @@ export function chooseCrossroad(save: SaveState, expeditionId: string, index: nu
   const next = structuredClone(save);
   const expedition = next.expeditions.find((e) => e.id === expeditionId && !e.claimed);
   if (!expedition) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  if (expedition.recallAt !== undefined) throw new GameError('expedition-recalled', '회군 중인 원정입니다');
   if (index < 0 || index >= expedition.choices.length) throw new GameError('crossroad-index', '잘못된 갈림길 번호입니다');
   expedition.choices[index] = choice;
   return next;
@@ -160,6 +164,8 @@ export function accelerateExpedition(save: SaveState, expeditionId: string, ms: 
   const next = structuredClone(save);
   const expedition = next.expeditions.find((e) => e.id === expeditionId && !e.claimed);
   if (!expedition) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  // 시간축 이동이 recallAt 기준 복귀 계산을 깨뜨린다 — 회군 귀로 가속은 v1에서 비허용 (2026-08-27)
+  if (expedition.recallAt !== undefined) throw new GameError('expedition-recalled', '회군 중에는 가속할 수 없습니다');
   const shift = Math.min(ms, Math.max(0, expedition.endsAt - now));
   expedition.startedAt -= shift;
   expedition.endsAt -= shift;
@@ -193,6 +199,52 @@ export function useHourglass(
   next.wallet.hourglasses[hourglassId] = save.wallet.hourglasses[hourglassId]! - 1;
   const finished = next.expeditions.find((e) => e.id === expeditionId)!.endsAt <= now;
   return { save: next, hourglass, finished };
+}
+
+// ── 회군 (2026-08-27 사용자) ─────────────────────────────────────────────────
+/** 여정의 이동(편도) 구간 비율 — 회군 소요 계산과 UI 여정 3막(이동/탐사/귀환)이 공유하는 정본 */
+export const TRAVEL_FRACTION = 0.22;
+
+/**
+ * 회군 복귀 완료 시각 — 저장하지 않고 recallAt에서 파생한다 (TECH §2 파생값 금지).
+ * 복귀 소요 = min(회군 시점까지의 경과, 편도 이동 시간): 이동 중이면 온 만큼 되돌아가고,
+ * 탐사 중이면 지역에서 캠프까지 편도만큼이다 (탐사한다고 더 멀어지지는 않는다).
+ */
+export function recallReturnEndsAt(expedition: ActiveExpedition): number | null {
+  if (expedition.recallAt === undefined) return null;
+  const total = Math.max(1, expedition.endsAt - expedition.startedAt);
+  const elapsed = Math.max(0, expedition.recallAt - expedition.startedAt);
+  return expedition.recallAt + Math.min(elapsed, Math.round(total * TRAVEL_FRACTION));
+}
+
+/** 아직 밖에 있어 군·몬스터·유물을 잠그는 원정인가 — 회군 복귀가 끝났으면 false */
+export function isExpeditionOut(expedition: ActiveExpedition, now: number): boolean {
+  if (expedition.claimed) return false;
+  const returnEnds = recallReturnEndsAt(expedition);
+  return returnEnds === null || now < returnEnds;
+}
+
+/**
+ * 회군 — 원정을 중단하고 귀로에 올린다. 즉시 삭제가 아니라 recallAt만 기록:
+ * 복귀가 끝날 때까지 군은 계속 잠기고, 지도 마커는 길을 되짚어 온다 (2026-08-27 사용자).
+ * 일지는 정산 시점에만 생성되므로 회군한 원정은 보상·통계에 아무것도 남기지 않는다.
+ * 적재한 미끼는 즉시 돌려받는다 — 오발송 취소가 제작 재화까지 깎으면 취소가 벌이 된다.
+ * 복귀가 끝난 기록의 청소는 createExpedition이 기회적으로 한다 (자동 틱이 없는 구조).
+ */
+export function recallExpedition(save: SaveState, expeditionId: string, now: number): SaveState {
+  const next = structuredClone(save);
+  const expedition = next.expeditions.find((e) => e.id === expeditionId && !e.claimed);
+  if (!expedition) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  if (expedition.endsAt <= now) throw new GameError('expedition-done', '이미 돌아온 원정입니다 — 일지를 열어 정산해 주세요');
+  if (expedition.recallAt !== undefined) throw new GameError('expedition-recalled', '이미 회군 중입니다');
+  // 귀환 단계(뒤 편도 구간)의 회군은 무의미하다 — 도착 시간은 같은데 보상만 사라진다
+  const total = Math.max(1, expedition.endsAt - expedition.startedAt);
+  if ((now - expedition.startedAt) / total >= 1 - TRAVEL_FRACTION) {
+    throw new GameError('expedition-returning', '이미 귀환길에 올랐습니다 — 곧 도착합니다');
+  }
+  expedition.recallAt = now;
+  next.wallet.lures += expedition.luresLoaded;
+  return next;
 }
 
 // ── 조우 계획 (시드 → 타임라인) ──────────────────────────────────────────────
@@ -691,6 +743,7 @@ export function claimExpedition(
 ): ClaimResult {
   const expedition = save.expeditions.find((e) => e.id === expeditionId && !e.claimed);
   if (!expedition) throw new GameError('expedition-missing', '진행 중인 원정이 아닙니다');
+  if (expedition.recallAt !== undefined) throw new GameError('expedition-recalled', '회군한 원정은 일지가 없습니다');
   if (!opts.force && ctx.now() < expedition.endsAt) {
     throw new GameError('expedition-running', '원정대가 아직 돌아오지 않았습니다');
   }

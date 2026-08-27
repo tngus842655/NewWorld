@@ -90,7 +90,8 @@ export function mountApp(root: HTMLElement): void {
     const state = save();
     const tip = currencyTip(state);
     header.replaceChildren(
-      // 타이틀 대신 진입 아이콘들 (2026-08-23 사용자) — 랭킹·상점 전체 화면
+      // 타이틀 대신 진입 아이콘들 (2026-08-23 사용자) — 랭킹·상점 전체 화면.
+      // 원정 지도 진입은 홈 '원정 현황' 타이틀 우측 아이콘 (2026-08-27 사용자 — 앱바가 아니라 홈 안쪽)
       el('div.appbar-icons', {},
         el('button.appbar-rank', {
           title: '랭킹 보기',
@@ -154,9 +155,14 @@ export function mountApp(root: HTMLElement): void {
   });
 
   let prevOverlay: Overlay = null;
+  let disposeOverlay: (() => void) | null = null;
   effect(() => {
     const current = overlay();
-    const node = renderOverlay(current);
+    // 시트도 화면처럼 스코프 이펙트를 수거한다 (2026-08-27) — 지도 시트의 초 단위 마커·시간 갱신이
+    // 시트가 닫히거나 바뀐 뒤에도 영구 effect로 살아남지 않게 (kit.ts scopedEffect는 스코프 밖이면 안 죽는다)
+    disposeOverlay?.();
+    const { value: node, dispose } = withScope(() => renderOverlay(current));
+    disposeOverlay = dispose;
     // 같은 시트의 재렌더(편성 탭·합성 등)는 스크롤을 유지하고 등장 애니메이션을 다시 틀지 않는다
     const sameKind = current !== null && current.kind === prevOverlay?.kind;
     const prevScroll = sameKind ? (overlayHost.querySelector('.sheet')?.scrollTop ?? 0) : 0;

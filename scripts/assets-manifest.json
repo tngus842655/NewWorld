@@ -1328,5 +1328,11 @@
       "slug": "hourglass-11930754",
       "contributor": "Didik Prasetio"
     }
+  },
+  "ui": {
+    "expedition-map": {
+      "slug": "treasure-map-11798660",
+      "contributor": "Naufal Hudallah"
+    }
   }
 }

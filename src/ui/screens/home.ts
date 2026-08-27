@@ -1,80 +1,21 @@
 /**
- * 홈 — 원정 현황 카드(가속·갈림길·정산 진입), 다음 목표, 최근 일지.
- * 카드 구조는 고정하고 시간 관련 표시만 scopedEffect로 갱신한다 (탭 안정성).
+ * 홈 — 원정 현황(지도 + 한 줄 요약), 다음 목표, 최근 일지.
+ * 상세 액션(가속·갈림길·회군·정산)은 지도 시트의 행이 담당한다 (2026-08-27 사용자 — 홈은 간략하게).
  */
 import { content } from '../../content';
+import { isExpeditionOut } from '../../core/expedition';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
-import { claim, nowTick, save } from '../../state/store';
-import { monsterIcon } from '../components';
-import { TIER_LABEL, el, fmtAgo, fmtClock, fmtGold, fmtRemain, scopedEffect } from '../kit';
+import { save } from '../../state/store';
+import { expeditionLinesCard, mapEntryButton } from '../expeditionMap';
+import { TIER_LABEL, el, fmtAgo, fmtGold } from '../kit';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
 /** 최근 일지 접힘 상태 — 탭 이동·재렌더에도 유지 (접힘 기본 5건, 펼치면 아카이브 전체) */
 const JOURNAL_COLLAPSED_COUNT = 5;
 const journalExpanded = signal(false);
-
-function expeditionCard(expeditionId: string): HTMLElement {
-  const state = save();
-  const expedition = state.expeditions.find((e) => e.id === expeditionId && !e.claimed)!;
-  const region = content.regions.get(expedition.regionId)!;
-  const total = Math.max(1, expedition.endsAt - expedition.startedAt);
-  const pendingChoices = expedition.choices.filter((c) => c === null).length;
-
-  const fill = el('div.progress-fill');
-  const remain = el('span.muted');
-  const accelBtn = el('button.btn.btn-ghost.exp-accel', {
-    onclick: () => overlay.set({ kind: 'accelerate', expeditionId: expedition.id }),
-  }, '⏳ 가속');
-  const crossroadBtn =
-    expedition.choices.length > 0
-      ? el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'crossroads', expeditionId: expedition.id }) },
-          pendingChoices > 0 ? `🔀 갈림길 ${pendingChoices}` : '🔀 선택 완료')
-      : null;
-  const claimBtn = el('button.btn.btn-primary.hidden', {
-    onclick: () => {
-      // 미선택 갈림길이 있으면 정산 전에 일괄 선택 시트부터 (TECH §4)
-      const current = save().expeditions.find((e) => e.id === expedition.id && !e.claimed);
-      if (!current) return;
-      if (current.choices.some((choice) => choice === null)) {
-        overlay.set({ kind: 'crossroads', expeditionId: expedition.id });
-        return;
-      }
-      const result = claim(expedition.id);
-      if (result) overlay.set({ kind: 'journal', ...result });
-    },
-  }, '📜 원정 일지 열기');
-
-  // 시간 흐름에 따른 갱신 — 구조는 그대로, 텍스트·클래스만 바뀐다
-  scopedEffect(() => {
-    const now = nowTick();
-    const progress = Math.min(1, (now - expedition.startedAt) / total);
-    fill.style.width = `${Math.round(progress * 100)}%`;
-    const done = now >= expedition.endsAt;
-    remain.textContent = done
-      ? '원정대가 돌아왔습니다!'
-      : `귀환까지 ${fmtRemain(expedition.endsAt - now)} · ${fmtClock(expedition.endsAt)} 귀환`;
-    claimBtn.classList.toggle('hidden', !done);
-    crossroadBtn?.classList.toggle('hidden', done);
-    accelBtn.classList.toggle('hidden', done);
-  });
-
-  const teamName = expedition.teamId ? state.teams.find((t) => t.id === expedition.teamId)?.name : null;
-  return el('div.card.exp-card', {},
-    el('div.exp-head', {},
-      el('div.exp-title', {}, `${region.icon} ${region.name}`),
-      el('div.row-gap', {},
-        teamName ? el('span.tag', {}, teamName) : null,
-        el('span.tag', {}, TIER_LABEL[expedition.tier]),
-      ),
-    ),
-    el('div.exp-party', {}, ...expedition.partyIds.map((monsterId) => monsterIcon(monsterId))),
-    el('div.progress', {}, fill),
-    el('div.exp-foot', {}, remain, el('div.row-gap', {}, accelBtn, crossroadBtn, claimBtn)),
-  );
-}
 
 /** 다음 목표 카드 — 지역 해금 → 파티 슬롯 → 도감 완성 → 초월 순으로 지금 좇을 목표 하나만 (GDD 필러 3) */
 function nextGoalCard(): HTMLElement | null {
@@ -155,7 +96,8 @@ function nextGoalCard(): HTMLElement | null {
 
 export function renderHome(): HTMLElement {
   const state = save();
-  const running = state.expeditions.filter((e) => !e.claimed);
+  // 비추적 시계 — 복귀 완료된 회군 기록은 표시에서 제외 (세이브 정리는 다음 파견 때 코어가 한다)
+  const running = state.expeditions.filter((e) => isExpeditionOut(e, clock.now()));
 
   const tutorialBanner = !state.profile.tutorialDone
     ? running.length > 0
@@ -195,13 +137,12 @@ export function renderHome(): HTMLElement {
 
   return el('div.screen', {},
     tutorialBanner,
-    el('h2.section-title', {}, running.length > 0 ? `원정 현황 (${running.length})` : '원정 현황'),
-    running.length === 0
-      ? el('div.card.empty', {},
-          el('div', {}, '지금은 모두 캠프에서 쉬고 있습니다.'),
-          el('button.btn.btn-primary', { onclick: () => tab.set('expedition') }, '원정 보내기'),
-        )
-      : el('div.stack', {}, ...running.map((e) => expeditionCard(e.id))),
+    // 타이틀 우측 지도 아이콘 → 전용 시트. 카드에는 한 줄 요약만 (2026-08-27 사용자)
+    el('div.section-head', {},
+      el('h2.section-title', {}, running.length > 0 ? `원정 현황 (${running.length})` : '원정 현황'),
+      mapEntryButton(),
+    ),
+    expeditionLinesCard(),
     nextGoalCard(),
     (() => {
       // 반복 과업 진입 (GDD §9.3) — 랭킹은 상단바 🏆 아이콘으로 이동 (2026-08-23 사용자)

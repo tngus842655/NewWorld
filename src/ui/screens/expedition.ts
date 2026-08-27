@@ -6,6 +6,8 @@ import { content } from '../../content';
 import type { Tier } from '../../content/schema';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
+import { isExpeditionOut } from '../../core/expedition';
+import * as clock from '../../state/clock';
 import { canUnlockRegion, capturedCounts, deepestUnlockedRegion, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { batch, signal } from '../../state/signal';
@@ -45,9 +47,9 @@ function setPanelOpen(next: boolean): void {
   try { localStorage.setItem(PANEL_OPEN_KEY, next ? '1' : '0'); } catch { /* 저장 불가 환경이면 세션 한정 동작 */ }
 }
 
-/** 파견 중인 군 id 집합 */
+/** 파견 중인 군 id 집합 — 회군 복귀 중도 밖에 있는 것 (비추적 시계, 렌더 시점 기준) */
 function busyTeamIds(state: SaveState): Set<string> {
-  return new Set(state.expeditions.filter((e) => !e.claimed && e.teamId).map((e) => e.teamId!));
+  return new Set(state.expeditions.filter((e) => isExpeditionOut(e, clock.now()) && e.teamId).map((e) => e.teamId!));
 }
 
 /** 유효한(존재하는) 편성만 남긴 군 파티 */
@@ -247,7 +249,7 @@ export function renderExpedition(): HTMLElement {
     );
 
   const lureLoad = Math.min(content.balance.lures.maxLoad, state.wallet.lures);
-  const runningCount = state.expeditions.filter((e) => !e.claimed).length;
+  const runningCount = state.expeditions.filter((e) => isExpeditionOut(e, clock.now())).length;
   const maxTeams = teamCount(content, state);
   const teamsFull = runningCount >= maxTeams;
   const teamBusy = busy.has(team.id);

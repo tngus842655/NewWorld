@@ -62,6 +62,9 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
   **탐색 실측 (다음에 드래곤을 다시 찾을 때의 출발점)**: `asset=3d query="dragon"` 1,265건은 대부분 춘절 용(뱀형)·
   용과(dragon fruit)·머리만 크롭. `wyvern`·`phoenix`는 사실상 0건. Ali Rahmat "Dragon Character" 팩 20점은
   **같은 드래곤의 포즈 변형**이라 3종으로 쓸 수 없다. 서로 다른 서양 드래곤 3종은 카탈로그에 없다시피 하다.
+- **[완료 2026-08-27] UI 그룹 신설 — 앱바 지도 아이콘 1점** (`ui/expedition-map`,
+  Naufal Hudallah `treasure-map-11798660` — 기존 유물 수급처 Adventure Game 팩과 동일 작가).
+  build-assets.mjs에 ui 그룹 추가, 원본 폴더 없는 그룹은 건너뛰도록 가드
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 

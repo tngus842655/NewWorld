@@ -4,7 +4,9 @@
  */
 import { content } from '../../content';
 import { SLOTS, type MonsterRarity, type Slot } from '../../content/schema';
+import { isExpeditionOut } from '../../core/expedition';
 import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
+import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
 import { buySlot, craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
@@ -34,7 +36,7 @@ const campSlot = signal<Slot | null>(null);
 
 export function renderCamp(): HTMLElement {
   const state = save();
-  const busyIds = new Set(state.expeditions.filter((e) => !e.claimed).flatMap((e) => e.partyIds));
+  const busyIds = new Set(state.expeditions.filter((e) => isExpeditionOut(e, clock.now())).flatMap((e) => e.partyIds));
   const tab = campTab();
   const rarity = campRarity();
 
