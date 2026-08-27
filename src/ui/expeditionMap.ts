@@ -17,7 +17,7 @@ import { content } from '../content';
 import type { Region } from '../content/schema';
 import { TRAVEL_FRACTION, isExpeditionOut, recallReturnEndsAt } from '../core/expedition';
 import { isRegionUnlocked } from '../core/progression';
-import type { ActiveExpedition } from '../core/types';
+import type { ActiveExpedition, SaveState } from '../core/types';
 import * as clock from '../state/clock';
 import { signal } from '../state/signal';
 import { claim, nowTick, recall, save } from '../state/store';
@@ -327,8 +327,8 @@ function markerEl(
 // ── 지도 본체 ────────────────────────────────────────────────────────────────
 function expeditionMap(opts: { onMarkerTap?: (expeditionId: string) => void } = {}): HTMLElement {
   const state = save();
-  // 비추적 시계 — 복귀 완료된 회군 기록은 렌더 시점에 걸러진다 (마커·행은 scopedEffect로 스스로도 숨는다)
-  const running = state.expeditions.filter((e) => isExpeditionOut(e, clock.now()));
+  // 복귀 완료된 회군 기록은 렌더 시점에 걸러진다 (마커·행은 scopedEffect로 스스로도 숨는다)
+  const running = outExpeditions(state);
   const targetRegions = new Set(running.filter((e) => e.recallAt === undefined).map((e) => e.regionId));
 
   const root = svg('svg', { viewBox: `0 0 ${VIEW_W} ${VIEW_H}`, role: 'img', 'aria-label': '원정 지도' });
@@ -431,6 +431,19 @@ function expeditionMap(opts: { onMarkerTap?: (expeditionId: string) => void } = 
   }
 
   return wrap; // 카드 포장은 호출부 몫 — 홈 카드는 한 줄 요약을, 시트는 지도만 담는다
+}
+
+/** 실제 귀환(복귀) 시각 — 회군 중이면 복귀 시각, 아니면 원정 종료 시각 */
+function effectiveEndsAt(expedition: ActiveExpedition): number {
+  return expedition.recallAt !== undefined ? recallReturnEndsAt(expedition)! : expedition.endsAt;
+}
+
+/** 밖에 나가 있는 원정 — 곧 돌아오는 순 (2026-08-27 사용자). 이미 귀환한 정산 대기가 자연히 맨 위 */
+function outExpeditions(state: SaveState): ActiveExpedition[] {
+  const now = clock.now(); // 비추적 시계 — 렌더 시점 기준
+  return state.expeditions
+    .filter((e) => isExpeditionOut(e, now))
+    .sort((a, b) => effectiveEndsAt(a) - effectiveEndsAt(b)); // 동시 귀환은 파견 순 유지 (안정 정렬)
 }
 
 /** 정산 진입 — 미선택 갈림길이 있으면 일괄 선택 시트부터 (TECH §4). 시트 행·홈 한 줄이 공유 */
@@ -554,9 +567,10 @@ const expandedLineId = signal<string | null>(null);
 
 /**
  * 한 줄 요약 — 지역·군 번호·상태(귀환/복귀 시각). 정산은 줄 안의 📜 버튼으로 바로,
- * 탭하면 아래로 펼쳐져 가속·갈림길·회군·지도 액션이 나온다 (회군 중에는 지도만).
+ * 탭하면 아래로 펼쳐져 가속·갈림길·회군 액션이 나온다 (지도는 타이틀 아이콘 몫).
+ * 회군 중·귀환 완료 줄은 펼 것이 없어 아코디언을 달지 않는다.
  */
-function expeditionLine(expeditionId: string, onOpenMap: () => void): HTMLElement {
+function expeditionLine(expeditionId: string): HTMLElement {
   const state = save();
   const expedition = state.expeditions.find((e) => e.id === expeditionId && !e.claimed)!;
   const region = content.regions.get(expedition.regionId)!;
@@ -564,7 +578,7 @@ function expeditionLine(expeditionId: string, onOpenMap: () => void): HTMLElemen
   const teamNo = expedition.teamId ? state.teams.findIndex((t) => t.id === expedition.teamId) + 1 : 0;
   const recalled = expedition.recallAt !== undefined;
   const pending = !recalled && expedition.choices.some((c) => c === null);
-  const expanded = expandedLineId() === expeditionId; // 토글은 시그널 → 화면 재렌더로 반영
+  const expanded = !recalled && expandedLineId() === expeditionId; // 토글은 시그널 → 화면 재렌더로 반영
 
   const status = el('span.map-line-status.muted');
   const journalBtn = el('button.btn.btn-primary.map-line-claim.hidden', {
@@ -573,26 +587,22 @@ function expeditionLine(expeditionId: string, onOpenMap: () => void): HTMLElemen
       openClaimFlow(expedition.id);
     },
   }, '📜 일지');
+  const chev = recalled ? null : el('span.map-line-chev', {}, expanded ? '∧' : '∨');
 
   const head = el(`div.map-line${recalled ? '.map-line-recalled' : ''}`, {
-    onclick: () => expandedLineId.set(expanded ? null : expeditionId),
+    onclick: recalled ? undefined : () => expandedLineId.set(expanded ? null : expeditionId),
   },
     el('span.map-line-name', {}, `${region.icon} ${region.name}${pending ? ' 🔀' : ''}`),
     teamNo > 0 ? el('span.map-line-team', {}, String(teamNo)) : null,
     status,
     journalBtn,
-    el('span.map-line-chev', {}, expanded ? '∧' : '∨'),
+    chev,
   );
 
   // 펼친 줄에만 액션 행 — 접힌 줄은 버튼·이펙트를 만들지 않는다
-  const buttons = expanded && !recalled
-    ? expeditionActionButtons(expedition, region, state.profile.tutorialDone)
-    : null;
-  const actions = expanded
-    ? el('div.map-line-actions', {},
-        buttons?.accelBtn, buttons?.crossroadBtn, buttons?.recallBtn,
-        el('button.btn.btn-ghost.exp-accel', { onclick: onOpenMap }, '🗺️ 지도'),
-      )
+  const buttons = expanded ? expeditionActionButtons(expedition, region, state.profile.tutorialDone) : null;
+  const actions = buttons
+    ? el('div.map-line-actions', {}, buttons.accelBtn, buttons.crossroadBtn, buttons.recallBtn)
     : null;
 
   const item = el('div.map-line-item', {}, head, actions);
@@ -601,16 +611,19 @@ function expeditionLine(expeditionId: string, onOpenMap: () => void): HTMLElemen
     if (recalled) {
       const returnEnds = recallReturnEndsAt(expedition)!;
       item.classList.toggle('hidden', now >= returnEnds); // 복귀 완료 — 다음 렌더 전까지 숨김
-      status.textContent = `🏳️ ${fmtClock(returnEnds)} 복귀 (${fmtRemainShort(returnEnds - now)})`;
+      status.textContent = `🏳️ 복귀까지 ${fmtRemainShort(returnEnds - now)}`;
       return;
     }
     const progress = Math.min(1, (now - expedition.startedAt) / total);
     const done = now >= expedition.endsAt;
     journalBtn.classList.toggle('hidden', !done);
     status.classList.toggle('hidden', done);
+    // 귀환 완료면 할 일은 정산뿐 — 아코디언(셰브런·액션 행)을 거둔다
+    chev?.classList.toggle('hidden', done);
+    actions?.classList.toggle('hidden', done);
     if (!done) {
-      status.textContent =
-        `${JOURNEY_EMOJI[journeyPhase(progress)]} ${fmtClock(expedition.endsAt)} 귀환 (${fmtRemainShort(expedition.endsAt - now)})`;
+      // 절대 시각(18:32 귀환)은 시트 상세 행 몫 — 한 줄 요약은 남은 시간만 (2026-08-27 사용자)
+      status.textContent = `${JOURNEY_EMOJI[journeyPhase(progress)]} ${fmtRemainShort(expedition.endsAt - now)} 남음`;
     }
     if (buttons) {
       buttons.accelBtn.classList.toggle('hidden', done);
@@ -622,14 +635,13 @@ function expeditionLine(expeditionId: string, onOpenMap: () => void): HTMLElemen
   return item;
 }
 
-/** 홈 '원정 현황' 카드 — 원정별 한 줄 요약만 (지도는 전용 시트). 줄 탭은 지도 시트로 */
+/** 홈 '원정 현황' 카드 — 원정별 한 줄 요약, 곧 돌아오는 순 (지도는 전용 시트) */
 export function expeditionLinesCard(): HTMLElement {
   const state = save();
-  const running = state.expeditions.filter((e) => isExpeditionOut(e, clock.now()));
-  const openMap = () => overlay.set({ kind: 'map' });
+  const running = outExpeditions(state);
   return el('div.card.map-lines-card', {},
     el('div.map-lines', {},
-      ...running.map((e) => expeditionLine(e.id, openMap)),
+      ...running.map((e) => expeditionLine(e.id)),
       running.length === 0
         ? el('div.map-line.map-line-empty', {},
             el('span.muted.small', {}, '지금은 모두 캠프에서 쉬고 있습니다'),
@@ -659,7 +671,7 @@ export function mapEntryButton(): HTMLElement {
 // ── 지도 전용 시트 — 앱바 🗺️ 진입 (2026-08-27 사용자: 상세 행·액션은 여기) ──
 export function mapSheet(): HTMLElement {
   const state = save();
-  const running = state.expeditions.filter((e) => isExpeditionOut(e, clock.now()));
+  const running = outExpeditions(state);
 
   // 마커 탭 → 시트 안의 해당 요약 행으로
   const rowEls = new Map<string, HTMLElement>();
