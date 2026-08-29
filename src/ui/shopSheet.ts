@@ -8,9 +8,10 @@ import type { ShopProduct } from '../content/schema';
 import { onceBought, purchasesToday, todayKey } from '../core/shop';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, nowTick, save } from '../state/store';
-import { hourglassIcon } from './components';
+import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
-import { MONSTER_RARITY_LABEL, ARTIFACT_RARITY_LABEL, el, fmtGold, toast } from './kit';
+import { showGachaReveal } from './gachaReveal';
+import { el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -26,7 +27,7 @@ function priceTag(product: ShopProduct): string {
   return product.shop === 'gold' ? `💰 ${fmtGold(product.price)}` : `💎 ${product.price}`;
 }
 
-/** 구매 실행 — 확인창 → 액션 → 결과 안내 */
+/** 구매 실행 — 확인창 → 액션 → 결과 안내 (뽑기·발굴은 리빌 연출, 나머지는 토스트) */
 function purchase(product: ShopProduct): void {
   void askConfirm({
     title: `${product.icon} ${product.name}`,
@@ -37,16 +38,24 @@ function purchase(product: ShopProduct): void {
     const result = buyShop({ productId: product.id });
     if (!result) return;
     const { granted } = result;
+    // 마일스톤 알림 — 뽑기는 리빌이 닫힌 뒤에 (연출 위로 토스트가 겹치지 않게)
+    const milestoneToasts = () => {
+      for (const id of result.newMilestones) {
+        const milestone = content.milestones.find((m) => m.id === id);
+        if (milestone) toast(`🏅 마일스톤 달성: ${milestone.name}`, 'ok');
+      }
+    };
 
-    if (granted.monsterId) {
-      const monster = content.monsters.get(granted.monsterId)!;
-      playSfx(granted.isNewMonster ? 'capture-new' : 'treasure');
-      toast(`🃏 [${MONSTER_RARITY_LABEL[monster.rarity]}] ${monster.name} 카드 획득!${granted.isNewMonster ? ' ✨ 도감 신규!' : ''}`, 'ok', { rarity: monster.rarity });
-    } else if (granted.artifactItemId) {
-      const def = content.artifacts.get(granted.artifactItemId)!;
-      playSfx('artifact');
-      toast(`🏺 [${ARTIFACT_RARITY_LABEL[def.rarity]}] ${def.name} 획득!`, 'ok', { rarity: def.rarity });
-    } else if (product.goods.kind === 'materialsAll') {
+    if (granted.monsters) {
+      void showGachaReveal({ kind: 'monster', results: granted.monsters }).then(milestoneToasts);
+      return;
+    }
+    if (granted.artifacts) {
+      void showGachaReveal({ kind: 'artifact', itemIds: granted.artifacts }).then(milestoneToasts);
+      return;
+    }
+
+    if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약 (+골드는 병기)
       playSfx('treasure');
       const goldTail = granted.gold ? ` + 골드 ${fmtGold(granted.gold)}` : '';
@@ -65,10 +74,7 @@ function purchase(product: ShopProduct): void {
       playSfx('treasure');
       toast(`${product.icon} ${parts} 획득!`, 'ok');
     }
-    for (const id of result.newMilestones) {
-      const milestone = content.milestones.find((m) => m.id === id);
-      if (milestone) toast(`🏅 마일스톤 달성: ${milestone.name}`, 'ok');
-    }
+    milestoneToasts();
   });
 }
 
@@ -112,19 +118,24 @@ function productCard(product: ShopProduct): HTMLElement {
   );
 }
 
-/** 모래시계 압축 타일 — 2열 그리드용. 등급색 테두리 아이콘으로 구분 (라벨 없이 색으로만) */
-function hourglassTile(product: ShopProduct): HTMLElement {
+/** 모래시계 카드 — 다른 상품과 같은 1줄 1개 (2026-08-29 사용자 — 2열 그리드는 이름 줄바꿈으로 높이가 틀어졌다).
+ * 이모지 대신 등급색 테두리 모래시계 아이콘으로 구분 */
+function hourglassRow(product: ShopProduct): HTMLElement {
   const { limitLabel, exhausted, shortFunds } = productState(product);
   const def = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
   const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
 
-  return el('div.card.shop-tile', {},
-    el('div.shop-tile-name', {},
-      def ? hourglassIcon(def, { small: true }) : product.icon,
-      el('span', {}, product.name), limitTag,
+  return el('div.card.stack-sm.shop-item', {},
+    el('div.list-row', {},
+      el('div.shop-hg-left', {},
+        def ? hourglassIcon(def, { small: true }) : null,
+        el('div', {},
+          el('div.shop-name', {}, `${product.name} `, limitTag),
+          el('div.muted.small', {}, product.desc),
+        ),
+      ),
+      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds)),
     ),
-    el('div.muted.small', {}, product.desc),
-    buyButton(product, exhausted, shortFunds),
   );
 }
 
@@ -144,7 +155,7 @@ export function shopSheet(): HTMLElement {
     const members = products.filter((product) => group.kinds.includes(product.goods.kind));
     if (members.length === 0) return [];
     const body = group.kinds.includes('hourglass')
-      ? [el('div.shop-grid', {}, ...members.map((product) => hourglassTile(product)))]
+      ? members.map((product) => hourglassRow(product))
       : members.map((product) => productCard(product));
     return [
       el('div.info-group-head', {},
@@ -155,17 +166,21 @@ export function shopSheet(): HTMLElement {
     ];
   });
 
-  const shell = sheetShell('🏪 상점',
+  const shell = sheetShell([uiIcon('shop-stall', '🏪', '상점'), ' 상점'],
     el('div.card.list-row', {},
-      el('span', {}, `💰 ${fmtGold(state.wallet.gold)}  ·  💎 ${state.wallet.diamonds}`),
-      el('div.row-gap', {},
-        import.meta.env.DEV
-          ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, 'DEV [1000]')
-          : null,
-        el('button.btn.btn-ghost', {
-          onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 [그 전엔 출석 이벤트로 모을 수 있어요]', 'ok'),
-        }, '충전'),
-      ),
+      // 보유 재화는 현재 관의 것만 — 골드관=골드, 다이아관=다이아 (2026-08-29 사용자)
+      el('span', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
+      // [DEV]·충전은 다이아 얘기라 다이아관에서만 (2026-08-29 사용자)
+      tab === 'diamond'
+        ? el('div.row-gap', {},
+            import.meta.env.DEV
+              ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, '[DEV]')
+              : null,
+            el('button.btn.btn-ghost', {
+              onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 [그 전엔 출석 이벤트로 모을 수 있어요]', 'ok'),
+            }, '충전'),
+          )
+        : null,
     ),
     el('div.big-tabs', {},
       el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),

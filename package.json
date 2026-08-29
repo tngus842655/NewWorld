@@ -12,6 +12,7 @@
     "demo": "tsx scripts/demo.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "zod": "^4.0.0"
   },
   "devDependencies": {

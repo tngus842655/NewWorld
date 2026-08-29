@@ -7,7 +7,6 @@ import { ctx, save } from '../state/store';
 import type { SaveState } from '../core/types';
 import { el, fmtCompact, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
-import { openRankingBoard } from './rankingSheets';
 import { resetShop } from './shopSheet';
 import { overlay, tab, type Overlay, type Tab } from './router';
 import { playSfx } from './sfx';
@@ -61,6 +60,46 @@ function currencyTip(state: SaveState): HTMLElement | null {
   );
 }
 
+/**
+ * 상점 진입 버튼 — 3D 가판대 아이콘 (2026-08-29 사용자, 원정 지도와 같은 Adventure Game 팩으로 톤 통일).
+ * 에셋 실패 시 이모지 폴백 (mapEntryButton과 같은 패턴)
+ */
+function shopEntryButton(): HTMLElement {
+  const img = el<'img'>('img');
+  img.src = '/assets/ui/shop-stall.webp';
+  img.alt = '상점';
+  const button = el('button.appbar-rank', {
+    title: '상점',
+    onclick: () => {
+      playSfx('tap');
+      resetShop();
+      overlay.set({ kind: 'shop' });
+    },
+  }, img);
+  img.onerror = () => { img.remove(); button.prepend('🏪'); };
+  return button;
+}
+
+/**
+ * 출석 달력 진입 버튼 — 3D 달력 아이콘 (2026-08-29 사용자). Adventure Game 팩에 달력이 없어
+ * Brian Savero 팩에서 크림 몸체+빨간 밴드로 톤을 맞췄다 (빨간 날짜 한 칸 = 출석 도장 모티프)
+ */
+function attendanceEntryButton(state: SaveState): HTMLElement {
+  const img = el<'img'>('img');
+  img.src = '/assets/ui/attendance-calendar.webp';
+  img.alt = '출석 달력';
+  const button = el('button.appbar-rank', {
+    title: '출석 달력',
+    onclick: () => {
+      playSfx('tap');
+      overlay.set({ kind: 'attendance' });
+    },
+    // 비추적 시계 — 매초 헤더 재렌더 방지 (도장 후엔 save 변경으로 즉시 갱신)
+  }, img, canCheckIn(state, ctx.now()) ? el('span.attend-dot', {}) : null);
+  img.onerror = () => { img.remove(); button.prepend('📅'); };
+  return button;
+}
+
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: '홈', icon: '🏕️' },
   { id: 'expedition', label: '원정', icon: '🧭' },
@@ -90,33 +129,12 @@ export function mountApp(root: HTMLElement): void {
     const state = save();
     const tip = currencyTip(state);
     header.replaceChildren(
-      // 타이틀 대신 진입 아이콘들 (2026-08-23 사용자) — 랭킹·상점 전체 화면.
+      // 타이틀 대신 진입 아이콘들 (2026-08-23 사용자) — 상점·출석.
+      // 랭킹 🏆는 스토어 출시를 앞두고 앱바에서 뺐다 (2026-08-29 사용자 — 일반 공개 여부 추후 결정, 진입은 설정 탭)
       // 원정 지도 진입은 홈 '원정 현황' 타이틀 우측 아이콘 (2026-08-27 사용자 — 앱바가 아니라 홈 안쪽)
       el('div.appbar-icons', {},
-        el('button.appbar-rank', {
-          title: '랭킹 보기',
-          onclick: () => {
-            playSfx('tap');
-            openRankingBoard();
-            overlay.set({ kind: 'ranking' });
-          },
-        }, '🏆'),
-        el('button.appbar-rank', {
-          title: '상점',
-          onclick: () => {
-            playSfx('tap');
-            resetShop();
-            overlay.set({ kind: 'shop' });
-          },
-        }, '🏪'),
-        el('button.appbar-rank', {
-          title: '출석 달력',
-          onclick: () => {
-            playSfx('tap');
-            overlay.set({ kind: 'attendance' });
-          },
-          // 비추적 시계 — 매초 헤더 재렌더 방지 (도장 후엔 save 변경으로 즉시 갱신)
-        }, '📅', canCheckIn(state, ctx.now()) ? el('span.attend-dot', {}) : null),
+        shopEntryButton(),
+        attendanceEntryButton(state),
       ),
       // 재화를 앱바로 복귀 (2026-08-25 사용자) — 2026-08-23에 "커지면 줄바꿈"을 이유로 홈 카드로 내렸었다.
       // 축약 표기(fmtCompact, 최대 6글자)로 그 원인을 없앴고 아이콘 간격도 좁혔다.

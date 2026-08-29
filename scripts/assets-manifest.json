@@ -1333,6 +1333,14 @@
     "expedition-map": {
       "slug": "treasure-map-11798660",
       "contributor": "Naufal Hudallah"
+    },
+    "shop-stall": {
+      "slug": "game-shop-11799317",
+      "contributor": "Naufal Hudallah"
+    },
+    "attendance-calendar": {
+      "slug": "calendar-10991552",
+      "contributor": "Brian Savero"
     }
   }
 }

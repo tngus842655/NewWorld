@@ -6,6 +6,7 @@ import { content } from '../content';
 import type { AttendanceReward } from '../content/schema';
 import { attendanceNow, canCheckIn, monthParts, nextReward } from '../core/attendance';
 import { checkInToday, nowTick, save } from '../state/store';
+import { uiIcon } from './components';
 import { el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
@@ -58,7 +59,7 @@ export function attendanceSheet(): HTMLElement {
   const reward = nextReward(content, state, now);
   const totalDiamonds = rewards.reduce((sum, r) => sum + (r.diamonds ?? 0), 0);
 
-  return sheetShell(`📅 ${monthNo}월 출석`,
+  return sheetShell([uiIcon('attendance-calendar', '📅', '출석 달력'), ` ${monthNo}월 출석`],
     el('div.card.codex-summary', {},
       el('div', {}, el('strong', {}, `${days.length}`), el('span.muted', {}, `일 출석`)),
       el('div.muted.small', {}, `이번 달 다이아 총 💎 ${totalDiamonds} · 매월 1일 초기화`),

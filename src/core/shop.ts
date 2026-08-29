@@ -38,9 +38,11 @@ export interface ShopBuyResult {
     dust?: number;
     lures?: number;
     materials?: { materialId: string; count: number }[];
-    monsterId?: string;
+    monsterId?: string; // 단발 뽑기 호환 필드 (count=1일 때만) — monsters[0]과 동일
     isNewMonster?: boolean;
-    artifactItemId?: string;
+    monsters?: { monsterId: string; isNew: boolean }[]; // 뽑기 결과 — ×10 포함, 뽑은 순서대로
+    artifactItemId?: string; // 단발 발굴 호환 필드 (count=1일 때만) — artifacts[0]과 동일
+    artifacts?: string[]; // 발굴 결과 itemId — ×10 포함, 뽑은 순서대로
     hourglass?: { hourglassId: string; count: number };
   };
   newMilestones: string[]; // 뽑기 신규 등록으로 달성된 마일스톤
@@ -111,24 +113,35 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
       return unlocked.length > 0 ? unlocked : content.monsterList.filter((m) => m.rarity === rarity);
     };
     const candidates = RARITIES.filter((rarity) => (table[rarity] ?? 0) > 0 && poolOf(rarity).length > 0);
-    const rarity = pickWeighted(rng, candidates, (r) => table[r] ?? 0);
-    const pool = poolOf(rarity);
-    const picked = pool[Math.floor(rng() * pool.length)]!;
-    granted.monsterId = picked.id;
-
-    const owned = next.roster.find((m) => m.monsterId === picked.id);
-    if (owned) {
-      owned.count += 1;
-    } else {
-      granted.isNewMonster = true;
-      next.roster.push({ monsterId: picked.id, level: 1, star: 1, count: 1 });
-      const entry = next.codex[picked.id] ?? { seen: false, captured: false, awakened: false };
-      entry.seen = true;
-      if (!entry.captured) {
-        entry.captured = true;
-        entry.firstCapturedAt = now;
+    // count장 연속 뽑기 (10연) — 같은 종이 겹치면 첫 장만 신규, 나머지는 카드 수 누적
+    granted.monsters = [];
+    for (let i = 0; i < goods.count; i++) {
+      const rarity = pickWeighted(rng, candidates, (r) => table[r] ?? 0);
+      const pool = poolOf(rarity);
+      const picked = pool[Math.floor(rng() * pool.length)]!;
+      const owned = next.roster.find((m) => m.monsterId === picked.id);
+      let isNew = false;
+      if (owned) {
+        owned.count += 1;
+      } else {
+        isNew = true;
+        next.roster.push({ monsterId: picked.id, level: 1, star: 1, count: 1 });
+        const entry = next.codex[picked.id] ?? { seen: false, captured: false, awakened: false };
+        entry.seen = true;
+        if (!entry.captured) {
+          entry.captured = true;
+          entry.firstCapturedAt = now;
+        }
+        next.codex[picked.id] = entry;
       }
-      next.codex[picked.id] = entry;
+      granted.monsters.push({ monsterId: picked.id, isNew });
+    }
+    if (goods.count === 1) {
+      granted.monsterId = granted.monsters[0]!.monsterId;
+      if (granted.monsters[0]!.isNew) granted.isNewMonster = true;
+    }
+    // 마일스톤은 전 장 등록 후 일괄 평가 — 10연 중간 달성도 한 번에 잡힌다
+    if (granted.monsters.some((m) => m.isNew)) {
       newMilestones = evaluateNewMilestones(content, next);
       for (const id of newMilestones) {
         next.milestones.push(id);
@@ -140,10 +153,14 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   } else if (goods.kind === 'artifactGacha') {
     const table = content.balance.shop.artifactGacha[goods.table]!;
     const candidates = RARITIES.filter((rarity) => (table[rarity] ?? 0) > 0);
-    const rarity: ArtifactRarity = pickWeighted(rng, candidates, (r) => table[r] ?? 0);
-    const drop = rollArtifactOfRarity(content, rng, rarity);
-    grantArtifact(next, drop.itemId);
-    granted.artifactItemId = drop.itemId;
+    granted.artifacts = [];
+    for (let i = 0; i < goods.count; i++) {
+      const rarity: ArtifactRarity = pickWeighted(rng, candidates, (r) => table[r] ?? 0);
+      const drop = rollArtifactOfRarity(content, rng, rarity);
+      grantArtifact(next, drop.itemId);
+      granted.artifacts.push(drop.itemId);
+    }
+    if (goods.count === 1) granted.artifactItemId = granted.artifacts[0];
   } else {
     // hourglass — rush(즉시 귀환) 폐지 후 가속은 모래시계로 일원화 (2026-08-23)
     next.wallet.hourglasses[goods.hourglassId] = (next.wallet.hourglasses[goods.hourglassId] ?? 0) + goods.count;

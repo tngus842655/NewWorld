@@ -47,7 +47,7 @@ body {
   flex-wrap: nowrap; position: relative; gap: 8px;
 }
 .appbar-title { font-weight: 700; letter-spacing: 0.5px; color: var(--accent-2); }
-/* 진입 아이콘 3종 — 간격을 좁혀 재화가 들어갈 폭을 낸다 (2026-08-25 사용자) */
+/* 진입 아이콘들 (상점·출석) — 간격을 좁혀 재화가 들어갈 폭을 낸다 (2026-08-25 사용자) */
 .appbar-icons { display: flex; gap: 2px; align-items: center; flex: none; }
 
 /* ── 앱바 재화 ── */
@@ -72,6 +72,8 @@ body {
  */
 .wallet-tip.appbar-tip { z-index: 20; margin: 0; border-radius: 0 0 14px 14px; border-top: none; }
 .appbar-rank { background: none; border: none; font-size: 20px; padding: 0 1px; cursor: pointer; line-height: 1; position: relative; }
+/* 앱바 이미지 아이콘 (상점 가판대 등) — 이모지(20px)와 시각 크기를 맞춘다 */
+.appbar-rank img { width: 24px; height: 24px; display: block; object-fit: contain; }
 /* 출석 미수령 알림 점 */
 .attend-dot {
   position: absolute; top: -2px; right: -3px; width: 8px; height: 8px;
@@ -107,6 +109,9 @@ body {
 .shop-name { font-weight: 600; font-size: 14px; }
 .shop-buy { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .shop-item .list-row { align-items: flex-start; }
+/* 상점 카드 상하 여백은 기본 카드(12px)의 절반 — 상품 8종이 한 화면에 더 들어오게 (2026-08-29 사용자).
+ * .card.shop-item — 뒤에 선언되는 .card의 padding 쇼트핸드에 밀리지 않게 특이도를 올린다 */
+.card.shop-item { padding-top: 6px; padding-bottom: 6px; }
 /* 전체 화면 시트 — 랭킹 등 팝업이 아닌 화면형 오버레이 */
 .sheet-full { height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; }
 .container { flex: 1; overflow-y: auto; padding: 14px 14px 20px; }
@@ -610,6 +615,9 @@ body {
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
 .sheet-title { font-size: 17px; font-weight: 700; }
+/* 인라인 UI 아이콘 — 시트 제목 등의 이모지 자리를 앱바와 같은 webp로. 글자 크기 따라 스케일 */
+.ui-icon { display: inline-flex; align-items: center; vertical-align: -0.22em; margin-right: 3px; }
+.ui-icon img { width: 1.25em; height: 1.25em; object-fit: contain; }
 .detail-head { display: flex; gap: 12px; align-items: center; }
 .detail-head .micon { width: 64px; height: 64px; }
 .stat-row { display: flex; gap: 8px; }
@@ -744,10 +752,8 @@ body.overlay-open .container { overflow: hidden; }
 .info-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
 .info-row + .info-row { border-top: 1px solid var(--line); }
 /* 상점 — 모래시계 압축 타일 2열 그리드 (2026-08-24 가독성 개편) */
-.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.shop-tile { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
-.shop-tile-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 600; }
-.shop-tile .btn { width: 100%; padding: 7px 8px; }
+/* 모래시계 카드 좌측 — 등급색 아이콘 + 이름·설명 (2열 그리드는 2026-08-29 폐지, 1줄 1개) */
+.shop-hg-left { display: flex; gap: 10px; align-items: center; min-width: 0; }
 
 /* 등급 구간 헤더 — 정보 시트에서 등급 내림차순 구간을 나눈다 (2026-08-24) */
 .info-group-head {
@@ -780,6 +786,138 @@ body.overlay-open .container { overflow: hidden; }
   padding: 9px 11px; font-size: 13px; min-height: 96px; resize: vertical; width: 100%;
 }
 .dialog-input:focus { outline: none; border-color: var(--accent); }
+
+/* ── 계정 (설정 탭) — 구글 로그인·클라우드 백업 (2026-08-29) ── */
+/* 구글 브랜딩 가이드의 밝은 버튼: 흰 배경 · #747775 테두리 · 공식 G 로고 */
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  background: #fff; border: 1px solid #747775; color: #1f1f1f;
+  font-size: 14px; font-weight: 600;
+}
+.google-btn:active { background: #f1f3f4; }
+.google-g { width: 18px; height: 18px; flex: none; }
+.google-g svg, .google-g-sm svg { width: 100%; height: 100%; display: block; }
+.google-g-sm { width: 14px; height: 14px; flex: none; display: inline-block; }
+.account-email {
+  display: flex; align-items: center; gap: 7px;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 좁은 행에 버튼 2~3개 — 줄바꿈 없이 들어가는 소형 버튼 */
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ── 뽑기·발굴 리빌 연출 (2026-08-29) — 시트(40) 위, 다이얼로그(55)·토스트(60) 아래 층 ──
+ * 긴장(카드 떨림·오라) → 섬광 → 결과 팝. 단계는 .phase-* 클래스로 전환 (gachaReveal.ts) */
+.gacha-backdrop {
+  position: fixed; inset: 0; z-index: 52; cursor: pointer;
+  background: radial-gradient(ellipse at center, rgba(12, 15, 24, 0.84), rgba(4, 6, 10, 0.95));
+  display: flex; align-items: center; justify-content: center;
+  animation: gacha-fade-in 0.25s ease-out;
+}
+@keyframes gacha-fade-in { from { opacity: 0; } }
+.gacha-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+
+/* 카드 뒷면 — 떨림이 점점 커진다 (마지막에 살짝 부풀며 터질 준비) */
+.gacha-card {
+  width: 132px; height: 172px; border-radius: 16px; position: relative;
+  background: linear-gradient(150deg, #262e44, #161b2a 55%, #232a3f);
+  border: 2px solid #3c4560;
+  display: flex; align-items: center; justify-content: center;
+  animation: gacha-rumble 2.6s ease-in forwards;
+}
+.gacha-card-mark { font-size: 46px; font-weight: 800; color: #6d7690; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); }
+/* 등급 오라 — 후반부에 카드 뒤에서 새어나온다 (희귀 미만은 무채색, 색은 JS가 --gacha-aura로) */
+.gacha-card::after {
+  content: ''; position: absolute; inset: -34%; z-index: -1; border-radius: 50%;
+  background: radial-gradient(circle, var(--gacha-aura, rgba(220, 226, 240, 0.2)), transparent 62%);
+  opacity: 0; animation: gacha-aura-in 2.6s ease-in forwards;
+}
+@keyframes gacha-rumble {
+  0%, 14% { transform: none; }
+  20% { transform: translate(-1px, 0) rotate(-0.5deg); }
+  26% { transform: translate(1px, 1px) rotate(0.5deg); }
+  32% { transform: translate(-2px, 0) rotate(-0.8deg); }
+  38% { transform: translate(2px, -1px) rotate(0.8deg); }
+  44% { transform: translate(-2px, 1px) rotate(-1.1deg); }
+  50% { transform: translate(3px, 0) rotate(1.1deg); }
+  56% { transform: translate(-3px, -2px) rotate(-1.5deg); }
+  62% { transform: translate(3px, 2px) rotate(1.5deg); }
+  68% { transform: translate(-4px, 0) rotate(-2deg); }
+  74% { transform: translate(4px, -2px) rotate(2deg); }
+  80% { transform: translate(-5px, 2px) rotate(-2.6deg); }
+  86% { transform: translate(5px, 0) rotate(2.6deg); }
+  92% { transform: translate(-6px, -2px) rotate(-3.2deg) scale(1.03); }
+  97% { transform: translate(6px, 2px) rotate(3.2deg) scale(1.05); }
+  100% { transform: scale(1.08); }
+}
+@keyframes gacha-aura-in { 0%, 52% { opacity: 0; } 74% { opacity: 0.55; } 100% { opacity: 0.95; } }
+
+/* 섬광 — 터지는 순간 화면을 채웠다 빠진다 */
+.gacha-flash {
+  position: absolute; inset: -60vmax; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 55%);
+}
+.phase-burst .gacha-card { animation: gacha-pop-out 0.22s ease-in forwards; }
+@keyframes gacha-pop-out { to { transform: scale(1.5); opacity: 0; } }
+.phase-burst .gacha-flash { animation: gacha-flash 0.38s ease-out forwards; }
+.phase-result .gacha-flash { opacity: 0; }
+@keyframes gacha-flash { 0% { opacity: 0; } 16% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 결과 — 오버슈트 바운스로 팝, 스파크가 사방으로 튄다 */
+.gacha-result { display: none; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.phase-result .gacha-card { display: none; }
+.phase-result .gacha-result { display: flex; animation: gacha-reveal-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes gacha-reveal-pop { from { transform: scale(0.2); opacity: 0; } }
+.gacha-result .micon { width: 118px; height: 118px; }
+.gacha-result .micon img { width: 84%; height: 84%; }
+.gacha-result-name { font-size: 21px; font-weight: 800; margin-top: 4px; }
+.gacha-result-sub { font-size: 13px; color: var(--muted); }
+.gacha-result-badge {
+  font-size: 12.5px; font-weight: 600; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 999px; padding: 3px 10px; margin-top: 2px;
+}
+.gacha-hint { margin-top: 14px; opacity: 0; animation: gacha-hint-in 0.4s ease-out 0.9s forwards; }
+@keyframes gacha-hint-in { to { opacity: 0.7; } }
+.gacha-spark {
+  position: absolute; left: 50%; top: 42%; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--gacha-spark, #dce2f0); opacity: 0; pointer-events: none;
+  box-shadow: 0 0 8px var(--gacha-spark, #dce2f0);
+}
+.phase-result .gacha-spark { animation: gacha-spark-fly 0.75s ease-out forwards; }
+@keyframes gacha-spark-fly {
+  0% { transform: none; opacity: 1; }
+  100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0.3); opacity: 0; }
+}
+
+/* 10연 — 카드 뒷면엔 ×10, 결과는 5×2 그리드가 차례로 쏟아진다 (--i = 셀 순번) */
+.gacha-card-count {
+  position: absolute; right: 9px; bottom: 7px;
+  font-size: 15px; font-weight: 800; color: #8b94ab;
+}
+.gacha-grid { display: grid; grid-template-columns: repeat(5, 56px); gap: 9px; justify-content: center; }
+.gacha-cell { position: relative; }
+.gacha-cell .micon { width: 56px; height: 56px; }
+.phase-result .gacha-cell {
+  opacity: 0;
+  animation: gacha-cell-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+@keyframes gacha-cell-pop { from { transform: scale(0.2); } to { opacity: 1; transform: none; } }
+.gacha-cell-new {
+  position: absolute; top: -5px; right: -4px; z-index: 2;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.3px;
+  background: var(--accent); color: #10131c; border-radius: 6px; padding: 1px 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha-backdrop, .gacha-card, .gacha-card::after, .phase-burst .gacha-flash,
+  .phase-result .gacha-result, .phase-result .gacha-spark, .phase-result .gacha-cell, .gacha-hint {
+    animation: none;
+  }
+  .gacha-hint { opacity: 0.7; }
+  .gacha-card::after { opacity: 0.9; }
+  .phase-result .gacha-cell { opacity: 1; }
+}
 
 /* ── 최근 일지 목록 (홈) ── */
 .journal-name { flex: 1; min-width: 0; }

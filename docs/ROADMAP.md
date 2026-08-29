@@ -259,10 +259,15 @@
 ## M5 — 안드로이드 클라이언트 (Google Play)  ⬜
 
 - [ ] **계정 시스템 한 묶음 (출시 전 필수 — 앱 삭제 = localStorage 삭제라 세이브 전멸 방지)**:
-      구글 로그인(Supabase Auth) → saves 테이블 재작업(휴면 앱인토스 스키마를 user_id 기준 RLS로)
-      → 로그인 시 로컬 vs 서버 lastSavedAt 비교·선택 다이얼로그 → 저장 시 자동 업로드(디바운스)
-      → 익명 랭킹 신원(playerId) 계정 병합. 예상 규모 하루 내외 (2026-08-23 결정)
+  - [x] 구글 로그인 + 클라우드 세이브 (2026-08-29 완료) — 0003_google_auth.sql: 휴면 앱인토스
+        스키마를 auth.users 기준 profiles·saves로 재작업(본인 행 RLS + 가입 트리거, expeditions
+        미러는 푸시 트랙과 함께 보류). 클라 state/cloud.ts: 로그인 시 lastSavedAt 비교·선택
+        다이얼로그 + 30초 디바운스 자동 업로드, 설정 탭 '계정' 섹션. 구글 콘솔(웹 애플리케이션)·
+        Supabase 프로바이더·리디렉션 설정 완료, 구글 로그인 화면 도달 검증
+  - [ ] 익명 랭킹 신원(playerId) 계정 병합 — 남음 (rank_scores는 여전히 playerId+secret 자가 신고)
 - [ ] Capacitor 패키징 (MoneyGame 파이프라인 재사용, Windows SDK 경로 수동 지정 주의)
+      **주의: 구글 OAuth는 웹뷰 내 차단(disallowed_useragent) — 시스템 브라우저(@capacitor/browser)
+      +딥링크 리디렉션으로 전환 필요 (웹·TWA는 현 리디렉션 방식 그대로 동작)**
 - [ ] platform/android.ts 브리지 — 귀환 **로컬 알림**(ends_at이 파견 시점 확정이라 서버 푸시 불필요), 진동
 - [ ] 파견 시작→알림 예약 / 정산·즉시귀환→알림 취소 연결
 - **DoD: 실기기에서 파견 → 앱 종료 → 귀환 로컬 알림 수신 → 복귀 정산**

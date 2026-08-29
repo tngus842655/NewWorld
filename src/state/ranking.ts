@@ -6,13 +6,9 @@
 import { content } from '../content';
 import { scoreBreakdown } from '../core/score';
 import type { SaveState } from '../core/types';
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabaseClient';
 
-const SUPABASE_URL = 'https://sbprvqtpshzrferjauxs.supabase.co';
-// 공개용 anon 키 — RLS·엣지 함수 검증으로 보호되는 클라이언트 키 (비밀 아님)
-const ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNicHJ2cXRwc2h6cmZlcmphdXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5Mzc4MzQsImV4cCI6MjEwMjUxMzgzNH0.OsSh0PN4NZohDL0KKyplDSiDelx5olUrFwwHKg2fYHw';
-
-const HEADERS = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` };
+const HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 export type RankCategory = 'total' | 'expedition' | 'monster' | 'artifact' | 'task' | 'power';
 

@@ -10,16 +10,19 @@ const app = document.getElementById('app');
 async function boot(): Promise<void> {
   if (!app) return;
   try {
-    const [{ save }, { mountApp }, { effect }, { preloadAllSfx, setSfxEnabled }] = await Promise.all([
+    const [{ save }, { mountApp }, { effect }, { preloadAllSfx, setSfxEnabled }, { initCloud }] = await Promise.all([
       import('./state/store'),
       import('./ui/app'),
       import('./state/signal'),
       import('./ui/sfx'),
+      import('./state/cloud'),
     ]);
     mountApp(app);
     // 효과음: 설정 미러 + 첫 제스처(자동재생 정책 통과 시점)에 전량 프리로드
     effect(() => setSfxEnabled(save().settings.sound));
     document.addEventListener('pointerdown', () => preloadAllSfx(), { once: true });
+    // 클라우드 세이브 — 세션 감지·자동 업로드 (구글 로그인, ROADMAP M5)
+    initCloud();
   } catch (err) {
     const box = document.createElement('div');
     box.className = 'boot-error';

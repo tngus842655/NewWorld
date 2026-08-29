@@ -121,6 +121,46 @@ describe('상점 (GDD §9.4)', () => {
     if (result.granted.isNewMonster) expect(result.save.codex[monster.id]!.captured).toBe(true);
   });
 
+  it('10연 뽑기 — 10장 지급, 중복은 카드 수 누적, 신규는 도감 등록 (2026-08-29)', () => {
+    const save = richSave();
+    const result = buyShopProduct(content, save, { productId: 'dia-monster-gacha-10' }, fixedCtx());
+    const monsters = result.granted.monsters!;
+    expect(monsters).toHaveLength(10);
+    expect(result.save.wallet.diamonds).toBe(1000 - 270);
+    // 단발 호환 필드는 count=1 전용 — 10연에서는 비워둔다
+    expect(result.granted.monsterId).toBeUndefined();
+
+    // 종별 장수 합 = 10, 로스터·도감과 일치
+    const byId = new Map<string, number>();
+    for (const m of monsters) byId.set(m.monsterId, (byId.get(m.monsterId) ?? 0) + 1);
+    for (const [monsterId, cards] of byId) {
+      const owned = result.save.roster.find((r) => r.monsterId === monsterId)!;
+      const before = save.roster.find((r) => r.monsterId === monsterId)?.count ?? 0;
+      expect(owned.count).toBe(before + cards);
+      expect(result.save.codex[monsterId]!.captured).toBe(true);
+    }
+    // 같은 종이 겹치면 첫 장만 신규 (사전 보유 종은 전부 신규 아님)
+    for (const m of monsters) {
+      const priorOwned = save.roster.some((r) => r.monsterId === m.monsterId);
+      const firstIndex = monsters.findIndex((x) => x.monsterId === m.monsterId);
+      expect(m.isNew).toBe(!priorOwned && monsters.indexOf(m) === firstIndex);
+    }
+  });
+
+  it('유물 발굴 10 — 10점 지급, 같은 유물은 보유 수 누적 (2026-08-29)', () => {
+    const save = richSave();
+    const result = buyShopProduct(content, save, { productId: 'dia-artifact-gacha-10' }, fixedCtx());
+    const itemIds = result.granted.artifacts!;
+    expect(itemIds).toHaveLength(10);
+    expect(result.save.wallet.diamonds).toBe(1000 - 360);
+    // 단발 호환 필드는 count=1 전용
+    expect(result.granted.artifactItemId).toBeUndefined();
+    // 보유 수 합 = 10점, 전부 발굴 도감 등록
+    const totalOwned = result.save.artifacts.reduce((sum, a) => sum + a.count, 0);
+    expect(totalOwned).toBe(10);
+    for (const itemId of itemIds) expect(result.save.artifactCodex[itemId]?.obtained).toBe(true);
+  });
+
   it('고급 유물 발굴 — 희귀 이상 확정', () => {
     const save = richSave();
     const result = buyShopProduct(content, save, { productId: 'dia-artifact-gacha-premium' }, fixedCtx());

@@ -332,8 +332,9 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   }),
   // 해금한 모든 지역의 재료를 각 n개 (+골드) — 지역 선택형 materials·regionPack 대체 (2026-08-23)
   z.object({ kind: z.literal('materialsAll'), countEach: z.number().int().positive(), gold: z.number().int().min(0).default(0) }),
-  z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES) }),
-  z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES) }),
+  // count>1 = 다연차 뽑기 (2026-08-29 ×10) — 같은 확률표로 n장, 리빌은 그리드로
+  z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES), count: z.number().int().positive().default(1) }),
+  z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES), count: z.number().int().positive().default(1) }),
   // rush(즉시 귀환) 상품은 폐지 (2026-08-23) — 가속은 모래시계 아이템으로 일원화
   z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive().default(1) }),
 ]);

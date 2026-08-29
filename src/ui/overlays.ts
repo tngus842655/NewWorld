@@ -19,7 +19,7 @@ import { teamSheet } from './teamSheet';
 import { accountBonusSheet } from './accountBonusSheet';
 import { attendanceSheet } from './attendanceSheet';
 import { shopSheet } from './shopSheet';
-import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp } from './components';
+import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp, uiIcon } from './components';
 import { describeEffect } from './effectText';
 import {
   ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
@@ -76,10 +76,11 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
   return el('div.overlay', { onclick: (event) => { if (event.target === event.currentTarget) closeOverlay(); } }, sheet);
 }
 
-export function sheetShell(title: string, ...children: (HTMLElement | null)[]): HTMLElement {
+/** title은 문자열 또는 [아이콘, 텍스트] 배열 — 이모지 자리를 webp 아이콘(uiIcon)으로 대체할 때 배열로 */
+export function sheetShell(title: string | (HTMLElement | string)[], ...children: (HTMLElement | null)[]): HTMLElement {
   return el('div.sheet', {},
     el('div.sheet-head', {},
-      el('div.sheet-title', {}, title),
+      el('div.sheet-title', {}, ...(Array.isArray(title) ? title : [title])),
       el('button.btn.btn-ghost', { onclick: closeOverlay }, '닫기'),
     ),
     ...children,
@@ -442,14 +443,14 @@ function oddsSheet(): HTMLElement {
     el('div.stack-sm', {}, ...rarities.filter((rarity) => (table[rarity] ?? 0) > 0).map((rarity) =>
       pctBarRow(rarityTag(rarity), table[rarity] ?? 0, `--rar-${rarity}`)));
   const shopPanel = el('div.card.stack-sm', {},
-    el('div.odds-title', {}, '🏪 상점 뽑기 확률'),
-    el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다.'),
+    el('div.odds-title', {}, uiIcon('shop-stall', '🏪', '상점'), ' 상점 뽑기 확률'),
+    el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다. 10장 상품은 같은 확률이 장마다 독립 적용됩니다.'),
     ...chipPanels([
       { key: 'goldNormal', label: '🃏 뽑기 [골드]', view: gachaView(shop.monsterGacha.goldNormal!) },
-      { key: 'normal', label: '🃏 뽑기 [다이아]', view: gachaView(shop.monsterGacha.normal!) },
-      { key: 'premium', label: '🌟 고급 뽑기', view: gachaView(shop.monsterGacha.premium!) },
-      { key: 'standard', label: '🏺 유물 발굴', view: gachaView(shop.artifactGacha.standard!) },
-      { key: 'artPremium', label: '🔮 고급 발굴', view: gachaView(shop.artifactGacha.premium!) },
+      { key: 'normal', label: '🃏 뽑기·10 [다이아]', view: gachaView(shop.monsterGacha.normal!) },
+      { key: 'premium', label: '🌟 고급 뽑기·10', view: gachaView(shop.monsterGacha.premium!) },
+      { key: 'standard', label: '🏺 유물 발굴·10', view: gachaView(shop.artifactGacha.standard!) },
+      { key: 'artPremium', label: '🔮 고급 발굴·10', view: gachaView(shop.artifactGacha.premium!) },
     ]),
   );
 

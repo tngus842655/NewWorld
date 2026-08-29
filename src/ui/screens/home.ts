@@ -145,7 +145,7 @@ export function renderHome(): HTMLElement {
     expeditionLinesCard(),
     nextGoalCard(),
     (() => {
-      // 반복 과업 진입 (GDD §9.3) — 랭킹은 상단바 🏆 아이콘으로 이동 (2026-08-23 사용자)
+      // 반복 과업 진입 (GDD §9.3) — 랭킹은 설정 탭으로 이동 (2026-08-29 사용자, 일반 공개 여부 추후 결정)
       const taskTimes = content.tasks.reduce((sum, task) => sum + (state.tasks[task.id] ?? 0), 0);
       return el('div.card.list-row', {},
         el('span', {}, `📋 반복 과업 [달성 ${taskTimes}회]`),

@@ -7,6 +7,17 @@ import { monsterBaseCp, statAt } from '../core/formulas';
 import type { OwnedArtifact, OwnedMonster } from '../core/types';
 import { ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, stars } from './kit';
 
+/** 인라인 UI 아이콘 — 앱바와 같은 /assets/ui/{name}.webp를 이모지 자리에. 실패 시 이모지 폴백 */
+export function uiIcon(name: string, fallback: string, alt: string): HTMLElement {
+  const wrap = el('span.ui-icon', {});
+  const img = el<'img'>('img');
+  img.src = `/assets/ui/${name}.webp`;
+  img.alt = alt;
+  img.onerror = () => { img.remove(); wrap.append(fallback); };
+  wrap.append(img);
+  return wrap;
+}
+
 /** 몬스터 아이콘 — /assets/monsters/{id}.webp, 없으면 종족 이모지 실루엣 (DATA.md §6) */
 export function monsterIcon(monsterId: string, opts: { silhouette?: boolean } = {}): HTMLElement {
   const monster = content.monsters.get(monsterId);

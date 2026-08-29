@@ -65,6 +65,15 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
 - **[완료 2026-08-27] UI 그룹 신설 — 앱바 지도 아이콘 1점** (`ui/expedition-map`,
   Naufal Hudallah `treasure-map-11798660` — 기존 유물 수급처 Adventure Game 팩과 동일 작가).
   build-assets.mjs에 ui 그룹 추가, 원본 폴더 없는 그룹은 건너뛰도록 가드
+- **[완료 2026-08-29] 앱바 상점·출석 아이콘 2점** — 이모지(🏪📅) 대체.
+  `ui/shop-stall` = Adventure Game 팩 `game-shop-11799317` (지도와 동일 팩·톤 통일),
+  `ui/attendance-calendar` = Brian Savero `calendar-10991552` (같은 팩에 달력이 없어
+  크림 몸체+빨간 밴드로 지도·가판대 팔레트에 맞춤 — 빨간 날짜 한 칸이 출석 도장 모티프).
+  지도 원본이 BAK에 없던 것도 재다운로드로 메꿈.
+- **⚠️ [발견 2026-08-29] BAK 원본이 낡았다 — 전체 리빌드 금지.** `build-assets.mjs` 전체 실행이
+  커밋된 webp 44건을 옛 이미지로 역행시켰다(8-25 교체 5건·리컬러분이 BAK에 반영 안 됐고, 초월 7종은
+  원본 자체가 없음). git checkout으로 수습. **BAK 정합성 복구 전에는 그룹 단위 전체 리빌드를 돌리지 말고,
+  새 에셋만 추가할 때도 리빌드 후 `git status`로 기존 webp가 안 바뀌었는지 확인할 것.**
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 
