@@ -111,15 +111,18 @@ export function renderSettings(): HTMLElement {
             }, '로그아웃'),
           ),
           el('div.list-row', {},
-            el('span.muted.small', {},
-              uploaded ? `☁️ 마지막 백업 ${new Date(uploaded).toLocaleTimeString('ko-KR')}` : '☁️ 자동 백업 대기 중'),
-            el('div.row-gap', {},
+            // 시각은 시:분까지만 — 초까지 쓰면 버튼이 줄바꿈으로 밀려 내려온다 (2026-08-29 사용자)
+            el('span.muted.small.cloud-stamp', {},
+              uploaded
+                ? `☁️ ${new Date(uploaded).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 저장됨`
+                : '☁️ 자동 저장 대기'),
+            el('div.row-gap.nowrap', {},
               el('button.btn.btn-ghost.btn-sm', {
                 onclick: () => {
                   void uploadNow().then((ok) =>
-                    toast(ok ? '☁️ 클라우드에 백업했습니다' : '백업 실패 — 연결을 확인해 주세요', ok ? 'ok' : 'error'));
+                    toast(ok ? '☁️ 클라우드에 저장했습니다' : '저장 실패 — 연결을 확인해 주세요', ok ? 'ok' : 'error'));
                 },
-              }, '지금 백업'),
+              }, '저장'),
               el('button.btn.btn-ghost.btn-sm', { onclick: () => void restoreFromCloud() }, '불러오기'),
             ),
           ),

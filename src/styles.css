@@ -805,6 +805,9 @@ body.overlay-open .container { overflow: hidden; }
 }
 /* 좁은 행에 버튼 2~3개 — 줄바꿈 없이 들어가는 소형 버튼 */
 .btn-sm { padding: 5px 10px; font-size: 12px; }
+/* 버튼 묶음이 세로로 내려앉지 않게 — 라벨 쪽이 말줄임으로 양보한다 */
+.row-gap.nowrap { flex-wrap: nowrap; flex: none; }
+.cloud-stamp { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ──
  * 풀블리드 키아트(login-background.png — 게임명 포함) 위에 버튼·링크만 하단 배치.
