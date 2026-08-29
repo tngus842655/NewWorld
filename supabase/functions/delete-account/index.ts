@@ -8,7 +8,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  // x-client-info: supabase-js functions.invoke가 자동으로 붙인다 — 빠뜨리면 프리플라이트에서 차단 (2026-08-29 실사고)
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
