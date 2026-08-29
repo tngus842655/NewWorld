@@ -2,7 +2,7 @@
  * 새 게임 초기 상태 — starter 구성은 balance.json에서.
  */
 import type { Content } from '../content';
-import type { CoreCtx, LifetimeStats, SaveState } from './types';
+import { CURRENT_SAVE_VERSION, type CoreCtx, type LifetimeStats, type SaveState } from './types';
 
 export function emptyStats(): LifetimeStats {
   return {
@@ -31,7 +31,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
 
   const playerId = ctx.newUid() + ctx.newUid(); // 랭킹용 익명 신원 (추후 구글 로그인 연동 전까지)
   return {
-    version: 11,
+    version: CURRENT_SAVE_VERSION,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -71,7 +71,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     journalArchive: [],
     counters: { day: '', adUsed: {} },
     buffs: { scentUntil: 0 },
-    settings: { sound: true, push: false },
+    settings: { sound: true, nightAlarms: false },
     lastSavedAt: now,
   };
 }

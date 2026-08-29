@@ -2,9 +2,9 @@
  * 세이브 마이그레이션 체인 (TECH.md §8) — v(n) → v(n+1) 순수 함수만 등록한다.
  * 스키마가 바뀌면 여기에 단계를 추가하고 tests/save.test.ts에 케이스를 더한다.
  */
-import type { SaveState } from '../core/types';
+import { CURRENT_SAVE_VERSION, type SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 12;
+export { CURRENT_SAVE_VERSION };
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -204,6 +204,18 @@ const migrateV11toV12: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v12 → v13 (2026-08-30): 야간 알림 토글 (검토 목록 ③) — 미사용 settings.push를
+ * nightAlarms(켬 = 21~08시에도 귀환 알림)로 대체. 기본 끔 = 야간 무음.
+ */
+const migrateV12toV13: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  const settings = { ...data['settings'] };
+  delete settings['push'];
+  data['settings'] = { ...settings, nightAlarms: false };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
@@ -216,6 +228,7 @@ const MIGRATIONS: Record<number, Migration> = {
   9: migrateV9toV10,
   10: migrateV10toV11,
   11: migrateV11toV12,
+  12: migrateV12toV13,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

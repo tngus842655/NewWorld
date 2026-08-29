@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { createInitialSave } from '../src/core/newgame';
+import { CURRENT_SAVE_VERSION } from '../src/core/types';
 import { migrateSave } from '../src/state/migrations';
+import { content, makeCtx } from './helpers';
 
 /** v1 세이브 최소 샘플 — 개체(uid) 로스터 + 정수 지갑 (2026-08-23 이전 구조) */
 function v1Save() {
@@ -46,7 +49,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(12); // v1 → … → v12 체인 끝까지
+    expect(migrated.version).toBe(13); // v1 → … → v13 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -162,6 +165,24 @@ describe('세이브 마이그레이션 v11 → v12 (다이아 단가 개편 ×5)
     const migrated = migrateSave(v11)!;
     expect(migrated.wallet.diamonds).toBe(650);
     expect(migrated.wallet.gold).toBe(base.wallet.gold);
-    expect(migrated.version).toBe(12);
+  });
+});
+
+describe('세이브 마이그레이션 v12 → v13 (야간 알림 토글)', () => {
+  it('push를 nightAlarms(기본 끔)로 대체한다 — push가 켜져 있었어도 기본은 끔', () => {
+    const base = migrateSave(v1Save())!;
+    const v12 = { ...structuredClone(base), version: 12, settings: { sound: false, push: true } };
+    const migrated = migrateSave(v12)!;
+    expect(migrated.settings).toEqual({ sound: false, nightAlarms: false });
+  });
+});
+
+describe('신규 세이브 버전', () => {
+  it('최신 버전을 찍는다 — 재부팅 시 구버전 마이그레이션(다이아 ×5 등) 재적용 방지', () => {
+    const clock = makeCtx();
+    const fresh = createInitialSave(content, clock.ctx);
+    expect(fresh.version).toBe(CURRENT_SAVE_VERSION);
+    // 새 세이브를 그대로 다시 로드해도 아무 마이그레이션도 뛰지 않는다
+    expect(migrateSave(structuredClone(fresh))).toEqual(fresh);
   });
 });

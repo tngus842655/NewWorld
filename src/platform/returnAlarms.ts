@@ -29,10 +29,22 @@ export function alarmId(expeditionId: string): number {
   return hash & 0x7fffffff;
 }
 
-/** 세이브에서 파생한 "울려야 할 알림" — 순수 함수 (회군·정산·과거 귀환은 제외) */
+// 야간 무음 구간 (검토 목록 ③, 2026-08-30) — 국내 게임 표준 관행(21~08시).
+// settings.nightAlarms가 꺼져 있으면(기본) 이 구간에 도착하는 알림은 미루지 않고 아예 안 울린다.
+export const NIGHT_START_HOUR = 21;
+export const NIGHT_END_HOUR = 8;
+
+/** 기기 로컬 시각 기준 야간 여부 — 알림은 기기 속성이라 로컬 시간대가 맞다 */
+export function isNightTime(at: number): boolean {
+  const hour = new Date(at).getHours();
+  return hour >= NIGHT_START_HOUR || hour < NIGHT_END_HOUR;
+}
+
+/** 세이브에서 파생한 "울려야 할 알림" — 순수 함수 (회군·정산·과거 귀환·야간 무음 제외) */
 export function desiredReturnAlarms(state: SaveState, now: number): ReturnAlarm[] {
   return state.expeditions
     .filter((e) => !e.claimed && e.recallAt === undefined && e.endsAt > now)
+    .filter((e) => state.settings.nightAlarms || !isNightTime(e.endsAt))
     .map((e) => ({
       id: alarmId(e.id),
       at: e.endsAt,

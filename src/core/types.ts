@@ -88,8 +88,16 @@ export interface AttendanceState {
 }
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
+
+/**
+ * 세이브 스키마 버전 — 올릴 때 state/migrations.ts에 단계를 추가한다 (TECH §8).
+ * 여기(core)가 정본인 이유: 신규 세이브(newgame)가 이 값을 찍어야 재부팅 때 구버전
+ * 마이그레이션이 다시 뛰지 않는다 (v11 고정 시절 다이아 ×5 재적용 잠복 버그, 2026-08-30 수정).
+ */
+export const CURRENT_SAVE_VERSION = 13;
+
 export interface SaveState {
-  version: 11; // v11 (2026-08-29): 광고 버프(buffs). v10: 탐사(4h)·전설의 흔적. migrations.ts
+  version: typeof CURRENT_SAVE_VERSION; // v13 (2026-08-30): 야간 알림. v12: 다이아 ×5. 내역은 migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -127,7 +135,8 @@ export interface SaveState {
   counters: { day: string; adUsed: Record<string, number> }; // 광고 일일 카운터 (core/ads.ts, 로컬 자정 리셋)
   /** 광고 보상 버프 (v11, GDD §9.2) — scentUntil: 야생의 향기 만료 시각 (0 = 없음) */
   buffs: { scentUntil: number };
-  settings: { sound: boolean; push: boolean };
+  /** nightAlarms (v13): 켬 = 야간(21~08시)에도 귀환 알림 — 기본 끔 (구 push 필드 대체) */
+  settings: { sound: boolean; nightAlarms: boolean };
   lastSavedAt: number;
 }
 

@@ -352,3 +352,9 @@ export function toggleSound(): void {
   const state = save();
   save.set({ ...state, settings: { ...state.settings, sound: !state.settings.sound } });
 }
+
+/** 야간 알림 토글 (검토 목록 ③) — save 변경만으로 returnAlarms의 선언적 동기화가 재예약까지 처리 */
+export function toggleNightAlarms(): void {
+  const state = save();
+  save.set({ ...state, settings: { ...state.settings, nightAlarms: !state.settings.nightAlarms } });
+}

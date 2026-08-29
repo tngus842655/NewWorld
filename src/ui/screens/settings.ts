@@ -4,7 +4,8 @@
  */
 import { cloudSession, signInWithGoogle, signOutGoogle } from '../../state/cloud';
 import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
-import { save, setNickname, toggleSound } from '../../state/store';
+import { NIGHT_END_HOUR, NIGHT_START_HOUR } from '../../platform/returnAlarms';
+import { save, setNickname, toggleNightAlarms, toggleSound } from '../../state/store';
 import { googleG } from '../components';
 import { askConfirm, askText } from '../dialog';
 import { el, toast } from '../kit';
@@ -53,6 +54,16 @@ export function renderSettings(): HTMLElement {
             if (save().settings.sound) playSfx('tap');
           },
         }, state.settings.sound ? '🔊 켬' : '🔇 끔'),
+      ),
+      // 야간 귀환 알림 (검토 목록 ③) — 끔(기본)이면 21~08시 도착 알림은 울리지 않는다
+      el('div.list-row', {},
+        el('span', {}, `야간 알림 (${NIGHT_START_HOUR}~${String(NIGHT_END_HOUR).padStart(2, '0')}시)`),
+        el('button.btn.btn-ghost', {
+          onclick: () => {
+            toggleNightAlarms();
+            playSfx('tap');
+          },
+        }, state.settings.nightAlarms ? '🌙 켬' : '🔕 끔'),
       ),
       el('div.list-row', {},
         el('span', {}, '확률 정보'),
