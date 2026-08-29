@@ -70,7 +70,7 @@ describe('초월 등급 격리 (합성 전용)', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }], { unlockAll: true });
     save.wallet.gold = 50_000_000;
-    save.wallet.diamonds = 500_000;
+    save.wallet.diamonds = 2_500_000;
 
     // 한도 없는 다이아 뽑기만 — 일일 한도가 있는 골드 뽑기는 표본이 1회뿐이라 의미가 없다
     const gacha = content.shopProducts.filter(

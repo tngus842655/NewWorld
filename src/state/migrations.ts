@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 11;
+export const CURRENT_SAVE_VERSION = 12;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -194,6 +194,16 @@ const migrateV10toV11: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v11 → v12 (2026-08-29): 다이아 단가 개편 (1💎=10원, GDD §9.1-2 노트) —
+ * 가격·출석 보상이 ×5 되므로 보유 다이아도 ×5 해 구매력을 보존한다.
+ */
+const migrateV11toV12: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['wallet'] = { ...data['wallet'], diamonds: (data['wallet']?.['diamonds'] ?? 0) * 5 };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
@@ -205,6 +215,7 @@ const MIGRATIONS: Record<number, Migration> = {
   8: migrateV8toV9,
   9: migrateV9toV10,
   10: migrateV10toV11,
+  11: migrateV11toV12,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

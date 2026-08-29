@@ -721,7 +721,7 @@
         "dust": 30
       },
       {
-        "diamonds": 10
+        "diamonds": 50
       },
       {
         "gold": 800
@@ -733,7 +733,7 @@
         "dust": 40
       },
       {
-        "diamonds": 20
+        "diamonds": 100
       },
       {
         "gold": 1000
@@ -754,7 +754,7 @@
         "gold": 1500
       },
       {
-        "diamonds": 30
+        "diamonds": 150
       },
       {
         "gold": 1500
@@ -775,7 +775,7 @@
         "gold": 2000
       },
       {
-        "diamonds": 40
+        "diamonds": 200
       },
       {
         "gold": 2500
@@ -796,7 +796,7 @@
         "gold": 3000
       },
       {
-        "diamonds": 60
+        "diamonds": 300
       }
     ]
   }

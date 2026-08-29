@@ -7,7 +7,7 @@ const fixedCtx = (now = T0, seed = 's'): CoreCtx => ({ now: () => now, newSeed: 
 
 function richSave(opts: { gold?: number; diamonds?: number } = {}): SaveState {
   const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }], { gold: opts.gold ?? 50_000 });
-  save.wallet.diamonds = opts.diamonds ?? 1000;
+  save.wallet.diamonds = opts.diamonds ?? 10_000;
   return save;
 }
 
@@ -42,7 +42,7 @@ describe('상점 (GDD §9.4)', () => {
   it('모래시계 — 다이아 차감·인벤토리 적립', () => {
     const save = richSave();
     const result = buyShopProduct(content, save, { productId: 'dia-hourglass-60' }, fixedCtx());
-    expect(result.save.wallet.diamonds).toBe(1000 - 6);
+    expect(result.save.wallet.diamonds).toBe(10_000 - 30);
     expect(result.save.wallet.hourglasses['hourglass-60']).toBe(1);
     expect(result.granted.hourglass).toEqual({ hourglassId: 'hourglass-60', count: 1 });
 
@@ -53,7 +53,7 @@ describe('상점 (GDD §9.4)', () => {
   it('1회 한정 — 시작 패키지는 재구매 불가', () => {
     const save = richSave();
     const result = buyShopProduct(content, save, { productId: 'dia-starter' }, fixedCtx());
-    expect(result.save.wallet.diamonds).toBe(1000 - 120);
+    expect(result.save.wallet.diamonds).toBe(10_000 - 600);
     expect(result.save.wallet.gold).toBe(save.wallet.gold + 8000);
     expect(result.save.wallet.dust).toBe(save.wallet.dust + 300);
     expect(() => buyShopProduct(content, result.save, { productId: 'dia-starter' }, fixedCtx())).toThrow(/이미 구매/);
@@ -126,7 +126,7 @@ describe('상점 (GDD §9.4)', () => {
     const result = buyShopProduct(content, save, { productId: 'dia-monster-gacha-10' }, fixedCtx());
     const monsters = result.granted.monsters!;
     expect(monsters).toHaveLength(10);
-    expect(result.save.wallet.diamonds).toBe(1000 - 270);
+    expect(result.save.wallet.diamonds).toBe(10_000 - 1350);
     // 단발 호환 필드는 count=1 전용 — 10연에서는 비워둔다
     expect(result.granted.monsterId).toBeUndefined();
 
@@ -152,7 +152,7 @@ describe('상점 (GDD §9.4)', () => {
     const result = buyShopProduct(content, save, { productId: 'dia-artifact-gacha-10' }, fixedCtx());
     const itemIds = result.granted.artifacts!;
     expect(itemIds).toHaveLength(10);
-    expect(result.save.wallet.diamonds).toBe(1000 - 360);
+    expect(result.save.wallet.diamonds).toBe(10_000 - 1800);
     // 단발 호환 필드는 count=1 전용
     expect(result.granted.artifactItemId).toBeUndefined();
     // 보유 수 합 = 10점, 전부 발굴 도감 등록

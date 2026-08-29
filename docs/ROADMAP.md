@@ -342,6 +342,11 @@
       (@capacitor-community/admob — MoneyGame 검증 조합), 웹 DEV 시뮬 폴백으로 E2E 검증.
       세이브 v11(buffs). **⚠️ 단위 ID·앱 ID 전부 구글 테스트 ID — AdMob 콘솔 발급 후
       adsConfig.ts + AndroidManifest 교체 필요 (교체 전까지 수익 0)**
+- [x] **인앱 결제 (Google Play Billing)** (2026-08-29, platform/iap.ts — cordova-plugin-purchase) —
+      광고 제거(`ad_free`, 비소모성·실결제 전용 — 출석 다이아로 못 사게 상점 판매 제거) +
+      다이아 팩 3종(`diamonds_300/550/1000`, 소모성, ₩3,000/5,500/10,000). 트랜잭션 장부로 중복 지급 방지.
+      **단가 개편: 1💎=10원 확정, 게임 내 다이아 가격·출석 보상 일괄 ×5** (GDD §9.1-2 노트).
+      **⚠️ 콘솔 인앱 상품 4종 등록 + 라이선스 테스터로 실기기 검증 전까지 구매 UI 숨김(storeReady)**
 - [ ] 성능 예산 검증 (TECH §11), 에러 리포팅 최소선
 - [ ] 스토어 자산(아이콘·스크린샷·그래픽), 확률 고지 페이지
 - [ ] 서명 AAB 빌드까지 (Play Console 업로드·심사 제출은 사용자가 직접)

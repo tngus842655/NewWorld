@@ -7,7 +7,7 @@ import { content } from '../content';
 import type { ShopProduct } from '../content/schema';
 import { hasAdFree, onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
 import { adsAvailable, showRewardedAd } from '../platform/ads';
-import { adFreeIap, buyAdFree } from '../platform/iap';
+import { adFreeIap, buyIapProduct, diamondPacks } from '../platform/iap';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, grantAdShopExtra, nowTick, save } from '../state/store';
 import { flushUpload } from '../state/cloudSync';
@@ -186,12 +186,43 @@ function adFreeIapCard(): HTMLElement | null {
           disabled: owned || iapBusy(),
           onclick: () => {
             iapBusy.set(true);
-            void buyAdFree().finally(() => iapBusy.set(false)); // 완료 반영은 iap 이벤트 → grantAdFree
+            void buyIapProduct('ad_free').finally(() => iapBusy.set(false)); // 완료 반영은 iap 이벤트
           },
         }, owned ? '적용됨' : (price ?? '구매')),
       ),
     ),
   );
+}
+
+/** 다이아 충전 — 실결제 팩 (platform/iap.ts). 스토어 준비 전(사이드로드·웹)에는 구간이 안 보인다 */
+function diamondPackBlocks(): HTMLElement[] {
+  const packs = diamondPacks();
+  if (packs.length === 0) return [];
+  return [
+    el('div.info-group-head', {},
+      el('span.small', {}, '💎 다이아 충전'),
+      el('span.muted.small', {}, `${packs.length}종`),
+    ),
+    ...packs.map((pack) =>
+      el('div.card.stack-sm.shop-item', {},
+        el('div.list-row', {},
+          el('div', {},
+            el('div.shop-name', {}, `💎 다이아 ${pack.diamonds.toLocaleString('ko-KR')}개`),
+            el('div.muted.small', {}, '충전 즉시 지급 · 클라우드에 바로 저장'),
+          ),
+          el('div.shop-buy', {},
+            el('button.btn.btn-primary', {
+              disabled: iapBusy(),
+              onclick: () => {
+                iapBusy.set(true);
+                void buyIapProduct(pack.id).finally(() => iapBusy.set(false));
+              },
+            }, pack.price ?? '구매'),
+          ),
+        ),
+      ),
+    ),
+  ];
 }
 
 // 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
@@ -230,7 +261,13 @@ export function shopSheet(): HTMLElement {
         el('span.shop-balance', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
         tab === 'diamond'
           ? el('button.btn.btn-ghost', {
-              onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 [그 전엔 출석 이벤트로 모을 수 있어요]', 'ok'),
+              // 팩이 로드됐으면(스토어 설치본) 아래 충전 구간 안내, 아니면 경로 안내
+              onclick: () => toast(
+                diamondPacks().length > 0
+                  ? '💎 아래 다이아 충전에서 구매할 수 있어요'
+                  : '💎 충전은 플레이스토어 설치 버전에서 제공됩니다 [출석으로도 모을 수 있어요]',
+                'ok',
+              ),
             }, '충전')
           : null,
         tab === 'diamond' && import.meta.env.DEV
@@ -242,6 +279,7 @@ export function shopSheet(): HTMLElement {
       el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),
       el(`button.big-tab${tab === 'diamond' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('diamond'); } }, '💎 다이아 상점'),
     ),
+    ...(tab === 'diamond' ? diamondPackBlocks() : []),
     tab === 'diamond' ? adFreeIapCard() : null,
     ...groupBlocks,
     tab === 'gold'

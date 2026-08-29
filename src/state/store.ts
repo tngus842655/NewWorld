@@ -184,6 +184,15 @@ export function grantAdScent(): boolean {
   );
 }
 
+/** 다이아 충전 지급 — 실결제(platform/iap.ts)가 거래당 1회 부른다 (중복 방지는 iap 장부).
+ *  결제 재화는 유실이 곧 CS라 즉시 클라우드에 실어 보낸다 */
+export function grantIapDiamonds(count: number): void {
+  const state = save();
+  save.set({ ...state, wallet: { ...state.wallet, diamonds: state.wallet.diamonds + count } });
+  toast(`💎 다이아 +${count.toLocaleString('ko-KR')} 충전 완료!`, 'ok');
+  void import('./cloudSync').then((m) => m.flushUpload()).catch(() => undefined);
+}
+
 /** 광고 제거 소유 반영 — 실결제 구매·복원(platform/iap.ts)이 부른다. 멱등 */
 export function grantAdFree(): void {
   const state = save();

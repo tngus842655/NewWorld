@@ -46,7 +46,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(11); // v1 → … → v11 체인 끝까지
+    expect(migrated.version).toBe(12); // v1 → … → v12 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -152,5 +152,16 @@ describe('세이브 마이그레이션 v8 → v9 (모래시계)', () => {
     const migrated = migrateSave(v1Save())!;
     expect(migrated.wallet.hourglasses).toEqual({});
     expect(migrated.wallet.gold).toBe(500);
+  });
+});
+
+describe('세이브 마이그레이션 v11 → v12 (다이아 단가 개편 ×5)', () => {
+  it('보유 다이아를 5배로 — 골드 등 다른 재화는 그대로', () => {
+    const base = migrateSave(v1Save())!;
+    const v11 = { ...structuredClone(base), version: 11, wallet: { ...base.wallet, diamonds: 130 } };
+    const migrated = migrateSave(v11)!;
+    expect(migrated.wallet.diamonds).toBe(650);
+    expect(migrated.wallet.gold).toBe(base.wallet.gold);
+    expect(migrated.version).toBe(12);
   });
 });

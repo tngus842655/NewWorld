@@ -153,7 +153,7 @@ describe('세이브 마이그레이션 v10 → v11', () => {
     raw['version'] = 10;
     delete raw['buffs'];
     const migrated = migrateSave(raw)!;
-    expect(migrated.version).toBe(11);
+    expect(migrated.version).toBe(12);
     expect(migrated.buffs).toEqual({ scentUntil: 0 });
   });
 });
