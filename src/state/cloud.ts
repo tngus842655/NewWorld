@@ -158,6 +158,24 @@ export async function signOutGoogle(): Promise<void> {
   await supabase.auth.signOut(); // SIGNED_OUT 이벤트 → 새로고침 → 게이트 (initCloud)
 }
 
+/**
+ * 회원 탈퇴 — delete-account 엣지 함수가 본인 JWT 검증 후 계정을 삭제한다
+ * (profiles·saves는 서버 cascade, 랭킹은 신원 해시 일치 시 함께). 성공하면 이 기기
+ * 세이브도 파기하고 로그아웃 → 게이트로 돌아간다. Google Play 계정 삭제 요건 (2026-08-29).
+ */
+export async function deleteAccount(): Promise<boolean> {
+  const session = cloudSession();
+  if (!session) return false;
+  const { profile } = save();
+  const { error } = await supabase.functions.invoke('delete-account', {
+    body: { playerId: profile.playerId, secret: profile.playerSecret },
+  });
+  if (error) return false;
+  localStorage.removeItem(SAVE_KEY); // 로컬 세이브 파기 — 새로고침 전이라 persistSave가 다시 쓸 일 없다
+  await supabase.auth.signOut(); // SIGNED_OUT → 새로고침 → 게이트 (완전한 신규 방문자 상태)
+  return true;
+}
+
 /** OAuth 리디렉션이 에러를 들고 돌아온 경우 — 조용히 삼키면 "그냥 안 됨"으로 보인다 (2026-08-29 실사례) */
 function surfaceAuthError(): void {
   const params = new URLSearchParams(window.location.search || window.location.hash.replace(/^#/, '?'));

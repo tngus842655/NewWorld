@@ -270,8 +270,9 @@
   - [x] 이용약관·개인정보처리방침 (2026-08-29) — 공개 페이지 #/terms·#/privacy (ui/legal.ts,
         로그인 불필요 — 스토어 등록 URL 겸용), 게이트 하단·설정 탭 진입. 운영자 엔에스에이치·
         문의 tngus842655@gmail.com·싱가포르 리전 국외이전 고지 기재 완료, **시행일만 출시일 확정 시 기재**
-  - [ ] **인앱 계정 삭제(탈퇴) 기능** — Google Play 정책상 계정 생성이 있으면 삭제 수단 필수.
-        방침에는 이메일 요청으로 우선 대응 명시, 출시 전 설정 탭에 탈퇴 버튼(서버 데이터 삭제) 구현
+  - [x] **인앱 계정 삭제(탈퇴)** (2026-08-29) — delete-account 엣지 함수(본인 JWT 검증 →
+        auth 삭제 cascade + 랭킹 행 해시 검증 삭제) + 설정 탭 탈퇴 버튼("탈퇴" 입력 이중 확인,
+        로컬 세이브 파기 → 게이트 복귀). Google Play 계정 삭제 요건 충족
   - [ ] 익명 랭킹 신원(playerId) 계정 병합 — 남음 (rank_scores는 여전히 playerId+secret 자가 신고)
 - [ ] Capacitor 패키징 (MoneyGame 파이프라인 재사용, Windows SDK 경로 수동 지정 주의)
       **주의: 구글 OAuth는 웹뷰 내 차단(disallowed_useragent) — 시스템 브라우저(@capacitor/browser)

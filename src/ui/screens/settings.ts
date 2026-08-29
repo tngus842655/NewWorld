@@ -2,7 +2,7 @@
  * 설정 — 효과음, 확률 정보(등급별 — 추후 관리자 페이지로 대체 예정), 세이브 관리.
  * 캠프에 섞여 있던 설정을 분리해 캠프는 "성장·제작"에 집중시킨다.
  */
-import { cloudSession, lastUploadedAt, restoreFromCloud, signInWithGoogle, signOutGoogle, uploadNow } from '../../state/cloud';
+import { cloudSession, deleteAccount, lastUploadedAt, restoreFromCloud, signInWithGoogle, signOutGoogle, uploadNow } from '../../state/cloud';
 import { exportSave, importSave } from '../../state/save';
 import { resetSave, save, setNickname, toggleSound } from '../../state/store';
 import { googleG } from '../components';
@@ -122,6 +122,29 @@ export function renderSettings(): HTMLElement {
               }, '지금 백업'),
               el('button.btn.btn-ghost.btn-sm', { onclick: () => void restoreFromCloud() }, '불러오기'),
             ),
+          ),
+          // 회원 탈퇴 (Google Play 계정 삭제 요건) — "탈퇴" 입력을 요구하는 이중 확인
+          el('div.list-row', {},
+            el('span.muted.small', {}, '회원 탈퇴 — 계정·게임 데이터 영구 삭제'),
+            el('button.btn.btn-danger.btn-sm', {
+              onclick: () => {
+                void askText({
+                  title: '회원 탈퇴',
+                  message: '계정과 게임 데이터(클라우드·이 기기 세이브·랭킹)가 모두 삭제되며 복구할 수 없습니다.\n계속하려면 "탈퇴"라고 입력하세요.',
+                  placeholder: '탈퇴',
+                  confirmLabel: '영구 삭제',
+                }).then(async (text) => {
+                  if (text === null) return;
+                  if (text.trim() !== '탈퇴') {
+                    toast('"탈퇴"라고 정확히 입력해야 합니다', 'error');
+                    return;
+                  }
+                  const ok = await deleteAccount();
+                  if (!ok) toast('탈퇴 처리에 실패했습니다 — 연결을 확인해 주세요', 'error');
+                  // 성공 시 로그아웃 이벤트가 게이트로 새로고침한다
+                });
+              },
+            }, '탈퇴'),
           ),
         ];
       })(),
