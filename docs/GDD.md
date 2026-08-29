@@ -655,7 +655,7 @@ P = Σ_unit ( CP × elemMult(unit.elem, region.elem) ) × synergyMult(party)
 > 아래 본문의 "1💎 = 50원"과 💎 수치는 개편 전 기준 서술이다.
 > IAP 팩 6종 (2026-08-29 확장): `diamonds_300`(₩3,000, 10원/💎) · `diamonds_550`(₩5,000, 9.1원) ·
 > `diamonds_1000`(₩8,500, 8.5원) · `diamonds_4000`(₩30,000, 7.5원) · `diamonds_7000`(₩50,000, 7.1원) ·
-> `diamonds_15000`(₩100,000, 6.7원) — 큰 팩일수록 단가 이득. 가격의 진실은 Play Console (앱은 조회·표시만).
+> `diamonds_15000`(₩99,000, 6.6원) — 큰 팩일수록 단가 이득. 가격의 진실은 Play Console (앱은 조회·표시만).
 
 **전제**: IAP는 아직 없다(§9.1 다이아 항 · M6 예정). **광고(IAA)도 코드에 없다** —
 `balance.ads.daily`와 `adBuffMult:2`, zod 선언은 있지만 런타임 참조가 0이고

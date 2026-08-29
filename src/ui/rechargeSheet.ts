@@ -23,7 +23,7 @@ const PACK_BONUS: Record<string, number> = {
   diamonds_1000: 18,
   diamonds_4000: 33,
   diamonds_7000: 40,
-  diamonds_15000: 50,
+  diamonds_15000: 51,
 };
 
 function buy(id: string): void {
