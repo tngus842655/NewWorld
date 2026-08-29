@@ -15,7 +15,7 @@ import { Capacitor } from '@capacitor/core';
 
 export const AD_FREE_PRODUCT_ID = 'ad_free'; // Play Console 인앱 상품 ID와 일치 (비소모성)
 
-/** 다이아 팩 — id의 숫자 = 지급량. 가격은 콘솔에서 (기준 단가 1💎=10원, 등록가 ₩3,000/₩5,300/₩9,000 — 큰 팩 보너스) */
+/** 다이아 팩 — id의 숫자 = 지급량. 가격은 콘솔에서 (기준 단가 1💎=10원, 등록가 ₩3,000/₩5,000/₩8,500 — 큰 팩 보너스) */
 export const DIAMOND_PACKS = [
   { id: 'diamonds_300', diamonds: 300 },
   { id: 'diamonds_550', diamonds: 550 },
