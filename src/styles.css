@@ -573,6 +573,9 @@ body {
 .cp-ok { color: var(--good); }
 .cp-low { color: var(--bad); }
 .tier-row { display: flex; gap: 6px; }
+/* 출발 버튼 — 라벨은 중앙 유지, 선택한 파견 길이는 우측에 (2026-08-29 사용자) */
+.dispatch-label { display: flex; width: 100%; align-items: center; justify-content: center; position: relative; }
+.dispatch-time { position: absolute; right: 2px; font-size: 12px; font-weight: 600; opacity: 0.85; }
 .tier-btn { flex: 1; font-size: 12px; padding: 8px 4px; }
 .tier-btn.selected { border-color: var(--accent); background: #2a2413; }
 

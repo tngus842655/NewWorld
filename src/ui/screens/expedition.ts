@@ -13,7 +13,7 @@ import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { batch, signal } from '../../state/signal';
 import { dispatchTeam, save, unlock } from '../../state/store';
 import { artifactIcon, monsterIconBadged, ownedCp } from '../components';
-import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, josaRo } from '../kit';
+import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, fmtRemainShort, josaRo } from '../kit';
 import { regionTiers, tierShortName } from '../regionTiers';
 import { resetTeamSheet } from '../teamSheet';
 import { tabBar } from '../panels';
@@ -65,6 +65,7 @@ interface Preview {
   tribes: { tribe: string; count: number }[];
   synergyAmp: number;
   encounterAdd: number; // 계정 보너스·유물 고유의 원정당 조우 추가 — 정보줄 표기용
+  durationMs: number; // 유물 시간 단축(timeMult) 반영 실소요 — 출발 버튼 표기용 (core createExpedition과 같은 식)
 }
 
 /** 군 프리셋 기준 유효 전투력 미리보기 (artifactUids를 []로 주면 유물 제외) */
@@ -82,8 +83,14 @@ function teamPreview(team: TeamLoadout, regionId: string, tier: Tier, withArtifa
       .sort((a, b) => b.count - a.count);
     const setupActions = query(fx.effects, 'expeditionSetup', { regionId: region.id, tier });
     let encounterAdd = 0;
-    for (const action of setupActions) if (action.kind === 'encounterAdd') encounterAdd += action.count;
-    return { power: Math.round(power), tribes, synergyAmp: fx.synergyAmp, encounterAdd };
+    let timeMult = 1;
+    for (const action of setupActions) {
+      if (action.kind === 'encounterAdd') encounterAdd += action.count;
+      if (action.kind === 'timeMult') timeMult *= action.value;
+    }
+    timeMult = Math.max(timeMult, content.balance.artifacts.effectCaps.timeMultMin);
+    const durationMs = Math.round(content.balance.tiers[tier].minutes * 60_000 * timeMult);
+    return { power: Math.round(power), tribes, synergyAmp: fx.synergyAmp, encounterAdd, durationMs };
   } catch (error) {
     if (error instanceof GameError) return null;
     throw error;
@@ -331,7 +338,12 @@ export function renderExpedition(): HTMLElement {
         ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})`
         : party.length === 0
           ? `${team.name} 편성이 비어 있습니다 [카드를 눌러 편성하세요]`
-          : `🧭 ${josaRo(region.name)} 출발`), // 갯벌로·우듬지로·심연으로 — '으로' 고정 금지
+          : el('span.dispatch-label', {},
+              `🧭 ${josaRo(region.name)} 출발`, // 갯벌로·우듬지로·심연으로 — '으로' 고정 금지
+              // 선택한 파견 길이의 실소요 — 유물 시간 단축 반영, 튜토리얼 첫 원정은 30초 압축 (2026-08-29 사용자)
+              el('span.dispatch-time', {},
+                `⏱ ${state.profile.tutorialDone ? fmtRemainShort(info?.durationMs ?? content.balance.tiers[tier].minutes * 60_000) : '30초'}`),
+            )),
     ),
   );
 }
