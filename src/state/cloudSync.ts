@@ -10,7 +10,7 @@ import { content } from '../content';
 import { ensureTeams } from '../core/teams';
 import type { SaveState } from '../core/types';
 import { askConfirm } from '../ui/dialog';
-import { toast } from '../ui/kit';
+import { fmtGold, toast } from '../ui/kit';
 import * as clock from './clock';
 import { cloudSession } from './cloud';
 import { migrateSave } from './migrations';
@@ -35,6 +35,36 @@ function localLastSavedAt(): number {
 
 function fmtStamp(at: number): string {
   return at > 0 ? new Date(at).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '기록 없음';
+}
+
+/** 진행 요약 — 시각만으로는 "어느 쪽이 내 진짜 진행인지" 안 보인다 (2026-08-29 사용자 지적) */
+function saveSummary(state: SaveState | null): string {
+  try {
+    if (!state) return '요약 불가';
+    const captured = Object.values(state.codex ?? {}).filter((entry) => entry?.captured).length;
+    return `도감 ${captured}종 · 카드 ${state.roster?.length ?? 0}장 · 💰 ${fmtGold(state.wallet?.gold ?? 0)}`;
+  } catch {
+    return '요약 불가';
+  }
+}
+
+/** 진행 크기 비교용 점수 — 도감이 주축, 카드 수는 보조 */
+function progressOf(state: SaveState | null): number {
+  try {
+    if (!state) return 0;
+    const captured = Object.values(state.codex ?? {}).filter((entry) => entry?.captured).length;
+    return captured * 100 + (state.roster?.length ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** 버려질 세이브를 서버 previous_*에 1세대 보관 (0004) — 실수 덮어쓰기의 최후 복구선. 실패는 조용히 */
+async function backupDiscarded(profileId: string, discarded: SaveState | null, discardedAt: number): Promise<void> {
+  if (!discarded) return;
+  await supabase.from('saves')
+    .update({ previous_data: discarded, previous_saved_at: discardedAt })
+    .eq('profile_id', profileId);
 }
 
 /**
@@ -111,13 +141,17 @@ export async function restoreFromCloud(): Promise<void> {
     .from('saves').select('data, client_saved_at').eq('profile_id', session.user.id).maybeSingle();
   if (error) { toast('클라우드 조회 실패 — 연결을 확인해 주세요', 'error'); return; }
   if (!row) { toast('클라우드에 저장된 세이브가 없습니다', 'error'); return; }
+  const cloudSave = row.data as SaveState | null;
   const ok = await askConfirm({
     title: '☁️ 클라우드에서 불러오기',
-    message: `클라우드 저장: ${fmtStamp(Number(row.client_saved_at))}\n이 기기의 현재 진행을 덮어씁니다.`,
+    message:
+      `클라우드 — ${saveSummary(cloudSave)}\n[${fmtStamp(Number(row.client_saved_at))} 저장]\n\n`
+      + `이 기기 — ${saveSummary(save())}\n\n이 기기의 현재 진행을 덮어씁니다.`,
     confirmLabel: '불러오기',
     danger: true,
   });
   if (!ok) return;
+  await backupDiscarded(session.user.id, save(), localLastSavedAt()); // 버려질 로컬을 1세대 보관
   if (applyCloudSave(row.data)) toast('클라우드 세이브를 불러왔습니다', 'ok');
   else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
 }
@@ -143,17 +177,43 @@ async function reconcile(): Promise<void> {
   const cloudAt = Number(row.client_saved_at);
   const localAt = localLastSavedAt();
   if (Math.abs(cloudAt - localAt) < 2_000) return; // 같은 저장으로 간주
-  const useCloud = await askConfirm({
-    title: '☁️ 클라우드 세이브 발견',
-    message: `클라우드: ${fmtStamp(cloudAt)} 저장\n이 기기: ${fmtStamp(localAt)} 저장\n\n어느 쪽으로 이어서 할까요?\n[선택하지 않은 쪽은 다음 저장 때 덮어써집니다]`,
-    confirmLabel: '클라우드 불러오기',
-    cancelLabel: '이 기기 유지',
-  });
-  if (useCloud) {
-    if (applyCloudSave(row.data)) toast('클라우드 세이브로 이어서 합니다', 'ok');
-    else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
-  } else {
-    toast('이 기기 세이브를 유지합니다 — 다음 저장부터 클라우드를 덮어씁니다', 'ok');
+  const cloudSave = row.data as SaveState | null;
+
+  // 실수 덮어쓰기 3겹 방어 (2026-08-29 사용자 지적 — "기기 유지" 오선택이 클라우드 진행을 지운다):
+  // ① 양쪽 진행 요약 + 배경 탭 무시(dismissible: false) ② 더 진행된 쪽을 버리면 2차 경고
+  // ③ 버려질 세이브를 서버 previous_*에 보관 (backupDiscarded)
+  for (;;) {
+    const useCloud = await askConfirm({
+      title: '☁️ 클라우드 세이브 발견',
+      message:
+        `클라우드 — ${saveSummary(cloudSave)}\n[${fmtStamp(cloudAt)} 저장]\n\n`
+        + `이 기기 — ${saveSummary(save())}\n[${fmtStamp(localAt)} 저장]\n\n`
+        + '어느 쪽으로 이어서 할까요? 선택하지 않은 쪽은 덮어써집니다.',
+      confirmLabel: '클라우드 불러오기',
+      cancelLabel: '이 기기 유지',
+      dismissible: false,
+    });
+    const kept = useCloud ? cloudSave : save();
+    const discarded = useCloud ? save() : cloudSave;
+    if (progressOf(discarded) > progressOf(kept)) {
+      const sure = await askConfirm({
+        title: '⚠️ 진행이 더 많은 쪽을 버립니다',
+        message: `버려질 진행 — ${saveSummary(discarded)}\n남길 진행 — ${saveSummary(kept)}\n\n정말 계속할까요? 덮어쓴 뒤에는 복구할 수 없습니다.`,
+        confirmLabel: '버리고 계속',
+        cancelLabel: '다시 선택',
+        danger: true,
+        dismissible: false,
+      });
+      if (!sure) continue; // 선택 화면으로 복귀
+    }
+    await backupDiscarded(session.user.id, discarded, useCloud ? localAt : cloudAt);
+    if (useCloud) {
+      if (applyCloudSave(row.data)) toast('클라우드 세이브로 이어서 합니다', 'ok');
+      else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+    } else {
+      toast('이 기기 세이브를 유지합니다 — 다음 저장부터 클라우드를 덮어씁니다', 'ok');
+    }
+    return;
   }
 }
 

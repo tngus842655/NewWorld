@@ -778,7 +778,7 @@ body.overlay-open .container { overflow: hidden; }
   animation: sheet-up 0.18s ease-out;
 }
 .dialog-title { font-size: 16px; font-weight: 700; }
-.dialog-message { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.dialog-message { font-size: 13.5px; color: var(--muted); line-height: 1.5; white-space: pre-line; }
 .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
 .dialog-actions .btn { min-width: 84px; }
 .dialog-input {

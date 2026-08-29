@@ -12,11 +12,13 @@ interface ConfirmOpts {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** false = 배경 탭으로 닫히지 않는다 — 실수 탭이 곧 선택이 되면 안 되는 결정용 (기기 전환 화해 등) */
+  dismissible?: boolean;
 }
 
-function mount(card: HTMLElement, onCancel: () => void): HTMLElement {
+function mount(card: HTMLElement, onCancel: () => void, dismissible = true): HTMLElement {
   const backdrop = el('div.dialog-backdrop', {
-    onclick: (event) => { if (event.target === event.currentTarget) onCancel(); },
+    onclick: (event) => { if (dismissible && event.target === event.currentTarget) onCancel(); },
   }, card);
   document.body.append(backdrop);
   playSfx('open');
@@ -39,7 +41,7 @@ export function askConfirm(opts: ConfirmOpts): Promise<boolean> {
         el(`button.btn.${opts.danger ? 'btn-danger' : 'btn-primary'}`, { onclick: () => close(true) }, opts.confirmLabel ?? '확인'),
       ),
     );
-    const backdrop = mount(card, () => close(false));
+    const backdrop = mount(card, () => close(false), opts.dismissible ?? true);
   });
 }
 
