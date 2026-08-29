@@ -11,6 +11,7 @@
   { "id": "gold-hourglass-480", "name": "황금 모래시계", "icon": "⏳", "desc": "원정 시간 8시간 단축", "shop": "gold", "price": 1500, "limit": { "kind": "daily", "count": 1 }, "goods": { "kind": "hourglass", "hourglassId": "hourglass-480" } },
 
   { "id": "dia-starter", "name": "개척자의 시작 패키지", "icon": "🎁", "desc": "골드 8,000 + 가루 300 + 미끼 5", "shop": "diamond", "price": 120, "limit": { "kind": "once" }, "goods": { "kind": "bundle", "gold": 8000, "dust": 300, "lures": 5 } },
+  { "id": "dia-ad-free", "name": "광고 제거", "icon": "🚫", "desc": "모든 보상형 광고를 시청 없이 즉시 보상으로 받습니다 (영구)", "shop": "diamond", "price": 200, "limit": { "kind": "once" }, "goods": { "kind": "adFree" } },
   { "id": "dia-region-pack", "name": "지역 개척 패키지", "icon": "🗺️", "desc": "해금 지역 재료 각 10개 + 골드 2,000", "shop": "diamond", "price": 60, "limit": { "kind": "none" }, "goods": { "kind": "materialsAll", "countEach": 10, "gold": 2000 } },
   { "id": "dia-gold-s", "name": "골드 꾸러미 (소)", "icon": "💰", "desc": "골드 1,000", "shop": "diamond", "price": 20, "limit": { "kind": "none" }, "goods": { "kind": "bundle", "gold": 1000 } },
   { "id": "dia-gold-m", "name": "골드 꾸러미 (중)", "icon": "💰", "desc": "골드 3,000", "shop": "diamond", "price": 50, "limit": { "kind": "none" }, "goods": { "kind": "bundle", "gold": 3000 } },

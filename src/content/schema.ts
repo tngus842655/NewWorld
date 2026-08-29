@@ -338,6 +338,8 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES), count: z.number().int().positive().default(1) }),
   // rush(즉시 귀환) 상품은 폐지 (2026-08-23) — 가속은 모래시계 아이템으로 일원화
   z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive().default(1) }),
+  // 광고 제거 (2026-08-29, 다이아 once) — 지급물 없음: shop.once 기록 자체가 소유 (core/shop.hasAdFree)
+  z.object({ kind: z.literal('adFree') }),
 ]);
 export type ShopGoods = z.infer<typeof ShopGoodsSchema>;
 
@@ -440,6 +442,7 @@ export const BalanceSchema = z.object({
   ads: z.object({
     daily: z.record(z.string(), z.number().int()),
     scentMinutes: z.number().int(), // 야생의 향기(포획 ×adBuffMult) 지속 시간
+    shopExtraPerProduct: z.number().int(), // 골드관 일일 한도 상품의 광고 연장 — 상품당 하루 n회 (+1구매/회)
   }),
   lures: z.object({ maxLoad: z.number().int() }),
   artifacts: z.object({

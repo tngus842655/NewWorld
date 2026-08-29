@@ -18,6 +18,11 @@ export function adsAvailable(): boolean {
 let initialized = false;
 
 export async function showRewardedAd(): Promise<AdResult> {
+  // 광고 제거 소유자 (다이아 상점 once) — 시청 없이 즉시 보상. 이게 그 상품의 가치 실체다
+  try {
+    const [{ hasAdFree }, { save }] = await Promise.all([import('../core/shop'), import('../state/store')]);
+    if (hasAdFree(save())) return 'rewarded';
+  } catch { /* 극초기 부팅 등 — 일반 광고 경로로 폴백 */ }
   if (!Capacitor.isNativePlatform()) {
     if (!import.meta.env.DEV) return 'unavailable';
     await new Promise((resolve) => setTimeout(resolve, 1500)); // DEV 시뮬

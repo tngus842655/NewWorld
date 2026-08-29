@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { adInstantReturn, adUsesLeft, applyScentBuff, doubleJournalRewards, markAdUse } from '../src/core/ads';
 import { claimExpedition, createExpedition, resolveExpedition } from '../src/core/expedition';
+import { buyShopProduct, grantShopAdExtra, hasAdFree } from '../src/core/shop';
 import { GameError } from '../src/core/types';
 import { T0, content, findSeed, makeCtx, makeExpedition, saveWithParty } from './helpers';
 
@@ -104,6 +105,43 @@ describe('일지 정산 2배 (원정당 1회 — 골드·재료만)', () => {
     }
     expect(doubled.save.journalArchive[0]!.doubled).toBe(true);
     expect(() => doubleJournalRewards(doubled.save, expedition.id)).toThrow(GameError);
+  });
+});
+
+describe('상점 광고 연동 (GDD §9.2, 2026-08-29)', () => {
+  it('골드관 일일 한도 소진 후 광고 연장으로 +1 구매 — 연장도 상품당 하루 1회', () => {
+    const clock = makeCtx();
+    let { save: s } = saveWithParty(clock, [{ id: 'dune-pup' }], { gold: 100_000 });
+    const productId = 'gold-lure'; // 일일 3회
+    for (let i = 0; i < 3; i++) s = buyShopProduct(content, s, { productId }, clock.ctx).save;
+    expect(() => buyShopProduct(content, s, { productId }, clock.ctx)).toThrow(GameError); // 한도 소진
+
+    s = grantShopAdExtra(content, s, productId, clock.ctx.now()); // 광고 연장 +1
+    s = buyShopProduct(content, s, { productId }, clock.ctx).save; // 4번째 성공
+    expect(s.wallet.lures).toBeGreaterThanOrEqual(4);
+    expect(() => buyShopProduct(content, s, { productId }, clock.ctx)).toThrow(GameError); // 연장분도 소진
+    expect(() => grantShopAdExtra(content, s, productId, clock.ctx.now())).toThrow(GameError); // 오늘 연장 끝
+
+    clock.advance(24 * 3_600_000); // 자정 리셋 — 한도·연장 모두 복구
+    expect(() => grantShopAdExtra(content, s, productId, clock.ctx.now())).not.toThrow();
+  });
+
+  it('광고 연장은 골드관 일일 한도 상품 전용 — 다이아·once 상품은 거절', () => {
+    const clock = makeCtx();
+    const { save: s } = saveWithParty(clock, [{ id: 'dune-pup' }]);
+    expect(() => grantShopAdExtra(content, s, 'dia-gold-s', clock.ctx.now())).toThrow(GameError);
+    expect(() => grantShopAdExtra(content, s, 'dia-starter', clock.ctx.now())).toThrow(GameError);
+  });
+
+  it('광고 제거 — 1회 구매로 영구 소유(hasAdFree), 재구매 불가', () => {
+    const clock = makeCtx();
+    const { save: s } = saveWithParty(clock, [{ id: 'dune-pup' }]);
+    s.wallet.diamonds = 500;
+    expect(hasAdFree(s)).toBe(false);
+    const bought = buyShopProduct(content, s, { productId: 'dia-ad-free' }, clock.ctx).save;
+    expect(hasAdFree(bought)).toBe(true);
+    expect(bought.wallet.diamonds).toBe(300); // 200💎 차감
+    expect(() => buyShopProduct(content, bought, { productId: 'dia-ad-free' }, clock.ctx)).toThrow(GameError);
   });
 });
 

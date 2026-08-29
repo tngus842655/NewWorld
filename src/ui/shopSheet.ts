@@ -5,9 +5,10 @@
  */
 import { content } from '../content';
 import type { ShopProduct } from '../content/schema';
-import { onceBought, purchasesToday, todayKey } from '../core/shop';
+import { onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
+import { adsAvailable, showRewardedAd } from '../platform/ads';
 import { signal } from '../state/signal';
-import { buyShop, devGrantDiamonds, nowTick, save } from '../state/store';
+import { buyShop, devGrantDiamonds, grantAdShopExtra, nowTick, save } from '../state/store';
 import { flushUpload } from '../state/cloudSync';
 import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
@@ -18,6 +19,7 @@ import { playSfx } from './sfx';
 
 type ShopTab = 'gold' | 'diamond';
 const shopTab = signal<ShopTab>('gold');
+const adBusy = signal(false); // 광고 로드 중 — 연장 버튼 잠금
 
 /** 상점을 열 때 초기화 */
 export function resetShop(): void {
@@ -57,7 +59,10 @@ function purchase(product: ShopProduct): void {
       return;
     }
 
-    if (product.goods.kind === 'materialsAll') {
+    if (product.goods.kind === 'adFree') {
+      playSfx('milestone');
+      toast('🚫 광고 제거 적용! 이제 광고 없이 바로 보상을 받습니다', 'ok');
+    } else if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약 (+골드는 병기)
       playSfx('treasure');
       const goldTail = granted.gold ? ` + 골드 ${fmtGold(granted.gold)}` : '';
@@ -80,33 +85,54 @@ function purchase(product: ShopProduct): void {
   });
 }
 
-/** 한도·잔액 상태 — 카드/타일 공용 */
+/** 한도·잔액 상태 — 카드/타일 공용. 골드관 일일 한도는 광고 연장분(+1/광고)을 합산해 보여준다 */
 function productState(product: ShopProduct) {
   const state = save();
   const now = nowTick();
   let limitLabel: string | null = null;
   let exhausted = false;
+  let adExtraOpen = false; // 한도 소진 + 오늘 연장 여유 있음 → 📺 버튼
   if (product.limit.kind === 'daily') {
+    const extras = product.shop === 'gold' ? shopAdExtrasToday(state, product.id, now) : 0;
+    const cap = product.limit.count + extras;
     const used = purchasesToday(state, product.id, now);
-    limitLabel = `${used}/${product.limit.count}`;
-    exhausted = used >= product.limit.count;
+    limitLabel = `${used}/${cap}`;
+    exhausted = used >= cap;
+    adExtraOpen =
+      exhausted && product.shop === 'gold' && adsAvailable()
+      && extras < content.balance.ads.shopExtraPerProduct;
   } else if (product.limit.kind === 'once') {
     exhausted = onceBought(state, product);
     limitLabel = `${exhausted ? 1 : 0}/1`;
   }
   const shortFunds = product.shop === 'gold' ? state.wallet.gold < product.price : state.wallet.diamonds < product.price;
-  return { limitLabel, exhausted, shortFunds };
+  return { limitLabel, exhausted, shortFunds, adExtraOpen };
 }
 
-function buyButton(product: ShopProduct, exhausted: boolean, shortFunds: boolean): HTMLElement {
+function buyButton(product: ShopProduct, exhausted: boolean, shortFunds: boolean, adExtraOpen: boolean): HTMLElement {
+  // 한도 소진 + 광고 연장 가능 → 죽은 버튼 대신 📺 연장 버튼 (GDD §9.2, 2026-08-29 사용자)
+  if (adExtraOpen) {
+    return el('button.btn.btn-ghost', {
+      disabled: adBusy(),
+      onclick: () => {
+        adBusy.set(true);
+        void showRewardedAd().then((result) => {
+          adBusy.set(false);
+          if (result === 'rewarded') grantAdShopExtra(product.id);
+          else if (result === 'dismissed') toast('광고를 끝까지 봐야 보상을 받아요', 'error');
+          else toast('지금은 광고를 불러올 수 없습니다 — 잠시 후 다시', 'error');
+        });
+      },
+    }, adBusy() ? '준비 중…' : '📺 +1회');
+  }
   return el('button.btn.btn-primary', {
     disabled: exhausted || shortFunds,
     onclick: () => purchase(product),
-  }, exhausted ? '한도 소진' : priceTag(product));
+  }, exhausted ? (product.limit.kind === 'once' ? '구매 완료' : '한도 소진') : priceTag(product));
 }
 
 function productCard(product: ShopProduct): HTMLElement {
-  const { limitLabel, exhausted, shortFunds } = productState(product);
+  const { limitLabel, exhausted, shortFunds, adExtraOpen } = productState(product);
   const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
 
   return el('div.card.stack-sm.shop-item', {},
@@ -115,7 +141,7 @@ function productCard(product: ShopProduct): HTMLElement {
         el('div.shop-name', {}, `${product.icon} ${product.name} `, limitTag),
         el('div.muted.small', {}, product.desc),
       ),
-      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds)),
+      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds, adExtraOpen)),
     ),
   );
 }
@@ -123,7 +149,7 @@ function productCard(product: ShopProduct): HTMLElement {
 /** 모래시계 카드 — 다른 상품과 같은 1줄 1개 (2026-08-29 사용자 — 2열 그리드는 이름 줄바꿈으로 높이가 틀어졌다).
  * 이모지 대신 등급색 테두리 모래시계 아이콘으로 구분 */
 function hourglassRow(product: ShopProduct): HTMLElement {
-  const { limitLabel, exhausted, shortFunds } = productState(product);
+  const { limitLabel, exhausted, shortFunds, adExtraOpen } = productState(product);
   const def = product.goods.kind === 'hourglass' ? content.hourglasses.get(product.goods.hourglassId) : undefined;
   const limitTag = limitLabel !== null ? el('span.muted.small.shop-limit', {}, `(${limitLabel})`) : null;
 
@@ -136,7 +162,7 @@ function hourglassRow(product: ShopProduct): HTMLElement {
           el('div.muted.small', {}, product.desc),
         ),
       ),
-      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds)),
+      el('div.shop-buy', {}, buyButton(product, exhausted, shortFunds, adExtraOpen)),
     ),
   );
 }
@@ -144,7 +170,7 @@ function hourglassRow(product: ShopProduct): HTMLElement {
 // 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
 const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][] }[] = [
   { label: '🎲 뽑기·발굴', kinds: ['monsterGacha', 'artifactGacha'] },
-  { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll'] },
+  { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll', 'adFree'] },
   { label: '⏳ 원정 가속', kinds: ['hourglass'] },
 ];
 
@@ -169,20 +195,21 @@ export function shopSheet(): HTMLElement {
   });
 
   const shell = sheetShell([uiIcon('shop-stall', '🏪', '상점'), ' 상점'],
-    el('div.card.list-row', {},
-      // 보유 재화는 현재 관의 것만 — 골드관=골드, 다이아관=다이아 (2026-08-29 사용자)
-      el('span', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
-      // [DEV]·충전은 다이아 얘기라 다이아관에서만 (2026-08-29 사용자)
-      tab === 'diamond'
-        ? el('div.row-gap', {},
-            import.meta.env.DEV
-              ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, '[DEV]')
-              : null,
-            el('button.btn.btn-ghost', {
+    // 재화 행 — 전부 우측 정렬: 재화 [충전] [DEV] 순서, 높이는 두 관 동일 (2026-08-29 사용자).
+    // 보유 재화는 현재 관의 것만 — 골드관=골드, 다이아관=다이아. [DEV]·충전은 다이아관에서만
+    el('div.card.list-row.shop-balance-row', {},
+      el('span'), // 빈 왼쪽 — space-between이 재화 묶음을 오른쪽 끝으로 민다
+      el('div.row-gap', {},
+        el('span.shop-balance', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
+        tab === 'diamond'
+          ? el('button.btn.btn-ghost', {
               onclick: () => toast('💎 충전은 정식 출시 후 제공됩니다 [그 전엔 출석 이벤트로 모을 수 있어요]', 'ok'),
-            }, '충전'),
-          )
-        : null,
+            }, '충전')
+          : null,
+        tab === 'diamond' && import.meta.env.DEV
+          ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, '[DEV]')
+          : null,
+      ),
     ),
     el('div.big-tabs', {},
       el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),

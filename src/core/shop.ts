@@ -26,6 +26,39 @@ export function onceBought(save: SaveState, product: ShopProduct): boolean {
   return save.shop.once.includes(product.id);
 }
 
+// ── 광고 연동 (GDD §9.2, 2026-08-29) ────────────────────────────────────────
+
+/** 광고 제거 소유 — 보상형 광고 전부를 시청 없이 즉시 보상으로 (다이아 once 상품, platform/ads.ts가 검사) */
+export function hasAdFree(save: SaveState): boolean {
+  return save.shop.once.includes('dia-ad-free');
+}
+
+/** 오늘 이 상품에 쓴 광고 연장 횟수 — counters.adUsed(로컬 자정 리셋, core/ads.ts와 공용 저장소) */
+export function shopAdExtrasToday(save: SaveState, productId: string, now: number): number {
+  if (save.counters.day !== todayKey(now)) return 0;
+  return save.counters.adUsed[`shop:${productId}`] ?? 0;
+}
+
+/**
+ * 광고 연장 — 골드관 일일 한도 상품의 오늘 한도를 +1 (상품당 balance.ads.shopExtraPerProduct회).
+ * 광고 시청 성공 검증 후 호출된다 (platform/ads.ts → store.grantAdShopExtra)
+ */
+export function grantShopAdExtra(content: Content, save: SaveState, productId: string, now: number): SaveState {
+  const product = content.shopProducts.find((p) => p.id === productId);
+  if (!product) throw new GameError('shop-missing', `없는 상품: ${productId}`);
+  if (product.shop !== 'gold' || product.limit.kind !== 'daily') {
+    throw new GameError('shop-ad-extra', '광고 연장이 없는 상품입니다');
+  }
+  if (shopAdExtrasToday(save, productId, now) >= content.balance.ads.shopExtraPerProduct) {
+    throw new GameError('ad-limit', '오늘은 더 연장할 수 없습니다 — 내일 다시!');
+  }
+  const next = structuredClone(save);
+  const today = todayKey(now);
+  if (next.counters.day !== today) next.counters = { day: today, adUsed: {} };
+  next.counters.adUsed[`shop:${productId}`] = (next.counters.adUsed[`shop:${productId}`] ?? 0) + 1;
+  return next;
+}
+
 export interface ShopBuyInput {
   productId: string;
 }
@@ -53,9 +86,10 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   if (!product) throw new GameError('shop-missing', `없는 상품: ${input.productId}`);
   const now = ctx.now();
 
-  // ── 한도 검증 — none은 무제한 (2026-08-23 다이아 상점) ──
+  // ── 한도 검증 — none은 무제한 (2026-08-23 다이아 상점). 골드관은 광고 연장분 합산 ──
   if (product.limit.kind === 'daily') {
-    if (purchasesToday(save, product.id, now) >= product.limit.count) {
+    const extra = product.shop === 'gold' ? shopAdExtrasToday(save, product.id, now) : 0;
+    if (purchasesToday(save, product.id, now) >= product.limit.count + extra) {
       throw new GameError('shop-limit', '오늘 구매 한도를 모두 사용했습니다');
     }
   } else if (product.limit.kind === 'once' && onceBought(save, product)) {
@@ -161,6 +195,8 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
       granted.artifacts.push(drop.itemId);
     }
     if (goods.count === 1) granted.artifactItemId = granted.artifacts[0];
+  } else if (goods.kind === 'adFree') {
+    // 지급물 없음 — 아래 once 기록 자체가 소유이며, platform/ads.ts가 hasAdFree로 검사한다
   } else {
     // hourglass — rush(즉시 귀환) 폐지 후 가속은 모래시계로 일원화 (2026-08-23)
     next.wallet.hourglasses[goods.hourglassId] = (next.wallet.hourglasses[goods.hourglassId] ?? 0) + goods.count;

@@ -299,8 +299,13 @@ export function renderExpedition(): HTMLElement {
         `🌿 야생의 향기 발동 중 [포획률 ×${content.balance.capture.adBuffMult} · ${fmtClock(state.buffs.scentUntil)}까지 출발분]`)
     : adsAvailable() && scentLeft > 0
       ? el('div.list-row', {},
-          el('span.muted.small', {},
-            `🌿 야생의 향기 [${content.balance.ads.scentMinutes}분간 포획률 ×${content.balance.capture.adBuffMult}]`),
+          // 두 줄 표기 — 한 줄이면 버튼에 밀려 어중간하게 접힌다 (2026-08-29 사용자).
+          // "30분간"은 효과 지속으로 오독되니 "내 출발" 유지 (30분은 출발 창, 효과는 원정 전체)
+          el('div', {},
+            el('div.small', {}, '🌿 야생의 향기'),
+            el('div.muted.small', {},
+              `${content.balance.ads.scentMinutes}분 내 출발 원정 포획 ×${content.balance.capture.adBuffMult}`),
+          ),
           el('button.btn.btn-ghost.btn-sm', {
             disabled: adBusy(),
             onclick: () => {

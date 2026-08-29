@@ -149,7 +149,8 @@
       "instantReturn": 3,
       "scentBuff": 3
     },
-    "scentMinutes": 30
+    "scentMinutes": 30,
+    "shopExtraPerProduct": 1
   },
   "lures": {
     "maxLoad": 3

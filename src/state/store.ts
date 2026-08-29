@@ -32,7 +32,7 @@ import { accountBonusState } from '../core/accountBonus';
 import { adInstantReturn, applyScentBuff, doubleJournalRewards } from '../core/ads';
 import { checkIn, type CheckInResult } from '../core/attendance';
 import { createInitialSave } from '../core/newgame';
-import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
+import { buyShopProduct, grantShopAdExtra, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
 import { ensureTeams, setTeamLoadout } from '../core/teams';
 import { GameError, type CoreCtx, type CrossroadChoice, type Journal, type SaveState } from '../core/types';
 import { describeEffect } from '../ui/effectText';
@@ -178,7 +178,18 @@ export function grantAdScent(): boolean {
   return (
     act(() => {
       save.set(applyScentBuff(content, save(), ctx.now()));
-      toast(`🌿 야생의 향기 [${content.balance.ads.scentMinutes}분간 포획률 ×${content.balance.capture.adBuffMult}]`, 'ok');
+      toast(`🌿 야생의 향기! ${content.balance.ads.scentMinutes}분 안에 출발하는 원정은 전부 포획률 ×${content.balance.capture.adBuffMult}`, 'ok');
+      return true;
+    }) ?? false
+  );
+}
+
+/** 광고: 상점 한도 연장 — 골드관 일일 한도 상품의 오늘 한도 +1 (상품당 하루 1회) */
+export function grantAdShopExtra(productId: string): boolean {
+  return (
+    act(() => {
+      save.set(grantShopAdExtra(content, save(), productId, ctx.now()));
+      toast('📺 오늘 1회 더 구매할 수 있습니다!', 'ok');
       return true;
     }) ?? false
   );
