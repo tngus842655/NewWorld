@@ -15,12 +15,30 @@ import { Capacitor } from '@capacitor/core';
 
 export const AD_FREE_PRODUCT_ID = 'ad_free'; // Play Console 인앱 상품 ID와 일치 (비소모성)
 
-/** 다이아 팩 — id의 숫자 = 지급량. 가격은 콘솔에서 (기준 단가 1💎=10원, 등록가 ₩3,000/₩5,000/₩8,500 — 큰 팩 보너스) */
+/**
+ * 다이아 팩 — id의 숫자 = 지급량. 가격은 콘솔에서 (기준 단가 1💎=10원, 클수록 단가 이득).
+ * 등록가: ₩3,000(10원) / ₩5,000(9.1원) / ₩8,500(8.5원) / ₩30,000(7.5원) / ₩50,000(7.1원) / ₩100,000(6.7원)
+ */
 export const DIAMOND_PACKS = [
   { id: 'diamonds_300', diamonds: 300 },
   { id: 'diamonds_550', diamonds: 550 },
   { id: 'diamonds_1000', diamonds: 1000 },
+  { id: 'diamonds_4000', diamonds: 4000 },
+  { id: 'diamonds_7000', diamonds: 7000 },
+  { id: 'diamonds_15000', diamonds: 15000 },
 ] as const;
+
+// ── 웹 DEV 시뮬 — 스토어 없이 충전 UI·지급 플로우를 검증한다 (ads.ts와 같은 패턴) ──
+const DEV_SIM = !Capacitor.isNativePlatform() && import.meta.env.DEV;
+const DEV_PRICES: Record<string, string> = {
+  [AD_FREE_PRODUCT_ID]: '₩5,500',
+  diamonds_300: '₩3,000',
+  diamonds_550: '₩5,000',
+  diamonds_1000: '₩8,500',
+  diamonds_4000: '₩30,000',
+  diamonds_7000: '₩50,000',
+  diamonds_15000: '₩100,000',
+};
 
 // cordova 전역 — 브리지가 네이티브에서만 주입한다. 타입은 쓰는 만큼만 구조적으로 선언
 interface CdvOffer { order(): Promise<unknown> }
@@ -129,11 +147,13 @@ export async function initIap(): Promise<void> {
 
 /** 상점 UI용 상태 — available이 false면 카드 자체를 그리지 않는다 */
 export function adFreeIap(): { available: boolean; price: string | null } {
+  if (DEV_SIM) return { available: true, price: DEV_PRICES[AD_FREE_PRODUCT_ID]! };
   return { available: storeReady && product(AD_FREE_PRODUCT_ID) !== undefined, price: priceLabels.get(AD_FREE_PRODUCT_ID) ?? null };
 }
 
 /** 다이아 팩 목록 (UI용) — 스토어가 준비된 것만 */
 export function diamondPacks(): { id: string; diamonds: number; price: string | null }[] {
+  if (DEV_SIM) return DIAMOND_PACKS.map((p) => ({ id: p.id, diamonds: p.diamonds, price: DEV_PRICES[p.id] ?? null }));
   if (!storeReady) return [];
   return DIAMOND_PACKS
     .filter((p) => product(p.id) !== undefined)
@@ -142,6 +162,14 @@ export function diamondPacks(): { id: string; diamonds: number; price: string | 
 
 /** 구매 시작 — 결제 시트는 플레이가 띄우고, 완료 반영은 위 이벤트 체인이 한다 */
 export async function buyIapProduct(id: string): Promise<void> {
+  if (DEV_SIM) {
+    await new Promise((resolve) => setTimeout(resolve, 800)); // 결제 시트 대기 시뮬
+    const { grantAdFree, grantIapDiamonds } = await import('../state/store');
+    if (id === AD_FREE_PRODUCT_ID) grantAdFree();
+    const pack = DIAMOND_PACKS.find((p) => p.id === id);
+    if (pack) grantIapDiamonds(pack.diamonds);
+    return;
+  }
   try {
     const offer = product(id)?.getOffer();
     if (offer) await offer.order();
