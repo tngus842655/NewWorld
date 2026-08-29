@@ -13,6 +13,29 @@ import type { Session } from '@supabase/supabase-js';
 
 export const cloudSession = signal<Session | null>(null);
 
+/**
+ * 관리자 여부 (검토 ④) — profiles.is_admin (본인 행 select). 서버가 정본이고 컬럼은
+ * 대시보드에서만 켤 수 있다. 이 플래그는 정보 메뉴 노출 같은 UI 가드 전용 — 민감한 동작의
+ * 권한 판정은 반드시 서버(RLS·엣지 함수)가 한다.
+ */
+export const isAdmin = signal(false);
+
+/** DEV 한정 ?dev-admin — 관리자 메뉴 노출을 로그인 없이 검증 (dev-guest와 짝, 프로드 번들에서는 제거됨) */
+const DEV_ADMIN = import.meta.env.DEV && new URLSearchParams(location.search).has('dev-admin');
+
+async function refreshAdminFlag(session: Session | null): Promise<void> {
+  if (DEV_ADMIN) {
+    isAdmin.set(true);
+    return;
+  }
+  if (!session) {
+    isAdmin.set(false);
+    return;
+  }
+  const { data } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
+  isAdmin.set(data?.is_admin === true);
+}
+
 /** 네이티브 앱의 OAuth 복귀 딥링크 — AndroidManifest의 intent-filter와 반드시 같아야 한다 */
 const NATIVE_REDIRECT = 'com.expeditionmonsters.app://auth-callback';
 
@@ -80,6 +103,7 @@ export async function initAuth(): Promise<Session | null> {
   // getSession은 리디렉션 복귀 시 코드 교환(detectSessionInUrl)까지 끝난 세션을 준다
   const { data } = await supabase.auth.getSession();
   cloudSession.set(data.session);
+  void refreshAdminFlag(data.session);
   // 네이티브: OAuth 복귀 딥링크 수신 — 앱이 떠 있으면 appUrlOpen(singleTask 재진입),
   // 브라우저에 나간 사이 죽었으면 launchUrl로 들어온다. launchUrl은 재부팅 후에도 같은 값을
   // 돌려주므로 세션이 없을 때만 본다 (성공 직후 reload가 쓰고 버린 코드를 재교환하지 않게)
@@ -93,6 +117,7 @@ export async function initAuth(): Promise<Session | null> {
   }
   supabase.auth.onAuthStateChange((event, session) => {
     cloudSession.set(session);
+    if (event === 'SIGNED_IN') void refreshAdminFlag(session); // 토큰 갱신마다 재조회할 필요는 없다
     // 회원 전용 (2026-08-29) — 로그아웃은 게이트로 돌아간다
     if (event === 'SIGNED_OUT') window.location.reload();
   });

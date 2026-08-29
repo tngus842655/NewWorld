@@ -2,7 +2,7 @@
  * 설정 — 효과음, 확률 정보(등급별 — 추후 관리자 페이지로 대체 예정), 세이브 관리.
  * 캠프에 섞여 있던 설정을 분리해 캠프는 "성장·제작"에 집중시킨다.
  */
-import { cloudSession, signInWithGoogle, signOutGoogle } from '../../state/cloud';
+import { cloudSession, isAdmin, signInWithGoogle, signOutGoogle } from '../../state/cloud';
 import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
 import { NIGHT_END_HOUR, NIGHT_START_HOUR } from '../../platform/returnAlarms';
 import { save, setNickname, toggleNightAlarms, toggleSound } from '../../state/store';
@@ -73,15 +73,18 @@ export function renderSettings(): HTMLElement {
         el('span', {}, '속성 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'elementInfo' }) }, '보기'),
       ),
-      // 전체 데이터 뷰 2종 — 추후 관리자 전용 메뉴로 전환 예정 (관리자 페이지 대체 전 임시 진입점)
-      el('div.list-row', {},
-        el('span', {}, '몬스터 정보'),
-        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'monsterInfo' }) }, '보기'),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '유물 정보'),
-        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
-      ),
+      // 전체 데이터 뷰 2종 — 관리자 전용 (검토 ④, 2026-08-30). 확률 정보는 확률형 아이템
+      // 고지 의무(유료 뽑기)라 유저 공개 유지. isAdmin은 UI 노출 가드일 뿐 — 민감 동작 아님
+      ...(isAdmin() ? [
+        el('div.list-row', {},
+          el('span', {}, '🛠️ 몬스터 정보'),
+          el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'monsterInfo' }) }, '보기'),
+        ),
+        el('div.list-row', {},
+          el('span', {}, '🛠️ 유물 정보'),
+          el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
+        ),
+      ] : []),
       // 약관·방침 — 게이트와 같은 공개 페이지로 (해시 라우팅, main.ts)
       el('div.list-row', {},
         el('span', {}, '약관·개인정보처리방침'),
