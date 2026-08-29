@@ -970,7 +970,7 @@
   {
     "id": "lava-gorge",
     "name": "용암 협곡",
-    "icon": "♨️",
+    "icon": "💥",
     "order": 11,
     "tier": 4,
     "growthCostMult": 12,

@@ -145,6 +145,9 @@ body {
 .small { font-size: 12px; }
 .center { text-align: center; }
 .list-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; }
+/* 카드형 단독 행 — .list-row의 padding 0이 .card 가로 패딩을 이겨 내용이 모서리에 붙던 문제
+   (홈 반복 과업·상점 재화·가속 시트 상단 등, 2026-08-29 사용자). 카드 여백을 복원한다 */
+.card.list-row { padding: 12px 14px; }
 .list-row + .list-row { border-top: 1px solid var(--line); }
 .list-row.done { color: var(--accent-2); }
 .tag {
@@ -586,10 +589,9 @@ body {
 .tier-btn { flex: 1; font-size: 11px; padding: 8px 2px; white-space: nowrap; }
 .tier-btn.selected { border-color: var(--accent); background: #2a2413; }
 
-/* 상점 보유 재화 — 우측 정렬(재화·충전·DEV), 가장자리에서 살짝 띄움 (2026-08-29 사용자).
-   .list-row의 padding 0이 .card 가로 패딩을 이겨 재화가 모서리에 붙던 것도 여기서 복원.
+/* 상점 보유 재화 — 우측 정렬(재화·충전·DEV). 가로 여백은 .card.list-row 공용 규칙이 담당.
    min-height: 골드관(버튼 없음)과 다이아관(충전 버튼)의 카드 높이를 맞춘다 */
-.shop-balance-row { padding-left: 10px; padding-right: 10px; min-height: 51px; }
+.shop-balance-row { min-height: 63px; }
 .shop-balance { font-weight: 600; }
 
 /* ── 도감 ── */

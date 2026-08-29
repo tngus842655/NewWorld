@@ -157,7 +157,8 @@ export function renderHome(): HTMLElement {
       const taskTimes = content.tasks.reduce((sum, task) => sum + (state.tasks[task.id] ?? 0), 0);
       return el('div.card.list-row', {},
         el('span', {}, `📋 반복 과업 [달성 ${taskTimes}회]`),
-        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
+        // journal-detail-btn — 최근 일지 '상세' 버튼과 같은 크기 (2026-08-29 사용자)
+        el('button.btn.btn-ghost.journal-detail-btn', { onclick: () => overlay.set({ kind: 'tasks' }) }, '보기'),
       );
     })(),
     el('h2.section-title', {}, archive.length > 0 ? `최근 일지 (${archive.length})` : '최근 일지'),
