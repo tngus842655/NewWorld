@@ -31,7 +31,7 @@ export const DIAMOND_PACKS = [
 // ── 웹 DEV 시뮬 — 스토어 없이 충전 UI·지급 플로우를 검증한다 (ads.ts와 같은 패턴) ──
 const DEV_SIM = !Capacitor.isNativePlatform() && import.meta.env.DEV;
 const DEV_PRICES: Record<string, string> = {
-  [AD_FREE_PRODUCT_ID]: '₩5,500',
+  [AD_FREE_PRODUCT_ID]: '₩12,000',
   diamonds_300: '₩3,000',
   diamonds_550: '₩5,000',
   diamonds_1000: '₩8,500',
