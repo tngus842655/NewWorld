@@ -5,9 +5,9 @@
  */
 import { content } from '../content';
 import type { ShopProduct } from '../content/schema';
-import { hasAdFree, onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
+import { onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
 import { adsAvailable, showRewardedAd } from '../platform/ads';
-import { adFreeIap, buyIapProduct, diamondPacks } from '../platform/iap';
+import { adFreeIap, diamondPacks } from '../platform/iap';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, grantAdShopExtra, nowTick, save } from '../state/store';
 import { flushUpload } from '../state/cloudSync';
@@ -16,12 +16,12 @@ import { askConfirm } from './dialog';
 import { showGachaReveal } from './gachaReveal';
 import { el, fmtGold, toast } from './kit';
 import { sheetShell } from './overlays';
+import { overlay } from './router';
 import { playSfx } from './sfx';
 
 type ShopTab = 'gold' | 'diamond';
 const shopTab = signal<ShopTab>('gold');
 const adBusy = signal(false); // 광고 로드 중 — 연장 버튼 잠금
-const iapBusy = signal(false); // 결제 시트 여는 중 — 광고 제거 버튼 잠금
 
 /** 상점을 열 때 초기화 */
 export function resetShop(): void {
@@ -166,64 +166,7 @@ function hourglassRow(product: ShopProduct): HTMLElement {
   );
 }
 
-/**
- * 광고 제거 — 실결제 전용 카드 (다이아관 상단, platform/iap.ts).
- * 출석 다이아로 못 사게 상점 상품이 아니라 IAP다 (2026-08-29 사용자). 가격은 플레이 콘솔 값.
- * 스토어 설치본 + 콘솔 상품 등록 전에는 카드가 안 보인다 (소유자는 '적용됨'으로 표시)
- */
-function adFreeIapCard(): HTMLElement | null {
-  const owned = hasAdFree(save());
-  const { available, price } = adFreeIap();
-  if (!available && !owned) return null;
-  return el('div.card.stack-sm.shop-item', {},
-    el('div.list-row', {},
-      el('div', {},
-        el('div.shop-name', {}, '🚫 광고 제거 ', owned ? el('span.muted.small.shop-limit', {}, '(적용됨)') : null),
-        el('div.muted.small', {}, '모든 보상형 광고를 시청 없이 즉시 보상으로 (영구)'),
-      ),
-      el('div.shop-buy', {},
-        el('button.btn.btn-primary', {
-          disabled: owned || iapBusy(),
-          onclick: () => {
-            iapBusy.set(true);
-            void buyIapProduct('ad_free').finally(() => iapBusy.set(false)); // 완료 반영은 iap 이벤트
-          },
-        }, owned ? '적용됨' : (price ?? '구매')),
-      ),
-    ),
-  );
-}
-
-/** 다이아 충전 — 실결제 팩 (platform/iap.ts). 스토어 준비 전(사이드로드·웹)에는 구간이 안 보인다 */
-function diamondPackBlocks(): HTMLElement[] {
-  const packs = diamondPacks();
-  if (packs.length === 0) return [];
-  return [
-    el('div.info-group-head', {},
-      el('span.small', {}, '💎 다이아 충전'),
-      el('span.muted.small', {}, `${packs.length}종`),
-    ),
-    ...packs.map((pack) =>
-      el('div.card.stack-sm.shop-item', {},
-        el('div.list-row', {},
-          el('div', {},
-            el('div.shop-name', {}, `💎 다이아 ${pack.diamonds.toLocaleString('ko-KR')}개`),
-            el('div.muted.small', {}, '충전 즉시 지급 · 클라우드에 바로 저장'),
-          ),
-          el('div.shop-buy', {},
-            el('button.btn.btn-primary', {
-              disabled: iapBusy(),
-              onclick: () => {
-                iapBusy.set(true);
-                void buyIapProduct(pack.id).finally(() => iapBusy.set(false));
-              },
-            }, pack.price ?? '구매'),
-          ),
-        ),
-      ),
-    ),
-  ];
-}
+// 광고 제거·다이아 팩 카드는 충전 시트로 분리 (2026-08-29 사용자) — ui/rechargeSheet.ts
 
 // 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
 const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][] }[] = [
@@ -260,14 +203,16 @@ export function shopSheet(): HTMLElement {
       el('div.row-gap', {},
         el('span.shop-balance', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
         tab === 'diamond'
-          ? el('button.btn.btn-ghost', {
-              // 팩이 로드됐으면(스토어 설치본) 아래 충전 구간 안내, 아니면 경로 안내
-              onclick: () => toast(
-                diamondPacks().length > 0
-                  ? '💎 아래 다이아 충전에서 구매할 수 있어요'
-                  : '💎 충전은 플레이스토어 설치 버전에서 제공됩니다 [출석으로도 모을 수 있어요]',
-                'ok',
-              ),
+          ? el('button.btn.btn-primary', {
+              // 스토어 준비됨(설치본·DEV) → 충전 시트, 아니면 경로 안내 토스트
+              onclick: () => {
+                if (diamondPacks().length > 0 || adFreeIap().available) {
+                  playSfx('tap');
+                  overlay.set({ kind: 'recharge' });
+                } else {
+                  toast('💎 충전은 플레이스토어 설치 버전에서 제공됩니다 [출석으로도 모을 수 있어요]', 'ok');
+                }
+              },
             }, '충전')
           : null,
         tab === 'diamond' && import.meta.env.DEV
@@ -279,8 +224,6 @@ export function shopSheet(): HTMLElement {
       el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),
       el(`button.big-tab${tab === 'diamond' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('diamond'); } }, '💎 다이아 상점'),
     ),
-    ...(tab === 'diamond' ? diamondPackBlocks() : []),
-    tab === 'diamond' ? adFreeIapCard() : null,
     ...groupBlocks,
     tab === 'gold'
       ? el('div.center.small.muted', {}, `구매 한도는 매일 자정에 초기화됩니다 (오늘: ${todayKey(nowTick())})`)

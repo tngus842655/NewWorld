@@ -17,6 +17,7 @@ export type Overlay =
   | { kind: 'species'; monsterId: string } // 도감 종 정보 (성장 액션 없음 — 캠프 상세와 목적 분리)
   | { kind: 'ranking' }                    // 랭킹 — 내 점수 + 리더보드 (GDD §9.3)
   | { kind: 'shop' }                       // 상점 — 골드/다이아 (GDD §9.4)
+  | { kind: 'recharge' }                   // 다이아 충전 — 실결제 전용 화면 (다이아관 '충전' 버튼, 닫으면 상점 복귀)
   | { kind: 'attendance' }                 // 월간 출석 달력 (v8 — 다이아 획득처)
   | { kind: 'tasks' }                      // 반복 과업 진행 현황
   | { kind: 'fusion' }                     // 카드 합성 (GDD §4.5)

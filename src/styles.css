@@ -1000,6 +1000,8 @@ body.overlay-open .container { overflow: hidden; }
 .hg-icon.hg-sm img { padding: 2px; }
 .hg-name { display: flex; align-items: center; gap: 7px; }
 .shop-limit { font-weight: 400; }
+/* 충전 시트 — 보너스 태그는 눈에 띄는 강조색 (기준 단가 대비 이득 표기) */
+.tag.recharge-bonus { background: var(--accent-2); color: var(--bg); border-color: transparent; font-weight: 700; }
 .auto-btn { padding: 4px 10px; font-size: 12px; }
 .hg-icon.rar-uncommon { border-color: var(--rar-uncommon); }
 .hg-icon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }

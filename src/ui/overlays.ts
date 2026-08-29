@@ -18,6 +18,7 @@ import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
 import { accountBonusSheet } from './accountBonusSheet';
 import { attendanceSheet } from './attendanceSheet';
+import { rechargeSheet } from './rechargeSheet';
 import { shopSheet } from './shopSheet';
 import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp, uiIcon } from './components';
 import { describeEffect } from './effectText';
@@ -49,6 +50,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
               ? rankingSheet()
             : current.kind === 'shop'
               ? shopSheet()
+            : current.kind === 'recharge'
+              ? rechargeSheet()
             : current.kind === 'attendance'
               ? attendanceSheet()
             : current.kind === 'accountBonus'
