@@ -46,7 +46,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(9); // v1 → … → v9 체인 끝까지
+    expect(migrated.version).toBe(11); // v1 → … → v11 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -78,8 +78,8 @@ describe('세이브 마이그레이션 v2 → v3 (누적 통계·과업·랭킹 
   it('stats·tasks 기본값과 익명 신원을 만든다', () => {
     const migrated = migrateSave(v1Save())!;
     expect(migrated.stats).toEqual({
-      expeditions: { scout: 0, standard: 0, deep: 0 },
-      wipes: { scout: 0, standard: 0, deep: 0 },
+      expeditions: { scout: 0, standard: 0, extended: 0, deep: 0 },
+      wipes: { scout: 0, standard: 0, extended: 0, deep: 0 },
       captures: 0,
       crafts: 0,
       fusions: 0,

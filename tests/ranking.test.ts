@@ -26,10 +26,10 @@ describe('반복 과업 (GDD §9.3)', () => {
     expect(save.wallet.gold).toBe(goldBefore + craftTask.reward.gold * 2);
   });
 
-  it('원정 카운터는 3단 파견 합산', () => {
+  it('원정 카운터는 4단 파견 합산', () => {
     const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
-    save.stats.expeditions = { scout: 3, standard: 2, deep: 1 };
-    expect(taskCounterValue(save, 'expedition')).toBe(6);
+    save.stats.expeditions = { scout: 3, standard: 2, extended: 2, deep: 1 };
+    expect(taskCounterValue(save, 'expedition')).toBe(8);
   });
 
   it('정산이 원정 통계를 누적하고 과업까지 잇는다', () => {
@@ -68,14 +68,16 @@ describe('랭킹 점수 (GDD §9.3)', () => {
 
   it('종합 점수 — 원정(전멸 절반)·과업 가중·전투력 반영', () => {
     const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
-    save.stats.expeditions = { scout: 4, standard: 0, deep: 2 };
-    save.stats.wipes = { scout: 0, standard: 0, deep: 1 };
+    save.stats.expeditions = { scout: 4, standard: 0, extended: 3, deep: 2 };
+    save.stats.wipes = { scout: 0, standard: 0, extended: 0, deep: 1 };
     save.stats.bestPower = 1234;
     save.tasks = { 'task-craft': 3 };
     const craftTask = content.tasks.find((t) => t.id === 'task-craft')!;
 
     const scores = scoreBreakdown(content, save);
-    expect(scores.expedition).toBe(4 * TIER_SCORE.scout + TIER_SCORE.deep + Math.ceil(TIER_SCORE.deep / 2));
+    expect(scores.expedition).toBe(
+      4 * TIER_SCORE.scout + 3 * TIER_SCORE.extended + TIER_SCORE.deep + Math.ceil(TIER_SCORE.deep / 2),
+    );
     expect(scores.monster).toBe(10); // dune-pup Lv1★1
     expect(scores.task).toBe(craftTask.score * 3);
     expect(scores.power).toBe(1234);

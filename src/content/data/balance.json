@@ -64,6 +64,14 @@
       "legendaryChance": 0,
       "rareWeightMult": 1
     },
+    "extended": {
+      "minutes": 240,
+      "encounters": 12,
+      "crossroads": 1,
+      "yieldMult": 1.28,
+      "legendaryChance": 0,
+      "rareWeightMult": 1.5
+    },
     "deep": {
       "minutes": 480,
       "encounters": 18,
@@ -72,6 +80,12 @@
       "legendaryChance": 0.02,
       "rareWeightMult": 2
     }
+  },
+  "legendTraces": {
+    "dropChance": { "scout": 0.15, "standard": 0.25, "extended": 0.35, "deep": 0 },
+    "bonusPerTrace": 0.01,
+    "maxStacks": 4,
+    "ttlHours": 24
   },
   "combat": {
     "encounterPowerMult": 3.2,
@@ -134,7 +148,8 @@
     "daily": {
       "instantReturn": 3,
       "scentBuff": 3
-    }
+    },
+    "scentMinutes": 30
   },
   "lures": {
     "maxLoad": 3

@@ -45,6 +45,10 @@ export interface ActiveExpedition {
   claimed: boolean;
   /** 회군 시각 (2026-08-27) — 있으면 보상 없이 귀로. 복귀 완료 시각은 저장하지 않고 파생(recallReturnEndsAt) */
   recallAt?: number;
+  /** 전설의 흔적 가산 (v10) — deep 파견 시 흔적을 소모해 확정, 정산·미리보기가 같은 값을 쓴다 */
+  legendBonus?: number;
+  /** 야생의 향기 스냅샷 (v11, GDD §9.2) — 버프 중 출발한 원정의 포획 ×adBuffMult (결정론 유지) */
+  scent?: boolean;
 }
 
 // ── 도감 ─────────────────────────────────────────────────────────────────────
@@ -85,13 +89,13 @@ export interface AttendanceState {
 
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 export interface SaveState {
-  version: 9; // v9 (2026-08-23): 모래시계 인벤토리. v8: 월간 출석. v7: 유물 도감. migrations.ts
+  version: 11; // v11 (2026-08-29): 광고 버프(buffs). v10: 탐사(4h)·전설의 흔적. migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
     partySlots: number;
     flags: Record<string, boolean>; // firstArtifactDropped 등 1회성 플래그
-    playerId: string; // 랭킹용 익명 신원 — 세이브에 저장되어 내보내기로 이동 (추후 구글 로그인 연동 예정)
+    playerId: string; // 랭킹용 익명 신원 — 기기 이동은 클라우드 세이브, 로그인 제출 시 user_id 연결(0005)
     playerSecret: string; // 랭킹 제출 검증 토큰 (서버에 해시로 보관)
     nickname: string;
   };
@@ -114,8 +118,12 @@ export interface SaveState {
   shop: ShopState;
   attendance: AttendanceState; // 월간 출석 (v8)
   expeditions: ActiveExpedition[];
+  /** 전설의 흔적 발견 시각 목록 (v10) — TTL 내 것만 유효, deep 파견 시 전량 소모 */
+  legendTraces: number[];
   journalArchive: JournalSummary[]; // 최근 20건 — 요약 + 정산 시점 풀 일지 (재열람용)
-  counters: { day: string; adUsed: Record<string, number> };
+  counters: { day: string; adUsed: Record<string, number> }; // 광고 일일 카운터 (core/ads.ts, 로컬 자정 리셋)
+  /** 광고 보상 버프 (v11, GDD §9.2) — scentUntil: 야생의 향기 만료 시각 (0 = 없음) */
+  buffs: { scentUntil: number };
   settings: { sound: boolean; push: boolean };
   lastSavedAt: number;
 }
@@ -179,6 +187,7 @@ export interface Journal {
   entries: JournalEntry[];
   wiped: boolean; // 전멸로 조기 귀환
   totals: JournalTotals;
+  legendTrace?: boolean; // 전설의 흔적 발견 (정찰 완주 한정) — 정산 시 세이브에 적립
 }
 
 export interface JournalSummary {
@@ -193,6 +202,8 @@ export interface JournalSummary {
   /** 정산 시점의 풀 일지 — 재열람용 (2026-08-23). 시드 재생성은 정산 후 세이브가 변해 불가능.
    *  구 세이브 항목에는 없음 → UI는 상세 버튼을 숨긴다 */
   journal?: Journal;
+  /** 광고 2배 수령 완료 (GDD §9.2 — 원정당 1회). 골드·재료만 2배, 카드·포획·유물은 도감 자산이라 제외 */
+  doubled?: boolean;
 }
 
 // ── 코어 호출 컨텍스트 ───────────────────────────────────────────────────────

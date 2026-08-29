@@ -218,8 +218,9 @@ async function reconcile(): Promise<void> {
 }
 
 /**
- * 회원 탈퇴 — delete-account 엣지 함수가 본인 JWT 검증 후 계정을 삭제한다
- * (profiles·saves는 서버 cascade, 랭킹은 신원 해시 일치 시 함께). 성공하면 이 기기
+ * 회원 탈퇴 — delete-account 엣지 함수가 본인 JWT 검증 후 계정을 삭제한다.
+ * profiles·saves·랭킹(로그인 제출분 user_id, 0005)은 서버 cascade로, 익명 랭킹 행은
+ * 본문 신원(playerId+secret) 해시가 일치할 때만 함께 지워진다. 성공하면 이 기기
  * 세이브도 파기하고 로그아웃 → 게이트로 돌아간다. Google Play 계정 삭제 요건 (2026-08-29).
  * 게이트는 store를 로딩하지 않으므로 새 세이브가 다시 생기지 않는다.
  */
@@ -232,6 +233,8 @@ export async function deleteAccount(): Promise<boolean> {
   });
   if (error) return false;
   localStorage.removeItem(SAVE_KEY); // 로컬 세이브 파기 — 새로고침 전이라 persistSave가 다시 쓸 일 없다
+  // 예약된 귀환 알림도 파기 — 남겨두면 지워진 계정의 원정 알림이 울린다 (네이티브 전용, 웹 무동작)
+  await import('../platform/returnAlarms').then((m) => m.cancelAllReturnAlarms()).catch(() => undefined);
   await supabase.auth.signOut(); // SIGNED_OUT → 새로고침 → 게이트 (완전한 신규 방문자 상태)
   return true;
 }

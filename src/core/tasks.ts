@@ -3,13 +3,13 @@
  * 업적(마일스톤)과 달리 무한 반복이며, 달성 횟수가 랭킹 점수가 된다.
  */
 import type { Content } from '../content';
-import type { TaskCounter } from '../content/schema';
+import { TIERS, type TaskCounter } from '../content/schema';
 import type { SaveState } from './types';
 
 export function taskCounterValue(save: SaveState, counter: TaskCounter): number {
   switch (counter) {
     case 'expedition':
-      return save.stats.expeditions.scout + save.stats.expeditions.standard + save.stats.expeditions.deep;
+      return TIERS.reduce((sum, tier) => sum + save.stats.expeditions[tier], 0);
     case 'capture':
       return save.stats.captures;
     case 'craft':

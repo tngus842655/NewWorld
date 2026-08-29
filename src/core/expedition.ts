@@ -36,6 +36,22 @@ import {
   type SaveState,
 } from './types';
 
+// ── 전설의 흔적 (GDD §5.1, 2026-08-29) ──────────────────────────────────────
+// 정찰 완주가 흔적을 남기고, deep 파견이 소모해 전설 조우율을 올린다 —
+// 낮의 15분 스팸과 밤의 8시간 전설 게이트를 협력 관계로 잇는다.
+
+/** TTL 내 유효 흔적 수 (상한 적용 전) — UI 표시·소모 계산 공용 */
+export function validLegendTraces(content: Content, save: SaveState, now: number): number {
+  const ttlMs = content.balance.legendTraces.ttlHours * 3_600_000;
+  return save.legendTraces.filter((at) => now - at < ttlMs).length;
+}
+
+/** deep 파견 시 확정될 전설 조우율 가산 — 상한 적용 후 */
+export function legendTraceBonus(content: Content, save: SaveState, now: number): number {
+  const { maxStacks, bonusPerTrace } = content.balance.legendTraces;
+  return Math.min(maxStacks, validLegendTraces(content, save, now)) * bonusPerTrace;
+}
+
 // ── 파견 생성 ────────────────────────────────────────────────────────────────
 
 export interface ExpeditionInput {
@@ -116,6 +132,11 @@ export function createExpedition(
   timeMult = Math.max(timeMult, content.balance.artifacts.effectCaps.timeMultMin);
 
   const luresLoaded = Math.min(content.balance.lures.maxLoad, save.wallet.lures);
+  // 전설의 흔적 — deep 파견이 전량 소모하고 가산을 확정한다 (정산·미리보기가 이 값을 공유).
+  // 소모 시점이 파견인 이유: 8시간 뒤 정산 때는 TTL이 지나 있을 수 있다 (취침 파견이 표준 사용례)
+  const legendBonus = input.tier === 'deep' ? legendTraceBonus(content, save, now) : 0;
+  // 야생의 향기 — 버프 중 출발한 원정에 스냅샷 (GDD §9.2, 결정론은 core/ads.ts 주석 참고)
+  const scent = save.buffs.scentUntil > now;
   const expedition: ActiveExpedition = {
     id: ctx.newUid(),
     regionId: region.id,
@@ -129,11 +150,19 @@ export function createExpedition(
     luresLoaded,
     choices: Array.from({ length: tierDef.crossroads }, () => null),
     claimed: false,
+    ...(legendBonus > 0 ? { legendBonus } : {}),
+    ...(scent ? { scent } : {}),
   };
 
   const next = structuredClone(save);
   // 복귀가 끝난 회군 기록 청소 — 자동 틱이 없는 구조라 상태를 바꾸는 이 액션에서 기회적으로 정리한다
   next.expeditions = next.expeditions.filter((e) => isExpeditionOut(e, now));
+  if (input.tier === 'deep') {
+    next.legendTraces = []; // 가산에 반영 못 한 초과분도 함께 소실 — 상한은 UI가 고지한다
+  } else {
+    const ttlMs = content.balance.legendTraces.ttlHours * 3_600_000;
+    next.legendTraces = next.legendTraces.filter((at) => now - at < ttlMs); // 기회적 만료 청소
+  }
   next.wallet.lures -= luresLoaded;
   next.expeditions.push(expedition);
   // 최고 유효 전투력 기록 — 랭킹 전투력 카테고리 (GDD §9.3)
@@ -256,7 +285,14 @@ type PlanItem =
   | { type: 'gather'; eventId: string }
   | { type: 'crossroad'; event: CrossroadEvent; index: number };
 
-function buildPlan(content: Content, region: Region, tier: Tier, effects: readonly ActiveEffect[], seed: string): PlanItem[] {
+function buildPlan(
+  content: Content,
+  region: Region,
+  tier: Tier,
+  effects: readonly ActiveEffect[],
+  seed: string,
+  legendaryChanceAdd = 0, // 전설의 흔적 가산 (expedition.legendBonus) — deep 외에는 항상 0
+): PlanItem[] {
   const rng = streamRng(seed, 'sequence');
   const tierDef = content.balance.tiers[tier];
   const setupCtx: EffectCtx = { regionId: region.id, tier };
@@ -285,8 +321,11 @@ function buildPlan(content: Content, region: Region, tier: Tier, effects: readon
     return weight;
   };
 
-  // 전설 조우 주입 (심층 한정, GDD §6) — 계획 중앙 슬롯을 교체. 지역 전설 2종 중 시드로 1종
-  const legendarySlot = tierDef.legendaryChance > 0 && rng() < tierDef.legendaryChance ? Math.floor(count / 2) : -1;
+  // 전설 조우 주입 (deep 한정, GDD §6) — 계획 중앙 슬롯을 교체. 지역 전설 2종 중 시드로 1종.
+  // 기본 확률이 0인 티어는 rng 호출 자체를 건너뛴다 — 가산을 더해도 호출 수가 변하지 않아
+  // 진행 중 원정의 결정론(미리보기 = 정산)이 유지된다
+  const legendaryChance = tierDef.legendaryChance + (tierDef.legendaryChance > 0 ? legendaryChanceAdd : 0);
+  const legendarySlot = legendaryChance > 0 && rng() < legendaryChance ? Math.floor(count / 2) : -1;
   const legendaryId = legendarySlot >= 0
     ? region.legendary[Math.min(Math.floor(rng() * region.legendary.length), region.legendary.length - 1)]!
     : region.legendary[0]!;
@@ -331,7 +370,7 @@ export function previewCrossroads(content: Content, save: SaveState, expedition:
   const region = content.regions.get(expedition.regionId);
   if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
   const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
-  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
+  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0);
   return plan
     .filter((item): item is Extract<PlanItem, { type: 'crossroad' }> => item.type === 'crossroad')
     .sort((a, b) => a.index - b.index)
@@ -383,7 +422,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
 
   const party = expedition.partyIds.map((monsterId) => findMonster(save, monsterId));
   const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
-  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed);
+  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0);
 
   const captureRng = streamRng(expedition.seed, 'capture');
   const lootRng = streamRng(expedition.seed, 'loot');
@@ -575,7 +614,11 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
           luresLeft--;
           totals.luresUsed++;
         }
-        const chance = captureChance(content, { monster, captureAddSum: captureAdds, useLure, buffMult: 1 });
+        // 광고 버프(야생의 향기)는 파견 시 스냅샷 — 미리보기·재정산이 같은 배수를 쓴다 (GDD §9.2)
+        const chance = captureChance(content, {
+          monster, captureAddSum: captureAdds, useLure,
+          buffMult: expedition.scent ? content.balance.capture.adBuffMult : 1,
+        });
         let success = captureRng() < chance;
         let retried = false;
         if (!success && firstCaptureAvailable) {
@@ -714,6 +757,12 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
     }
   }
 
+  // 전설의 흔적 발견 — 완주 시, 전설 없는 티어만 (deep은 dropChance 0 — 전설 파견이 흔적까지
+  // 얻으면 자기 강화 루프). 전멸 제외, 시드 파생이라 재정산에도 결정론
+  const traceChance = content.balance.legendTraces.dropChance[expedition.tier];
+  const legendTrace =
+    !wiped && traceChance > 0 && streamRng(expedition.seed, 'legend-trace')() < traceChance;
+
   return {
     expeditionId: expedition.id,
     regionId: region.id,
@@ -722,6 +771,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
     entries,
     wiped,
     totals,
+    ...(legendTrace ? { legendTrace } : {}),
   };
 }
 
@@ -811,6 +861,12 @@ export function claimExpedition(
     const milestone = content.milestones.find((m) => m.id === id)!;
     next.wallet.gold += milestone.reward.gold ?? 0;
     next.wallet.dust += milestone.reward.dust ?? 0;
+  }
+
+  // 전설의 흔적 적립 — 시각은 귀환 시각(endsAt)으로 결정론 유지. 만료분은 이 기회에 청소
+  if (journal.legendTrace) {
+    const ttlMs = content.balance.legendTraces.ttlHours * 3_600_000;
+    next.legendTraces = [...next.legendTraces.filter((at) => expedition.endsAt - at < ttlMs), expedition.endsAt];
   }
 
   // 누적 통계 + 반복 과업 정산 (GDD §9.3)

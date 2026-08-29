@@ -1,11 +1,13 @@
 /**
  * 랭킹 서버 연동 (Supabase, 2026-08-23) — 비크리티컬: 실패는 조용히 무시, 게임은 완전 오프라인 동작.
- * 신원: 세이브의 playerId/secret (익명 — 추후 구글 로그인 연동 예정, 세이브 내보내기로 기기 이동).
+ * 신원: 세이브의 playerId/secret (익명) — 로그인 세션 제출이면 user_id도 연결(0005, 탈퇴 cascade).
+ * 기기 이동은 클라우드 세이브가 담당한다 (세이브 내보내기는 2026-08-29 제거).
  * 쓰기는 submit-score 엣지 함수만, 읽기는 rank_board 뷰 (RLS로 원본 테이블 차단).
  */
 import { content } from '../content';
 import { scoreBreakdown } from '../core/score';
 import type { SaveState } from '../core/types';
+import { cloudSession } from './cloud';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabaseClient';
 
 const HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
@@ -25,7 +27,11 @@ export interface BoardRow {
 
 let lastSubmitted = ''; // 같은 점수는 재전송하지 않는다
 
-/** 현재 세이브의 점수를 제출 — 실패해도 게임에는 영향 없음 */
+/**
+ * 현재 세이브의 점수를 제출 — 실패해도 게임에는 영향 없음.
+ * 로그인 상태면 세션 토큰으로 보내 행이 계정에 연결된다(user_id) — 탈퇴 시 cascade로
+ * 확실히 삭제된다 (0005). 신원 해시 삭제만으로는 세이브 초기화·기기 이동 시 행이 잔존했다.
+ */
 export async function submitScore(save: SaveState): Promise<boolean> {
   const scores = scoreBreakdown(content, save);
   const payload = JSON.stringify({
@@ -36,9 +42,10 @@ export async function submitScore(save: SaveState): Promise<boolean> {
   });
   if (payload === lastSubmitted) return true;
   try {
+    const token = cloudSession()?.access_token ?? SUPABASE_ANON_KEY;
     const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-score`, {
       method: 'POST',
-      headers: { ...HEADERS, 'Content-Type': 'application/json' },
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: payload,
     });
     if (res.ok) lastSubmitted = payload;

@@ -6,8 +6,8 @@ import type { CoreCtx, LifetimeStats, SaveState } from './types';
 
 export function emptyStats(): LifetimeStats {
   return {
-    expeditions: { scout: 0, standard: 0, deep: 0 },
-    wipes: { scout: 0, standard: 0, deep: 0 },
+    expeditions: { scout: 0, standard: 0, extended: 0, deep: 0 },
+    wipes: { scout: 0, standard: 0, extended: 0, deep: 0 },
     captures: 0,
     crafts: 0,
     fusions: 0,
@@ -31,7 +31,7 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
 
   const playerId = ctx.newUid() + ctx.newUid(); // 랭킹용 익명 신원 (추후 구글 로그인 연동 전까지)
   return {
-    version: 9,
+    version: 11,
     profile: {
       createdAt: now,
       tutorialDone: false,
@@ -67,8 +67,10 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     shop: { day: '', bought: {}, once: [] },
     attendance: { month: '', days: [] },
     expeditions: [],
+    legendTraces: [],
     journalArchive: [],
     counters: { day: '', adUsed: {} },
+    buffs: { scentUntil: 0 },
     settings: { sound: true, push: false },
     lastSavedAt: now,
   };

@@ -32,7 +32,8 @@ export const RARITY_ORDER = Object.fromEntries(
   RARITIES.map((rarity, index) => [rarity, index]),
 ) as Record<(typeof RARITIES)[number], number>;
 export const SLOTS = ['weapon', 'armor', 'banner', 'charm'] as const;
-export const TIERS = ['scout', 'standard', 'deep'] as const;
+// 파견 길이 4단 (2026-08-29 탐사 4h 신설) — 표기: 정찰/조사/탐사/원정 (ui/kit.ts TIER_NAME)
+export const TIERS = ['scout', 'standard', 'extended', 'deep'] as const;
 export const HOOKS = [
   'expeditionSetup',
   'computeParty',
@@ -394,6 +395,15 @@ export const BalanceSchema = z.object({
       rareWeightMult: z.number(),
     }),
   ),
+  // 전설의 흔적 (GDD §5.1, 2026-08-29) — 전설 없는 파견의 완주가 원정(deep) 전설 조우율을 올린다.
+  // 열심히 하는 유저의 짧은 파견과 8시간 전설 게이트를 경쟁이 아닌 협력 관계로 잇는 장치
+  legendTraces: z.object({
+    // 티어별 완주(전멸 제외)당 발견 확률 — 전설을 직접 만나는 deep은 0 (자기 강화 루프 방지)
+    dropChance: z.record(TierSchema, z.number()),
+    bonusPerTrace: z.number(), // 흔적 1개당 전설 조우율 가산 (0.01 = +1%p)
+    maxStacks: z.number().int(), // 파견 시 인정 상한 (초과분은 소실)
+    ttlHours: z.number(), // 발견 후 유효 시간 — 지나면 소멸
+  }),
   combat: z.object({
     encounterPowerMult: z.number(),
     victoryDamageK: z.number(),
@@ -426,7 +436,11 @@ export const BalanceSchema = z.object({
       totalCaptured: z.number().int().optional(),
     }),
   ),
-  ads: z.object({ daily: z.record(z.string(), z.number().int()) }),
+  // 광고 보상 (GDD §9.2 — 전부 보상형, 강제 없음). daily 키는 core/ads.ts AdSlot과 일치
+  ads: z.object({
+    daily: z.record(z.string(), z.number().int()),
+    scentMinutes: z.number().int(), // 야생의 향기(포획 ×adBuffMult) 지속 시간
+  }),
   lures: z.object({ maxLoad: z.number().int() }),
   artifacts: z.object({
     dropRarity: z.record(ArtifactRaritySchema, z.number()),

@@ -1,7 +1,8 @@
 // 회원 탈퇴 (2026-08-29, Google Play 계정 삭제 요건) — 본인 JWT 검증 후 auth 유저를 삭제한다.
-// profiles·saves는 FK on delete cascade로 함께 지워진다 (0003_google_auth.sql).
-// 랭킹(rank_scores)은 계정과 무관한 익명 신원(playerId+secret)이라, 본문으로 받아
-// submit-score와 같은 해시 검증이 일치할 때만 함께 삭제한다 (실패해도 탈퇴는 진행).
+// profiles·saves·랭킹(user_id 연결분, 0005)은 FK on delete cascade로 함께 지워진다.
+// 계정에 연결되지 않은 익명 랭킹 행은 본문 신원(playerId+secret)이 해시 일치할 때만 삭제
+// (실패해도 탈퇴는 진행). 세이브 초기화·가져오기로 신원이 바뀌면 이 경로로는 못 지운다 —
+// 로그인 제출분은 cascade가 보장 (2026-08-29 실사고: 신원 불일치로 행 2개 잔존).
 // 수정 시 MCP deploy_edge_function으로 재배포할 것 — 서버 배포본이 실행 진실, 이 파일은 저장소 사본.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -46,7 +47,10 @@ Deno.serve(async (req: Request) => {
     const secret = String(body['secret'] ?? '');
     if (/^[0-9a-f]{8,64}$/.test(playerId) && secret.length >= 8 && secret.length <= 128) {
       const secretHash = await sha256(`${playerId}:${secret}`);
-      await admin.from('rank_scores').delete().eq('player_id', playerId).eq('secret_hash', secretHash);
+      const { error: rankError } = await admin
+        .from('rank_scores').delete().eq('player_id', playerId).eq('secret_hash', secretHash);
+      // supabase-js는 throw하지 않는다 — error를 안 보면 침묵 실패 (2026-08-29 원인 조사에서 확인)
+      if (rankError) console.warn('rank cleanup failed:', rankError.message);
     }
   } catch { /* 본문 없음·파싱 실패 — 랭킹 삭제만 건너뛴다 */ }
 

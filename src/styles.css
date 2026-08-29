@@ -576,7 +576,8 @@ body {
 /* 출발 버튼 — 라벨은 중앙 유지, 선택한 파견 길이는 우측에 (2026-08-29 사용자) */
 .dispatch-label { display: flex; width: 100%; align-items: center; justify-content: center; position: relative; }
 .dispatch-time { position: absolute; right: 2px; font-size: 12px; font-weight: 600; opacity: 0.85; }
-.tier-btn { flex: 1; font-size: 12px; padding: 8px 4px; }
+/* 파견 길이 4단 (2026-08-29) — 한 줄 유지: 짧은 표기 + nowrap, 폭이 모자라면 폰트가 아니라 여백을 줄인다 */
+.tier-btn { flex: 1; font-size: 11px; padding: 8px 2px; white-space: nowrap; }
 .tier-btn.selected { border-color: var(--accent); background: #2a2413; }
 
 /* ── 도감 ── */
@@ -646,8 +647,9 @@ body.overlay-open .container { overflow: hidden; }
 /* ── 확률 정보 ── */
 .odds-title { font-weight: 700; font-size: 14px; }
 .elem-flow { font-weight: 600; font-size: 14px; letter-spacing: 0.2px; }
-.odds-grid { display: grid; grid-template-columns: 1fr 90px 90px; align-items: center; gap: 6px; padding: 3px 0; }
-.odds-grid span:nth-child(2), .odds-grid span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+/* 4열 (2026-08-29 탐사 추가): 등급 | 정찰·조사 | 탐사 | 원정 */
+.odds-grid { display: grid; grid-template-columns: 1fr 64px 56px 56px; align-items: center; gap: 6px; padding: 3px 0; }
+.odds-grid span:nth-child(2), .odds-grid span:nth-child(3), .odds-grid span:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
 .odds-head { color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
 .odds-note { border-top: 1px dashed var(--line); padding-top: 7px; display: flex; flex-direction: column; gap: 3px; }
 /* 확률 게이지 — 등급색 바 + 우측 수치 (유저 공개용 가독성) */

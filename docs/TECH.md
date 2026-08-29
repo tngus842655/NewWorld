@@ -168,8 +168,9 @@ effect(() => { el.textContent = label(); }); // 의존 자동 추적, 파괴 시
 - 단일 JSON 문서 `SaveState` — `{ version, profile, roster, codex, wallet, expeditions, settings, lastSavedAt }`
 - 로컬: localStorage, 상태 변경 debounce 1s + 파견/정산 등 중요 액션은 즉시 flush
 - 마이그레이션: `migrations.ts`에 `v(n)→v(n+1)` 순수 함수 체인, 로드 시 순차 적용 + 각 단계 테스트
-- 클라우드(M4): `saves` 테이블 upsert(jsonb). 충돌 정책 v1 = last-write-wins + 서버 `updated_at` 비교 시 경고 후 선택
-- 내보내기/가져오기(디버그·CS용): JSON 텍스트 복사 방식 (설정 화면)
+- 클라우드(M5, cloudSync.ts): `saves` 테이블 upsert(jsonb). 충돌 정책 v1 = last-write-wins + 시각 비교 시 경고 후 선택
+- 내보내기/가져오기: **2026-08-29 제거** — 클라우드 세이브(구글 로그인)가 기기 이동을 대체.
+  가져오기는 랭킹 신원(playerId/secret)을 통째로 교체하는 사고 벡터이기도 했다 (탈퇴 후 랭킹 잔존 사고)
 
 ## 9. 플랫폼 어댑터
 

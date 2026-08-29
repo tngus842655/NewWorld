@@ -3,8 +3,10 @@
  */
 import { content } from '../content';
 import type { Journal, JournalEntry } from '../core/types';
+import { adsAvailable, showRewardedAd } from '../platform/ads';
+import { grantJournalDouble, save } from '../state/store';
 import { monsterIcon } from './components';
-import { ARTIFACT_RARITY_LABEL, RARITY_ORDER, TIER_LABEL, el, fmtGold, fmtPct } from './kit';
+import { ARTIFACT_RARITY_LABEL, RARITY_ORDER, TIER_LABEL, el, fmtGold, fmtPct, toast } from './kit';
 import { playSfx, type SfxId } from './sfx';
 
 const REVEAL_INTERVAL_MS = 420;
@@ -127,7 +129,7 @@ function entryCard(entry: JournalEntry): HTMLElement {
     case 'clearBox': {
       const boxRarity = content.artifacts.get(entry.artifact.itemId)?.rarity ?? 'common';
       return el(`div.jcard.jdrop-card${rarityCardClass(boxRarity)}`, {},
-        artifactDropLine(`🎁 심층 완주 상자 ${artifactLabel(entry.artifact.itemId)}`, entry.artifact.itemId));
+        artifactDropLine(`🎁 완주 상자 ${artifactLabel(entry.artifact.itemId)}`, entry.artifact.itemId));
     }
   }
 }
@@ -159,11 +161,43 @@ export function journalView(journal: Journal, newMilestones: string[], opts: Jou
     totals.artifacts.length > 0 ? `유물 ${totals.artifacts.length}점` : null,
   ].filter(Boolean).join(' · ');
 
+  // 광고 2배 (GDD §9.2 — 원정당 1회, 골드·재료만: 카드·포획·유물은 도감 자산).
+  // 정산 직후·아카이브 재열람 양쪽에서 노출 — 이미 받았거나 받을 재화가 없으면 숨긴다
+  const doubleRow = ((): HTMLElement | null => {
+    if (!adsAvailable()) return null;
+    const entry = save().journalArchive.find((j) => j.expeditionId === journal.expeditionId);
+    if (!entry?.journal || entry.doubled) return null;
+    if (totals.gold <= 0 && Object.keys(totals.materials).length === 0) return null;
+    const label = '📺 광고 보고 골드·재료 2배 받기 [원정당 1회]';
+    const btn = el('button.btn.btn-ghost.btn-sm', {
+      onclick: () => {
+        (btn as HTMLButtonElement).disabled = true;
+        btn.textContent = '📺 광고 준비 중…';
+        void showRewardedAd().then((result) => {
+          if (result === 'rewarded' && grantJournalDouble(journal.expeditionId)) {
+            playSfx('treasure');
+            btn.replaceWith(el('div.jline', {}, '✅ 보상을 2배로 받았습니다'));
+            return;
+          }
+          (btn as HTMLButtonElement).disabled = false;
+          btn.textContent = label;
+          if (result === 'dismissed') toast('광고를 끝까지 봐야 보상을 받아요', 'error');
+          else if (result === 'unavailable') toast('지금은 광고를 불러올 수 없습니다 — 잠시 후 다시', 'error');
+        });
+      },
+    }, label);
+    return el('div.jline', {}, btn);
+  })();
+
   const footer = el(`div.jfooter${opts.instant ? '' : '.jhidden'}`, {},
     el('div.jline', {}, `🏕️ 귀환 [${summaryBits}]`),
     totals.capturedMonsterIds.length > 0
       ? el('div.jsub', {}, `📖 도감 등록: ${totals.capturedMonsterIds.map(monsterName).join(', ')}`)
       : null,
+    journal.legendTrace
+      ? el('div.jline', {}, `✨ 전설의 흔적 발견 — 다음 ${TIER_LABEL.deep} 파견의 전설 확률이 오릅니다`)
+      : null,
+    doubleRow,
     ...newMilestones.map((id) => {
       const milestone = content.milestones.find((m) => m.id === id);
       return milestone

@@ -5,6 +5,7 @@
  * 원인 (2026-08-29 실사고). 세이브 동기화·탈퇴 등 store 결합 로직은 cloudSync.ts에.
  * 회원 전용: 로그아웃(명시적·유령 세션 정리 포함)은 SIGNED_OUT → 새로고침 → 게이트.
  */
+import { Capacitor } from '@capacitor/core';
 import { toast } from '../ui/kit';
 import { signal } from './signal';
 import { supabase } from './supabaseClient';
@@ -12,12 +13,51 @@ import type { Session } from '@supabase/supabase-js';
 
 export const cloudSession = signal<Session | null>(null);
 
+/** 네이티브 앱의 OAuth 복귀 딥링크 — AndroidManifest의 intent-filter와 반드시 같아야 한다 */
+const NATIVE_REDIRECT = 'com.expeditionmonsters.app://auth-callback';
+
 export async function signInWithGoogle(): Promise<void> {
+  // 네이티브(Capacitor): 웹뷰 내 구글 OAuth는 차단(disallowed_useragent) — 시스템 브라우저
+  // (커스텀 탭)로 나갔다 딥링크로 복귀한다 (ROADMAP M5). 복귀 처리는 initAuth의 appUrlOpen.
+  if (Capacitor.isNativePlatform()) {
+    const { Browser } = await import('@capacitor/browser');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: NATIVE_REDIRECT, skipBrowserRedirect: true },
+    });
+    if (error || !data.url) {
+      toast(`구글 로그인 실패 [${error?.message ?? '인증 URL 없음'}]`, 'error');
+      return;
+    }
+    await Browser.open({ url: data.url });
+    return;
+  }
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin },
   });
   if (error) toast(`구글 로그인 실패 [${error.message}]`, 'error');
+}
+
+/** 딥링크 복귀 — PKCE ?code=를 세션으로 교환하고 재부팅한다 (웹의 리디렉션 왕복과 같은 그림) */
+async function handleAuthDeepLink(url: string): Promise<void> {
+  if (!url.startsWith(NATIVE_REDIRECT)) return;
+  // 커스텀 스킴은 URL 파서가 환경마다 다르게 읽는다 — 쿼리 문자열을 직접 잘라 파싱
+  const query = (url.split('?')[1] ?? '').split('#')[0]!;
+  const params = new URLSearchParams(query);
+  const { Browser } = await import('@capacitor/browser');
+  void Browser.close().catch(() => { /* 커스텀 탭이 이미 닫혔으면 그만 */ });
+  const code = params.get('code');
+  if (!code) {
+    toast(`구글 로그인 실패 [${params.get('error_description') ?? params.get('error') ?? '코드 없음'}]`, 'error');
+    return;
+  }
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    toast(`구글 로그인 실패 [${error.message}]`, 'error');
+    return;
+  }
+  window.location.reload(); // 게이트에 멈춘 화면 → 세션 확보 상태로 재부팅 → 게임 마운트
 }
 
 export async function signOutGoogle(): Promise<void> {
@@ -40,6 +80,17 @@ export async function initAuth(): Promise<Session | null> {
   // getSession은 리디렉션 복귀 시 코드 교환(detectSessionInUrl)까지 끝난 세션을 준다
   const { data } = await supabase.auth.getSession();
   cloudSession.set(data.session);
+  // 네이티브: OAuth 복귀 딥링크 수신 — 앱이 떠 있으면 appUrlOpen(singleTask 재진입),
+  // 브라우저에 나간 사이 죽었으면 launchUrl로 들어온다. launchUrl은 재부팅 후에도 같은 값을
+  // 돌려주므로 세션이 없을 때만 본다 (성공 직후 reload가 쓰고 버린 코드를 재교환하지 않게)
+  if (Capacitor.isNativePlatform()) {
+    const { App } = await import('@capacitor/app');
+    void App.addListener('appUrlOpen', ({ url }) => { void handleAuthDeepLink(url); });
+    if (!data.session) {
+      const launch = await App.getLaunchUrl();
+      if (launch?.url) void handleAuthDeepLink(launch.url);
+    }
+  }
   supabase.auth.onAuthStateChange((event, session) => {
     cloudSession.set(session);
     // 회원 전용 (2026-08-29) — 로그아웃은 게이트로 돌아간다

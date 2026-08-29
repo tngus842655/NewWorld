@@ -45,6 +45,8 @@ async function boot(): Promise<void> {
     document.addEventListener('pointerdown', () => preloadAllSfx(), { once: true });
     // 클라우드 세이브 동기화 — 로그인 화해 + 자동 업로드 (게임 경로 전용)
     initCloudSync();
+    // 귀환 로컬 알림 (네이티브 전용 — 웹에서는 무동작). 실패해도 게임은 그대로 돈다
+    void import('./platform/returnAlarms').then(({ initReturnAlarms }) => initReturnAlarms()).catch(() => undefined);
   } catch (err) {
     const box = document.createElement('div');
     box.className = 'boot-error';

@@ -4,8 +4,7 @@
  */
 import { cloudSession, signInWithGoogle, signOutGoogle } from '../../state/cloud';
 import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
-import { exportSave, importSave } from '../../state/save';
-import { resetSave, save, setNickname, toggleSound } from '../../state/store';
+import { save, setNickname, toggleSound } from '../../state/store';
 import { googleG } from '../components';
 import { askConfirm, askText } from '../dialog';
 import { el, toast } from '../kit';
@@ -154,55 +153,9 @@ export function renderSettings(): HTMLElement {
       })(),
     ),
 
-    el('h2.section-title', {}, '세이브'),
-    el('div.card', {},
-      el('div.list-row', {},
-        el('span', {}, '세이브 내보내기'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            void navigator.clipboard?.writeText(exportSave(save())).then(
-              () => toast('세이브를 클립보드에 복사했습니다', 'ok'),
-              () => toast('클립보드 복사 실패', 'error'),
-            );
-          },
-        }, '복사'),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '세이브 가져오기'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            void askText({
-              title: '세이브 가져오기',
-              message: '내보내기로 복사한 세이브 JSON을 붙여넣으세요. 현재 진행은 덮어써집니다.',
-              placeholder: '{"version":1,…}',
-              confirmLabel: '불러오기',
-            }).then((text) => {
-              if (!text) return;
-              const imported = importSave(text);
-              if (imported) {
-                save.set(imported);
-                toast('세이브를 불러왔습니다', 'ok');
-              } else {
-                toast('올바른 세이브가 아닙니다', 'error');
-              }
-            });
-          },
-        }, '붙여넣기'),
-      ),
-      el('div.list-row', {},
-        el('span.muted', {}, '처음부터 (되돌릴 수 없음)'),
-        el('button.btn.btn-danger', {
-          onclick: () => {
-            void askConfirm({
-              title: '새 게임',
-              message: '정말 새 게임을 시작할까요? 현재 진행이 사라집니다.',
-              confirmLabel: '초기화',
-              danger: true,
-            }).then((ok) => { if (ok) resetSave(); });
-          },
-        }, '초기화'),
-      ),
-    ),
+    // 세이브 섹션은 2026-08-29 통째로 제거 — 내보내기/가져오기는 클라우드 세이브(구글 로그인)가
+    // 기기 이동을 대체한 잔재(가져오기는 랭킹 신원 교체 사고 벡터 — 같은 날 랭킹 잔존 사고),
+    // 초기화는 탈퇴가 사실상 대체(계정·클라우드·로컬 전부 삭제 후 새 출발)
     el('div.center.small.muted', {},
       `코드 로드 ${CODE_LOADED_AT.toLocaleTimeString('ko-KR')} · 세이브 v${state.version}`),
   );

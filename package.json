@@ -9,13 +9,24 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "demo": "tsx scripts/demo.ts"
+    "demo": "tsx scripts/demo.ts",
+    "build:aab": "cd android && gradlew.bat bundleRelease",
+    "build:android": "npm run build && cap sync android",
+    "make-key": "powershell -ExecutionPolicy Bypass -File scripts/make-upload-key.ps1",
+    "icons": "node scripts/android-assets.mjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.1.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/local-notifications": "^8.3.1",
     "@supabase/supabase-js": "^2.112.4",
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@types/node": "^26.2.0",
     "sharp": "^0.35.3",
     "tsx": "^4.19.0",

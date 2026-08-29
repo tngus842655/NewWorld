@@ -1,5 +1,6 @@
 /**
- * 로컬 영속화 — localStorage + 마이그레이션. 클라우드 동기화는 M4.
+ * 로컬 영속화 — localStorage + 마이그레이션. 클라우드 동기화는 cloudSync.ts (M5).
+ * 내보내기/가져오기(클립보드 JSON)는 2026-08-29 제거 — 클라우드 세이브가 기기 이동을 대체.
  */
 import type { SaveState } from '../core/types';
 import { migrateSave } from './migrations';
@@ -34,17 +35,5 @@ export function persistSave(state: SaveState, at: number): void {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSavedAt: at }));
   } catch {
     // 저장 실패(용량 등)는 게임을 멈출 사유가 아니다 — M4에서 리포팅 연결
-  }
-}
-
-export function exportSave(state: SaveState): string {
-  return JSON.stringify(state);
-}
-
-export function importSave(text: string): SaveState | null {
-  try {
-    return migrateSave(JSON.parse(text));
-  } catch {
-    return null;
   }
 }

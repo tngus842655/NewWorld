@@ -3,7 +3,7 @@
  */
 import { content } from '../content';
 import { RARITY_LABEL, type Action, type Condition, type Effect } from '../content/schema';
-import { ELEMENT_LABEL, TIER_LABEL, TRIBE_LABEL } from './kit';
+import { ELEMENT_LABEL, TIER_NAME, TRIBE_LABEL } from './kit';
 
 function pct(value: number): string {
   return `${Math.round(value * 100)}%`;
@@ -13,7 +13,7 @@ function describeCondition(when: Condition | undefined): string {
   if (!when) return '';
   const parts: string[] = [];
   if (when.region) parts.push(when.region.map((r) => content.regions.get(r)?.name ?? r).join('·') + '에서');
-  if (when.tier) parts.push(`${TIER_LABEL[when.tier].split(' ')[0]} 시`);
+  if (when.tier) parts.push(`${TIER_NAME[when.tier]} 시`);
   if (when.element) parts.push(`${ELEMENT_LABEL[when.element]} 대상`);
   if (when.tribe) parts.push(`${TRIBE_LABEL[when.tribe]} 유닛`);
   if (when.encounterIndex !== undefined) parts.push(`${when.encounterIndex + 1}번째 조우`);

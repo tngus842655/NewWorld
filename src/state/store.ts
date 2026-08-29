@@ -29,6 +29,7 @@ import {
   type UseHourglassResult,
 } from '../core/expedition';
 import { accountBonusState } from '../core/accountBonus';
+import { adInstantReturn, applyScentBuff, doubleJournalRewards } from '../core/ads';
 import { checkIn, type CheckInResult } from '../core/attendance';
 import { createInitialSave } from '../core/newgame';
 import { buyShopProduct, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
@@ -156,6 +157,40 @@ export function useHourglassOn(expeditionId: string, hourglassId: string): UseHo
     const result = useHourglass(content, save(), expeditionId, hourglassId, ctx.now());
     save.set(result.save);
     return result;
+  });
+}
+
+// ── 광고 보상 (GDD §9.2) — 시청 성공 검증 후 호출된다 (platform/ads.ts) ──────
+
+/** 광고: 즉시 귀환 — 남은 시간 전부 단축. 한도·회군 검증은 core/ads.ts */
+export function grantAdInstantReturn(expeditionId: string): boolean {
+  return (
+    act(() => {
+      save.set(adInstantReturn(content, save(), expeditionId, ctx.now()));
+      toast('📺 원정대가 돌아왔습니다! [일지를 확인하세요]', 'ok');
+      return true;
+    }) ?? false
+  );
+}
+
+/** 광고: 야생의 향기 — scentMinutes 동안 포획률 ×adBuffMult (버프 중 출발한 원정에 적용) */
+export function grantAdScent(): boolean {
+  return (
+    act(() => {
+      save.set(applyScentBuff(content, save(), ctx.now()));
+      toast(`🌿 야생의 향기 [${content.balance.ads.scentMinutes}분간 포획률 ×${content.balance.capture.adBuffMult}]`, 'ok');
+      return true;
+    }) ?? false
+  );
+}
+
+/** 광고: 일지 정산 2배 (원정당 1회) — 받은 골드·재료만큼 한 번 더 */
+export function grantJournalDouble(expeditionId: string): { gold: number } | null {
+  return act(() => {
+    const result = doubleJournalRewards(save(), expeditionId);
+    save.set(result.save);
+    toast(`📺 보상 2배 수령! [골드 +${result.gold.toLocaleString('ko-KR')}]`, 'ok');
+    return { gold: result.gold };
   });
 }
 
@@ -304,9 +339,4 @@ export function buySlot(): boolean {
 export function toggleSound(): void {
   const state = save();
   save.set({ ...state, settings: { ...state.settings, sound: !state.settings.sound } });
-}
-
-export function resetSave(): void {
-  save.set(createInitialSave(content, ctx));
-  toast('새 게임을 시작했습니다', 'ok');
 }

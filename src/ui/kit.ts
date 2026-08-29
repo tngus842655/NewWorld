@@ -110,8 +110,13 @@ export const RARITY_DESC: readonly MonsterRarity[] = [...RARITIES].reverse();
 export const RARITY_ORDER = CORE_RARITY_ORDER;
 /** 유물도 같은 등급 체계 (schema.ts에서 같은 배열의 별칭) */
 export const ARTIFACT_RARITY_ORDER: Record<ArtifactRarity, number> = CORE_RARITY_ORDER;
+/** 파견 길이 이름 정본 (2026-08-29 표기 개편) — GDD 본문의 "심층"은 deep을 가리킨다 */
+export const TIER_NAME: Record<Tier, string> = {
+  scout: '정찰', standard: '조사', extended: '탐사', deep: '원정',
+};
+// 버튼 4개가 한 줄에 들어가도록 짧게 (2026-08-29 사용자) — 시간은 balance tiers.minutes와 맞출 것
 export const TIER_LABEL: Record<Tier, string> = {
-  scout: '정찰 · 15분', standard: '원정 · 2시간', deep: '심층 탐사 · 8시간',
+  scout: '정찰(15분)', standard: '조사(2시간)', extended: '탐사(4시간)', deep: '원정(8시간)',
 };
 export const SLOT_LABEL: Record<string, string> = {
   weapon: '무기', armor: '방어구', banner: '깃발', charm: '부적',

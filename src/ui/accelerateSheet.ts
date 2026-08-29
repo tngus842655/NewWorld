@@ -4,12 +4,17 @@
  */
 import { content } from '../content';
 import type { HourglassDef } from '../content/schema';
-import { devGrantHourglasses, nowTick, save, useHourglassOn } from '../state/store';
+import { adUsesLeft } from '../core/ads';
+import { adsAvailable, showRewardedAd } from '../platform/ads';
+import { signal } from '../state/signal';
+import { devGrantHourglasses, grantAdInstantReturn, nowTick, save, useHourglassOn } from '../state/store';
 import { hourglassIcon } from './components';
 import { el, fmtRemain, josa, toast } from './kit';
 import { sheetShell } from './overlays';
 import { closeOverlay, overlay } from './router';
 import { playSfx } from './sfx';
+
+const adLoading = signal(false); // 광고 로드 중 — 시트가 초 단위로 재렌더되므로 시그널로
 
 export function hourglassDuration(def: HourglassDef): string {
   return def.minutes >= 60 ? `${def.minutes / 60}시간` : `${def.minutes}분`;
@@ -58,6 +63,36 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
     );
   });
 
+  // 광고 즉시 귀환 (GDD §9.2 — 1일 3회). 광고 불가 환경에서는 행 자체를 숨긴다
+  const adReturnsLeft = adUsesLeft(content, state, 'instantReturn', now);
+  const adRow = adsAvailable() && !done
+    ? el('div.list-row.hg-row', {},
+        el('div.hg-body', {},
+          el('div.hg-name', {}, '📺 광고 보고 즉시 귀환'),
+          el('div.muted.small', {}, `남은 시간 전부 단축 · 오늘 ${adReturnsLeft}회 남음`),
+        ),
+        el('button.btn.btn-primary.hg-use', {
+          disabled: adReturnsLeft <= 0 || adLoading(),
+          onclick: () => {
+            adLoading.set(true);
+            void showRewardedAd().then((result) => {
+              adLoading.set(false);
+              if (result === 'rewarded') {
+                if (grantAdInstantReturn(expeditionId)) {
+                  playSfx('confirm');
+                  closeOverlay(); // 홈 카드의 일지 열기 버튼이 보이게
+                }
+              } else if (result === 'dismissed') {
+                toast('광고를 끝까지 봐야 보상을 받아요', 'error');
+              } else {
+                toast('지금은 광고를 불러올 수 없습니다 — 잠시 후 다시', 'error');
+              }
+            });
+          },
+        }, adLoading() ? '준비 중…' : '시청'),
+      )
+    : null;
+
   return sheetShell('⏳ 원정 가속',
     el('div.card.list-row', {},
       el('div', {},
@@ -65,7 +100,7 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
         el('div.muted.small', {}, done ? '원정대가 돌아왔습니다!' : `귀환까지 ${fmtRemain(expedition.endsAt - now)}`),
       ),
     ),
-    el('div.card.stack-sm', {}, ...rows),
+    el('div.card.stack-sm', {}, ...rows, adRow),
     el('div.card.list-row', {},
       el('span.muted.small', {}, '모래시계는 상점에서 판매합니다'),
       el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'shop' }) }, '상점 열기'),

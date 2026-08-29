@@ -2,7 +2,7 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
-import { ELEMENTS, RARITY_LABEL, type MonsterRarity, type Region } from '../content/schema';
+import { ELEMENTS, RARITY_LABEL, TIERS, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { finalTierEntry } from '../core/economy';
@@ -23,7 +23,7 @@ import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ow
 import { describeEffect } from './effectText';
 import {
   ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
-  TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
+  TIER_LABEL, TIER_NAME, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
 import { chipPanels, filterSections, tabPanels, type Panel } from './panels';
@@ -344,8 +344,8 @@ function oddsSheet(): HTMLElement {
   const { balance } = content;
   const state = save();
   const rarities = RARITY_ASC; // 순서 정본은 RARITIES — 라벨 객체의 키 순서에 기대지 않는다 (2026-08-25)
+  const extendedMult = balance.tiers.extended.rareWeightMult;
   const deepMult = balance.tiers.deep.rareWeightMult;
-  const tierName = (tier: 'scout' | 'standard' | 'deep') => TIER_LABEL[tier].split(' ')[0];
   const rarityTag = (rarity: MonsterRarity) => el(`span.tag.rar-${rarity}`, {}, MONSTER_RARITY_LABEL[rarity]);
 
   // ── 탭 1: 몬스터 — 포획 + 지역별 등장 (지역은 칩으로 1개씩) ──
@@ -366,6 +366,7 @@ function oddsSheet(): HTMLElement {
   const regionViews = content.regionList.map((region) => {
     const unlocked = isRegionUnlocked(content, state, region.id);
     const base = spawnOddsByRarity(region, 1);
+    const extended = spawnOddsByRarity(region, extendedMult);
     const deep = spawnOddsByRarity(region, deepMult);
     const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
     return {
@@ -373,24 +374,33 @@ function oddsSheet(): HTMLElement {
       label: `${unlocked ? '' : '🔒 '}${region.icon} ${region.name}`,
       view: el('div.stack-sm', {},
         el('div.odds-grid.odds-head', {},
-          el('span', {}, '등급'), el('span', {}, `${tierName('scout')}·${tierName('standard')}`), el('span', {}, tierName('deep')),
+          el('span', {}, '등급'), el('span', {}, `${TIER_NAME.scout}·${TIER_NAME.standard}`),
+          el('span', {}, TIER_NAME.extended), el('span', {}, TIER_NAME.deep),
         ),
         ...rarities.filter((rarity) => base.has(rarity)).map((rarity) =>
           el('div.odds-grid', {},
             rarityTag(rarity),
             el('span', {}, pct1(base.get(rarity) ?? 0)),
+            el('span', {}, pct1(extended.get(rarity) ?? 0)),
             el('span', {}, pct1(deep.get(rarity) ?? 0)),
           ),
         ),
         el('div.small.muted', {},
-          `⭐ 전설 (${legendNames}) [${tierName('deep')}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
+          `⭐ 전설 (${legendNames}) [${TIER_LABEL.deep}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
       ),
     };
   });
   const firstUnlocked = Math.max(0, content.regionList.findIndex((region) => isRegionUnlocked(content, state, region.id)));
+  const traces = balance.legendTraces;
   const regionCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🗺️ 지역별 등장 확률'),
     ...chipPanels(regionViews, { initial: firstUnlocked }),
+    // 흔적은 전설 확률을 바꾸는 요소라 확률 고지에 명시한다 (확률형 아이템 고지 의무)
+    el('div.small.muted', {},
+      `✨ 전설의 흔적: 완주 시 발견 (${TIERS.filter((t) => traces.dropChance[t] > 0)
+        .map((t) => `${TIER_NAME[t]} ${pct1(traces.dropChance[t])}`).join(' · ')}) — `
+      + `다음 ${TIER_LABEL.deep} 출발 시 소모되어 전설 확률을 1개당 +${pct1(traces.bonusPerTrace)}p 올립니다 `
+      + `[최대 ${traces.maxStacks}개 · 발견 후 ${traces.ttlHours}시간 유효]`),
   );
   const monsterPanel = el('div.stack-sm', {}, captureCard, regionCard);
 
@@ -432,7 +442,7 @@ function oddsSheet(): HTMLElement {
         pctBarRow(el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]), balance.artifacts.dropRarity[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
       el('div.small.muted', {}, `· 발굴 기회 [보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}]`),
-      sources.deepClearBox ? el('div.small.muted', {}, `· ${tierName('deep')} 완주 상자에서는 유물이 확정으로 나옵니다`) : null,
+      sources.deepClearBox ? el('div.small.muted', {}, `· ${TIER_LABEL.deep} 완주 상자에서는 유물이 확정으로 나옵니다`) : null,
       balance.artifacts.firstTreasurePity ? el('div.small.muted', {}, '· 계정의 첫 보물 이벤트에서는 유물이 확정으로 나옵니다') : null,
     ),
   );

@@ -3,15 +3,15 @@
  * 카테고리: 원정 / 몬스터 / 유물 / 과업 / 전투력 → 종합.
  */
 import type { Content } from '../content';
-import type { MonsterRarity, Tier } from '../content/schema';
+import { TIERS, type MonsterRarity, type Tier } from '../content/schema';
 import type { OwnedArtifact, OwnedMonster, SaveState } from './types';
 
 export const RARITY_SCORE: Record<MonsterRarity, number> = {
   common: 10, uncommon: 20, rare: 40, heroic: 80, legendary: 200, transcendent: 500,
 };
 
-/** 파견 길이별 점수 — 시간 비례 + 위험 가중 (전멸 귀환은 절반) */
-export const TIER_SCORE: Record<Tier, number> = { scout: 1, standard: 6, deep: 30 };
+/** 파견 길이별 점수 — 시간 비례 + 위험 가중 (전멸 귀환은 절반). 탐사 14 = 2h(6)~8h(30) 시간 보간 */
+export const TIER_SCORE: Record<Tier, number> = { scout: 1, standard: 6, extended: 14, deep: 30 };
 
 /**
  * 종 기본점 = 등급점 × 지역 배수(tier) — 도감·상세에 그대로 노출.
@@ -40,7 +40,7 @@ export function artifactScore(content: Content, owned: OwnedArtifact): number {
 
 export function expeditionScore(save: SaveState): number {
   let total = 0;
-  for (const tier of ['scout', 'standard', 'deep'] as const) {
+  for (const tier of TIERS) {
     const done = save.stats.expeditions[tier];
     const wiped = Math.min(save.stats.wipes[tier], done);
     total += TIER_SCORE[tier] * (done - wiped) + Math.ceil(TIER_SCORE[tier] / 2) * wiped;

@@ -3,17 +3,19 @@
  * 편성은 군 카드를 눌러 여는 편성 시트에서, 파견은 군 단위로.
  */
 import { content } from '../../content';
-import type { Tier } from '../../content/schema';
+import { TIERS, type Tier } from '../../content/schema';
+import { adUsesLeft } from '../../core/ads';
 import { computePartyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
-import { isExpeditionOut } from '../../core/expedition';
+import { isExpeditionOut, legendTraceBonus, validLegendTraces } from '../../core/expedition';
+import { adsAvailable, showRewardedAd } from '../../platform/ads';
 import * as clock from '../../state/clock';
 import { canUnlockRegion, capturedCounts, deepestUnlockedRegion, isRegionUnlocked, teamCount } from '../../core/progression';
 import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { batch, signal } from '../../state/signal';
-import { dispatchTeam, save, unlock } from '../../state/store';
+import { dispatchTeam, grantAdScent, save, unlock } from '../../state/store';
 import { artifactIcon, monsterIconBadged, ownedCp } from '../components';
-import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, fmtRemainShort, josaRo } from '../kit';
+import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TIER_NAME, TRIBE_EMOJI, TRIBE_LABEL, el, fmtClock, fmtGold, fmtPct, fmtRemainShort, josaRo, toast } from '../kit';
 import { regionTiers, tierShortName } from '../regionTiers';
 import { resetTeamSheet } from '../teamSheet';
 import { tabBar } from '../panels';
@@ -37,6 +39,7 @@ function pickTier(tier: number): void {
   });
 }
 const selTeamId = signal<string>('team-1');
+const adBusy = signal(false); // 광고 로드 중 — 파견 패널 버튼 잠금
 // 하단 파견 패널 접힘 상태 — 접은 채로 종료해도 다음 접속에 유지 (세이브와 무관한 기기 UI 취향이라 localStorage 별도 키)
 const PANEL_OPEN_KEY = 'newworld-ui-dispatch-open';
 const panelOpen = signal(localStorage.getItem(PANEL_OPEN_KEY) !== '0');
@@ -262,13 +265,56 @@ export function renderExpedition(): HTMLElement {
   const teamBusy = busy.has(team.id);
 
   const tierDef = content.balance.tiers[tier];
+  const traceChance = content.balance.legendTraces.dropChance[tier];
   const tierInfo = [
     `조우 ${tierDef.encounters + (info?.encounterAdd ?? 0)}회`,
     tierDef.crossroads > 0 ? `갈림길 ${tierDef.crossroads}회` : null,
     tierDef.yieldMult > 1 ? `보상 ×${tierDef.yieldMult}` : null,
     tierDef.rareWeightMult > 1 ? `희귀 출현 ×${tierDef.rareWeightMult}` : null,
-    tierDef.legendaryChance > 0 ? '⭐ 전설과 만날 수 있다' : null,
   ].filter(Boolean).join(' · ');
+  // 흔적·전설 안내는 정보줄에 섞지 않고 한 칸 아래 별도 줄로 (2026-08-29 사용자).
+  // 티어당 하나만 존재한다 — 흔적은 전설 없는 티어 전용(dropChance), 전설은 deep 전용
+  const tierHighlight = traceChance > 0
+    ? el('div.muted.small', {}, `✨ 전설의 흔적 ${fmtPct(traceChance)} [${TIER_NAME.deep} 전설 확률↑]`)
+    : tierDef.legendaryChance > 0
+      ? el('div.muted.small', {}, '⭐ 전설과 만날 수 있다')
+      : null;
+
+  // 전설의 흔적 — 완주로 모아 deep 출발 시 소모 (core/expedition.ts). 있을 때만 한 줄.
+  // 표기는 줄바꿈 안 되게 최소한으로 — 소모 시점·유효 기간 등 상세는 확률 정보 시트가 담당 (2026-08-29 사용자)
+  const traceHeld = Math.min(content.balance.legendTraces.maxStacks, validLegendTraces(content, state, clock.now()));
+  const traceBonus = legendTraceBonus(content, state, clock.now());
+  const deepLegendBase = content.balance.tiers.deep.legendaryChance;
+  const traceLine = traceHeld > 0
+    ? el('div.muted.small', {},
+        `✨ 전설의 흔적 ${traceHeld}개 — ${TIER_NAME.deep} 전설 확률 ${fmtPct(deepLegendBase)}→${fmtPct(deepLegendBase + traceBonus)}`)
+    : null;
+
+  // 광고 버프 — 야생의 향기 (GDD §9.2). 버프 중 출발한 원정의 포획률 ×2.
+  // 광고 불가 환경(프로드 웹)이거나 오늘 소진이면 행을 숨긴다 (전부 보상형·강제 없음)
+  const scentActive = state.buffs.scentUntil > clock.now();
+  const scentLeft = adUsesLeft(content, state, 'scentBuff', clock.now());
+  const scentRow = scentActive
+    ? el('div.muted.small', {},
+        `🌿 야생의 향기 발동 중 [포획률 ×${content.balance.capture.adBuffMult} · ${fmtClock(state.buffs.scentUntil)}까지 출발분]`)
+    : adsAvailable() && scentLeft > 0
+      ? el('div.list-row', {},
+          el('span.muted.small', {},
+            `🌿 야생의 향기 [${content.balance.ads.scentMinutes}분간 포획률 ×${content.balance.capture.adBuffMult}]`),
+          el('button.btn.btn-ghost.btn-sm', {
+            disabled: adBusy(),
+            onclick: () => {
+              adBusy.set(true);
+              void showRewardedAd().then((result) => {
+                adBusy.set(false);
+                if (result === 'rewarded') grantAdScent();
+                else if (result === 'dismissed') toast('광고를 끝까지 봐야 보상을 받아요', 'error');
+                else toast('지금은 광고를 불러올 수 없습니다 — 잠시 후 다시', 'error');
+              });
+            },
+          }, adBusy() ? '준비 중…' : `📺 보기 [오늘 ${scentLeft}회]`),
+        )
+      : null;
 
   // 권역 탭 — 12행을 탭 4개 + 소지역 3행으로 접는다. 완료 ✓ · 진행 n/3 · 미개방 🔒,
   // 지금 해금을 실행할 수 있는 관문이 있으면 알림 점(탭 점 관용: '보유'가 아니라 '실행 가능')
@@ -317,11 +363,14 @@ export function renderExpedition(): HTMLElement {
         ),
         synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 [같은 종족 2마리부터 발동]'),
         info && info.synergyAmp > 0 ? el('div.muted.small', {}, `시너지 증폭 +${Math.round(info.synergyAmp * 100)}%`) : null,
-        el('div.tier-row', {}, ...(['scout', 'standard', 'deep'] as const).map((t) =>
+        el('div.tier-row', {}, ...TIERS.map((t) =>
           el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
         )),
         el('div.muted.small', {}, tierInfo),
+        tierHighlight,
+        traceLine,
         el('div.muted.small', {}, `미끼 자동 적재: ${lureLoad}개 (보유 ${state.wallet.lures})`),
+        scentRow,
         maxTeams > 1 || teamsFull
           ? el('div.muted.small', {}, `원정대 ${runningCount}/${maxTeams} 파견 중`)
           : null,

@@ -1,0 +1,151 @@
+apply plugin: 'com.android.application'
+
+// ── 웹 자산 자동 동기화 (MoneyGame 파이프라인 이식, 2026-08-29) ─────────────
+// 게임 본체는 저장소 루트의 vite 프로젝트이고, 안드로이드 앱은 dist/를
+// app/src/main/assets/public에 복사해서 웹뷰로 띄운다. 이 복사를 사람이 따로
+// 실행하게 두면 빼먹기 쉽고, 그러면 **앱 안에 예전 게임이 그대로 들어간 채로
+// 스토어에 올라간다.** 빌드가 알아서 하도록 preBuild에 물린다.
+//
+//   android/ 에서 gradlew.bat bundleRelease 하나로 끝나게 하는 것이 목적이다.
+def webRoot = rootProject.projectDir.parentFile      // 저장소 루트 (android/의 부모)
+def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+
+// dist/ 만들기 — vite 빌드. tsc 타입체크는 개발 게이트라 여기서는 생략한다
+// (npx 대신 CLI 진입점을 node로 직접 부른다 — npx는 셸·경로 해석이 환경마다 달라진다)
+tasks.register('makeWebDist', Exec) {
+    group = 'capacitor'
+    description = '게임을 dist/로 빌드한다 (vite build)'
+    workingDir = webRoot
+    commandLine 'node', 'node_modules/vite/bin/vite.js', 'build'
+    // 입력이 그대로면 건너뛴다 — 매번 도는 것을 막아 빌드가 느려지지 않게 한다
+    inputs.files(fileTree(dir: webRoot, includes: ['index.html', 'src/**', 'public/**', 'package.json', 'vite.config.ts']))
+    outputs.dir(new File(webRoot, 'dist'))
+}
+
+// dist/ → android/app/src/main/assets/public 복사 + capacitor.config/plugins json 갱신.
+// `sync`가 아니라 `copy`인 이유: sync의 update 단계가 capacitor-cordova-android-plugins/
+// 모듈을 통째로 다시 만들며 gradle의 R 파일까지 지운다 (MoneyGame에서 실측한 함정).
+// 플러그인을 더하거나 뺐을 때만 `npx cap sync android`를 한 번 돌리면 된다.
+tasks.register('capCopy', Exec) {
+    group = 'capacitor'
+    description = 'dist/를 안드로이드 프로젝트로 복사한다 (cap copy)'
+    dependsOn 'makeWebDist'
+    workingDir = webRoot
+    commandLine 'node', 'node_modules/@capacitor/cli/bin/capacitor', 'copy', 'android'
+}
+
+// Exec 태스크는 PATH에서 node를 찾는데, 윈도우에서는 node.exe다. 확장자 없이도
+// 대개 찾지만 확실히 하려고 실행 직전에 한 번 확인한다.
+[tasks.named('makeWebDist'), tasks.named('capCopy')].each { t ->
+    t.configure {
+        doFirst {
+            if (isWindows) { environment 'PATHEXT', System.getenv('PATHEXT') ?: '.COM;.EXE;.BAT;.CMD' }
+        }
+    }
+}
+
+project.afterEvaluate {
+    tasks.named('preBuild').configure { dependsOn 'capCopy' }
+}
+
+// ── 서명 ───────────────────────────────────────────────────────────────────
+// 서명 정보는 저장소에 두지 않는다. android/keystore.properties(gitignore됨)에 적고,
+// 생성은 scripts/make-upload-key.ps1 하나로 한다 (키스토어와 항상 같은 비밀번호).
+// 없으면 디버그 빌드는 그대로 돌아가지만, **릴리스는 일부러 실패시킨다** — 미서명
+// .aab는 Play가 받지 않는데, 조용히 만들어지면 업로드 화면에서야 알게 된다.
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "com.expeditionmonsters.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.expeditionmonsters.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // 1 = 플레이스토어 첫 업로드. 올릴 때마다 versionCode를 1씩 올린다.
+        // versionCode는 한 번 쓴 번호를 재사용할 수 없고 Console에서도 고칠 수 없다.
+        // versionName은 스토어에 보이는 표시용 (package.json 버전과 맞춘다).
+        versionCode 3
+        versionName "0.1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            release {
+                // rootProject.file: android/ 기준으로 푼다. 그냥 file()을 쓰면 android/app/
+                // 기준이 되어 android/에 있는 키스토어를 못 찾는다.
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+            // R8을 켜면 매핑 파일이 .aab에 실려 가 Play가 크래시 로그를 되돌린다 (MoneyGame과 동일).
+            // 캐패시터 플러그인은 consumerProguardFiles가 지켜 주므로 따로 적을 규칙은 없다.
+            minifyEnabled true
+            // shrinkResources는 켜지 않는다 — 스플래시가 drawable을 이름으로 찾는데 R8이 못 보고 지운다
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+// 서명 키가 없는데 릴리스를 만들려고 하면 **빌드를 시작하기 전에** 세워 준다.
+if (!keystorePropertiesFile.exists()) {
+    gradle.taskGraph.whenReady { graph ->
+        def wantsRelease = graph.allTasks.any { it.name in ['bundleRelease', 'assembleRelease'] }
+        if (wantsRelease) {
+            throw new GradleException(
+                "\n\n" +
+                "  서명 키가 없습니다. 미서명 .aab는 Play가 받지 않습니다.\n\n" +
+                "  처음 한 번만 (터미널 창에서 직접 실행, 비밀번호를 물어봅니다):\n" +
+                "    powershell -ExecutionPolicy Bypass -File ..\\scripts\\make-upload-key.ps1\n\n" +
+                "  키스토어와 android\\keystore.properties가 같이 만들어집니다.\n" +
+                "  그 뒤로는 gradlew.bat bundleRelease만 하면 됩니다.\n"
+            )
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

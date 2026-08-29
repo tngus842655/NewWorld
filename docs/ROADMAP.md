@@ -256,6 +256,26 @@
       조련 최종 8,000점(최적 D159·현실 8~12개월) · 공명 최종 400점(상한 500의 80%, 6~9개월).
       근거 곡선(최적 경로·보통 유저): 조련 4,000=D34 · 6,000=D77 · 8,000=D159 · 10,000=D307
 
+**8라운드 (2026-08-29 — 파견 4단 + 전설의 흔적, GDD §5.1):**
+
+- [x] **탐사(extended, 4시간) 티어 신설** — 2h와 8h 사이 반나절 슬롯. 조우 12(시간당 3회로 밀도 단조
+      유지), 갈림길 1, 보상 ×1.28, 희귀 ×1.5. 랭킹 점수 14점(2h 6점~8h 30점 시간 보간),
+      세이브 v10(stats에 extended 키 — 기존 수치 보존 마이그레이션)
+- [x] **파견 표기 개편** (사용자) — 버튼 4개 한 줄 유지: 정찰(15분)/조사(2시간)/탐사(4시간)/원정(8시간).
+      구 "원정"→조사, "심층 탐사"→원정. 이름 정본을 ui/kit.ts TIER_NAME으로 모으고
+      TIER_LABEL.split(' ')[0] 파생을 전부 제거 (GDD 본문의 "심층"은 deep을 가리킨다 — 용어 노트)
+- [x] **전설의 흔적** — 완주 적립(정찰 15%·조사 25%·탐사 35%, 전설이 나오는 원정=deep은 제외)
+      → 원정(deep) 출발 시 전량 소모, 전설 조우율 +1%p/개(최대 4개, 24시간 유효, 기본 2%→최대 6%).
+      계기: "열심히 하는 유저는 15분을 많이 쓰는데 전설은 8h에만"(사용자 형평성 지적) —
+      확률 직접 개방 대신 낮 활동이 밤 확률을 올리는 다리. 소모가 출발 시점인 이유: 8h 뒤 정산 땐
+      TTL 경과 (expedition.legendBonus로 확정 — 미리보기·정산 결정론 유지). 확률 정보 시트 고지 +
+      파견 정보줄 획득 안내(2026-08-29 사용자 후속 — 처음엔 어디에도 안 보였다),
+      tests/legend-trace.test.ts 신설
+- [x] **설정 '세이브' 섹션 통째 제거** (2026-08-29 사용자) — 내보내기/가져오기는 클라우드 세이브
+      (구글 로그인) 이전의 기기 이동 수단이라 잔재. 가져오기는 랭킹 신원(playerId/secret)을 통째로
+      교체하는 사고 벡터이기도 했다 (같은 날 "탈퇴 후 랭킹 잔존" 사고의 직접 원인 경로).
+      '처음부터(초기화)'도 후속 결정으로 제거 — 탈퇴(계정·클라우드·로컬 전부 삭제)가 새 출발을 대체
+
 ## M5 — 안드로이드 클라이언트 (Google Play)  ⬜
 
 > **앱 표시명 확정: 원정 몬스터즈** (2026-08-29 사용자) — 코드명·저장소는 NewWorld 유지.
@@ -276,17 +296,36 @@
   - [x] **인앱 계정 삭제(탈퇴)** (2026-08-29) — delete-account 엣지 함수(본인 JWT 검증 →
         auth 삭제 cascade + 랭킹 행 해시 검증 삭제) + 설정 탭 탈퇴 버튼("탈퇴" 입력 이중 확인,
         로컬 세이브 파기 → 게이트 복귀). Google Play 계정 삭제 요건 충족
-  - [ ] 익명 랭킹 신원(playerId) 계정 병합 — 남음 (rank_scores는 여전히 playerId+secret 자가 신고)
-- [ ] Capacitor 패키징 (MoneyGame 파이프라인 재사용, Windows SDK 경로 수동 지정 주의)
-      **주의: 구글 OAuth는 웹뷰 내 차단(disallowed_useragent) — 시스템 브라우저(@capacitor/browser)
-      +딥링크 리디렉션으로 전환 필요 (웹·TWA는 현 리디렉션 방식 그대로 동작)**
-- [ ] platform/android.ts 브리지 — 귀환 **로컬 알림**(ends_at이 파견 시점 확정이라 서버 푸시 불필요), 진동
-- [ ] 파견 시작→알림 예약 / 정산·즉시귀환→알림 취소 연결
-- **DoD: 실기기에서 파견 → 앱 종료 → 귀환 로컬 알림 수신 → 복귀 정산**
+  - [x] 익명 랭킹 신원(playerId) 계정 병합 (2026-08-29) — rank_scores.user_id(auth cascade,
+        0005_rank_account_link) + submit-score가 로그인 세션 제출에 user_id 기록(클라는 세션
+        토큰으로 제출) → 탈퇴가 계정 연결 행을 DB에서 지운다. 계기: 해시 검증 삭제만으로는
+        세이브 초기화·가져오기·기기 이동으로 신원이 바뀌면 행이 영구 잔존 (실사고 — 잔존 2행 정리)
+- [x] **Capacitor 패키징** (2026-08-29 — MoneyGame 파이프라인 이식, ANDROID_RELEASE.md) —
+      appId `com.expeditionmonsters.app`(⚠️ 첫 Play 업로드 전까지만 변경 가능), gradle이
+      vite build→cap copy를 preBuild에 물어 한 명령(bundleRelease)으로 서명 AAB까지.
+      아이콘·스플래시는 scripts/android-assets.mjs (원본 public/app-icon/icon-512-v1.png),
+      업로드 키 scripts/make-upload-key.ps1 (키스토어·properties 커밋 금지, 백업 필수)
+  - [x] 구글 OAuth 네이티브 경로 — 웹뷰 내 차단(disallowed_useragent)이라 @capacitor/browser
+        커스텀 탭 + 딥링크(`com.expeditionmonsters.app://auth-callback`) + PKCE 코드 교환으로
+        전환 (cloud.ts, appUrlOpen/launchUrl 양쪽 처리 — launchUrl은 세션 없을 때만 봐서
+        사용된 코드 재교환을 막는다). **실기기 검증 전 1회: Supabase 대시보드 Redirect URLs에
+        딥링크 추가 필요** (MCP로 불가 — 대시보드 전용)
+- [x] **귀환 로컬 알림** (2026-08-29, platform/returnAlarms.ts + @capacitor/local-notifications) —
+      endsAt이 파견 시점 확정이라 서버 푸시 불필요. 액션별 훅 대신 **선언적 동기화**: 세이브에서
+      "울려야 할 알림 집합"을 파생해 OS 예약과 diff — 파견·정산·회군·모래시계·가속 어느 경로로
+      endsAt이 바뀌어도 항상 맞는다. 권한은 첫 예약 시점에 요청(거부돼도 게임은 그대로),
+      부팅 시 스테일 예약 정리, 탈퇴 시 전체 취소, 재부팅 복원은 플러그인 부트 리시버.
+      알림 채널 진동 켬 (인게임 햅틱은 별도 — 필요해지면 @capacitor/haptics)
+- **DoD: 실기기에서 파견 → 앱 종료 → 귀환 로컬 알림 수신 → 복귀 정산 (검증 남음)**
 
 ## M6 — Google Play 출시 준비  ⬜
 
-- [ ] AdMob 보상형 3슬롯 (GDD §9.2의 IAA 대체 — 네트워크·슬롯 구성은 착수 시 확정)
+- [x] **AdMob 보상형 3슬롯** (2026-08-29, GDD §9.2 확정 구현) — 즉시 귀환(가속 시트)·야생의 향기
+      (파견 패널, 출발 스냅샷 ×2)·정산 2배(일지, 재화만·원정당 1회). 전면·배너는 안 쓴다
+      (짧은 확인 세션 + 전부 보상형 원칙). core/ads.ts 순수 로직 + platform/ads.ts 브리지
+      (@capacitor-community/admob — MoneyGame 검증 조합), 웹 DEV 시뮬 폴백으로 E2E 검증.
+      세이브 v11(buffs). **⚠️ 단위 ID·앱 ID 전부 구글 테스트 ID — AdMob 콘솔 발급 후
+      adsConfig.ts + AndroidManifest 교체 필요 (교체 전까지 수익 0)**
 - [ ] 성능 예산 검증 (TECH §11), 에러 리포팅 최소선
 - [ ] 스토어 자산(아이콘·스크린샷·그래픽), 확률 고지 페이지
 - [ ] 서명 AAB 빌드까지 (Play Console 업로드·심사 제출은 사용자가 직접)

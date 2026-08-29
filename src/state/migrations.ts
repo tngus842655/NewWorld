@@ -4,7 +4,7 @@
  */
 import type { SaveState } from '../core/types';
 
-export const CURRENT_SAVE_VERSION = 9;
+export const CURRENT_SAVE_VERSION = 11;
 
 type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
@@ -175,6 +175,25 @@ const migrateV8toV9: Migration = (raw) => {
   return data;
 };
 
+/** v9 → v10 (2026-08-29): 탐사(extended, 4h) 통계 키 + 전설의 흔적 저장소 */
+const migrateV9toV10: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['stats'] = {
+    ...data['stats'],
+    expeditions: { extended: 0, ...data['stats']?.['expeditions'] },
+    wipes: { extended: 0, ...data['stats']?.['wipes'] },
+  };
+  data['legendTraces'] = [];
+  return data;
+};
+
+/** v10 → v11 (2026-08-29): 광고 보상 버프 저장소 (GDD §9.2 — 야생의 향기 만료 시각) */
+const migrateV10toV11: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  data['buffs'] = { scentUntil: 0 };
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
@@ -184,6 +203,8 @@ const MIGRATIONS: Record<number, Migration> = {
   6: migrateV6toV7,
   7: migrateV7toV8,
   8: migrateV8toV9,
+  9: migrateV9toV10,
+  10: migrateV10toV11,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

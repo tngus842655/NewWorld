@@ -9,7 +9,7 @@ import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
 import { nowTick, save } from '../../state/store';
 import { expeditionLinesCard, mapEntryButton } from '../expeditionMap';
-import { TIER_LABEL, el, fmtAgo, fmtGold, scopedEffect } from '../kit';
+import { TIER_LABEL, TIER_NAME, el, fmtAgo, fmtGold, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -77,7 +77,7 @@ function nextGoalCard(): HTMLElement | null {
   if (counts.total < totalSpecies) {
     return el('div.card.goal-card', { onclick: () => tab.set('codex') },
       el('div.goal-head', {}, el('span', {}, '🎯 다음 목표 [신대륙 도감의 완성]')),
-      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 [전설은 심층 탐사에서만]`)),
+      el('div.goal-items', {}, el('div.goal-item', {}, `▫️ 도감 ${counts.total}/${totalSpecies}종 포획 [전설은 ${TIER_LABEL.deep}에서만]`)),
     );
   }
 
@@ -117,7 +117,7 @@ export function renderHome(): HTMLElement {
   const archive = state.journalArchive; // 정산 시 최근 20건으로 유지된다
   const recent = (expanded ? archive : archive.slice(0, JOURNAL_COLLAPSED_COUNT)).map((summary) => {
     const region = content.regions.get(summary.regionId);
-    const tierName = TIER_LABEL[summary.tier].split(' ')[0];
+    const tierName = TIER_NAME[summary.tier];
     return el('div.list-row.journal-row', {},
       el('div.journal-name', {},
         `${summary.wiped ? '💀' : '🏕️'} ${region?.name ?? summary.regionId} · ${tierName}`,
