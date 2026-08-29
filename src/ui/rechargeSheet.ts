@@ -39,7 +39,7 @@ function packCard(pack: { id: string; diamonds: number; price: string | null }):
       el('div', {},
         el('div.shop-name', {},
           `💎 다이아 ${pack.diamonds.toLocaleString('ko-KR')}개 `,
-          bonus ? el('span.tag.recharge-bonus', {}, `+${bonus}% 이득`) : null,
+          bonus ? el('span.tag.recharge-bonus', {}, `+${bonus}%`) : null,
         ),
       ),
       el('div.shop-buy', {},
@@ -57,7 +57,7 @@ function adFreeCard(): HTMLElement | null {
     el('div.list-row', {},
       el('div', {},
         el('div.shop-name', {}, '🚫 광고 제거 ', owned ? el('span.muted.small.shop-limit', {}, '(적용됨)') : null),
-        el('div.muted.small', {}, '모든 보상형 광고를 시청 없이 즉시 보상으로 (영구)'),
+        el('div.muted.small', {}, '광고 시청 없이 즉시 보상 (영구)'),
       ),
       el('div.shop-buy', {},
         el('button.btn.btn-primary', { disabled: owned || iapBusy(), onclick: () => buy('ad_free') },
@@ -83,9 +83,9 @@ export function rechargeSheet(): HTMLElement {
     ...packs.map(packCard),
     adFree ? el('div.info-group-head', {}, el('span.small', {}, '🎁 기타 상품')) : null,
     adFree,
-    el('div.center.small.muted', {}, 'Google Play로 결제됩니다 · 충전 즉시 지급 · 클라우드에 바로 저장'),
+    el('div.center.small.muted', {}, 'Google Play 결제 · 즉시 지급 · 클라우드 저장'),
     el('div.center.small.muted', {}, '다이아는 출석 달력에서도 모을 수 있어요'),
   );
-  shell.classList.add('sheet-full');
+  shell.classList.add('sheet-full', 'sheet-recharge');
   return shell;
 }

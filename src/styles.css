@@ -1002,6 +1002,11 @@ body.overlay-open .container { overflow: hidden; }
 .shop-limit { font-weight: 400; }
 /* 충전 시트 — 보너스 태그는 눈에 띄는 강조색 (기준 단가 대비 이득 표기) */
 .tag.recharge-bonus { background: var(--accent-2); color: var(--bg); border-color: transparent; font-weight: 700; }
+/* 팩 7카드가 한 화면에 들어오게 컴팩트 — 버튼·카드 높이·간격 축소 (2026-08-29 사용자) */
+.sheet-recharge { gap: 7px; }
+.sheet-recharge .card.shop-item { padding-top: 4px; padding-bottom: 4px; }
+.sheet-recharge .shop-buy .btn { padding: 4px 10px; font-size: 13px; }
+.sheet-recharge .shop-balance-row { min-height: 0; padding: 8px 14px; }
 .auto-btn { padding: 4px 10px; font-size: 12px; }
 .hg-icon.rar-uncommon { border-color: var(--rar-uncommon); }
 .hg-icon.rar-rare { border-color: var(--rar-rare); box-shadow: 0 0 6px rgba(74, 163, 255, 0.25); }
