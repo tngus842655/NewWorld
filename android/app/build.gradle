@@ -69,8 +69,8 @@ android {
         // 1 = 플레이스토어 첫 업로드. 올릴 때마다 versionCode를 1씩 올린다.
         // versionCode는 한 번 쓴 번호를 재사용할 수 없고 Console에서도 고칠 수 없다.
         // versionName은 스토어에 보이는 표시용 (package.json 버전과 맞춘다).
-        // 콘솔에 실제 업로드된 버전 기준 +1 (현재 콘솔 최신 = 2, 2026-08-29 사용자 확인)
-        versionCode 3
+        // 콘솔에 실제 업로드된 버전 기준 +1 (현재 콘솔 최신 = 3, 2026-08-29 사용자 확인)
+        versionCode 4
         versionName "0.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
