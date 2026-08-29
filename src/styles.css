@@ -807,27 +807,31 @@ body.overlay-open .container { overflow: hidden; }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 
 /* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ──
- * 배경은 앱 아이콘(icon-512-v1)의 네이비 팔레트 실측값 — 위 #0d274c → 아래 #040823.
- * 아이콘에 게임명이 그려져 있어 텍스트 타이틀은 폴백 전용 */
+ * 풀블리드 키아트(login-background.png — 게임명 포함) 위에 버튼·링크만 하단 배치.
+ * 밑색 그라데이션은 이미지 로드 전·실패 시 폴백 (아이콘 팔레트 실측값 #0d274c→#040823) */
 .gate {
-  min-height: 100dvh; padding: 24px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-  background: linear-gradient(180deg, #0d274c 0%, #0a1c3d 45%, #040823 100%);
+  min-height: 100dvh; text-align: center; position: relative;
+  padding: 24px 24px calc(48px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px;
+  background:
+    url('/app-icon/login-background.webp') center top / cover no-repeat,
+    linear-gradient(180deg, #0d274c 0%, #0a1c3d 45%, #040823 100%);
 }
-.gate-logo { font-size: 72px; line-height: 1; margin-bottom: 18px; }
-.gate-logo img {
-  width: min(240px, 62vw); height: auto; object-fit: contain;
-  border-radius: 30px; box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+/* 하단 가독성 스크림 — 지도 아트 위의 버튼·링크가 묻히지 않게 */
+.gate::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 32%;
+  background: linear-gradient(180deg, transparent, rgba(4, 8, 35, 0.65));
+  pointer-events: none;
 }
-.gate-title { font-size: 30px; font-weight: 800; letter-spacing: 1px; }
-.gate-sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+.gate > * { position: relative; }
 .gate .google-btn { width: min(280px, 100%); }
-.gate-links { margin-top: 18px; display: flex; align-items: center; gap: 8px; }
+.gate-links { margin-top: 14px; display: flex; align-items: center; gap: 8px; }
 .gate-link {
   background: none; border: none; padding: 0; cursor: pointer;
-  color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px;
+  color: rgba(255, 255, 255, 0.82); font-size: 12px; text-decoration: underline; text-underline-offset: 3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
-.gate-link-dot { color: var(--muted); font-size: 12px; }
+.gate-link-dot { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
 
 /* ── 약관·개인정보처리방침 (공개 페이지, #/terms · #/privacy) ── */
 .legal {
