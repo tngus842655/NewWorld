@@ -222,22 +222,6 @@ export function grantJournalDouble(expeditionId: string): { gold: number } | nul
   });
 }
 
-/** DEV: 다이아 +1,000 — 다이아 상점 테스트용 (DEV 빌드에서만 UI 노출) */
-export function devGrantDiamonds(): void {
-  const state = save();
-  save.set({ ...state, wallet: { ...state.wallet, diamonds: state.wallet.diamonds + 1000 } });
-  toast('💎 DEV [다이아 +1,000]', 'ok');
-}
-
-/** DEV: 모래시계 각 1개씩 지급 — 가속 기능 테스트용 (DEV 빌드에서만 UI 노출) */
-export function devGrantHourglasses(): void {
-  const state = save();
-  const hourglasses = { ...state.wallet.hourglasses };
-  for (const def of content.hourglassList) hourglasses[def.id] = (hourglasses[def.id] ?? 0) + 1;
-  save.set({ ...state, wallet: { ...state.wallet, hourglasses } });
-  toast('⏳ DEV [모래시계 각 +1]', 'ok');
-}
-
 export function choose(expeditionId: string, index: number, choice: CrossroadChoice): void {
   act(() => {
     save.set(chooseCrossroad(save(), expeditionId, index, choice));

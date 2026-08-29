@@ -9,7 +9,7 @@ import { onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core
 import { adsAvailable, showRewardedAd } from '../platform/ads';
 import { adFreeIap, diamondPacks } from '../platform/iap';
 import { signal } from '../state/signal';
-import { buyShop, devGrantDiamonds, grantAdShopExtra, nowTick, save } from '../state/store';
+import { buyShop, grantAdShopExtra, nowTick, save } from '../state/store';
 import { flushUpload } from '../state/cloudSync';
 import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
@@ -214,9 +214,6 @@ export function shopSheet(): HTMLElement {
                 }
               },
             }, '충전')
-          : null,
-        tab === 'diamond' && import.meta.env.DEV
-          ? el('button.btn.btn-ghost', { onclick: devGrantDiamonds }, '[DEV]')
           : null,
       ),
     ),

@@ -7,7 +7,7 @@ import type { HourglassDef } from '../content/schema';
 import { adUsesLeft } from '../core/ads';
 import { adsAvailable, showRewardedAd } from '../platform/ads';
 import { signal } from '../state/signal';
-import { devGrantHourglasses, grantAdInstantReturn, nowTick, save, useHourglassOn } from '../state/store';
+import { grantAdInstantReturn, nowTick, save, useHourglassOn } from '../state/store';
 import { hourglassIcon } from './components';
 import { el, fmtRemain, josa, toast } from './kit';
 import { sheetShell } from './overlays';
@@ -105,8 +105,5 @@ export function accelerateSheet(expeditionId: string): HTMLElement | null {
       el('span.muted.small', {}, '모래시계는 상점에서 판매합니다'),
       el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'shop' }) }, '상점 열기'),
     ),
-    import.meta.env.DEV
-      ? el('button.btn.btn-ghost', { onclick: devGrantHourglasses }, 'DEV [모래시계 각 +1]')
-      : null,
   );
 }
