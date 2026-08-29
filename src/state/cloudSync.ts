@@ -7,6 +7,7 @@
  * 진실은 항상 클라 — 서버는 미러다 (0003_google_auth.sql).
  */
 import { content } from '../content';
+import { createInitialSave } from '../core/newgame';
 import { ensureTeams } from '../core/teams';
 import type { SaveState } from '../core/types';
 import { askConfirm } from '../ui/dialog';
@@ -16,7 +17,7 @@ import { cloudSession } from './cloud';
 import { migrateSave } from './migrations';
 import { SAVE_KEY } from './save';
 import { effect, signal } from './signal';
-import { save } from './store';
+import { ctx, save } from './store';
 import { supabase } from './supabaseClient';
 
 export const lastUploadedAt = signal<number | null>(null);
@@ -84,6 +85,9 @@ export async function uploadNow(state?: SaveState): Promise<boolean> {
   if (!session) return false;
   const at = clock.now();
   const body = { ...(state ?? save()), lastSavedAt: at };
+  // 주인 불일치 세이브는 절대 올리지 않는다 (2026-08-29) — 계정 전환 상속 사고의 최후 방어선.
+  // reconcile이 정리하기 전(오프라인 등)에 디바운스 업로드가 남의 진행을 실어가는 것을 막는다
+  if (body.profile.ownerUserId && body.profile.ownerUserId !== session.user.id) return false;
   const { error } = await supabase.from('saves').upsert({
     profile_id: session.user.id,
     data: body,
@@ -122,10 +126,11 @@ export function flushUpload(): void {
 }
 
 /** 서버 세이브를 이 기기에 적용 — 미래 버전(스테일 번들)이면 false */
-function applyCloudSave(data: unknown): boolean {
+function applyCloudSave(data: unknown, ownerId: string): boolean {
   try {
     const migrated = migrateSave(data);
     if (!migrated) return false;
+    migrated.profile.ownerUserId = ownerId; // 도장 없는 구 클라우드 세이브도 현재 계정 소유로
     save.set(ensureTeams(content, migrated));
     return true;
   } catch {
@@ -152,7 +157,7 @@ export async function restoreFromCloud(): Promise<void> {
   });
   if (!ok) return;
   await backupDiscarded(session.user.id, save(), localLastSavedAt()); // 버려질 로컬을 1세대 보관
-  if (applyCloudSave(row.data)) toast('클라우드 세이브를 불러왔습니다', 'ok');
+  if (applyCloudSave(row.data, session.user.id)) toast('클라우드 세이브를 불러왔습니다', 'ok');
   else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
 }
 
@@ -160,6 +165,33 @@ export async function restoreFromCloud(): Promise<void> {
 async function reconcile(): Promise<void> {
   const session = cloudSession();
   if (!session) return;
+
+  // 계정 전환 방어 (2026-08-29 실사고: 검수용 새 계정이 기기 진행을 통째로 상속·업로드) —
+  // 이 기기 세이브가 다른 계정 소유면 올리지도 잇지도 않는다. 프로필 미러보다 먼저:
+  // 남의 닉네임이 내 프로필에 실리는 것도 막는다
+  const localOwner = save().profile.ownerUserId;
+  if (localOwner && localOwner !== session.user.id) {
+    const { data: row, error } = await supabase
+      .from('saves').select('data').eq('profile_id', session.user.id).maybeSingle();
+    if (error) return; // 판단 불가(오프라인 등) — uploadNow 가드가 상속을 막는다, 다음 로그인에 다시
+    if (row) {
+      if (applyCloudSave(row.data, session.user.id)) toast('☁️ 이 계정의 클라우드 세이브로 이어서 합니다', 'ok');
+      else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+      return;
+    }
+    // 이 계정은 클라우드도 비어 있다 — 남의 진행 대신 새 게임 (랭킹 신원도 새로 발급된다)
+    const fresh = createInitialSave(content, ctx);
+    fresh.profile.ownerUserId = session.user.id;
+    save.set(ensureTeams(content, fresh));
+    toast('이 기기의 진행은 다른 계정의 것이라, 새 게임으로 시작합니다', 'ok');
+    return; // 새 세이브는 디바운스 업로드가 곧 백업한다
+  }
+  // 첫 로그인 도장 — 게스트·구버전 세이브를 이 계정 소유로 (도장이 있어야 위 방어가 작동한다)
+  if (!localOwner) {
+    const state = save();
+    save.set({ ...state, profile: { ...state.profile, ownerUserId: session.user.id } });
+  }
+
   // 프로필 자가 복구(가입 트리거 누락 대비) + 접속 흔적
   const { error: profileError } = await supabase.from('profiles').upsert({
     id: session.user.id,
@@ -208,7 +240,7 @@ async function reconcile(): Promise<void> {
     }
     await backupDiscarded(session.user.id, discarded, useCloud ? localAt : cloudAt);
     if (useCloud) {
-      if (applyCloudSave(row.data)) toast('클라우드 세이브로 이어서 합니다', 'ok');
+      if (applyCloudSave(row.data, session.user.id)) toast('클라우드 세이브로 이어서 합니다', 'ok');
       else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
     } else {
       toast('이 기기 세이브를 유지합니다 — 다음 저장부터 클라우드를 덮어씁니다', 'ok');

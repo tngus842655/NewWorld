@@ -98,6 +98,9 @@ export interface SaveState {
     playerId: string; // 랭킹용 익명 신원 — 기기 이동은 클라우드 세이브, 로그인 제출 시 user_id 연결(0005)
     playerSecret: string; // 랭킹 제출 검증 토큰 (서버에 해시로 보관)
     nickname: string;
+    /** 이 세이브의 주인 계정 (2026-08-29) — 다른 계정 로그인이 기기 진행을 상속하는 사고 방지
+     *  (cloudSync reconcile·uploadNow가 검사). 미기록 = 게스트/구세이브 — 첫 로그인 계정에 귀속 */
+    ownerUserId?: string;
   };
   wallet: {
     gold: number;

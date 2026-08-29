@@ -300,6 +300,11 @@
         0005_rank_account_link) + submit-score가 로그인 세션 제출에 user_id 기록(클라는 세션
         토큰으로 제출) → 탈퇴가 계정 연결 행을 DB에서 지운다. 계기: 해시 검증 삭제만으로는
         세이브 초기화·가져오기·기기 이동으로 신원이 바뀌면 행이 영구 잔존 (실사고 — 잔존 2행 정리)
+  - [x] **계정 전환 상속 차단** (2026-08-29) — 세이브에 ownerUserId 도장(첫 로그인 시 귀속),
+        다른 계정 로그인 시 기기 진행을 올리지도 잇지도 않는다: 그 계정의 클라우드를 쓰거나
+        새 게임(랭킹 신원도 새로 발급). uploadNow에도 주인 검사(오프라인 경합 최후 방어선).
+        계기: 검수용 테스트 계정이 기기 세이브·랭킹 신원을 통째로 상속(실사고).
+        복원(applyCloudSave) 경로도 항상 현재 계정으로 재도장
 - [x] **Capacitor 패키징** (2026-08-29 — MoneyGame 파이프라인 이식, ANDROID_RELEASE.md) —
       appId `com.expeditionmonsters.app`(⚠️ 첫 Play 업로드 전까지만 변경 가능), gradle이
       vite build→cap copy를 preBuild에 물어 한 명령(bundleRelease)으로 서명 AAB까지.
