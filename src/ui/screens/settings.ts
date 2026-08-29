@@ -133,13 +133,13 @@ export function renderSettings(): HTMLElement {
               onclick: () => {
                 void askText({
                   title: '회원 탈퇴',
-                  message: '계정과 게임 데이터(클라우드·이 기기 세이브·랭킹)가 모두 삭제되며 복구할 수 없습니다.\n계속하려면 "탈퇴"라고 입력하세요.',
-                  placeholder: '탈퇴',
+                  message: '계정과 게임 데이터(클라우드·이 기기 세이브·랭킹)가 모두 삭제되며 복구할 수 없습니다.\n계속하려면 "탈퇴할게요"라고 입력하세요.',
+                  placeholder: '탈퇴할게요',
                   confirmLabel: '영구 삭제',
                 }).then(async (text) => {
                   if (text === null) return;
-                  if (text.trim() !== '탈퇴') {
-                    toast('"탈퇴"라고 정확히 입력해야 합니다', 'error');
+                  if (text.trim() !== '탈퇴할게요') {
+                    toast('"탈퇴할게요"라고 정확히 입력해야 합니다', 'error');
                     return;
                   }
                   const ok = await deleteAccount();
