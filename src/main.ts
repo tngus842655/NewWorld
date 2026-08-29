@@ -18,6 +18,9 @@ async function boot(): Promise<void> {
       return;
     }
 
+    // 앱 업데이트 안내 (네이티브 전용, 게이트·게임 공통) — 새 버전이 스토어에 있으면 팝업
+    void import('./platform/appUpdate').then(({ initAppUpdatePrompt }) => initAppUpdatePrompt()).catch(() => undefined);
+
     // 회원 전용 (2026-08-29 사용자) — 세션 없으면 로그인 게이트에서 멈춘다.
     // 게이트 경로에서는 store를 로딩하지 않는다: store는 로드 즉시 세이브를 생성·저장하므로
     // 탈퇴 직후의 빈 localStorage에 유령 세이브가 되살아난다 (2026-08-29 실사고).

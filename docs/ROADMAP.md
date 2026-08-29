@@ -322,6 +322,10 @@
         전환 (cloud.ts, appUrlOpen/launchUrl 양쪽 처리 — launchUrl은 세션 없을 때만 봐서
         사용된 코드 재교환을 막는다). **실기기 검증 전 1회: Supabase 대시보드 Redirect URLs에
         딥링크 추가 필요** (MCP로 불가 — 대시보드 전용)
+- [x] **인앱 업데이트 안내** (2026-08-29, platform/appUpdate.ts — my-investment 패턴 이식) —
+      플레이 In-App Updates API가 새 버전을 직접 판정(버전 값 별도 관리 불필요), 팝업에서
+      '업데이트' 누르면 플레이스토어 앱 페이지로. 같은 버전 24시간 스누즈, 백그라운드 복귀 시
+      재검사. 스토어 설치본에서만 동작(사이드로드는 조용히 무시) — 실기기 확인은 테스트 트랙에서
 - [x] **귀환 로컬 알림** (2026-08-29, platform/returnAlarms.ts + @capacitor/local-notifications) —
       endsAt이 파견 시점 확정이라 서버 푸시 불필요. 액션별 훅 대신 **선언적 동기화**: 세이브에서
       "울려야 할 알림 집합"을 파생해 OS 예약과 diff — 파견·정산·회군·모래시계·가속 어느 경로로
