@@ -38,6 +38,17 @@ function fmtStamp(at: number): string {
   return at > 0 ? new Date(at).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '기록 없음';
 }
 
+/**
+ * 유령 세션 정리 — 서버에서 계정이 삭제됐는데 클라 JWT만 살아있으면 쓰기가 FK 위반(23503→409)으로
+ * 계속 실패한다 (2026-08-29 재가입 테스트에서 실측). 감지 즉시 로그아웃해 자가 치유.
+ */
+function purgeStaleSession(error: { code?: string } | null): boolean {
+  if (error?.code !== '23503') return false;
+  void supabase.auth.signOut();
+  toast('클라우드 계정이 삭제되어 로그아웃했습니다 — 다시 로그인하면 새로 등록됩니다', 'error');
+  return true;
+}
+
 /** 현재 세이브를 서버에 업로드 — 실패는 조용히 (다음 디바운스가 재시도 역할) */
 export async function uploadNow(state?: SaveState): Promise<boolean> {
   const session = cloudSession();
@@ -51,17 +62,19 @@ export async function uploadNow(state?: SaveState): Promise<boolean> {
     client_saved_at: at,
     updated_at: new Date(at).toISOString(),
   });
-  if (!error) {
-    lastUploadedAt.set(at);
-    // 닉네임·최근 접속을 profiles에도 미러 — 대시보드에서 유저를 알아보게 (2026-08-29 사용자 리포트).
-    // 로그인 시점 1회로는 이후 닉네임 변경이 영영 안 실렸다
-    await supabase.from('profiles').upsert({
-      id: session.user.id,
-      nickname: body.profile.nickname,
-      last_seen_at: new Date(at).toISOString(),
-    });
+  if (error) {
+    purgeStaleSession(error);
+    return false;
   }
-  return !error;
+  lastUploadedAt.set(at);
+  // 닉네임·최근 접속을 profiles에도 미러 — 대시보드에서 유저를 알아보게 (2026-08-29 사용자 리포트).
+  // 로그인 시점 1회로는 이후 닉네임 변경이 영영 안 실렸다
+  await supabase.from('profiles').upsert({
+    id: session.user.id,
+    nickname: body.profile.nickname,
+    last_seen_at: new Date(at).toISOString(),
+  });
+  return true;
 }
 
 /** 서버 세이브를 이 기기에 적용 — 미래 버전(스테일 번들)이면 false */
@@ -102,11 +115,12 @@ async function reconcile(): Promise<void> {
   // 프로필 자가 복구(가입 트리거 누락 대비) + 접속 흔적.
   // ⚠️ supabase-js 쿼리는 then 구독 시점에 실행되는 지연 thenable — void로 버리면
   // 요청 자체가 안 나간다 (2026-08-29 실사고: 닉네임이 영영 null이었다). 반드시 await.
-  await supabase.from('profiles').upsert({
+  const { error: profileError } = await supabase.from('profiles').upsert({
     id: session.user.id,
     nickname: save().profile.nickname,
     last_seen_at: new Date(clock.now()).toISOString(),
   });
+  if (purgeStaleSession(profileError)) return; // 서버에서 계정이 지워진 유령 세션 — 여기서 끝
   const { data: row, error } = await supabase
     .from('saves').select('data, client_saved_at').eq('profile_id', session.user.id).maybeSingle();
   if (error) return; // 오프라인 등 — 다음 로그인 때 다시
