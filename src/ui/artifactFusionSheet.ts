@@ -6,7 +6,7 @@ import { content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
 import type { ArtifactFusionInput, ArtifactFusionResult } from '../core/economy';
 import type { SaveState } from '../core/types';
-import { flushUpload } from '../state/cloud';
+import { flushUpload } from '../state/cloudSync';
 import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';

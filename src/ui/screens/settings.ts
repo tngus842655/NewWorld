@@ -2,7 +2,8 @@
  * 설정 — 효과음, 확률 정보(등급별 — 추후 관리자 페이지로 대체 예정), 세이브 관리.
  * 캠프에 섞여 있던 설정을 분리해 캠프는 "성장·제작"에 집중시킨다.
  */
-import { cloudSession, deleteAccount, lastUploadedAt, restoreFromCloud, signInWithGoogle, signOutGoogle, uploadNow } from '../../state/cloud';
+import { cloudSession, signInWithGoogle, signOutGoogle } from '../../state/cloud';
+import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
 import { exportSave, importSave } from '../../state/save';
 import { resetSave, save, setNickname, toggleSound } from '../../state/store';
 import { googleG } from '../components';

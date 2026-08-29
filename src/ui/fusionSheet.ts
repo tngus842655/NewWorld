@@ -7,7 +7,7 @@ import type { MonsterRarity } from '../content/schema';
 import { RARITY_NEXT, finalTierEntry, isFinalTierNative, type FusionInput, type FusionResult } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import type { SaveState } from '../core/types';
-import { flushUpload } from '../state/cloud';
+import { flushUpload } from '../state/cloudSync';
 import { batch, signal } from '../state/signal';
 import { fuse, save } from '../state/store';
 import { monsterIcon } from './components';

@@ -8,7 +8,7 @@ import type { ShopProduct } from '../content/schema';
 import { onceBought, purchasesToday, todayKey } from '../core/shop';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, nowTick, save } from '../state/store';
-import { flushUpload } from '../state/cloud';
+import { flushUpload } from '../state/cloudSync';
 import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
 import { showGachaReveal } from './gachaReveal';
