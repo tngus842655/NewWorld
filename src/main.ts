@@ -10,6 +10,14 @@ const app = document.getElementById('app');
 async function boot(): Promise<void> {
   if (!app) return;
   try {
+    // 약관·개인정보처리방침 — 로그인 이전에도 접근 가능한 공개 페이지 (스토어 등록 URL 겸용)
+    const legalPage = window.location.hash === '#/terms' ? 'terms' : window.location.hash === '#/privacy' ? 'privacy' : null;
+    if (legalPage) {
+      const { renderLegal } = await import('./ui/legal');
+      renderLegal(app, legalPage);
+      return;
+    }
+
     const [{ save }, { mountApp }, { effect }, { preloadAllSfx, setSfxEnabled }, { initCloud }, { renderGate }] = await Promise.all([
       import('./state/store'),
       import('./ui/app'),
@@ -46,5 +54,8 @@ async function boot(): Promise<void> {
     app.replaceChildren(box);
   }
 }
+
+// 해시 전환(게이트↔약관 등)은 재부팅으로 처리 — SPA 라우터 없이 페이지 3장을 감당하는 최소 장치
+window.addEventListener('hashchange', () => window.location.reload());
 
 void boot();

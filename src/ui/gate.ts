@@ -22,7 +22,12 @@ export function renderGate(root: HTMLElement): void {
       el('button.google-btn', {
         onclick: () => void signInWithGoogle(),
       }, googleG('google-g'), 'Google로 계속하기'),
-      el('div.gate-note.small.muted', {}, '로그인하면 세이브가 클라우드에 안전하게 보관되고,\n기기를 바꿔도 이어서 할 수 있습니다.'),
+      // 약관·방침 — 로그인 없이 열람 가능해야 한다 (#/... 해시 → main.ts가 공개 페이지로 라우팅)
+      el('div.gate-links', {},
+        el('button.gate-link', { onclick: () => { window.location.hash = '#/terms'; } }, '이용약관'),
+        el('span.gate-link-dot', {}, '·'),
+        el('button.gate-link', { onclick: () => { window.location.hash = '#/privacy'; } }, '개인정보처리방침'),
+      ),
     ),
   );
 }

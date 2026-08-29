@@ -71,6 +71,14 @@ export function renderSettings(): HTMLElement {
         el('span', {}, '유물 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
       ),
+      // 약관·방침 — 게이트와 같은 공개 페이지로 (해시 라우팅, main.ts)
+      el('div.list-row', {},
+        el('span', {}, '약관·개인정보처리방침'),
+        el('div.row-gap', {},
+          el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/terms'; } }, '약관'),
+          el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/privacy'; } }, '방침'),
+        ),
+      ),
     ),
 
     // 계정 — 구글 로그인 + 클라우드 세이브 (ROADMAP M5, 2026-08-29). 로그인은 선택: 없어도 완전 오프라인 동작
