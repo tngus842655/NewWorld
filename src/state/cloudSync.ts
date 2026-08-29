@@ -2,8 +2,10 @@
  * 클라우드 세이브 동기화 — saves 테이블 LWW 미러 + 회원 탈퇴 (ROADMAP M5, 2026-08-29).
  * store에 결합되므로 **게임 경로에서만** 로드한다 (게이트 경로는 cloud.ts만 —
  * 이 모듈이 게이트에 실리면 store가 빈 세이브를 만들어 저장해버린다, 2026-08-29 실사고).
- * 흐름: 로그인 직후 reconcile(서버와 lastSavedAt 비교·선택) → 저장은 30초 디바운스 업로드,
- * RNG 소비(뽑기·합성)는 flushUpload로 즉시. 실패는 조용히 무시 (비크리티컬 원칙).
+ * 흐름: 로그인 직후 reconcile — 같은 기기 선형 진행은 베이스 리비전으로 감지해 조용히,
+ * 기기 간 충돌은 진행 많은 쪽 자동 선택(팝업 없음 — 2026-08-29 사용자, 패자는 previous_* 보관).
+ * 저장은 30초 디바운스 업로드 + 백그라운드 진입 시 즉시 플러시, RNG 소비(뽑기·합성)도 즉시.
+ * 실패는 조용히 무시 (비크리티컬 원칙).
  * 진실은 항상 클라 — 서버는 미러다 (0003_google_auth.sql).
  */
 import { content } from '../content';
@@ -24,6 +26,29 @@ export const lastUploadedAt = signal<number | null>(null);
 
 const UPLOAD_DEBOUNCE_MS = 30_000; // 저장이 잦아도 업로드는 30초에 한 번
 let uploadTimer: number | null = null;
+
+// ── 클라우드 베이스 리비전 (2026-08-29 실기기) ───────────────────────────────
+// 이 기기가 마지막으로 클라우드에 쓰거나(업로드) 받아들인(복원) client_saved_at.
+// reconcile에서 클라우드가 이 값 그대로면 다른 기기의 개입이 없었다는 뜻 — 같은 기기의
+// 선형 진행이므로 선택 다이얼로그 없이 조용히 따라잡는다. 계기: 파견 직후 앱을 닫으면
+// 디바운스 업로드가 유실돼 재진입마다 다이얼로그가 떴고, 무심코 '클라우드 불러오기'를
+// 누르면 파견 전으로 롤백되는 함정이었다. 다이얼로그는 진짜 기기 간 충돌에만 남긴다.
+const CLOUD_BASE_KEY = 'newworld-cloud-base-v1';
+
+function cloudBase(userId: string): number | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CLOUD_BASE_KEY) ?? 'null') as { userId: string; at: number } | null;
+    return raw && raw.userId === userId ? raw.at : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCloudBase(userId: string, at: number): void {
+  try {
+    localStorage.setItem(CLOUD_BASE_KEY, JSON.stringify({ userId, at }));
+  } catch { /* 비크리티컬 — 다음 성공 때 갱신 */ }
+}
 
 /** 마지막으로 디스크에 남은 저장 시각 — 메모리 시그널의 lastSavedAt은 로드 시점 값이라 스토리지가 진실 */
 function localLastSavedAt(): number {
@@ -99,6 +124,7 @@ export async function uploadNow(state?: SaveState): Promise<boolean> {
     purgeStaleSession(error);
     return false;
   }
+  setCloudBase(session.user.id, at); // 이제 클라우드 = 이 기기가 쓴 값
   lastUploadedAt.set(at);
   // 닉네임·최근 접속을 profiles에도 미러 — 대시보드에서 유저를 알아보게 (2026-08-29 사용자 리포트).
   // 로그인 시점 1회로는 이후 닉네임 변경이 영영 안 실렸다.
@@ -157,8 +183,12 @@ export async function restoreFromCloud(): Promise<void> {
   });
   if (!ok) return;
   await backupDiscarded(session.user.id, save(), localLastSavedAt()); // 버려질 로컬을 1세대 보관
-  if (applyCloudSave(row.data, session.user.id)) toast('클라우드 세이브를 불러왔습니다', 'ok');
-  else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+  if (applyCloudSave(row.data, session.user.id)) {
+    setCloudBase(session.user.id, Number(row.client_saved_at));
+    toast('클라우드 세이브를 불러왔습니다', 'ok');
+  } else {
+    toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+  }
 }
 
 /** 로그인 직후 1회 — 서버 세이브 유무·시각 비교, 다르면 사용자 선택 (ROADMAP M5 스펙) */
@@ -172,11 +202,15 @@ async function reconcile(): Promise<void> {
   const localOwner = save().profile.ownerUserId;
   if (localOwner && localOwner !== session.user.id) {
     const { data: row, error } = await supabase
-      .from('saves').select('data').eq('profile_id', session.user.id).maybeSingle();
+      .from('saves').select('data, client_saved_at').eq('profile_id', session.user.id).maybeSingle();
     if (error) return; // 판단 불가(오프라인 등) — uploadNow 가드가 상속을 막는다, 다음 로그인에 다시
     if (row) {
-      if (applyCloudSave(row.data, session.user.id)) toast('☁️ 이 계정의 클라우드 세이브로 이어서 합니다', 'ok');
-      else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+      if (applyCloudSave(row.data, session.user.id)) {
+        setCloudBase(session.user.id, Number(row.client_saved_at));
+        toast('☁️ 이 계정의 클라우드 세이브로 이어서 합니다', 'ok');
+      } else {
+        toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+      }
       return;
     }
     // 이 계정은 클라우드도 비어 있다 — 남의 진행 대신 새 게임 (랭킹 신원도 새로 발급된다)
@@ -209,43 +243,33 @@ async function reconcile(): Promise<void> {
   const cloudAt = Number(row.client_saved_at);
   const localAt = localLastSavedAt();
   if (Math.abs(cloudAt - localAt) < 2_000) return; // 같은 저장으로 간주
-  const cloudSave = row.data as SaveState | null;
 
-  // 실수 덮어쓰기 3겹 방어 (2026-08-29 사용자 지적 — "기기 유지" 오선택이 클라우드 진행을 지운다):
-  // ① 양쪽 진행 요약 + 배경 탭 무시(dismissible: false) ② 더 진행된 쪽을 버리면 2차 경고
-  // ③ 버려질 세이브를 서버 previous_*에 보관 (backupDiscarded)
-  for (;;) {
-    const useCloud = await askConfirm({
-      title: '☁️ 클라우드 세이브 발견',
-      message:
-        `클라우드 — ${saveSummary(cloudSave)}\n[${fmtStamp(cloudAt)} 저장]\n\n`
-        + `이 기기 — ${saveSummary(save())}\n[${fmtStamp(localAt)} 저장]\n\n`
-        + '어느 쪽으로 이어서 할까요? 선택하지 않은 쪽은 덮어써집니다.',
-      confirmLabel: '클라우드 불러오기',
-      cancelLabel: '이 기기 유지',
-      dismissible: false,
-    });
-    const kept = useCloud ? cloudSave : save();
-    const discarded = useCloud ? save() : cloudSave;
-    if (progressOf(discarded) > progressOf(kept)) {
-      const sure = await askConfirm({
-        title: '⚠️ 진행이 더 많은 쪽을 버립니다',
-        message: `버려질 진행 — ${saveSummary(discarded)}\n남길 진행 — ${saveSummary(kept)}\n\n정말 계속할까요? 덮어쓴 뒤에는 복구할 수 없습니다.`,
-        confirmLabel: '버리고 계속',
-        cancelLabel: '다시 선택',
-        danger: true,
-        dismissible: false,
-      });
-      if (!sure) continue; // 선택 화면으로 복귀
-    }
-    await backupDiscarded(session.user.id, discarded, useCloud ? localAt : cloudAt);
-    if (useCloud) {
-      if (applyCloudSave(row.data, session.user.id)) toast('클라우드 세이브로 이어서 합니다', 'ok');
-      else toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
-    } else {
-      toast('이 기기 세이브를 유지합니다 — 다음 저장부터 클라우드를 덮어씁니다', 'ok');
-    }
+  // 같은 기기의 선형 진행 — 클라우드가 이 기기의 베이스 그대로면 다른 기기 개입이 없었다.
+  // 조용히 따라잡는다 (파견 직후 앱 종료로 디바운스 업로드가 유실되는 일상 케이스 —
+  // 이게 매 재진입마다 선택 팝업으로 떴었다, 2026-08-29 실기기)
+  if (cloudBase(session.user.id) === cloudAt && localAt > cloudAt) {
+    void uploadNow();
     return;
+  }
+
+  // 진짜 기기 간 충돌 — 선택 팝업 없이 자동 해소 (2026-08-29 사용자: 팝업 자체가 불편).
+  // 진행이 많은 쪽, 같으면 최신 쪽을 잇는다. 구 3겹 방어의 ①②(다이얼로그)는 폐기하고
+  // ③(버려지는 쪽을 서버 previous_*에 1세대 보관)만 복구선으로 남긴다 (0004)
+  const cloudSave = row.data as SaveState | null;
+  const localSave = save();
+  const cloudProgress = progressOf(cloudSave);
+  const localProgress = progressOf(localSave);
+  const useCloud = cloudProgress !== localProgress ? cloudProgress > localProgress : cloudAt > localAt;
+  await backupDiscarded(session.user.id, useCloud ? localSave : cloudSave, useCloud ? localAt : cloudAt);
+  if (useCloud) {
+    if (applyCloudSave(row.data, session.user.id)) {
+      setCloudBase(session.user.id, cloudAt);
+      toast(`☁️ 다른 기기의 진행으로 이어갑니다 [${saveSummary(cloudSave)}]`, 'ok');
+    } else {
+      toast('세이브 버전이 앱보다 높습니다 — 앱을 새로고침해 주세요', 'error');
+    }
+  } else {
+    void uploadNow(); // 이 기기가 앞선다 — 클라우드가 따라오게 (조용히)
   }
 }
 
@@ -265,6 +289,7 @@ export async function deleteAccount(): Promise<boolean> {
   });
   if (error) return false;
   localStorage.removeItem(SAVE_KEY); // 로컬 세이브 파기 — 새로고침 전이라 persistSave가 다시 쓸 일 없다
+  localStorage.removeItem(CLOUD_BASE_KEY); // 삭제된 계정의 베이스 리비전도 함께
   // 예약된 귀환 알림도 파기 — 남겨두면 지워진 계정의 원정 알림이 울린다 (네이티브 전용, 웹 무동작)
   await import('../platform/returnAlarms').then((m) => m.cancelAllReturnAlarms()).catch(() => undefined);
   await supabase.auth.signOut(); // SIGNED_OUT → 새로고침 → 게이트 (완전한 신규 방문자 상태)
@@ -282,5 +307,10 @@ export function initCloudSync(): void {
     if (!cloudSession()) return;
     if (uploadTimer !== null) clearTimeout(uploadTimer);
     uploadTimer = window.setTimeout(() => { void uploadNow(state); }, UPLOAD_DEBOUNCE_MS);
+  });
+  // 백그라운드 진입 시 즉시 업로드 (2026-08-29 실기기) — 모바일은 디바운스 30초가
+  // 앱 전환·종료로 통째로 유실되기 쉽다. 이 플러시가 로컬·클라우드 드리프트를 원천 차단
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && cloudSession()) flushUpload();
   });
 }
