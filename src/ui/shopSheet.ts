@@ -8,6 +8,7 @@ import type { ShopProduct } from '../content/schema';
 import { onceBought, purchasesToday, todayKey } from '../core/shop';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, nowTick, save } from '../state/store';
+import { flushUpload } from '../state/cloud';
 import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
 import { showGachaReveal } from './gachaReveal';
@@ -37,6 +38,7 @@ function purchase(product: ShopProduct): void {
     if (!ok) return;
     const result = buyShop({ productId: product.id });
     if (!result) return;
+    flushUpload(); // 뽑기 결과 확정 즉시 서버 반영 — '불러오기' 세이브 스컴 차단
     const { granted } = result;
     // 마일스톤 알림 — 뽑기는 리빌이 닫힌 뒤에 (연출 위로 토스트가 겹치지 않게)
     const milestoneToasts = () => {

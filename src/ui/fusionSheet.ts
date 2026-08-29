@@ -7,6 +7,7 @@ import type { MonsterRarity } from '../content/schema';
 import { RARITY_NEXT, finalTierEntry, isFinalTierNative, type FusionInput, type FusionResult } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import type { SaveState } from '../core/types';
+import { flushUpload } from '../state/cloud';
 import { batch, signal } from '../state/signal';
 import { fuse, save } from '../state/store';
 import { monsterIcon } from './components';
@@ -130,6 +131,7 @@ function startRitual(rarity: MonsterRarity, rounds: number): void {
       fuseResults.set(results);
       fuseRevealed.set([]);
       fusePhase.set('result');
+      flushUpload(); // 합성 결과 확정 즉시 서버 반영 — '불러오기' 세이브 스컴 차단
     });
     const successes = results.filter((r) => r.success).length;
     playSfx(successes > 0 ? 'confirm' : 'capture-miss');

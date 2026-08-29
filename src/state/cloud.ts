@@ -78,6 +78,19 @@ export async function uploadNow(state?: SaveState): Promise<boolean> {
   return true;
 }
 
+/**
+ * RNG 소비 직후의 즉시 업로드 (세이브 스컴 방지, 2026-08-29) — 뽑기·발굴·합성 결과가
+ * 디바운스 30초를 기다리는 동안 '불러오기'가 소비 전 스냅샷으로 되돌리는 무료 재시도가 된다.
+ * 결과 확정 즉시 서버에 실어 되돌아갈 과거를 없앤다. 대기 중인 디바운스도 정리.
+ */
+export function flushUpload(): void {
+  if (uploadTimer !== null) {
+    clearTimeout(uploadTimer);
+    uploadTimer = null;
+  }
+  void uploadNow();
+}
+
 /** 서버 세이브를 이 기기에 적용 — 미래 버전(스테일 번들)이면 false */
 function applyCloudSave(data: unknown): boolean {
   try {

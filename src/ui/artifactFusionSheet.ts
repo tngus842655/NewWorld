@@ -6,6 +6,7 @@ import { content } from '../content';
 import type { ArtifactRarity } from '../content/schema';
 import type { ArtifactFusionInput, ArtifactFusionResult } from '../core/economy';
 import type { SaveState } from '../core/types';
+import { flushUpload } from '../state/cloud';
 import { batch, signal } from '../state/signal';
 import { fuseArtifact, save } from '../state/store';
 import { artifactIcon } from './components';
@@ -97,6 +98,7 @@ function startRitual(rarity: ArtifactRarity, rounds: number): void {
       afResults.set(results);
       afRevealed.set([]);
       afPhase.set('result');
+      flushUpload(); // 합성 결과 확정 즉시 서버 반영 — '불러오기' 세이브 스컴 차단
     });
     const successes = results.filter((r) => r.success).length;
     playSfx(successes > 0 ? 'confirm' : 'capture-miss');
