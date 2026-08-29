@@ -806,13 +806,19 @@ body.overlay-open .container { overflow: hidden; }
 /* 좁은 행에 버튼 2~3개 — 줄바꿈 없이 들어가는 소형 버튼 */
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 
-/* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ── */
+/* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ──
+ * 배경은 앱 아이콘(icon-512-v1)의 네이비 팔레트 실측값 — 위 #0d274c → 아래 #040823.
+ * 아이콘에 게임명이 그려져 있어 텍스트 타이틀은 폴백 전용 */
 .gate {
   min-height: 100dvh; padding: 24px; text-align: center;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(180deg, #0d274c 0%, #0a1c3d 45%, #040823 100%);
 }
-.gate-logo { font-size: 72px; line-height: 1; margin-bottom: 8px; }
-.gate-logo img { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)); }
+.gate-logo { font-size: 72px; line-height: 1; margin-bottom: 18px; }
+.gate-logo img {
+  width: min(240px, 62vw); height: auto; object-fit: contain;
+  border-radius: 30px; box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+}
 .gate-title { font-size: 30px; font-weight: 800; letter-spacing: 1px; }
 .gate-sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
 .gate .google-btn { width: min(280px, 100%); }

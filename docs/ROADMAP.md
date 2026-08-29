@@ -258,6 +258,9 @@
 
 ## M5 — 안드로이드 클라이언트 (Google Play)  ⬜
 
+> **앱 표시명 확정: 원정 몬스터즈** (2026-08-29 사용자) — 코드명·저장소는 NewWorld 유지.
+> 앱 아이콘 public/app-icon/icon-{192,512}-v1.png (픽셀아트, 게임명 포함 — 게이트 히어로 겸용)
+
 - [ ] **계정 시스템 한 묶음 (출시 전 필수 — 앱 삭제 = localStorage 삭제라 세이브 전멸 방지)**:
   - [x] 구글 로그인 + 클라우드 세이브 (2026-08-29 완료) — 0003_google_auth.sql: 휴면 앱인토스
         스키마를 auth.users 기준 profiles·saves로 재작업(본인 행 RLS + 가입 트리거, expeditions
