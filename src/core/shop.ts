@@ -28,9 +28,12 @@ export function onceBought(save: SaveState, product: ShopProduct): boolean {
 
 // ── 광고 연동 (GDD §9.2, 2026-08-29) ────────────────────────────────────────
 
-/** 광고 제거 소유 — 보상형 광고 전부를 시청 없이 즉시 보상으로 (다이아 once 상품, platform/ads.ts가 검사) */
+/** 광고 제거 소유 — 보상형 광고 전부를 시청 없이 즉시 보상으로 (platform/ads.ts가 검사).
+ *  플래그는 실결제(IAP)만 세운다 (platform/iap.ts → store.grantAdFree) — 출석 다이아로 못 사게
+ *  다이아 상점 판매는 폐지 (2026-08-29 사용자). 세이브에 실려 클라우드로도 복원되고,
+ *  재설치 시에는 부팅 IAP 소유 조회가 복원한다 */
 export function hasAdFree(save: SaveState): boolean {
-  return save.shop.once.includes('dia-ad-free');
+  return save.profile.flags['adFree'] === true;
 }
 
 /** 오늘 이 상품에 쓴 광고 연장 횟수 — counters.adUsed(로컬 자정 리셋, core/ads.ts와 공용 저장소) */
@@ -195,8 +198,6 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
       granted.artifacts.push(drop.itemId);
     }
     if (goods.count === 1) granted.artifactItemId = granted.artifacts[0];
-  } else if (goods.kind === 'adFree') {
-    // 지급물 없음 — 아래 once 기록 자체가 소유이며, platform/ads.ts가 hasAdFree로 검사한다
   } else {
     // hourglass — rush(즉시 귀환) 폐지 후 가속은 모래시계로 일원화 (2026-08-23)
     next.wallet.hourglasses[goods.hourglassId] = (next.wallet.hourglasses[goods.hourglassId] ?? 0) + goods.count;

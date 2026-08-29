@@ -50,6 +50,8 @@ async function boot(): Promise<void> {
     initCloudSync();
     // 귀환 로컬 알림 (네이티브 전용 — 웹에서는 무동작). 실패해도 게임은 그대로 돈다
     void import('./platform/returnAlarms').then(({ initReturnAlarms }) => initReturnAlarms()).catch(() => undefined);
+    // 실결제 (네이티브 전용) — 광고 제거 상품 조회·소유 복원
+    void import('./platform/iap').then(({ initIap }) => initIap()).catch(() => undefined);
   } catch (err) {
     const box = document.createElement('div');
     box.className = 'boot-error';

@@ -133,15 +133,14 @@ describe('상점 광고 연동 (GDD §9.2, 2026-08-29)', () => {
     expect(() => grantShopAdExtra(content, s, 'dia-starter', clock.ctx.now())).toThrow(GameError);
   });
 
-  it('광고 제거 — 1회 구매로 영구 소유(hasAdFree), 재구매 불가', () => {
+  it('광고 제거 — 실결제(IAP) 전용: 상점 상품이 아니고, 소유는 profile.flags.adFree', () => {
     const clock = makeCtx();
     const { save: s } = saveWithParty(clock, [{ id: 'dune-pup' }]);
-    s.wallet.diamonds = 500;
+    // 출석 다이아로 못 사게 상점에서 제거됨 (2026-08-29 사용자) — 판매처는 platform/iap.ts뿐
+    expect(content.shopProducts.some((p) => p.id === 'dia-ad-free')).toBe(false);
     expect(hasAdFree(s)).toBe(false);
-    const bought = buyShopProduct(content, s, { productId: 'dia-ad-free' }, clock.ctx).save;
-    expect(hasAdFree(bought)).toBe(true);
-    expect(bought.wallet.diamonds).toBe(300); // 200💎 차감
-    expect(() => buyShopProduct(content, bought, { productId: 'dia-ad-free' }, clock.ctx)).toThrow(GameError);
+    s.profile.flags['adFree'] = true; // IAP 구매·복원이 세우는 플래그 (store.grantAdFree)
+    expect(hasAdFree(s)).toBe(true);
   });
 });
 

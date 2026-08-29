@@ -336,10 +336,9 @@ export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   // count>1 = 다연차 뽑기 (2026-08-29 ×10) — 같은 확률표로 n장, 리빌은 그리드로
   z.object({ kind: z.literal('monsterGacha'), table: z.enum(MONSTER_GACHA_TABLES), count: z.number().int().positive().default(1) }),
   z.object({ kind: z.literal('artifactGacha'), table: z.enum(ARTIFACT_GACHA_TABLES), count: z.number().int().positive().default(1) }),
-  // rush(즉시 귀환) 상품은 폐지 (2026-08-23) — 가속은 모래시계 아이템으로 일원화
+  // rush(즉시 귀환) 상품은 폐지 (2026-08-23) — 가속은 모래시계 아이템으로 일원화.
+  // 광고 제거는 상점 상품이 아니라 실결제(IAP, platform/iap.ts) — 출석 다이아로 못 사게 (2026-08-29 사용자)
   z.object({ kind: z.literal('hourglass'), hourglassId: z.string(), count: z.number().int().positive().default(1) }),
-  // 광고 제거 (2026-08-29, 다이아 once) — 지급물 없음: shop.once 기록 자체가 소유 (core/shop.hasAdFree)
-  z.object({ kind: z.literal('adFree') }),
 ]);
 export type ShopGoods = z.infer<typeof ShopGoodsSchema>;
 

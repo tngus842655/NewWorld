@@ -5,8 +5,9 @@
  */
 import { content } from '../content';
 import type { ShopProduct } from '../content/schema';
-import { onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
+import { hasAdFree, onceBought, purchasesToday, shopAdExtrasToday, todayKey } from '../core/shop';
 import { adsAvailable, showRewardedAd } from '../platform/ads';
+import { adFreeIap, buyAdFree } from '../platform/iap';
 import { signal } from '../state/signal';
 import { buyShop, devGrantDiamonds, grantAdShopExtra, nowTick, save } from '../state/store';
 import { flushUpload } from '../state/cloudSync';
@@ -20,6 +21,7 @@ import { playSfx } from './sfx';
 type ShopTab = 'gold' | 'diamond';
 const shopTab = signal<ShopTab>('gold');
 const adBusy = signal(false); // 광고 로드 중 — 연장 버튼 잠금
+const iapBusy = signal(false); // 결제 시트 여는 중 — 광고 제거 버튼 잠금
 
 /** 상점을 열 때 초기화 */
 export function resetShop(): void {
@@ -59,10 +61,7 @@ function purchase(product: ShopProduct): void {
       return;
     }
 
-    if (product.goods.kind === 'adFree') {
-      playSfx('milestone');
-      toast('🚫 광고 제거 적용! 이제 광고 없이 바로 보상을 받습니다', 'ok');
-    } else if (product.goods.kind === 'materialsAll') {
+    if (product.goods.kind === 'materialsAll') {
       // 해금 지역이 많으면 재료 나열이 길어진다 — 종 수만 요약 (+골드는 병기)
       playSfx('treasure');
       const goldTail = granted.gold ? ` + 골드 ${fmtGold(granted.gold)}` : '';
@@ -167,10 +166,38 @@ function hourglassRow(product: ShopProduct): HTMLElement {
   );
 }
 
+/**
+ * 광고 제거 — 실결제 전용 카드 (다이아관 상단, platform/iap.ts).
+ * 출석 다이아로 못 사게 상점 상품이 아니라 IAP다 (2026-08-29 사용자). 가격은 플레이 콘솔 값.
+ * 스토어 설치본 + 콘솔 상품 등록 전에는 카드가 안 보인다 (소유자는 '적용됨'으로 표시)
+ */
+function adFreeIapCard(): HTMLElement | null {
+  const owned = hasAdFree(save());
+  const { available, price } = adFreeIap();
+  if (!available && !owned) return null;
+  return el('div.card.stack-sm.shop-item', {},
+    el('div.list-row', {},
+      el('div', {},
+        el('div.shop-name', {}, '🚫 광고 제거 ', owned ? el('span.muted.small.shop-limit', {}, '(적용됨)') : null),
+        el('div.muted.small', {}, '모든 보상형 광고를 시청 없이 즉시 보상으로 (영구)'),
+      ),
+      el('div.shop-buy', {},
+        el('button.btn.btn-primary', {
+          disabled: owned || iapBusy(),
+          onclick: () => {
+            iapBusy.set(true);
+            void buyAdFree().finally(() => iapBusy.set(false)); // 완료 반영은 iap 이벤트 → grantAdFree
+          },
+        }, owned ? '적용됨' : (price ?? '구매')),
+      ),
+    ),
+  );
+}
+
 // 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
 const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][] }[] = [
   { label: '🎲 뽑기·발굴', kinds: ['monsterGacha', 'artifactGacha'] },
-  { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll', 'adFree'] },
+  { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll'] },
   { label: '⏳ 원정 가속', kinds: ['hourglass'] },
 ];
 
@@ -215,6 +242,7 @@ export function shopSheet(): HTMLElement {
       el(`button.big-tab${tab === 'gold' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('gold'); } }, '💰 골드 상점'),
       el(`button.big-tab${tab === 'diamond' ? '.active' : ''}`, { onclick: () => { playSfx('tap'); shopTab.set('diamond'); } }, '💎 다이아 상점'),
     ),
+    tab === 'diamond' ? adFreeIapCard() : null,
     ...groupBlocks,
     tab === 'gold'
       ? el('div.center.small.muted', {}, `구매 한도는 매일 자정에 초기화됩니다 (오늘: ${todayKey(nowTick())})`)

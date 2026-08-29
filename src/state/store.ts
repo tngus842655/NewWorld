@@ -184,6 +184,14 @@ export function grantAdScent(): boolean {
   );
 }
 
+/** 광고 제거 소유 반영 — 실결제 구매·복원(platform/iap.ts)이 부른다. 멱등 */
+export function grantAdFree(): void {
+  const state = save();
+  if (state.profile.flags['adFree'] === true) return;
+  save.set({ ...state, profile: { ...state.profile, flags: { ...state.profile.flags, adFree: true } } });
+  toast('🚫 광고 제거 적용! 이제 광고 없이 바로 보상을 받습니다', 'ok');
+}
+
 /** 광고: 상점 한도 연장 — 골드관 일일 한도 상품의 오늘 한도 +1 (상품당 하루 1회) */
 export function grantAdShopExtra(productId: string): boolean {
   return (
