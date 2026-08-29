@@ -806,6 +806,18 @@ body.overlay-open .container { overflow: hidden; }
 /* 좁은 행에 버튼 2~3개 — 줄바꿈 없이 들어가는 소형 버튼 */
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 
+/* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ── */
+.gate {
+  min-height: 100dvh; padding: 24px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.gate-logo { font-size: 72px; line-height: 1; margin-bottom: 8px; }
+.gate-logo img { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)); }
+.gate-title { font-size: 30px; font-weight: 800; letter-spacing: 1px; }
+.gate-sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+.gate .google-btn { width: min(280px, 100%); }
+.gate-note { margin-top: 16px; white-space: pre-line; line-height: 1.6; }
+
 /* ── 뽑기·발굴 리빌 연출 (2026-08-29) — 시트(40) 위, 다이얼로그(55)·토스트(60) 아래 층 ──
  * 긴장(카드 떨림·오라) → 섬광 → 결과 팝. 단계는 .phase-* 클래스로 전환 (gachaReveal.ts) */
 .gacha-backdrop {

@@ -264,6 +264,9 @@
         미러는 푸시 트랙과 함께 보류). 클라 state/cloud.ts: 로그인 시 lastSavedAt 비교·선택
         다이얼로그 + 30초 디바운스 자동 업로드, 설정 탭 '계정' 섹션. 구글 콘솔(웹 애플리케이션)·
         Supabase 프로바이더·리디렉션 설정 완료, 구글 로그인 화면 도달 검증
+  - [x] **회원 전용 전환** (2026-08-29 사용자 결정: 비회원 이용 차단) — 부팅 게이트(ui/gate.ts)가
+        구글 로그인을 강제, 로그아웃·유령 세션은 게이트로 복귀. 세션 확보 후 플레이는 로컬 우선
+        그대로 (일시 오프라인에도 게임 계속, 업로드만 밀림). DEV 한정 ?dev-guest 우회(자동 검증용)
   - [ ] 익명 랭킹 신원(playerId) 계정 병합 — 남음 (rank_scores는 여전히 playerId+secret 자가 신고)
 - [ ] Capacitor 패키징 (MoneyGame 파이프라인 재사용, Windows SDK 경로 수동 지정 주의)
       **주의: 구글 OAuth는 웹뷰 내 차단(disallowed_useragent) — 시스템 브라우저(@capacitor/browser)

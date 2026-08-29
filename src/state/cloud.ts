@@ -1,9 +1,10 @@
 /**
  * 클라우드 세이브 — 구글 로그인(Supabase Auth) + saves 테이블 LWW 동기화 (ROADMAP M5, 2026-08-29).
- * 로컬 우선: 로그인 없이 완전 오프라인 동작하고, 로그인하면 백업·복원이 생긴다.
+ * 회원 전용 (2026-08-29 사용자: 비회원 이용 차단) — 부팅 게이트(ui/gate.ts)가 로그인을 강제하고,
+ * 세션 확보 후의 플레이는 로컬 우선으로 동작한다 (일시 오프라인에도 게임은 계속, 업로드만 밀림).
  * 흐름: 로그인 감지 → 서버 세이브와 lastSavedAt 비교 → 다르면 선택 다이얼로그 →
  *       이후 저장은 디바운스 자동 업로드. 실패는 조용히 무시 (랭킹과 같은 비크리티컬 원칙).
- * 진실은 항상 클라 — 서버는 미러다 (0003_google_auth.sql).
+ * 진실은 항상 클라 — 서버는 미러다 (0003_google_auth.sql). 로그아웃·유령 세션은 새로고침 → 게이트.
  */
 import { content } from '../content';
 import { ensureTeams } from '../core/teams';
@@ -154,8 +155,7 @@ export async function signInWithGoogle(): Promise<void> {
 }
 
 export async function signOutGoogle(): Promise<void> {
-  await supabase.auth.signOut();
-  toast('로그아웃했습니다 — 게임은 이 기기에서 계속됩니다', 'ok');
+  await supabase.auth.signOut(); // SIGNED_OUT 이벤트 → 새로고침 → 게이트 (initCloud)
 }
 
 /** OAuth 리디렉션이 에러를 들고 돌아온 경우 — 조용히 삼키면 "그냥 안 됨"으로 보인다 (2026-08-29 실사례) */
@@ -168,14 +168,18 @@ function surfaceAuthError(): void {
   history.replaceState(null, '', window.location.pathname); // 새로고침 때 같은 토스트 반복 방지
 }
 
-/** 부팅 시 1회 (main.ts) — 세션 미러 + 자동 업로드 이펙트 연결 */
-export function initCloud(): void {
+/** 부팅 시 1회 (main.ts) — 초기 세션을 돌려준다 (null이면 게이트). 세션 미러·자동 업로드 연결 */
+export async function initCloud(): Promise<Session | null> {
   // DEV 전용 검증 손잡이 — 콘솔 동적 import는 HMR ?t= 때문에 딴 인스턴스를 받는다 (프로드에선 제거)
   if (import.meta.env.DEV) Object.assign(window, { __newworldCloud: { cloudSession } });
   surfaceAuthError();
-  void supabase.auth.getSession().then(({ data }) => cloudSession.set(data.session));
-  supabase.auth.onAuthStateChange((_event, session) => {
+  // getSession은 리디렉션 복귀 시 코드 교환(detectSessionInUrl)까지 끝난 세션을 준다
+  const { data } = await supabase.auth.getSession();
+  cloudSession.set(data.session);
+  supabase.auth.onAuthStateChange((event, session) => {
     cloudSession.set(session);
+    // 회원 전용 (2026-08-29) — 로그아웃(명시적·유령 세션 정리 포함)은 게이트로 돌아간다
+    if (event === 'SIGNED_OUT') { window.location.reload(); return; }
     if (!session) { reconciled = false; return; }
     if (!reconciled) {
       reconciled = true;
@@ -189,4 +193,5 @@ export function initCloud(): void {
     if (uploadTimer !== null) clearTimeout(uploadTimer);
     uploadTimer = window.setTimeout(() => { void uploadNow(state); }, UPLOAD_DEBOUNCE_MS);
   });
+  return data.session;
 }
