@@ -639,15 +639,20 @@ function expeditionLine(expeditionId: string): HTMLElement {
 export function expeditionLinesCard(): HTMLElement {
   const state = save();
   const running = outExpeditions(state);
+  // 빈 상태 줄은 항상 만들어 두고 토글한다 — 회군 복귀는 세이브 변화 없이 시간만으로 끝나서
+  // 줄이 스스로 숨은 뒤 얇은 빈 카드 껍데기가 남았다 (2026-08-29 사용자 리포트)
+  const emptyLine = el('div.map-line.map-line-empty', {},
+    el('span.muted.small', {}, '지금은 모두 캠프에서 쉬고 있습니다'),
+    el('button.btn.btn-primary.map-line-claim', { onclick: () => tab.set('expedition') }, '원정 보내기'),
+  );
+  scopedEffect(() => {
+    const now = nowTick();
+    emptyLine.classList.toggle('hidden', state.expeditions.some((e) => isExpeditionOut(e, now)));
+  });
   return el('div.card.map-lines-card', {},
     el('div.map-lines', {},
       ...running.map((e) => expeditionLine(e.id)),
-      running.length === 0
-        ? el('div.map-line.map-line-empty', {},
-            el('span.muted.small', {}, '지금은 모두 캠프에서 쉬고 있습니다'),
-            el('button.btn.btn-primary.map-line-claim', { onclick: () => tab.set('expedition') }, '원정 보내기'),
-          )
-        : null,
+      emptyLine,
     ),
   );
 }

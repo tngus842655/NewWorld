@@ -7,9 +7,9 @@ import { isExpeditionOut } from '../../core/expedition';
 import { canUnlockRegion, capturedCounts, isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
 import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
-import { save } from '../../state/store';
+import { nowTick, save } from '../../state/store';
 import { expeditionLinesCard, mapEntryButton } from '../expeditionMap';
-import { TIER_LABEL, el, fmtAgo, fmtGold } from '../kit';
+import { TIER_LABEL, el, fmtAgo, fmtGold, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -139,7 +139,15 @@ export function renderHome(): HTMLElement {
     tutorialBanner,
     // 타이틀 우측 지도 아이콘 → 전용 시트. 카드에는 한 줄 요약만 (2026-08-27 사용자)
     el('div.section-head', {},
-      el('h2.section-title', {}, running.length > 0 ? `원정 현황 (${running.length})` : '원정 현황'),
+      (() => {
+        // 회군 복귀 완료는 세이브 변화 없이 시간만으로 일어난다 — 카운트도 초 단위로 따라가게 (2026-08-29)
+        const title = el('h2.section-title', {});
+        scopedEffect(() => {
+          const count = state.expeditions.filter((e) => isExpeditionOut(e, nowTick())).length;
+          title.textContent = count > 0 ? `원정 현황 (${count})` : '원정 현황';
+        });
+        return title;
+      })(),
       mapEntryButton(),
     ),
     expeditionLinesCard(),
