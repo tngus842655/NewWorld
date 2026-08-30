@@ -161,7 +161,13 @@ export function renderSettings(): HTMLElement {
                   title: '로그아웃',
                   message: '로그아웃하면 로그인 화면으로 돌아갑니다.\n세이브는 이 기기와 클라우드에 안전하게 남습니다.',
                   confirmLabel: '로그아웃',
-                }).then((ok) => { if (ok) void signOutGoogle(); });
+                }).then(async (ok) => {
+                  if (!ok) return;
+                  // 마지막 진행을 플러시하고 나간다 — 디바운스 창(30초) 안의 진행이 로그아웃·계정
+                  // 전환으로 증발하던 실사고 (2026-08-30 firepath 쿠폰 다이아 유실). 실패해도 진행
+                  await uploadNow().catch(() => undefined);
+                  void signOutGoogle();
+                });
               },
             }, '로그아웃'),
           ),
