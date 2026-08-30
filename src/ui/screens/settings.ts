@@ -37,18 +37,22 @@ export function renderSettings(): HTMLElement {
           },
         }, '변경'),
       ),
-      // 랭킹 — 앱바 🏆에서 이동 (2026-08-29 사용자, 스토어 출시 전 일반 공개 여부 미정이라 설정으로 숨김)
+      // 랭킹 — 관리자 전용 (2026-08-30 사용자: 페이지 다듬은 뒤 유저 공개 예정).
+      // 리더보드 자체도 서버 뷰(0013)가 관리자 점수를 걸러낸다
+      ...(isAdmin() ? [
+        el('div.list-row', {},
+          el('span', {}, '🛠️ 랭킹'),
+          el('button.btn.btn-ghost', {
+            onclick: () => {
+              openRankingBoard();
+              overlay.set({ kind: 'ranking' });
+            },
+          }, '보기'),
+        ),
+      ] : []),
       el('div.list-row', {},
-        el('span', {}, '🏆 랭킹'),
-        el('button.btn.btn-ghost', {
-          onclick: () => {
-            openRankingBoard();
-            overlay.set({ kind: 'ranking' });
-          },
-        }, '보기'),
-      ),
-      el('div.list-row', {},
-        el('span', {}, '효과음'),
+        // 라벨 이모지는 상태 이모지(🔊/🔇 버튼)와 겹치지 않는 것으로 (2026-08-30 이모지 통일)
+        el('span', {}, '🎵 효과음'),
         el('button.btn.btn-ghost', {
           onclick: () => {
             toggleSound();
@@ -59,7 +63,7 @@ export function renderSettings(): HTMLElement {
       ),
       // 야간 귀환 알림 (검토 목록 ③) — 끔(기본)이면 21~08시 도착 알림은 울리지 않는다
       el('div.list-row', {},
-        el('span', {}, `야간 알림 (${NIGHT_START_HOUR}~${String(NIGHT_END_HOUR).padStart(2, '0')}시)`),
+        el('span', {}, `🔔 야간 알림 (${NIGHT_START_HOUR}~${String(NIGHT_END_HOUR).padStart(2, '0')}시)`),
         el('button.btn.btn-ghost', {
           onclick: () => {
             toggleNightAlarms();
@@ -87,16 +91,16 @@ export function renderSettings(): HTMLElement {
         }, '입력'),
       ),
       el('div.list-row', {},
-        el('span', {}, '확률 정보'),
+        el('span', {}, '🎲 확률 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'odds' }) }, '보기'),
       ),
       el('div.list-row', {},
-        el('span', {}, '속성 정보'),
+        el('span', {}, '🔥 속성 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'elementInfo' }) }, '보기'),
       ),
       // 업데이트 내역 (검토 ⑧) — 파일 관리형, 읽기 전용 (content/releaseNotes.ts)
       el('div.list-row', {},
-        el('span', {}, '📦 업데이트 내역'),
+        el('span', {}, '📝 업데이트 내역'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'releaseNotes' }) }, '보기'),
       ),
       // 문의하기 (검토 ⑩) — 비공개 1:1, 본인 문의·답변만 보인다
@@ -123,7 +127,7 @@ export function renderSettings(): HTMLElement {
       ] : []),
       // 약관·방침 — 게이트와 같은 공개 페이지로 (해시 라우팅, main.ts)
       el('div.list-row', {},
-        el('span', {}, '약관·개인정보처리방침'),
+        el('span', {}, '📜 약관·개인정보처리방침'),
         el('div.row-gap', {},
           el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/terms'; } }, '약관'),
           el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/privacy'; } }, '방침'),

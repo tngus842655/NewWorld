@@ -197,10 +197,9 @@ export function renderCamp(): HTMLElement {
 
   // 합성 한 번에 필요한 재료 수 — 여분이 이만큼 모여야 실제로 돌릴 수 있다
   const fusionCost = content.balance.fusion.materials;
+  // 제작 탭 알림 점은 카드·유물 합성 가능일 때만 (2026-08-30 사용자) — 미끼·모래시계는
+  // 재료만 있으면 늘 만들 수 있어 점이 상시 켜진 것과 같아진다 (알림 가치 0)
   const canFuse = spareCards >= fusionCost || spareArtifacts >= fusionCost;
-  // 제작 탭 알림 점 — 합성뿐 아니라 '지금 만들 수 있는 레시피'도 포함한다 (2026-08-25).
-  // 모래시계 레시피가 들어오면서 제작 탭에 할 일이 늘었다
-  const canCraft = [...content.recipes.values()].some(canAfford);
 
   const rarityChipRow = filterChips(
     RARITY_DESC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
@@ -311,9 +310,8 @@ export function renderCamp(): HTMLElement {
       [
         { key: 'monster' as const, label: `몬스터 (${state.roster.length})` },
         { key: 'artifact' as const, label: `유물 (${state.artifacts.length})` },
-        // 제작 탭만 수치가 없어 발견성이 떨어진다 — 지금 할 수 있는 일이 있으면 점으로 알린다 (2026-08-25 사용자).
-        // '보유하고 있다'가 아니라 '실제로 지금 한 번 실행할 수 있다'가 기준
-        { key: 'craft' as const, label: '제작', dot: canFuse || canCraft },
+        // 제작 탭만 수치가 없어 발견성이 떨어진다 — 합성(카드·유물) 가능일 때만 점 (2026-08-30 사용자)
+        { key: 'craft' as const, label: '제작', dot: canFuse },
       ],
       { active: tab, onPick: (key) => campTab.set(key) },
     ),

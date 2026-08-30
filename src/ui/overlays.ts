@@ -564,7 +564,7 @@ function raritySections(sections: { rarity: MonsterRarity; view: HTMLElement }[]
 
 /** 업데이트 내역 (검토 ⑧) — 파일 관리형(content/releaseNotes.ts), 최신 버전만 기본 펼침 */
 function releaseNotesSheet(): HTMLElement {
-  return sheetShell('📦 업데이트 내역',
+  return sheetShell('📝 업데이트 내역',
     el('div.sheet-body', {},
       ...RELEASE_NOTES.map((note, index) => {
         const detail = el<'details'>('details.release-note', {},
