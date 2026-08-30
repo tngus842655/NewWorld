@@ -14,6 +14,7 @@ import { awaken, choose, claim, crossroadsOf, enhance, levelUp, save } from '../
 import { accelerateSheet } from './accelerateSheet';
 import { artifactFusionSheet } from './artifactFusionSheet';
 import { mapSheet } from './expeditionMap';
+import { feedbackSheet } from './feedbackSheet';
 import { FUSABLE_RARITIES, FUSION_NEXT, fusionSheet } from './fusionSheet';
 import { rankingSheet, tasksSheet } from './rankingSheets';
 import { teamSheet } from './teamSheet';
@@ -75,6 +76,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
                   ? monsterInfoSheet()
                 : current.kind === 'releaseNotes'
                   ? releaseNotesSheet()
+                : current.kind === 'feedback'
+                  ? feedbackSheet()
                   : current.kind === 'artifactInfo'
                     ? artifactInfoSheet()
                     : crossroadsSheet(current.expeditionId);

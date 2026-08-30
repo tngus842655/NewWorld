@@ -855,6 +855,19 @@ body.overlay-open .container { overflow: hidden; }
 }
 .gate-link-dot { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
 
+/* 문의하기 (검토 ⑩) — 작성 카드 + 내 문의 목록 */
+.feedback-input { min-height: 88px; width: 100%; margin: 10px 0; }
+.feedback-list { display: grid; gap: 10px; }
+.feedback-entry { border: 1px solid var(--line, rgba(255, 255, 255, 0.08)); border-radius: 10px; padding: 10px 12px; }
+.feedback-entry-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.feedback-entry-head .muted { margin-left: auto; }
+.feedback-entry-body { font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+.feedback-reply {
+  margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; line-height: 1.55;
+  background: rgba(120, 190, 255, 0.08); white-space: pre-wrap;
+}
+.tag-ok { color: #7ddf9a; border-color: rgba(125, 223, 154, 0.5); }
+
 /* 공지 팝업 (검토 ⑨) — 본문 줄바꿈 보존, 길면 스크롤 */
 .dialog-notice .notice-body { white-space: pre-wrap; text-align: left; max-height: 50vh; overflow-y: auto; }
 

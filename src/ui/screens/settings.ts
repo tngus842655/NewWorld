@@ -6,6 +6,7 @@ import { cloudSession, isAdmin, signInWithGoogle, signOutGoogle } from '../../st
 import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
 import { NIGHT_END_HOUR, NIGHT_START_HOUR } from '../../platform/returnAlarms';
 import { redeemCoupon } from '../../state/coupon';
+import { openFeedback } from '../feedbackSheet';
 import { save, setNickname, toggleNightAlarms, toggleSound } from '../../state/store';
 import { googleG } from '../components';
 import { askConfirm, askText } from '../dialog';
@@ -97,6 +98,16 @@ export function renderSettings(): HTMLElement {
       el('div.list-row', {},
         el('span', {}, '📦 업데이트 내역'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'releaseNotes' }) }, '보기'),
+      ),
+      // 문의하기 (검토 ⑩) — 비공개 1:1, 본인 문의·답변만 보인다
+      el('div.list-row', {},
+        el('span', {}, '💬 문의하기'),
+        el('button.btn.btn-ghost', {
+          onclick: () => {
+            openFeedback();
+            overlay.set({ kind: 'feedback' });
+          },
+        }, '열기'),
       ),
       // 전체 데이터 뷰 2종 — 관리자 전용 (검토 ④, 2026-08-30). 확률 정보는 확률형 아이템
       // 고지 의무(유료 뽑기)라 유저 공개 유지. isAdmin은 UI 노출 가드일 뿐 — 민감 동작 아님

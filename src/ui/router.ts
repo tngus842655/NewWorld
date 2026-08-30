@@ -28,6 +28,7 @@ export type Overlay =
   | { kind: 'odds' }                       // 확률 정보 (등급별 — 추후 관리자 페이지로 대체 예정)
   | { kind: 'elementInfo' }                // 속성 정보 (상성 구조·배수·지역별 유불리 — 유저 공개)
   | { kind: 'releaseNotes' }               // 업데이트 내역 — 파일 관리형 (검토 ⑧, content/releaseNotes.ts)
+  | { kind: 'feedback' }                   // 문의하기 — 비공개 1:1 건의·버그 제보 (검토 ⑩)
   | { kind: 'monsterInfo' }                // 전체 몬스터 데이터 뷰 (추후 관리자 전용)
   | { kind: 'artifactInfo' }               // 전체 유물 데이터 뷰 (추후 관리자 전용)
   | null;
