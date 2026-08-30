@@ -357,6 +357,12 @@ export function toggleSound(): void {
   save.set({ ...state, settings: { ...state.settings, sound: !state.settings.sound } });
 }
 
+/** 온보딩 투어 플래그 기록 (GDD §11.2) — 일회성 사실(tourIntro/tourMap/…/tourDone)만 남긴다 */
+export function setTourFlags(patch: Record<string, boolean>): void {
+  const state = save();
+  save.set({ ...state, profile: { ...state.profile, flags: { ...state.profile.flags, ...patch } } });
+}
+
 /** 야간 알림 토글 (검토 목록 ③) — save 변경만으로 returnAlarms의 선언적 동기화가 재예약까지 처리 */
 export function toggleNightAlarms(): void {
   const state = save();

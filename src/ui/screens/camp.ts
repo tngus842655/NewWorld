@@ -218,10 +218,14 @@ export function renderCamp(): HTMLElement {
     ),
     rarityChipRow,
     rosterList.length > 0
-      ? el('div.stack-sm', {}, ...rosterList.map((o) => monsterChip(o, {
-          onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
-          onExpedition: busyIds.has(o.monsterId),
-        })))
+      ? el('div.stack-sm', {}, ...rosterList.map((o, index) => {
+          const chip = monsterChip(o, {
+            onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
+            onExpedition: busyIds.has(o.monsterId),
+          });
+          if (index === 0) chip.dataset['tour'] = 'camp-monster'; // 온보딩 투어 — 첫 몬스터 열기
+          return chip;
+        }))
       : el('div.card', {}, el('span.muted.small', {},
           inTier.length > 0
             ? '이 등급의 몬스터가 없습니다 [등급 칩을 눌러 해제해 보세요]'

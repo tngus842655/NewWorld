@@ -180,6 +180,7 @@ function monsterSheet(monsterId: string): HTMLElement | null {
     el('p.flavor', {}, `“${monster.flavor}”`),
     el('div.row-gap', {},
       el('button.btn.btn-primary', {
+        tour: 'levelup', // 온보딩 투어 — 첫 레벨업 유도 (GDD §11.2)
         disabled: maxLevel || state.wallet.gold < upCost,
         onclick: () => { if (levelUp(monsterId)) playSfx('levelup'); },
       }, maxLevel ? '최대 레벨' : `레벨업 (골드 ${fmtGold(upCost)})`),

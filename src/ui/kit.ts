@@ -41,6 +41,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
     html: string;
     value: string;
     placeholder: string;
+    tour: string; // 온보딩 투어 마킹 → data-tour (ui/tour.ts가 스포트라이트 대상 탐색)
   }> = {},
   ...children: Child[]
 ): HTMLElementTagNameMap[K] {
@@ -54,6 +55,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   if (attrs.html !== undefined) node.innerHTML = attrs.html;
   if (attrs.value !== undefined && 'value' in node) (node as HTMLInputElement).value = attrs.value;
   if (attrs.placeholder !== undefined && 'placeholder' in node) (node as HTMLInputElement).placeholder = attrs.placeholder;
+  if (attrs.tour !== undefined) node.dataset['tour'] = attrs.tour;
   for (const child of children) {
     if (child === null || child === undefined || child === false) continue;
     node.append(child instanceof Node ? child : document.createTextNode(child));

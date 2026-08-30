@@ -859,6 +859,31 @@ body.overlay-open .container { overflow: hidden; }
 }
 .gate-link-dot { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
 
+/* 온보딩 투어 (GDD §11.2) — 딤 4패널 + 스포트라이트 링 + 말풍선. z: 시트(40) < 투어(50) < 다이얼로그(55) */
+.tour-root { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+.tour-shield { position: fixed; background: rgba(4, 6, 14, 0.72); pointer-events: auto; }
+.tour-ring {
+  position: fixed; border: 2px solid var(--accent, #e8b34c); border-radius: 12px;
+  box-shadow: 0 0 14px rgba(232, 179, 76, 0.55); pointer-events: none;
+  animation: tour-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(232, 179, 76, 0.35); }
+  50% { box-shadow: 0 0 18px rgba(232, 179, 76, 0.75); }
+}
+.tour-bubble {
+  position: fixed; pointer-events: auto; max-width: min(320px, calc(100vw - 32px));
+  background: var(--card, #1b2030); border: 1px solid rgba(232, 179, 76, 0.5); border-radius: 14px;
+  padding: 14px 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+}
+.tour-card { width: min(320px, calc(100vw - 32px)); padding: 20px 18px; }
+.tour-text { font-size: 14px; line-height: 1.65; white-space: pre-line; }
+.tour-skip {
+  background: none; border: none; padding: 2px; cursor: pointer;
+  color: var(--muted, #8a90a4); font-size: 11.5px; text-decoration: underline; text-underline-offset: 3px;
+}
+
 /* 문의하기 (검토 ⑩) — 작성 카드 + 내 문의 목록 */
 .feedback-input { min-height: 88px; width: 100%; margin: 10px 0; }
 .feedback-list { display: grid; gap: 10px; }

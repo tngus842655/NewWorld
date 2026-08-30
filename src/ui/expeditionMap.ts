@@ -582,6 +582,7 @@ function expeditionLine(expeditionId: string): HTMLElement {
 
   const status = el('span.map-line-status.muted');
   const journalBtn = el('button.btn.btn-primary.map-line-claim.hidden', {
+    tour: 'journal', // 온보딩 투어 — 첫 귀환 정산 유도 (GDD §11.2)
     onclick: (event) => {
       event.stopPropagation(); // 줄 탭(펼침 토글)과 분리
       openClaimFlow(expedition.id);
@@ -643,7 +644,7 @@ export function expeditionLinesCard(): HTMLElement {
   // 줄이 스스로 숨은 뒤 얇은 빈 카드 껍데기가 남았다 (2026-08-29 사용자 리포트)
   const emptyLine = el('div.map-line.map-line-empty', {},
     el('span.muted.small', {}, '지금은 모두 캠프에서 쉬고 있습니다'),
-    el('button.btn.btn-primary.map-line-claim', { onclick: () => tab.set('expedition') }, '원정 보내기'),
+    el('button.btn.btn-primary.map-line-claim', { tour: 'go-expedition', onclick: () => tab.set('expedition') }, '원정 보내기'),
   );
   scopedEffect(() => {
     const now = nowTick();
@@ -664,6 +665,7 @@ export function mapEntryButton(): HTMLElement {
   img.alt = '원정 지도';
   const button = el('button.map-entry-btn', {
     title: '원정 지도',
+    tour: 'map',
     onclick: () => overlay.set({ kind: 'map' }),
   }, img);
   img.onerror = () => {

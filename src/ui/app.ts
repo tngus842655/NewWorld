@@ -90,6 +90,7 @@ function attendanceEntryButton(state: SaveState): HTMLElement {
   img.alt = '출석 달력';
   const button = el('button.appbar-rank', {
     title: '출석 달력',
+    tour: 'attendance',
     onclick: () => {
       playSfx('tap');
       overlay.set({ kind: 'attendance' });
@@ -160,6 +161,7 @@ export function mountApp(root: HTMLElement): void {
     tabbar.replaceChildren(
       ...TABS.map(({ id, label, icon }) =>
         el(`button.tab${current === id ? '.active' : ''}`, {
+          tour: `tab-${id}`, // 온보딩 투어 스포트라이트 대상 (GDD §11.2)
           onclick: () => {
             if (current !== id) playSfx('tap');
             tab.set(id);

@@ -56,6 +56,8 @@ async function boot(): Promise<void> {
     initCloudSync();
     // 공지 팝업 (검토 ⑨) — 최신 공지 1건, '다시 보지 않기'는 기기 저장. 실패는 조용히 스킵
     void import('./state/notice').then(({ checkNotice }) => checkNotice()).catch(() => undefined);
+    // 온보딩 투어 (GDD §11.2) — 신규 계정만 활성, 완료·스킵 후엔 무동작
+    void import('./ui/tour').then(({ initTour }) => initTour()).catch(() => undefined);
     // 귀환 로컬 알림 (네이티브 전용 — 웹에서는 무동작). 실패해도 게임은 그대로 돈다
     void import('./platform/returnAlarms').then(({ initReturnAlarms }) => initReturnAlarms()).catch(() => undefined);
     // 실결제 (네이티브 전용) — 광고 제거 상품 조회·소유 복원

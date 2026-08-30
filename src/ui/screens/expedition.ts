@@ -385,6 +385,7 @@ export function renderExpedition(): HTMLElement {
           : null,
       ] : []),
       el('button.btn.btn-primary.btn-big', {
+        tour: 'dispatch', // 온보딩 투어 — 첫 파견 유도 (GDD §11.2)
         disabled: party.length === 0 || teamsFull || teamBusy,
         onclick: () => {
           if (dispatchTeam(team.id, regionId, tier)) {

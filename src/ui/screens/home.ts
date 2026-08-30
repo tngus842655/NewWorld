@@ -99,7 +99,8 @@ export function renderHome(): HTMLElement {
   // 비추적 시계 — 복귀 완료된 회군 기록은 표시에서 제외 (세이브 정리는 다음 파견 때 코어가 한다)
   const running = state.expeditions.filter((e) => isExpeditionOut(e, clock.now()));
 
-  const tutorialBanner = !state.profile.tutorialDone
+  // 투어(GDD §11.2)가 첫 안내를 담당한다 — 배너는 투어를 건너뛴 유저의 안전망으로만
+  const tutorialBanner = !state.profile.tutorialDone && state.profile.flags['tourDone'] === true
     ? running.length > 0
       ? el('div.card.banner', {},
           el('div', {}, '🧭 첫 원정대가 출발했습니다!'),
