@@ -405,11 +405,14 @@
         상한 500건 초과분은 base로 접어 합계 불변식 유지. **diamond_audit 뷰**(0012, service role
         전용)가 합계 불일치·미검증 iap·출석 월 상한(800) 초과·DEV 시뮬 흔적·가격 불일치용
         소비 집계를 한 번에 — v14 이전 세이브는 mismatch null(오탐 방지). 테스트 221/221 + 웹 E2E
-  - [x] **1층 — Play 영수증 서버 검증** 코드 완료: verify-purchase 엣지 함수 배포
+  - [x] **1층 — Play 영수증 서버 검증 가동** (2026-08-30): verify-purchase 엣지 함수
         (서비스 계정 JWT → androidpublisher purchases.products.get → iap_receipts 기록(0011),
-        구글 무효 판정 'invalid'면 클라 지급 금지). **시크릿(GOOGLE_PLAY_SA_JSON) 설정 전까지는
-        소프트 신뢰 폴백 — 결제가 막히지 않는다.** 콘솔 상품 7종 등록 확인(2026-08-30 사용자).
-        **남은 사용자 작업**: 서비스 계정 생성·Play 콘솔 연결·시크릿 등록 → 라이선스 테스터 실결제 검증
+        구글 무효 판정 'invalid'면 클라 지급 금지 / 판정 불가 시에만 소프트 신뢰 폴백).
+        같은 날 사용자와 함께 콘솔 설정 완료 — Cloud 프로젝트(newworld-507003)에 API 활성 +
+        play-verify 서비스 계정(최소 권한: 재무 보기·주문 관리) + GOOGLE_PLAY_SA_JSON 시크릿.
+        권한 전파 지연은 상품 저장 트릭 후 ~4분에 해소. **가짜 토큰 400(Invalid Value) 판정까지
+        원격 검증 — 검증 모드 ON.** 남은 확인: 내부 테스트 트랙 v6 업로드 후 라이선스 테스터 실결제
+        1건 (iap_receipts 행 생성 확인)
 - [x] **블랙리스트 (임시/영구/해제)** (2026-08-30 완료) — 0007_ban_flags: profiles.banned_until
       (null=정상 / infinity=영구 / 미래 시각=임시, 지나면 자동 해제) + banned_reason.
       서버 강제 2겹: saves RLS에 밴 조건(조작 클라도 업로드 불가) + submit-score 밴 검사

@@ -3,6 +3,8 @@
 // 'invalid' = 구글이 무효 판정(가짜 결제·취소) → 클라 지급 금지.
 // 'not-configured' = GOOGLE_PLAY_SA_JSON 시크릿 미설정 → 클라는 소프트 신뢰로 폴백 (결제 안 막음).
 // 시크릿: 대시보드 Edge Functions → Secrets → GOOGLE_PLAY_SA_JSON = 서비스 계정 키 JSON 통째.
+// 2026-08-30 가동 확인: 시크릿·Play 콘솔 권한(play-verify@newworld-507003) 설정 완료,
+// 가짜 토큰 400(Invalid Value) 판정까지 검증 — 검증 모드 ON. 남은 확인은 라이선스 테스터 실결제.
 // 수정 시 MCP deploy_edge_function으로 재배포할 것 — 서버 배포본이 실행 진실, 이 파일은 저장소 사본.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
