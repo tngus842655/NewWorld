@@ -2,6 +2,7 @@
  * 오버레이 — 일지 / 몬스터 상세 / 유물 상세 / 갈림길 선택.
  */
 import { content } from '../content';
+import { RELEASE_NOTES } from '../content/releaseNotes';
 import { ELEMENTS, RARITY_LABEL, TIERS, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
@@ -72,6 +73,8 @@ export function renderOverlay(current: Overlay): HTMLElement | null {
                   ? elementInfoSheet()
                 : current.kind === 'monsterInfo'
                   ? monsterInfoSheet()
+                : current.kind === 'releaseNotes'
+                  ? releaseNotesSheet()
                   : current.kind === 'artifactInfo'
                     ? artifactInfoSheet()
                     : crossroadsSheet(current.expeditionId);
@@ -554,6 +557,27 @@ function raritySections(sections: { rarity: MonsterRarity; view: HTMLElement }[]
     cls: `rar-${section.rarity}`,
     view: section.view,
   }));
+}
+
+/** 업데이트 내역 (검토 ⑧) — 파일 관리형(content/releaseNotes.ts), 최신 버전만 기본 펼침 */
+function releaseNotesSheet(): HTMLElement {
+  return sheetShell('📦 업데이트 내역',
+    el('div.sheet-body', {},
+      ...RELEASE_NOTES.map((note, index) => {
+        const detail = el<'details'>('details.release-note', {},
+          el('summary.release-note-head', {},
+            el('strong', {}, note.version),
+            el('span.muted.small', {}, note.date),
+          ),
+          el('ul.release-note-items', {},
+            ...note.items.map((item) => el('li', {}, item)),
+          ),
+        );
+        detail.open = index === 0; // el() props에 open이 없어 직접 — 최신 버전만 기본 펼침
+        return detail;
+      }),
+    ),
+  );
 }
 
 function monsterInfoSheet(): HTMLElement {

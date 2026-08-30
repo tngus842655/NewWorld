@@ -93,6 +93,11 @@ export function renderSettings(): HTMLElement {
         el('span', {}, '속성 정보'),
         el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'elementInfo' }) }, '보기'),
       ),
+      // 업데이트 내역 (검토 ⑧) — 파일 관리형, 읽기 전용 (content/releaseNotes.ts)
+      el('div.list-row', {},
+        el('span', {}, '📦 업데이트 내역'),
+        el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'releaseNotes' }) }, '보기'),
+      ),
       // 전체 데이터 뷰 2종 — 관리자 전용 (검토 ④, 2026-08-30). 확률 정보는 확률형 아이템
       // 고지 의무(유료 뽑기)라 유저 공개 유지. isAdmin은 UI 노출 가드일 뿐 — 민감 동작 아님
       ...(isAdmin() ? [

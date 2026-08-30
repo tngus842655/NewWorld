@@ -409,10 +409,10 @@
       goods를 zod 검증 후 지갑 지급 (core/coupon.ts — 음수·오타 재료 방어). 설정 탭 🎟️ 입력.
       발급 SQL은 0008 머리 주석. 원격 RPC 5경로 검증(사용/중복/타유저/소진/무효) + cascade 정리
       확인, DEV 시뮬(DEV-TEST)로 브라우저 E2E, 테스트 214/214
-- [ ] **패치노트** — **확정 (2026-08-30 사용자): 서버 게시판이 아니라 파일 관리형** —
-      파이어패스 `ReleaseNotesView.vue` 패턴 이식 (버전별 노트 배열을 소스 파일로 관리, 빌드에 포함,
-      최신 버전만 기본 펼침 아코디언). 유저·관리자 모두 읽기 전용, 작성은 개발자가 릴리즈 때 코드로.
-      설정 탭에 "업데이트 내역" 진입. 서버 작업 0 — 관리자 인프라 불필요해져 순서 제약에서 빠짐
+- [x] **패치노트** (2026-08-30 완료) — 파일 관리형 (파이어패스 ReleaseNotesView 패턴).
+      content/releaseNotes.ts 배열이 정본 — **릴리즈 때 개발자가 항목 추가** (versionName과 맞춤),
+      빌드에 포함, 유저·관리자 모두 읽기 전용. 설정 탭 📦 업데이트 내역 → 버전별 아코디언
+      (native details, 최신만 기본 펼침). v0.1.0 첫 항목 작성. 브라우저 E2E 확인
 - [ ] **공지 팝업** — notices(제목·본문·게시 기간·active), RLS: authenticated select /
       is_admin만 insert·update. 게이트 통과 후 최신 active 1건 fetch → localStorage
       dismissedNoticeId 비교 → 다이얼로그 + "다시 보지 않기"(새 공지 id면 재표시).

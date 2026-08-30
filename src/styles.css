@@ -855,6 +855,18 @@ body.overlay-open .container { overflow: hidden; }
 }
 .gate-link-dot { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
 
+/* 업데이트 내역 (검토 ⑧) — 버전별 아코디언, 최신만 기본 펼침 */
+.release-note { border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08)); padding: 4px 0; }
+.release-note:last-child { border-bottom: none; }
+.release-note-head {
+  display: flex; align-items: baseline; gap: 8px; padding: 8px 2px;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.release-note-head::before { content: '▸'; font-size: 11px; opacity: 0.6; }
+.release-note[open] .release-note-head::before { content: '▾'; }
+.release-note-items { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
+.release-note-items li { font-size: 13px; line-height: 1.55; }
+
 /* 이용 제한 안내 (검토 ⑥) — 게이트 배경 위 중앙 카드 */
 .ban-card {
   margin: auto 0; width: min(320px, 100%); text-align: center;
