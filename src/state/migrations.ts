@@ -216,6 +216,18 @@ const migrateV12toV13: Migration = (raw) => {
   return data;
 };
 
+/**
+ * v13 → v14 (2026-08-30): 다이아 원장 (검토 ⑤ 2층) — 기존 잔액은 출처 미상이라
+ * 'legacy' 한 건으로 시드한다 (at: 0 = 도입 이전). 이후 증감은 전부 건별 기록.
+ */
+const migrateV13toV14: Migration = (raw) => {
+  const data = structuredClone(raw) as Record<string, any>;
+  const balance = data['wallet']?.['diamonds'] ?? 0;
+  data['diamondLog'] = balance > 0 ? [{ at: 0, delta: balance, source: 'legacy' }] : [];
+  data['diamondLogBase'] = 0;
+  return data;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
@@ -229,6 +241,7 @@ const MIGRATIONS: Record<number, Migration> = {
   10: migrateV10toV11,
   11: migrateV11toV12,
   12: migrateV12toV13,
+  13: migrateV13toV14,
 };
 
 export function migrateSave(raw: unknown): SaveState | null {

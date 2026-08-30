@@ -6,6 +6,7 @@
  */
 import { content } from '../content';
 import { applyCouponGoods, parseCouponGoods } from '../core/coupon';
+import * as clock from './clock';
 import { cloudSession } from './cloud';
 import { save } from './store';
 import { supabase } from './supabaseClient';
@@ -31,7 +32,7 @@ export async function redeemCoupon(rawCode: string): Promise<CouponResult> {
   // DEV 한정 시뮬 (dev-guest — 세션 없음): 서버 없이 지급 경로를 검증한다 (IAP DEV_SIM과 같은 관례)
   if (import.meta.env.DEV && !cloudSession()) {
     if (code !== 'DEV-TEST') return { ok: false, message: ERROR_MESSAGE['invalid']! };
-    const { next, summary } = applyCouponGoods(content, save(), { gold: 1000, diamonds: 300, lures: 5 });
+    const { next, summary } = applyCouponGoods(content, save(), { gold: 1000, diamonds: 300, lures: 5 }, { code, at: clock.now() });
     save.set(next);
     return { ok: true, message: `지급 완료 — ${summary}` };
   }
@@ -56,7 +57,7 @@ export async function redeemCoupon(rawCode: string): Promise<CouponResult> {
   }
   const goods = parseCouponGoods(data.goods);
   if (!goods) return { ok: false, message: '쿠폰 구성이 올바르지 않습니다 — 문의해 주세요' };
-  const { next, summary } = applyCouponGoods(content, save(), goods);
+  const { next, summary } = applyCouponGoods(content, save(), goods, { code, at: clock.now() });
   save.set(next);
   return { ok: true, message: `지급 완료 — ${summary}` };
 }

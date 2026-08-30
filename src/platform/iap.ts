@@ -43,7 +43,13 @@ const DEV_PRICES: Record<string, string> = {
 // cordova 전역 — 브리지가 네이티브에서만 주입한다. 타입은 쓰는 만큼만 구조적으로 선언
 interface CdvOffer { order(): Promise<unknown> }
 interface CdvProduct { owned: boolean; pricing?: { price: string }; getOffer(): CdvOffer | undefined }
-interface CdvTransaction { transactionId: string; products: { id: string }[]; verify(): Promise<unknown> }
+interface CdvTransaction {
+  transactionId: string; // 구글플레이: 주문 id (GPA.…)
+  purchaseId?: string; // 구글플레이: purchaseToken (플러그인 v13)
+  products: { id: string }[];
+  nativePurchase?: { purchaseToken?: string };
+  verify(): Promise<unknown>;
+}
 interface CdvReceipt { finish(): Promise<unknown> }
 interface CdvEvents {
   approved(cb: (tx: CdvTransaction) => void): CdvEvents;
@@ -96,6 +102,27 @@ function refreshPrices(): void {
   }
 }
 
+/**
+ * 결제 영수증 서버 검증 (검토 ⑤ 1층, 2026-08-30) — verify-purchase 엣지 함수가
+ * Google Play Developer API로 진위를 확인하고 iap_receipts에 기록한다.
+ * 'fake' = 구글이 무효 판정 (지급 금지) · 'ok' = 진성 · 'skip' = 판정 불가
+ * (서비스 계정 미설정·일시 네트워크) — skip은 기존 소프트 신뢰로 폴백해 결제를 막지 않는다.
+ */
+async function verifyPurchaseServer(tx: CdvTransaction, productId: string): Promise<{ verdict: 'ok' | 'fake' | 'skip'; orderId?: string }> {
+  const purchaseToken = tx.nativePurchase?.purchaseToken ?? tx.purchaseId;
+  if (!purchaseToken) return { verdict: 'skip' };
+  try {
+    const { supabase } = await import('../state/supabaseClient');
+    const res = await supabase.functions.invoke('verify-purchase', { body: { productId, purchaseToken } });
+    if (res.error) return { verdict: 'skip' };
+    const data = res.data as { ok?: boolean; error?: string; orderId?: string } | null;
+    if (data?.ok) return { verdict: 'ok', orderId: data.orderId };
+    return { verdict: data?.error === 'invalid' ? 'fake' : 'skip' };
+  } catch {
+    return { verdict: 'skip' };
+  }
+}
+
 /** 거래 지급 — 소모성은 장부로 1회 보장, 광고 제거는 멱등이라 장부 불요 */
 async function deliver(tx: CdvTransaction): Promise<void> {
   const { grantAdFree, grantIapDiamonds } = await import('../state/store');
@@ -106,8 +133,16 @@ async function deliver(tx: CdvTransaction): Promise<void> {
     }
     const pack = DIAMOND_PACKS.find((p) => p.id === id);
     if (pack && !grantedIds().includes(tx.transactionId)) {
+      const { verdict, orderId } = await verifyPurchaseServer(tx, id);
+      if (verdict === 'fake') {
+        // 구글이 무효 판정한 거래 — 지급 없이 장부에 올려 재통지 루프만 끊는다
+        markGranted(tx.transactionId);
+        const { toast } = await import('../ui/kit');
+        toast('결제를 확인할 수 없습니다 — 문의해 주세요', 'error');
+        continue;
+      }
       markGranted(tx.transactionId);
-      grantIapDiamonds(pack.diamonds);
+      grantIapDiamonds(pack.diamonds, `iap:${orderId ?? tx.transactionId}`); // 원장 (v14)
     }
   }
 }
@@ -167,7 +202,7 @@ export async function buyIapProduct(id: string): Promise<void> {
     const { grantAdFree, grantIapDiamonds } = await import('../state/store');
     if (id === AD_FREE_PRODUCT_ID) grantAdFree();
     const pack = DIAMOND_PACKS.find((p) => p.id === id);
-    if (pack) grantIapDiamonds(pack.diamonds);
+    if (pack) grantIapDiamonds(pack.diamonds, `dev-sim:${id}`); // 프로드 세이브에 있으면 그 자체가 이상 신호
     return;
   }
   try {

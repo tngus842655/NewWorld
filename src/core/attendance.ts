@@ -5,6 +5,7 @@
  */
 import type { Content } from '../content';
 import type { AttendanceReward } from '../content/schema';
+import { logDiamonds } from './diamondLog';
 import { GameError, type AttendanceState, type SaveState } from './types';
 
 /** 로컬 기준 'YYYY-MM' + 일(day of month) — 일일 리셋(shop todayKey)과 동일하게 기기 자정 기준 */
@@ -38,6 +39,7 @@ export interface CheckInResult {
   dayIndex: number; // 이번 달 n번째 출석 (1부터)
 }
 
+// (v14) 다이아 보상은 원장에도 남긴다 — 서버 감사가 출석 월 상한과 대조한다
 export function checkIn(content: Content, save: SaveState, now: number): CheckInResult {
   const { month, day } = monthParts(now);
   const next = structuredClone(save);
@@ -51,6 +53,7 @@ export function checkIn(content: Content, save: SaveState, now: number): CheckIn
     next.wallet.dust += reward.dust ?? 0;
     next.wallet.diamonds += reward.diamonds ?? 0;
     next.wallet.lures += reward.lures ?? 0;
+    if (reward.diamonds) logDiamonds(next, reward.diamonds, `attendance:${month}-${day}`, now);
   }
   return { save: next, reward, dayIndex: next.attendance.days.length };
 }

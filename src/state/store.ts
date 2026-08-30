@@ -31,6 +31,7 @@ import {
 import { accountBonusState } from '../core/accountBonus';
 import { adInstantReturn, applyScentBuff, doubleJournalRewards } from '../core/ads';
 import { checkIn, type CheckInResult } from '../core/attendance';
+import { logDiamonds } from '../core/diamondLog';
 import { createInitialSave } from '../core/newgame';
 import { buyShopProduct, grantShopAdExtra, type ShopBuyInput, type ShopBuyResult } from '../core/shop';
 import { ensureTeams, setTeamLoadout } from '../core/teams';
@@ -185,10 +186,13 @@ export function grantAdScent(): boolean {
 }
 
 /** 다이아 충전 지급 — 실결제(platform/iap.ts)가 거래당 1회 부른다 (중복 방지는 iap 장부).
- *  결제 재화는 유실이 곧 CS라 즉시 클라우드에 실어 보낸다 */
-export function grantIapDiamonds(count: number): void {
-  const state = save();
-  save.set({ ...state, wallet: { ...state.wallet, diamonds: state.wallet.diamonds + count } });
+ *  결제 재화는 유실이 곧 CS라 즉시 클라우드에 실어 보낸다.
+ *  source (v14 원장): 'iap:<주문id>' 또는 'dev-sim:<상품id>' — 서버 감사가 영수증과 대조 */
+export function grantIapDiamonds(count: number, source: string): void {
+  const next = structuredClone(save());
+  next.wallet.diamonds += count;
+  logDiamonds(next, count, source, ctx.now());
+  save.set(next);
   toast(`💎 다이아 +${count.toLocaleString('ko-KR')} 충전 완료!`, 'ok');
   void import('./cloudSync').then((m) => m.flushUpload()).catch(() => undefined);
 }

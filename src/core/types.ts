@@ -87,6 +87,13 @@ export interface AttendanceState {
   days: number[]; // 출석 도장을 찍은 일(day of month) 목록 — 보상은 순서(n번째)대로
 }
 
+/** 다이아 원장 항목 (v14, 검토 ⑤) — source 규약은 core/diamondLog.ts 머리 주석 */
+export interface DiamondLogEntry {
+  at: number;
+  delta: number; // +획득 / -소비
+  source: string;
+}
+
 // ── 세이브 루트 ──────────────────────────────────────────────────────────────
 
 /**
@@ -94,10 +101,10 @@ export interface AttendanceState {
  * 여기(core)가 정본인 이유: 신규 세이브(newgame)가 이 값을 찍어야 재부팅 때 구버전
  * 마이그레이션이 다시 뛰지 않는다 (v11 고정 시절 다이아 ×5 재적용 잠복 버그, 2026-08-30 수정).
  */
-export const CURRENT_SAVE_VERSION = 13;
+export const CURRENT_SAVE_VERSION = 14;
 
 export interface SaveState {
-  version: typeof CURRENT_SAVE_VERSION; // v13 (2026-08-30): 야간 알림. v12: 다이아 ×5. 내역은 migrations.ts
+  version: typeof CURRENT_SAVE_VERSION; // v14 (2026-08-30): 다이아 원장. v13: 야간 알림. 내역은 migrations.ts
   profile: {
     createdAt: number;
     tutorialDone: boolean;
@@ -137,6 +144,10 @@ export interface SaveState {
   buffs: { scentUntil: number };
   /** nightAlarms (v13): 켬 = 야간(21~08시)에도 귀환 알림 — 기본 끔 (구 push 필드 대체) */
   settings: { sound: boolean; nightAlarms: boolean };
+  /** 다이아 원장 (v14, 검토 ⑤) — 증감 건별 기록. 합계 불변식·source 규약은 core/diamondLog.ts */
+  diamondLog: DiamondLogEntry[];
+  /** 원장 상한 초과로 접힌 과거 항목들의 delta 합 — ledgerSum = base + Σlog */
+  diamondLogBase: number;
   lastSavedAt: number;
 }
 

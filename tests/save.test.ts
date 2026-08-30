@@ -49,7 +49,7 @@ function v1Save() {
 describe('세이브 마이그레이션 v1 → v2 (종 단위 통합·정수 폐기)', () => {
   it('같은 종을 병합한다 — level/star는 최대값, count는 개체 수 + 정수 환산', () => {
     const migrated = migrateSave(v1Save())!;
-    expect(migrated.version).toBe(13); // v1 → … → v13 체인 끝까지
+    expect(migrated.version).toBe(14); // v1 → … → v14 체인 끝까지
 
     const pup = migrated.roster.find((m) => m.monsterId === 'dune-pup')!;
     expect(pup.level).toBe(5);
@@ -174,6 +174,22 @@ describe('세이브 마이그레이션 v12 → v13 (야간 알림 토글)', () =
     const v12 = { ...structuredClone(base), version: 12, settings: { sound: false, push: true } };
     const migrated = migrateSave(v12)!;
     expect(migrated.settings).toEqual({ sound: false, nightAlarms: false });
+  });
+});
+
+describe('세이브 마이그레이션 v13 → v14 (다이아 원장)', () => {
+  it('기존 잔액을 legacy 한 건으로 시드한다 — 합계 불변식 성립', () => {
+    const base = migrateSave(v1Save())!;
+    const v13 = { ...structuredClone(base), version: 13, wallet: { ...base.wallet, diamonds: 777 } };
+    const migrated = migrateSave(v13)!;
+    expect(migrated.diamondLog).toEqual([{ at: 0, delta: 777, source: 'legacy' }]);
+    expect(migrated.diamondLogBase).toBe(0);
+  });
+
+  it('잔액 0이면 원장도 비어 있다', () => {
+    const base = migrateSave(v1Save())!;
+    const v13 = { ...structuredClone(base), version: 13, wallet: { ...base.wallet, diamonds: 0 } };
+    expect(migrateSave(v13)!.diamondLog).toEqual([]);
   });
 });
 

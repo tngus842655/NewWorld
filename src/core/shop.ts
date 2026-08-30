@@ -5,6 +5,7 @@
 import type { Content } from '../content';
 import type { ArtifactRarity, MonsterRarity, ShopProduct } from '../content/schema';
 import { RARITIES } from '../content/schema';
+import { logDiamonds } from './diamondLog';
 import { grantArtifact } from './effects';
 import { evaluateNewMilestones, rollArtifactOfRarity } from './expedition';
 import { isRegionUnlocked } from './progression';
@@ -108,6 +109,7 @@ export function buyShopProduct(content: Content, save: SaveState, input: ShopBuy
   } else {
     if (next.wallet.diamonds < product.price) throw new GameError('diamond-short', `다이아가 부족합니다 (필요: ${product.price})`);
     next.wallet.diamonds -= product.price;
+    logDiamonds(next, -product.price, `shop:${product.id}`, now); // 원장 (v14) — 가격 조작 감사 근거
   }
 
   // ── 지급 ──

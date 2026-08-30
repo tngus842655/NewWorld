@@ -72,6 +72,8 @@ export function createInitialSave(content: Content, ctx: CoreCtx): SaveState {
     counters: { day: '', adUsed: {} },
     buffs: { scentUntil: 0 },
     settings: { sound: true, nightAlarms: false },
+    diamondLog: [],
+    diamondLogBase: 0,
     lastSavedAt: now,
   };
 }

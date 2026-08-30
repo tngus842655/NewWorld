@@ -150,7 +150,7 @@ describe('세이브 마이그레이션 v9 → v10', () => {
     raw['stats']['wipes'] = { scout: 1, standard: 0, deep: 0 };
 
     const migrated = migrateSave(raw)!;
-    expect(migrated.version).toBe(13); // v10 뒤에 체인 끝(v13)까지 이어진다
+    expect(migrated.version).toBe(14); // v10 뒤에 체인 끝(v14)까지 이어진다
     expect(migrated.stats.expeditions).toEqual({ scout: 7, standard: 1, extended: 0, deep: 2 });
     expect(migrated.stats.wipes).toEqual({ scout: 1, standard: 0, extended: 0, deep: 0 });
     expect(migrated.legendTraces).toEqual([]);

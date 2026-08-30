@@ -6,6 +6,7 @@
  */
 import { z } from 'zod';
 import type { Content } from '../content';
+import { logDiamonds } from './diamondLog';
 import type { SaveState } from './types';
 
 const CouponGoodsSchema = z.object({
@@ -29,7 +30,12 @@ export interface CouponApplyResult {
   summary: string; // 토스트용 — "골드 1,000 · 💎 300 · 미끼 5"
 }
 
-export function applyCouponGoods(content: Content, save: SaveState, goods: CouponGoods): CouponApplyResult {
+export function applyCouponGoods(
+  content: Content,
+  save: SaveState,
+  goods: CouponGoods,
+  meta: { code: string; at: number }, // 다이아 원장용 (v14) — 서버 사용 기록과 대조하는 키
+): CouponApplyResult {
   const next = structuredClone(save);
   const parts: string[] = [];
   if (goods.gold) {
@@ -42,6 +48,7 @@ export function applyCouponGoods(content: Content, save: SaveState, goods: Coupo
   }
   if (goods.diamonds) {
     next.wallet.diamonds += goods.diamonds;
+    logDiamonds(next, goods.diamonds, `coupon:${meta.code}`, meta.at);
     parts.push(`💎 ${goods.diamonds.toLocaleString()}`);
   }
   if (goods.lures) {

@@ -25,7 +25,7 @@ describe('쿠폰 지급 (applyCouponGoods)', () => {
     const materialId = content.regionList[0]!.materials[0]!;
     const { next, summary } = applyCouponGoods(content, save, {
       gold: 1000, diamonds: 300, lures: 5, materials: { [materialId]: 10 },
-    });
+    }, { code: 'TEST', at: 0 });
     expect(next.wallet.gold).toBe(1100);
     expect(next.wallet.diamonds).toBe(save.wallet.diamonds + 300);
     expect(next.wallet.lures).toBe(save.wallet.lures + 5);
@@ -39,7 +39,7 @@ describe('쿠폰 지급 (applyCouponGoods)', () => {
   it('콘텐츠에 없는 재료 id는 조용히 건너뛴다 (운영 오타 방어)', () => {
     const clock = makeCtx();
     const { save } = saveWithParty(clock, [{ id: 'dune-pup' }]);
-    const { next, summary } = applyCouponGoods(content, save, { materials: { 'no-such-material': 5 } });
+    const { next, summary } = applyCouponGoods(content, save, { materials: { 'no-such-material': 5 } }, { code: 'TEST', at: 0 });
     expect(next.wallet.materials['no-such-material']).toBeUndefined();
     expect(summary).toBe('지급 품목 없음');
   });
