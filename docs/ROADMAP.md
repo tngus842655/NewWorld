@@ -403,10 +403,12 @@
       게이트풍 안내 화면(기간·사유·문의·로그아웃) — 부팅을 조회에 막지 않는다(로컬 우선).
       지정·해제 SQL은 0007 마이그레이션 머리 주석에 정리. 인게임 관리자 UI는 후순위.
       ban.ts 순수부 테스트 5건 + DEV ?dev-banned E2E
-- [ ] **쿠폰** — coupons(code, goods jsonb — shop.json bundle 스키마 재사용, 만료·총한도·인당 1회) +
-      coupon_redemptions(unique) + redeem-coupon 엣지 함수(JWT→밴 검사→원자적 등록→goods 반환),
-      지급은 클라 로컬 세이브 + 지급 장부(IAP deliver 패턴 재사용). 입력 UI는 설정 탭. 발급은 초기
-      대시보드
+- [x] **쿠폰** (2026-08-30 완료) — 0008_coupons: coupons(goods jsonb·만료·총수량·메모) +
+      coupon_redemptions(인당 1회 PK) + **redeem_coupon RPC** (한 트랜잭션에서 판정·차감 —
+      실행 권한 service role 전용). redeem-coupon 엣지 함수(JWT→밴 검사→RPC), 클라는 응답
+      goods를 zod 검증 후 지갑 지급 (core/coupon.ts — 음수·오타 재료 방어). 설정 탭 🎟️ 입력.
+      발급 SQL은 0008 머리 주석. 원격 RPC 5경로 검증(사용/중복/타유저/소진/무효) + cascade 정리
+      확인, DEV 시뮬(DEV-TEST)로 브라우저 E2E, 테스트 214/214
 - [ ] **패치노트** — **확정 (2026-08-30 사용자): 서버 게시판이 아니라 파일 관리형** —
       파이어패스 `ReleaseNotesView.vue` 패턴 이식 (버전별 노트 배열을 소스 파일로 관리, 빌드에 포함,
       최신 버전만 기본 펼침 아코디언). 유저·관리자 모두 읽기 전용, 작성은 개발자가 릴리즈 때 코드로.

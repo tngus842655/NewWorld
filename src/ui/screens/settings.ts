@@ -5,6 +5,7 @@
 import { cloudSession, isAdmin, signInWithGoogle, signOutGoogle } from '../../state/cloud';
 import { deleteAccount, lastUploadedAt, restoreFromCloud, uploadNow } from '../../state/cloudSync';
 import { NIGHT_END_HOUR, NIGHT_START_HOUR } from '../../platform/returnAlarms';
+import { redeemCoupon } from '../../state/coupon';
 import { save, setNickname, toggleNightAlarms, toggleSound } from '../../state/store';
 import { googleG } from '../components';
 import { askConfirm, askText } from '../dialog';
@@ -64,6 +65,25 @@ export function renderSettings(): HTMLElement {
             playSfx('tap');
           },
         }, state.settings.nightAlarms ? '🌙 켬' : '🔕 끔'),
+      ),
+      // 쿠폰 (검토 ⑦) — 판정은 서버가 원자적으로, 지급은 응답 goods를 검증 후 로컬 세이브에
+      el('div.list-row', {},
+        el('span', {}, '🎟️ 쿠폰'),
+        el('button.btn.btn-ghost', {
+          onclick: () => {
+            void askText({
+              title: '쿠폰 입력',
+              message: '쿠폰 번호를 입력하세요 (영문·숫자·하이픈)',
+              placeholder: 'WELCOME-300',
+              confirmLabel: '사용',
+            }).then(async (text) => {
+              if (!text) return;
+              const result = await redeemCoupon(text);
+              toast(result.message, result.ok ? 'ok' : 'error');
+              if (result.ok) playSfx('tap');
+            });
+          },
+        }, '입력'),
       ),
       el('div.list-row', {},
         el('span', {}, '확률 정보'),
