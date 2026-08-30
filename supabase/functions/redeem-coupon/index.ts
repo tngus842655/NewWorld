@@ -6,7 +6,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  // ⚠️ x-client-info 필수 — supabase-js functions.invoke가 이 헤더를 붙이는데, 허용 목록에
+  // 없으면 프리플라이트 통과 후 본요청이 브라우저에서 차단된다 (2026-08-30 실기기 실사고 —
+  // 서버 로그에 OPTIONS만 남고 POST가 없다). raw fetch를 쓰는 submit-score는 해당 없음.
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
