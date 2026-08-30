@@ -125,11 +125,11 @@
         "success": [
           {
             "kind": "lure",
-            "count": 2
+            "count": 1
           },
           {
             "kind": "gold",
-            "amount": 100
+            "amount": 150
           }
         ],
         "fail": {
