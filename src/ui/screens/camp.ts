@@ -5,13 +5,13 @@
 import { content } from '../../content';
 import { SLOTS, type MonsterRarity, type Slot } from '../../content/schema';
 import { isExpeditionOut } from '../../core/expedition';
-import { isRegionUnlocked, nextPartySlotUnlock } from '../../core/progression';
+import { isRegionUnlocked } from '../../core/progression';
 import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
-import { buySlot, craft, save } from '../../state/store';
+import { craft, save } from '../../state/store';
 import { resetArtifactFusion } from '../artifactFusionSheet';
-import { artifactCard, monsterChip, ownedCp } from '../components';
-import { MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, el, fmtGold, fmtRemain } from '../kit';
+import { artifactCard, hourglassIcon, monsterChip, ownedCp } from '../components';
+import { MONSTER_RARITY_LABEL, RARITY_ASC, RARITY_ORDER, SLOT_LABEL, el, fmtGold } from '../kit';
 import { FUSION_NEXT, resetFusion } from '../fusionSheet';
 import { accountBonusState } from '../../core/accountBonus';
 import { filterChips, tabBar } from '../panels';
@@ -41,7 +41,9 @@ export function renderCamp(): HTMLElement {
   const rarity = campRarity();
 
   // ── 몬스터: 권역 탭 + 등급 칩 ──
-  // 캠프는 '키울 놈 고르는 화면' — 등급 내림차순 (읽는 화면인 정보 시트·도감은 오름차순, 2026-08-25 사용자 확정)
+  // 목록은 등급 내림차순 정렬 — 캠프는 '키울 놈 고르는 화면'이라 센 놈이 위로 온다.
+  // 다만 **등급 칩의 나열 순서**는 오름차순으로 통일했다 (2026-08-30 사용자) — 칩은 고르는 눈금이라
+  // 도감·정보 시트와 같은 방향으로 읽히는 편이 낫다 (2026-08-25의 '캠프는 내림차순' 결정을 뒤집는다)
   const habitatTier = (monsterId: string): number | undefined => {
     const habitat = content.monsters.get(monsterId)?.habitat;
     return habitat ? content.regions.get(habitat)?.tier : undefined;
@@ -58,77 +60,52 @@ export function renderCamp(): HTMLElement {
 
   // ── 유물: 슬롯 탭 + 등급 칩 ──
   const slot = campSlot() ?? SLOTS[0];
-  const artifactList = state.artifacts
+  const inSlot = state.artifacts
     .map((owned) => ({ owned, def: content.artifacts.get(owned.itemId) }))
     .filter((entry): entry is { owned: typeof entry.owned; def: NonNullable<typeof entry.def> } => entry.def !== undefined)
-    .filter(({ def }) => def.slot === slot && (rarity === null || def.rarity === rarity))
+    .filter(({ def }) => def.slot === slot);
+  const artifactList = inSlot
+    .filter(({ def }) => rarity === null || def.rarity === rarity)
     .sort((a, b) => RARITY_ORDER[b.def.rarity] - RARITY_ORDER[a.def.rarity] || b.owned.enhance - a.owned.enhance);
 
   const canAfford = (recipe: { cost: { gold: number; materials: Record<string, number> } }): boolean =>
     state.wallet.gold >= recipe.cost.gold
     && Object.entries(recipe.cost.materials).every(([id, n]) => (state.wallet.materials[id] ?? 0) >= n);
 
-  /**
-   * 아직 잠긴 지역이 요구하는 재료 수량 (재료 id → 필요 개수).
-   * 제작과 지역 해금이 **같은 재료 풀을 공유**해서, 모르고 만들다 보면 해금이 밀린다
-   * (시뮬 실측: 모래시계를 계속 세공하면 화산 해금이 D7 → D19). 막지는 않고 알려만 준다 —
-   * 지금 시간을 벌지 나중에 문을 열지는 유저가 고를 문제다.
-   */
-  const unlockReserve = new Map<string, { need: number; region: string }>();
-  for (const region of content.regionList) {
-    if (isRegionUnlocked(content, state, region.id)) continue;
-    for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
-      const prev = unlockReserve.get(materialId);
-      if (!prev || need > prev.need) unlockReserve.set(materialId, { need, region: `${region.icon} ${region.name}` });
-    }
-  }
-  /** 이 레시피를 만들면 해금 예약분을 깎는가 — 깎는 재료들의 안내 문구 */
-  const reserveWarning = (recipe: { cost: { materials: Record<string, number> } }): string | null => {
-    const hits: string[] = [];
-    let regionLabel = '';
-    for (const [materialId, count] of Object.entries(recipe.cost.materials)) {
-      const reserve = unlockReserve.get(materialId);
-      if (!reserve) continue;
-      const have = state.wallet.materials[materialId] ?? 0;
-      if (have - count >= reserve.need) continue; // 만들어도 해금분이 남는다
-      // "보유/필요"로 쓰면 충족된 것처럼 읽힌다 — 만든 **뒤**의 수량을 보여준다
-      hits.push(`${content.materials.get(materialId)?.icon ?? ''}${have - count}/${reserve.need}`);
-      regionLabel = reserve.region;
-    }
-    return hits.length > 0 ? `🔒 만들면 ${regionLabel} 해금분이 모자랍니다 (제작 후 ${hits.join(' · ')})` : null;
-  };
+  // 해금 예약 경고(🔒 …)는 뺐다 (2026-08-30 사용자) — 재료 부족은 비용 줄의 '보유/필요'가 이미 말한다
 
   const recipeRow = (recipe: (typeof content.recipes) extends ReadonlyMap<string, infer R> ? R : never) => {
-    // 부족한 항목이 보이게 — 비용 나열에 보유량 병기, 부족하면 제작 버튼 비활성
+    // 비용은 '아이콘이름 필요수'만 — ×n 표기도, 보유량 병기(0/6)도 뺐다 (2026-08-30 사용자: 줄바꿈이 거슬린다).
+    // 모자란다는 사실은 줄 전체가 빨개지는 .cost-short와 비활성 제작 버튼이 말하고,
+    // 보유량은 바로 위 '제작 재료' 카드가 상시 보여준다
     const affordable = canAfford(recipe);
     const costText = [
       recipe.cost.gold > 0 ? `골드 ${fmtGold(recipe.cost.gold)}` : null,
       ...Object.entries(recipe.cost.materials).map(([id, n]) => {
         const material = content.materials.get(id);
-        const have = state.wallet.materials[id] ?? 0;
-        // 부족분은 '보유/필요'로 압축 — "(보유 n)" 병기는 좁은 화면에서 줄바꿈됨 (2026-08-23)
-        return have < n ? `${material?.icon ?? ''}${material?.name} ${have}/${n}` : `${material?.icon ?? ''}${material?.name} ×${n}`;
+        return `${material?.icon ?? ''}${material?.name} ${n}`;
       }),
     ].filter(Boolean).join(' + ');
-    // 산출 표기 — 모래시계는 등급색 이름 + 총 단축 시간을 병기한다 (몇 분을 버는지가 판단 기준)
+    // 산출 표기 (2026-08-30 사용자로 축약) — '아이콘 + 이름 n개' 한 줄, 아래에 필요 재료.
+    // 레시피 이름(해안의 모래 세공 →)과 총 단축 시간을 뺐다: 무엇이 드는지는 아래 재료 줄이 말하고,
+    // 모래시계는 이름 자체가 등급을 담는다
     const out = recipe.output;
-    const outLabel = out.kind === 'lures'
-      ? el('span', {}, `미끼 ${out.count}개`)
+    const head = out.kind === 'lures'
+      ? el('div.recipe-head', {}, el('span.recipe-emoji', {}, '🪤'), el('span', {}, `미끼 ${out.count}개`))
       : (() => {
           const def = content.hourglasses.get(out.hourglassId);
-          const total = (def?.minutes ?? 0) * out.count;
-          return el('span', {},
-            el(`span.rar-name.rar-${def?.rarity ?? 'common'}`, {}, def?.name ?? out.hourglassId),
-            ` ${out.count}개`,
-            el('span.muted.small', {}, ` [총 ${fmtRemain(total * 60_000)} 단축]`),
+          return el('div.recipe-head', {},
+            def ? hourglassIcon(def, { small: true }) : null,
+            el('span', {},
+              el(`span.rar-name.rar-${def?.rarity ?? 'common'}`, {}, def?.name ?? out.hourglassId),
+              ` ${out.count}개`,
+            ),
           );
         })();
-    const warning = affordable ? reserveWarning(recipe) : null; // 못 만드는 레시피엔 경고가 무의미
     return el('div.list-row', {},
       el('div', {},
-        el('div', {}, `${recipe.name} → `, outLabel),
+        head,
         el(`div.muted.small${affordable ? '' : '.cost-short'}`, {}, costText),
-        warning ? el('div.small.cost-reserve', {}, warning) : null,
       ),
       el('button.btn.btn-ghost', {
         disabled: !affordable,
@@ -183,7 +160,6 @@ export function renderCamp(): HTMLElement {
       })()
     : null;
 
-  const slotUnlock = nextPartySlotUnlock(content, state);
 
   // 합성 여분 — 합성 가능 등급(다음 등급이 있는 등급)만. 최상위 등급은 재료가 될 수 없다 (2026-08-25)
   const spareCards = state.roster.reduce((sum, m) => {
@@ -201,10 +177,37 @@ export function renderCamp(): HTMLElement {
   // 재료만 있으면 늘 만들 수 있어 점이 상시 켜진 것과 같아진다 (알림 가치 0)
   const canFuse = spareCards >= fusionCost || spareArtifacts >= fusionCost;
 
-  const rarityChipRow = filterChips(
-    RARITY_DESC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
+  /**
+   * 등급 칩은 **지금 보고 있는 목록에 실제로 있는 등급만** 낸다 (2026-08-30 사용자).
+   * 누를 때마다 0건이 되는 칩은 눈금이 아니라 소음이다 — 무기 1개(희귀)뿐인데 칩 7개가 뜨던 자리.
+   * 기준은 등급 필터를 걸기 **전** 목록(권역 안 몬스터 / 슬롯 안 유물)이다.
+   * 선택 중인 등급은 목록에 없어도 남긴다 — 권역·슬롯을 옮겨 0건이 됐을 때 해제할 칩이 사라지면
+   * 빈 화면에 갇힌다.
+   */
+  const rarityChips = (present: ReadonlySet<string>) => filterChips(
+    RARITY_ASC.filter((r) => present.has(r) || rarity === r)
+      .map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
     { active: rarity, onPick: (v) => campRarity.set(v) },
   );
+  const monsterRarityChips = rarityChips(new Set(inTier.map((m) => content.monsters.get(m.monsterId)!.rarity)));
+  const artifactRarityChips = rarityChips(new Set(inSlot.map(({ def }) => def.rarity)));
+
+  /**
+   * 권역·슬롯·탭을 옮길 때, 그 문맥에 없는 등급이 선택돼 있으면 필터를 푼다 (2026-08-30 사용자).
+   * 해안에서 영웅을 고르고 늪(0마리)으로 가면 빈 목록에 필터만 남아 있던 자리 —
+   * 옮긴 곳에 그 등급이 있으면 필터는 유지된다 (등급을 축으로 권역을 훑는 사용법은 살린다).
+   */
+  const dropRarityIfAbsent = (has: (r: MonsterRarity) => boolean): void => {
+    const current = campRarity();
+    if (current !== null && !has(current)) campRarity.set(null);
+  };
+  const tierHasRarity = (t: number) => (r: MonsterRarity) =>
+    state.roster.some((m) => habitatTier(m.monsterId) === t && content.monsters.get(m.monsterId)!.rarity === r);
+  const slotHasRarity = (sl: Slot) => (r: MonsterRarity) =>
+    state.artifacts.some((a) => {
+      const def = content.artifacts.get(a.itemId);
+      return def?.slot === sl && def.rarity === r;
+    });
 
   const monsterPanel = [
     // 권역 탭은 4개 고정 — 진행도에 따라 탭이 생겼다 사라지면 근육 기억이 깨진다
@@ -214,12 +217,13 @@ export function renderCamp(): HTMLElement {
         label: `${regions[0]!.icon} ${tierShortName(regions)} ${state.roster.filter((m) => habitatTier(m.monsterId) === t).length}`,
         title: `${regions[0]!.name} 권역`,
       })),
-      { active: String(tier), onPick: (key) => campTier.set(Number(key)) },
+      { active: String(tier), onPick: (key) => { const next = Number(key); campTier.set(next); dropRarityIfAbsent(tierHasRarity(next)); } },
     ),
-    rarityChipRow,
+    monsterRarityChips,
     rosterList.length > 0
       ? el('div.stack-sm', {}, ...rosterList.map((o, index) => {
           const chip = monsterChip(o, {
+            wide: true, // 캠프는 한 줄에 카드 하나 — 오른쪽에 Lv·CP를 크게 (2026-08-30 사용자)
             onclick: () => overlay.set({ kind: 'monster', monsterId: o.monsterId }),
             onExpedition: busyIds.has(o.monsterId),
           });
@@ -228,22 +232,10 @@ export function renderCamp(): HTMLElement {
         }))
       : el('div.card', {}, el('span.muted.small', {},
           inTier.length > 0
-            ? '이 등급의 몬스터가 없습니다 [등급 칩을 눌러 해제해 보세요]'
-            : '이 권역의 몬스터를 아직 보유하지 않았습니다 [원정에서 포획해 보세요]')),
-    slotUnlock
-      ? (() => {
-          const captured = Object.values(state.codex).filter((c) => c.captured).length;
-          const canBuy = captured >= slotUnlock.totalCaptured && state.wallet.gold >= slotUnlock.gold;
-          return el('div.card.list-row', {},
-            el('span.muted.small', {},
-              `파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots} (도감 ${Math.min(captured, slotUnlock.totalCaptured)}/${slotUnlock.totalCaptured}종 + 골드 ${fmtGold(slotUnlock.gold)})`),
-            el('button.btn.btn-ghost', {
-              disabled: !canBuy,
-              onclick: () => { if (buySlot()) playSfx('confirm'); },
-            }, '확장'),
-          );
-        })()
-      : null,
+            ? '이 등급의 몬스터가 없습니다.'
+            : '이 지역의 몬스터를 아직 보유하지 않았습니다.')),
+    // 파티 슬롯 확장은 2026-08-30에 편성 시트로 옮겼다 (사용자) — 슬롯은 '보유 관리'가 아니라
+    // '몇 마리를 데리고 나가나'의 문제라, 한계를 체감하는 자리(원정대 편성 몬스터 n/N 옆)에서 늘린다
   ];
 
   const artifactPanel = [
@@ -253,15 +245,15 @@ export function renderCamp(): HTMLElement {
         key: s,
         label: `${SLOT_LABEL[s]} ${state.artifacts.filter((a) => content.artifacts.get(a.itemId)?.slot === s).length}`,
       })),
-      { active: slot, onPick: (key) => campSlot.set(key) },
+      { active: slot, onPick: (key) => { campSlot.set(key); dropRarityIfAbsent(slotHasRarity(key)); } },
     ),
-    rarityChipRow,
+    artifactRarityChips,
     artifactList.length > 0
       ? el('div.stack-sm', {}, ...artifactList.map(({ owned, def }) =>
           artifactCard(owned, def, { onclick: () => overlay.set({ kind: 'artifact', itemId: owned.itemId }) })))
       : el('div.card', {}, el('span.muted.small', {},
           state.artifacts.length > 0
-            ? '이 조건의 유물이 없습니다 [다른 슬롯 탭이나 등급 칩을 확인해 보세요]'
+            ? '이 조건의 유물이 없습니다.'
             : '원정에서 발굴한 유물이 여기 모입니다')),
   ];
 
@@ -269,7 +261,7 @@ export function renderCamp(): HTMLElement {
   // 목록 탭은 '보고 고르는 곳', 제작 탭은 '만드는 곳'으로 역할이 갈린다.
   const craftPanel = [
     el('h2.section-title', {}, '합성'),
-    el('div.card', {},
+    el('div.card.tight-card', {},
       el('div.list-row', {},
         el('span', {}, `🧬 카드 합성 [여분 카드 ${spareCards}장]`),
         el('button.btn.btn-ghost', {
@@ -287,7 +279,7 @@ export function renderCamp(): HTMLElement {
     ),
     // 재료 지갑은 두 제작 섹션의 공통 재원이라 위에 한 번만
     el('h2.section-title', {}, '제작 재료'),
-    el('div.card.wallet', {},
+    el('div.card.wallet.tight-card', {},
       ...(materialChips.length > 0
         ? materialChips
         : [el('span.muted.small', {}, '지역 재료는 원정의 채집·갈림길에서 모입니다')]),
@@ -317,7 +309,12 @@ export function renderCamp(): HTMLElement {
         // 제작 탭만 수치가 없어 발견성이 떨어진다 — 합성(카드·유물) 가능일 때만 점 (2026-08-30 사용자)
         { key: 'craft' as const, label: '제작', dot: canFuse },
       ],
-      { active: tab, onPick: (key) => campTab.set(key) },
+      // 몬스터↔유물 전환도 같은 함정 — 옮겨 간 쪽(현재 권역/슬롯)에 없는 등급이면 푼다
+      { active: tab, onPick: (key) => {
+        campTab.set(key);
+        if (key === 'monster') dropRarityIfAbsent(tierHasRarity(tier));
+        else if (key === 'artifact') dropRarityIfAbsent(slotHasRarity(slot));
+      } },
     ),
     ...(tab === 'monster' ? monsterPanel : tab === 'artifact' ? artifactPanel : craftPanel),
   );

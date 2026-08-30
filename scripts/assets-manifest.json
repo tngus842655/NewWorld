@@ -1341,6 +1341,26 @@
     "attendance-calendar": {
       "slug": "calendar-10991552",
       "contributor": "Brian Savero"
+    },
+    "tab-home": {
+      "slug": "house-11799314",
+      "contributor": "Naufal Hudallah"
+    },
+    "tab-expedition": {
+      "slug": "map-pin-11799320",
+      "contributor": "Naufal Hudallah"
+    },
+    "tab-camp": {
+      "slug": "camping-tent-10452937",
+      "contributor": "Creasheeps Studio"
+    },
+    "tab-codex": {
+      "slug": "skull-book-11799335",
+      "contributor": "Naufal Hudallah"
+    },
+    "tab-settings": {
+      "slug": "gear-15223690",
+      "contributor": "Bakar Designs"
     }
   }
 }

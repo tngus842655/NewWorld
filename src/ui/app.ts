@@ -8,7 +8,7 @@ import type { SaveState } from '../core/types';
 import { el, fmtCompact, fmtGold, withScope } from './kit';
 import { renderOverlay } from './overlays';
 import { resetShop } from './shopSheet';
-import { overlay, tab, type Overlay, type Tab } from './router';
+import { consumeReturnTab, overlay, tab, type Overlay, type Tab } from './router';
 import { playSfx } from './sfx';
 import { renderCamp } from './screens/camp';
 import { renderCodex } from './screens/codex';
@@ -101,6 +101,7 @@ function attendanceEntryButton(state: SaveState): HTMLElement {
   return button;
 }
 
+// icon은 에셋 실패 시의 이모지 폴백 — 실제로 보이는 것은 /assets/ui/tab-{id}.webp (tabIcon)
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: '홈', icon: '🏕️' },
   { id: 'expedition', label: '원정', icon: '🧭' },
@@ -108,6 +109,22 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'codex', label: '도감', icon: '📖' },
   { id: 'settings', label: '설정', icon: '⚙️' },
 ];
+
+/**
+ * 탭 아이콘 — 3D 에셋 (2026-08-30 사용자: 이모지 대신 아이콘 팩으로, 메뉴끼리 톤 통일).
+ * 홈·원정·캠프·도감은 앱바 상점·지도와 같은 Adventure Game 팩(Naufal Hudallah),
+ * 설정 톱니만 같은 팩에 없어 금색·차콜 팔레트가 맞는 것으로 골랐다 (ASSETS.md §3).
+ * 에셋 실패 시 이모지 폴백 — shopEntryButton과 같은 패턴이다.
+ */
+function tabIcon(id: Tab, fallback: string): HTMLElement {
+  const box = el('span.tab-icon', {});
+  const img = el<'img'>('img');
+  img.src = `/assets/ui/tab-${id}.webp`;
+  img.alt = ''; // 옆의 라벨이 이름을 말한다 — 스크린리더에 중복 낭독시키지 않는다
+  img.onerror = () => { img.remove(); box.textContent = fallback; };
+  box.append(img);
+  return box;
+}
 
 function renderScreen(current: Tab): HTMLElement {
   switch (current) {
@@ -120,6 +137,11 @@ function renderScreen(current: Tab): HTMLElement {
 }
 
 export function mountApp(root: HTMLElement): void {
+  // 약관·방침에서 돌아온 부팅이면 나가기 전 탭으로 (2026-08-30 사용자 — router.rememberTab 참고).
+  // 첫 effect가 돌기 전에 세워야 화면이 홈으로 한 번 깜빡였다가 바뀌지 않는다
+  const returnTab = consumeReturnTab();
+  if (returnTab) tab.set(returnTab);
+
   const header = el('header.appbar', {});
   const container = el('main.container', {});
   const tabbar = el('nav.tabbar', {});
@@ -167,7 +189,7 @@ export function mountApp(root: HTMLElement): void {
             tab.set(id);
           },
         },
-          el('span.tab-icon', {}, icon),
+          tabIcon(id, icon),
           el('span.tab-label', {}, label),
         ),
       ),

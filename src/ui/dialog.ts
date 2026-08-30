@@ -14,6 +14,11 @@ interface ConfirmOpts {
   danger?: boolean;
   /** false = 배경 탭으로 닫히지 않는다 — 실수 탭이 곧 선택이 되면 안 되는 결정용 (기기 전환 화해 등) */
   dismissible?: boolean;
+  /**
+   * 확인 버튼만 잠근다 — 조건이 아직 안 찬 경우 (파티 슬롯 확장 등).
+   * "무엇이 모자란지 보여주되 누르지는 못하게"가 목적이라, 팝업 자체는 그대로 뜬다.
+   */
+  confirmDisabled?: boolean;
 }
 
 function mount(card: HTMLElement, onCancel: () => void, dismissible = true): HTMLElement {
@@ -38,7 +43,10 @@ export function askConfirm(opts: ConfirmOpts): Promise<boolean> {
       el('div.dialog-message', {}, opts.message),
       el('div.dialog-actions', {},
         el('button.btn.btn-ghost', { onclick: () => close(false) }, opts.cancelLabel ?? '취소'),
-        el(`button.btn.${opts.danger ? 'btn-danger' : 'btn-primary'}`, { onclick: () => close(true) }, opts.confirmLabel ?? '확인'),
+        el(`button.btn.${opts.danger ? 'btn-danger' : 'btn-primary'}`, {
+          disabled: opts.confirmDisabled ?? false,
+          onclick: () => close(true),
+        }, opts.confirmLabel ?? '확인'),
       ),
     );
     const backdrop = mount(card, () => close(false), opts.dismissible ?? true);

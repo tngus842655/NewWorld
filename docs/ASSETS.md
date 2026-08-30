@@ -70,10 +70,28 @@ search_assets (작가·팩 단위 탐색, 그리드로 사용자와 함께 선�
   `ui/attendance-calendar` = Brian Savero `calendar-10991552` (같은 팩에 달력이 없어
   크림 몸체+빨간 밴드로 지도·가판대 팔레트에 맞춤 — 빨간 날짜 한 칸이 출석 도장 모티프).
   지도 원본이 BAK에 없던 것도 재다운로드로 메꿈.
+- **[완료 2026-08-30] 하단 탭 아이콘 5점** — 이모지(🏕️🧭🎒📖⚙️) 대체, 메뉴 간 톤 통일이 요구사항이었다.
+  4점은 앱바 지도·가판대와 **같은 Adventure Game 팩**(Naufal Hudallah)에서 골라 앱바–탭바가 한 세트로 읽힌다:
+  `ui/tab-home` = `house-11799314` · `ui/tab-expedition` = `map-pin-11799320` ·
+  `ui/tab-codex` = `skull-book-11799335`(몬스터 도감 = 해골 문장 서책).
+  설정 톱니만 그 팩에 없어 `ui/tab-settings` = Bakar Designs `gear-15223690` — 팩의 금색·차콜 팔레트에
+  맞는 것으로 골랐다(후보 14점 콘택트 시트 비교, 광택 강한 것들은 클레이 톤과 어긋나 탈락).
+  **팩 안에서 이미 쓰는 원본은 피했다**: `compass-11798163`은 유물 `dawn-compass`, `treasure-map-11798660`은
+  `ui/expedition-map`이라 원정 탭에는 `map-pin`을 썼다 (중복 검사기는 ui 그룹을 훑지 않으므로 손으로 대조할 것).
+  캠프 탭은 처음에 `inventory-bag-11799312`(배낭)를 썼다가 **`ui/tab-camp` = Creasheeps Studio
+  `camping-tent-10452937`로 교체** (2026-08-30 사용자: "캠프인데 가방은 이상하다"). 화면 내용은
+  인벤토리·제작이 맞지만 **탭 이름이 캠프**라 이름과 그림이 어긋났다 — 원래 이모지도 🏕️였다.
+  탄색 A형 텐트로, 24px 실측에서 실루엣이 가장 또렷하고 홈(빨간 지붕 집)과 헷갈리지 않는다.
+  차점은 Illustraly `camping-tent-11210447`(금색, 랜턴 장식이 작은 크기에서 뭉개져 탈락).
+  Creasheeps Studio는 유물에서 이미 쓰는 작가라 톤도 검증돼 있다.
+  배낭 원본은 `BAK/.../ui/unused-inventory-bag.png`로 남겼다 (재다운로드 비용 절약).
+  **주의: `swap-asset.mjs`는 ui 그룹을 못 받는다** — 콘텐츠 JSON의 asset id로 검증하는 구조라
+  UI 에셋은 매니페스트 수정 + `build-assets.mjs --only ui`로 손수 교체한다.
 - **⚠️ [발견 2026-08-29] BAK 원본이 낡았다 — 전체 리빌드 금지.** `build-assets.mjs` 전체 실행이
   커밋된 webp 44건을 옛 이미지로 역행시켰다(8-25 교체 5건·리컬러분이 BAK에 반영 안 됐고, 초월 7종은
   원본 자체가 없음). git checkout으로 수습. **BAK 정합성 복구 전에는 그룹 단위 전체 리빌드를 돌리지 말고,
   새 에셋만 추가할 때도 리빌드 후 `git status`로 기존 webp가 안 바뀌었는지 확인할 것.**
+  *(2026-08-30 후속: `build-assets.mjs --only <그룹>`을 추가했다 — 새 에셋 추가는 이 옵션으로 그룹 하나만 돌린다.)*
 - 원본은 `BAK`에 보관 (재다운로드 비용 절약 — 구 NewWorld 25종 원본도 BAK에 있음)
 - 구 NewWorld 건물 아이콘 25종: 이번 컨셉에서 미사용. 폐기하지 말고 BAK 유지 (추후 캠프 시설 등장 시 후보)
 

@@ -1,6 +1,6 @@
 /**
  * 도감 — 몬스터/유물/업적 3탭 (모바일 스크롤 최소화, 2026-08-23).
- * 몬스터: 권역 칩 → 소지역 3카드 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 종족·등급 필터.
+ * 몬스터: 권역 칩 → 소지역 3카드 그리드 (미지 ? / 목격 실루엣 / 포획 컬러 / 각성 금테) + 등급 필터 (종족 필터는 2026-08-30 제거).
  * 유물: 등급별 그리드 — 획득 이력(v7) 기반, 종이 사라진 과거 세이브(분해 제거 전)도 도감에는 남는다.
  * 업적: 권역 4칩 + 공통 (12지역 개편으로 지역 13칩이 네 줄을 덮던 것을 압축, 2026-08-27).
  */
@@ -11,14 +11,13 @@ import { signal } from '../../state/signal';
 import { save } from '../../state/store';
 import { artifactIcon, artifactIconBadged, monsterIcon } from '../components';
 import { describeEffect } from '../effectText';
-import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, RARITY_ORDER, TRIBE_LABEL, el, fmtGold } from '../kit';
+import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, RARITY_ORDER, el, fmtGold } from '../kit';
 import { filterChips } from '../panels';
 import { regionTiers, tierShortName } from '../regionTiers';
 import { overlay } from '../router';
 
 // 탭을 오가도 유지되는 화면 로컬 상태 (GDD §11)
 const codexTab = signal<'monster' | 'artifact' | 'achieve'>('monster');
-const tribeFilter = signal<Monster['tribe'] | null>(null);
 const rarityFilter = signal<Monster['rarity'] | null>(null);
 // 접힘 상태 (기본 접힘 — 캠프와 동일 패턴) + 권역 선택 (2026-08-27 원정과 같은 권역 축)
 const openCodexRegions = signal<Record<string, boolean>>({});
@@ -53,7 +52,6 @@ export function renderCodex(): HTMLElement {
 type Save = ReturnType<typeof save>;
 
 function monsterTab(state: Save): HTMLElement[] {
-  const tribe = tribeFilter();
   const rarity = rarityFilter();
   const seen = Object.values(state.codex).filter((c) => c.seen && !c.captured).length;
   const score = Object.entries(state.codex).reduce((sum, [, entry]) => {
@@ -84,7 +82,7 @@ function monsterTab(state: Save): HTMLElement[] {
     const allNatives = content.monsterList.filter((m) => m.habitat === region.id);
     const regionCaptured = allNatives.filter((m) => state.codex[m.id]?.captured).length;
     const natives = allNatives
-      .filter((m) => (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity))
+      .filter((m) => rarity === null || m.rarity === rarity)
       // 도감은 '읽는 화면' — 등급 오름차순(일반→전설). 지금까지 정렬이 아예 없어
       // monsters.json 파일 순서 그대로였다 (2026-08-25)
       .sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name, 'ko'));
@@ -150,20 +148,25 @@ function monsterTab(state: Save): HTMLElement[] {
   // 필터가 걸리면 '보이는 수'를 병기 — 헤더 진행도(필터 전)와 그리드(필터 후)가 어긋나 보이던 지점.
   // 권역 칩 도입 후에는 보이는 권역 안에서 센다 (전체 모수로 세면 또 어긋난다)
   const shownCount = content.monsterList.filter(
-    (m) => viewRegions.some((r) => r.id === m.habitat)
-      && (tribe === null || m.tribe === tribe) && (rarity === null || m.rarity === rarity),
+    (m) => viewRegions.some((r) => r.id === m.habitat) && (rarity === null || m.rarity === rarity),
   ).length;
-  const filtered = tribe !== null || rarity !== null;
+  const filtered = rarity !== null;
 
-  // 권역 칩 — 진행(포획/전체)을 함께. 집계는 섹션 헤더와 같은 기준(habitat, 초월 포함)이라 합이 어긋나지 않는다
+  // 권역 칩 — 이름만 (2026-08-30 사용자: 두 줄로 접히는 게 거슬린다).
+  // 이모지·진행(n/N)까지 넣으면 5칸이 360px 폰에서 367px를 먹어 반드시 두 줄이 된다 (실측).
+  // 버린 진행률은 사라지지 않는다: 상단 큰 탭이 '몬스터 (n/219)'로, 아래 섹션 제목이
+  // '속삭이는 숲 0/6'으로 같은 정보를 더 잘게 보여준다 — 칩 줄은 '고르는 곳'에 집중시킨다
   const tierChips = filterChips(
-    regionTiers.map(({ tier, regions }) => {
-      const natives = content.monsterList.filter((m) => regions.some((r) => r.id === m.habitat));
-      const done = natives.filter((m) => state.codex[m.id]?.captured).length;
-      return { key: String(tier), label: `${regions[0]!.icon} ${tierShortName(regions)} ${done}/${natives.length}` };
-    }),
+    regionTiers.map(({ tier, regions }) => ({ key: String(tier), label: tierShortName(regions) })),
     { active: view === null ? null : String(view), onPick: (v) => codexTierView.set(v === null ? null : Number(v)) },
   );
+  // 같은 카드 안 두 줄은 여백을 맞춘다 — 등급 줄만 조이면 위아래가 어긋나 보인다
+  tierChips.classList.add('chips-tight');
+  const rarityChips = filterChips(
+    RARITY_ASC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
+    { active: rarity, onPick: (v) => rarityFilter.set(v) },
+  );
+  rarityChips.classList.add('chips-tight');
 
   return [
     // 포획 수는 탭 라벨('몬스터 n/216')이 이미 말한다 — 중복 요약 카드를 지우고
@@ -172,15 +175,10 @@ function monsterTab(state: Save): HTMLElement[] {
       tierChips,
       el('div.muted.small', {},
         `목격 ${seen} · 도감 점수 ${score}${filtered ? ` · 필터 ${shownCount}종 표시` : ''}`),
-      filterChips(
-        (Object.entries(TRIBE_LABEL) as [Monster['tribe'], string][]).map(([key, label]) => ({ key, label })),
-        { active: tribe, onPick: (v) => tribeFilter.set(v) },
-      ),
+      // 종족 필터는 뺐다 (2026-08-30 사용자) — 도감은 권역·등급으로 찾는 화면이고,
+      // 종족은 카드 안 뱃지로 읽는다. 칩 줄이 셋이면 필터 카드가 화면 절반을 먹었다
       // 등급 칩은 등급색으로 — 도감은 '읽는 화면'이라 오름차순 (2026-08-25 사용자 확정)
-      filterChips(
-        RARITY_ASC.map((r) => ({ key: r, label: MONSTER_RARITY_LABEL[r], cls: `rar-${r}` })),
-        { active: rarity, onPick: (v) => rarityFilter.set(v) },
-      ),
+      rarityChips,
     ),
     visibleSections.length > 0
       ? el('div.stack-sm', {}, ...visibleSections)
@@ -267,13 +265,11 @@ function achieveTab_(state: Save): HTMLElement[] {
   const commonItems = content.milestones.filter((m) => m.condition.kind !== 'regionCaptured');
 
   const current = achieveTab();
+  // 몬스터 탭의 권역 칩과 같은 규칙 — 이름만 (2026-08-30 사용자). 진행은 아래 섹션 제목이 말한다
   const achievementTabs = filterChips(
     [
-      ...regionTiers.map(({ tier, regions }) => {
-        const items = regions.flatMap((r) => regionItems(r.id));
-        return { key: String(tier), label: `${regions[0]!.icon} ${tierShortName(regions)} ${doneCount(items)}/${items.length}` };
-      }),
-      { key: 'common', label: `🏅 공통 ${doneCount(commonItems)}/${commonItems.length}` },
+      ...regionTiers.map(({ tier, regions }) => ({ key: String(tier), label: tierShortName(regions) })),
+      { key: 'common', label: '공통' },
     ],
     { active: current, onPick: (v) => { if (v !== null) achieveTab.set(v); }, allLabel: null },
   );

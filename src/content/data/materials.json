@@ -6,5 +6,5 @@
   { "id": "grave-reed", "name": "무덤갈대", "icon": "🌾", "region": "sunken-marsh", "desc": "가라앉은 것들 위에서 자라는 갈대. 바람이 없어도 흔들린다." },
   { "id": "chill-amber", "name": "한기호박", "icon": "🧊", "region": "sunken-marsh", "desc": "얼어붙은 수액이 그대로 굳은 호박. 쥐고 있으면 손끝이 시리다." },
   { "id": "ember-core", "name": "잿불핵", "icon": "🔥", "region": "ashen-volcano", "desc": "꺼지지 않는 불씨가 갇힌 돌. 재 속에서도 온기가 돈다." },
-  { "id": "obsidian-shard", "name": "흑요석조각", "icon": "🪨", "region": "ashen-volcano", "desc": "화산 유리의 날카로운 조각. 빛을 삼켜 검게 반짝인다." }
+  { "id": "obsidian-shard", "name": "흑요석", "icon": "🪨", "region": "ashen-volcano", "desc": "화산 유리의 날카로운 조각. 빛을 삼켜 검게 반짝인다." }
 ]

@@ -2,7 +2,10 @@
  * 에셋 변환 파이프라인 (docs/ASSETS.md §3)
  * BAK의 원본 PNG(500px) → public/assets/monsters/{id}.webp (256px, 투명 유지)
  *
- *   node scripts/build-assets.mjs [--raw <원본폴더>] [--size 256]
+ *   node scripts/build-assets.mjs [--raw <원본폴더>] [--size 256] [--only <그룹>]
+ *
+ * --only 는 한 그룹만 변환한다 (예: --only ui). BAK 원본이 낡은 그룹까지 싸잡아 리빌드해
+ * 커밋된 webp를 역행시킨 사고가 있었다 (ASSETS.md §3, 2026-08-29) — 새 에셋 추가는 이 옵션으로.
  *
  * 원본은 저장소에 넣지 않는다(IconScout 라이선스). 매핑 대장: scripts/assets-manifest.json
  */
@@ -22,13 +25,20 @@ const RAW_ROOT = resolve(argOf('raw', 'C:/Workspace/BAK/NewWorld-assets-raw'));
 const OUT_ROOT = resolve(here, '../public/assets');
 const SIZE = Number(argOf('size', '256'));
 
+const ONLY = argOf('only', null);
+
 const manifest = JSON.parse(readFileSync(join(here, 'assets-manifest.json'), 'utf8'));
-const groups = [
+const allGroups = [
   { name: 'monsters', ids: Object.keys(manifest.monsters) },
   { name: 'artifacts', ids: Object.keys(manifest.artifacts ?? {}) },
   { name: 'hourglasses', ids: Object.keys(manifest.hourglasses ?? {}) },
   { name: 'ui', ids: Object.keys(manifest.ui ?? {}) }, // 앱바 지도 아이콘 등 UI 에셋 (2026-08-27)
 ];
+const groups = ONLY ? allGroups.filter((g) => g.name === ONLY) : allGroups;
+if (groups.length === 0) {
+  console.error(`--only ${ONLY}: 그룹 없음 (가능: ${allGroups.map((g) => g.name).join(', ')})`);
+  process.exit(1);
+}
 
 const missing = [];
 for (const group of groups) {

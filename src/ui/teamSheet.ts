@@ -6,13 +6,15 @@
 import { content } from '../content';
 import { SLOTS, type MonsterRarity, type Slot, type Tribe } from '../content/schema';
 import { isExpeditionOut } from '../core/expedition';
+import { nextPartySlotUnlock } from '../core/progression';
 import { artifactsUsedByTeams, autoLoadout, speciesUsedByTeams } from '../core/teams';
 import * as clock from '../state/clock';
-import type { OwnedArtifact } from '../core/types';
+import type { OwnedArtifact, SaveState } from '../core/types';
 import { signal } from '../state/signal';
-import { save, setTeam } from '../state/store';
+import { buySlot, save, setTeam } from '../state/store';
 import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
 import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
+import { askConfirm } from './dialog';
 import { sheetShell } from './overlays';
 import { filterChips, tabBar } from './panels';
 import { regionTiers, tierShortName } from './regionTiers';
@@ -49,6 +51,44 @@ function emptyMonsterText(inTierCount: number, filtered: boolean): string {
   if (inTierCount > 0 && filtered) return '이 조건에 맞는 몬스터가 없습니다 [등급·종족 칩을 눌러 해제해 보세요]';
   if (inTierCount === 0) return '이 권역의 몬스터를 아직 보유하지 않았습니다 [다른 권역 탭을 보거나 원정으로 포획해 보세요]';
   return '편성할 수 있는 몬스터가 없습니다 [다른 군이 카드를 사용 중이면 중복 포획으로 카드를 늘려보세요]';
+}
+
+/**
+ * 파티 슬롯 확장 버튼 (2026-08-30 사용자) — '몬스터 (n/N)' 바로 옆.
+ * 캠프 몬스터 목록 아래에 있던 확장 줄을 여기로 옮겼다: 슬롯은 보유 관리가 아니라
+ * "몇 마리를 데리고 나가나"의 문제라, 칸이 모자란 걸 체감하는 자리에서 늘리는 게 맞다.
+ * 조건 미달이어도 팝업은 열리고 확인 버튼만 잠긴다 — 무엇이 얼마나 모자란지 읽히게.
+ * 슬롯이 최대면 아예 렌더하지 않는다 (누를 데가 없는 버튼은 두지 않는다).
+ */
+function slotExpandButton(state: SaveState): HTMLElement | null {
+  const unlock = nextPartySlotUnlock(content, state);
+  if (!unlock) return null;
+  const captured = Object.values(state.codex).filter((c) => c.captured).length;
+  const codexOk = captured >= unlock.totalCaptured;
+  const goldOk = state.wallet.gold >= unlock.gold;
+  const canBuy = codexOk && goldOk;
+  // 조건이 찼을 때만 눈에 띄게 — 평소엔 조용한 고스트 버튼으로 둔다
+  return el(`button.btn.btn-sm.slot-add${canBuy ? '.btn-primary' : '.btn-ghost'}`, {
+    title: '파티 슬롯 확장',
+    onclick: () => {
+      playSfx('tap');
+      void askConfirm({
+        title: '파티 슬롯 확장',
+        message: [
+          `파티 슬롯 ${state.profile.partySlots} → ${unlock.slots}칸`,
+          '',
+          `${codexOk ? '✅' : '▫️'} 도감 ${Math.min(captured, unlock.totalCaptured)}/${unlock.totalCaptured}종 포획`,
+          `${goldOk ? '✅' : '▫️'} 골드 ${fmtGold(Math.min(state.wallet.gold, unlock.gold))}/${fmtGold(unlock.gold)}`,
+          '',
+          canBuy ? '지금 확장할 수 있습니다.' : '조건을 모두 채우면 확장할 수 있습니다.',
+        ].join('\n'),
+        confirmLabel: '확장',
+        confirmDisabled: !canBuy,
+      }).then((ok) => {
+        if (ok && buySlot()) playSfx('confirm');
+      });
+    },
+  }, '+');
 }
 
 function emptyArtifactText(ownedCount: number, filtered: boolean): string {
@@ -214,7 +254,10 @@ export function teamSheet(teamId: string): HTMLElement | null {
     busy ? el('div.card.banner', {}, el('span.small', {}, '🧭 원정에서 돌아오면 편성을 바꿀 수 있습니다')) : null,
     el('div.card.stack-sm', {},
       el('div.list-row', {},
-        el('span.small', {}, `몬스터 (${party.length}/${slots})`),
+        el('div.row-gap', {},
+          el('span.small', {}, `몬스터 (${party.length}/${slots})`),
+          slotExpandButton(state),
+        ),
         el('div.row-gap', {},
           el('button.btn.btn-ghost.auto-btn', {
             disabled: busy,

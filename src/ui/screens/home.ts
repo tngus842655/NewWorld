@@ -56,7 +56,8 @@ function nextGoalCard(): HTMLElement | null {
     const goldHave = Math.min(state.wallet.gold, slotUnlock.gold);
     const codexOk = codexHave >= slotUnlock.totalCaptured;
     const goldOk = goldHave >= slotUnlock.gold;
-    return el('div.card.goal-card', { onclick: () => tab.set('camp') },
+    // 확장 진입은 원정 탭의 군 카드 → 편성 시트 '몬스터 (n/N)' 옆 + 버튼 (2026-08-30 캠프에서 이동)
+    return el('div.card.goal-card', { onclick: () => tab.set('expedition') },
       el('div.goal-head', {},
         el('span', {}, `🎯 다음 목표 [파티 슬롯 ${state.profile.partySlots} → ${slotUnlock.slots}칸]`),
         codexOk && goldOk ? el('span.tag.goal-ready', {}, '조건 달성!') : null,
@@ -68,7 +69,7 @@ function nextGoalCard(): HTMLElement | null {
           `${goldOk ? '✅' : '▫️'} 골드 ${fmtGold(goldHave)}/${fmtGold(slotUnlock.gold)}`),
       ),
       el('div.muted.small', {},
-        codexOk && goldOk ? '캠프에서 확장할 수 있습니다' : '슬롯이 늘면 3+2 이중 시너지 편성이 열립니다'),
+        codexOk && goldOk ? '원정대 편성에서 확장할 수 있습니다' : '슬롯이 늘면 3+2 이중 시너지 편성이 열립니다'),
     );
   }
 

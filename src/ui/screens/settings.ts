@@ -12,7 +12,7 @@ import { googleG } from '../components';
 import { askConfirm, askText } from '../dialog';
 import { el, toast } from '../kit';
 import { openRankingBoard } from '../rankingSheets';
-import { overlay } from '../router';
+import { overlay, rememberTab } from '../router';
 import { playSfx } from '../sfx';
 
 // 이 번들이 브라우저에 로드된 시각 — 옛 번들을 실행 중인 창을 판별하는 용도 (새로고침 시 갱신)
@@ -126,12 +126,13 @@ export function renderSettings(): HTMLElement {
           el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
         ),
       ] : []),
-      // 약관·방침 — 게이트와 같은 공개 페이지로 (해시 라우팅, main.ts)
+      // 약관·방침 — 게이트와 같은 공개 페이지로 (해시 라우팅, main.ts).
+      // 해시 전환은 새로고침이라 탭이 홈으로 초기화된다 — 돌아올 탭을 남겨 둔다 (2026-08-30 사용자)
       el('div.list-row', {},
         el('span', {}, '📜 약관·개인정보처리방침'),
         el('div.row-gap', {},
-          el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/terms'; } }, '약관'),
-          el('button.btn.btn-ghost.btn-sm', { onclick: () => { window.location.hash = '#/privacy'; } }, '방침'),
+          el('button.btn.btn-ghost.btn-sm', { onclick: () => { rememberTab('settings'); window.location.hash = '#/terms'; } }, '약관'),
+          el('button.btn.btn-ghost.btn-sm', { onclick: () => { rememberTab('settings'); window.location.hash = '#/privacy'; } }, '방침'),
         ),
       ),
     ),

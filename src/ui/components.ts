@@ -105,21 +105,37 @@ export function monsterIconBadged(owned: OwnedMonster, opts: { onExpedition?: bo
 
 export function monsterChip(
   owned: OwnedMonster,
-  opts: { selected?: boolean; busy?: boolean; onclick?: () => void; onExpedition?: boolean } = {},
+  opts: { selected?: boolean; busy?: boolean; onclick?: () => void; onExpedition?: boolean; wide?: boolean } = {},
 ): HTMLElement {
   const monster = content.monsters.get(owned.monsterId)!;
   const icon = monsterIconBadged(owned, { onExpedition: opts.onExpedition });
-  return el(
-    `button.mchip${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`,
-    { onclick: opts.onclick, disabled: opts.busy },
+  // 이름은 등급색으로 (2026-08-30 사용자) — 아이콘 테두리와 같은 축이라 목록에서 등급이 먼저 읽힌다
+  const name = el(`div.mchip-name.rar-name.rar-${monster.rarity}`, {},
+    monster.name,
+    el('span.mchip-elems', {
+      title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}`,
+    }, ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
+  );
+  const cls = `${opts.selected ? '.selected' : ''}${opts.busy ? '.busy' : ''}`;
+  const attrs = { onclick: opts.onclick, disabled: opts.busy };
+  /**
+   * wide — 한 줄에 카드 하나인 배치(캠프)용. 남아돌던 오른쪽을 Lv·CP가 채우고 이름도 커진다.
+   * 편성 시트는 2열 격자라 오른쪽 여유가 없어 기존 2줄 배치를 그대로 쓴다 (2026-08-30 사용자).
+   */
+  if (opts.wide) {
+    return el(`button.mchip.mchip-wide${cls}`, attrs,
+      icon,
+      el('div.mchip-body', {}, name),
+      el('div.mchip-stats', {},
+        el('div.mchip-lv', {}, `Lv.${owned.level} ${stars(owned.star)}`),
+        el('div.mchip-cp', {}, `CP ${ownedCp(owned)}`),
+      ),
+    );
+  }
+  return el(`button.mchip${cls}`, attrs,
     icon,
     el('div.mchip-body', {},
-      el('div.mchip-name', {},
-        monster.name,
-        el('span.mchip-elems', {
-          title: `${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}`,
-        }, ` ${ELEMENT_EMOJI[monster.element]}${TRIBE_EMOJI[monster.tribe]}`),
-      ),
+      name,
       el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)} · CP ${ownedCp(owned)}`),
     ),
   );

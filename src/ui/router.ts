@@ -39,3 +39,28 @@ export const overlay = signal<Overlay>(null);
 export function closeOverlay(): void {
   overlay.set(null);
 }
+
+// ── 해시 페이지에서 돌아올 탭 (2026-08-30 사용자) ──────────────────────────────
+// 약관·방침(#/terms, #/privacy)은 새 페이지가 아니라 같은 문서의 해시 전환이고,
+// main.ts가 해시 전환을 새로고침으로 처리하므로 tab 시그널이 통째로 날아간다.
+// 그래서 설정에서 약관을 열었다가 돌아오면 언제나 홈에서 시작했다.
+// sessionStorage에 1회용으로 남겼다가 부팅 때 소비한다 — 앱을 껐다 켜면 세션이 새로 시작하므로
+// 엉뚱한 탭에서 시작할 일이 없고, 브라우저 뒤로가기·화면 안의 '돌아가기' 둘 다 같은 부팅 경로를 탄다.
+const RETURN_TAB_KEY = 'nw:returnTab';
+const TAB_IDS: readonly Tab[] = ['home', 'expedition', 'codex', 'camp', 'settings'];
+
+export function rememberTab(current: Tab): void {
+  // 프라이빗 모드 등 저장소가 막힌 환경 — 홈에서 시작할 뿐이라 조용히 넘긴다
+  try { sessionStorage.setItem(RETURN_TAB_KEY, current); } catch { /* 무시 */ }
+}
+
+/** 저장된 복귀 탭을 읽고 즉시 지운다 (1회용) */
+export function consumeReturnTab(): Tab | null {
+  try {
+    const saved = sessionStorage.getItem(RETURN_TAB_KEY);
+    sessionStorage.removeItem(RETURN_TAB_KEY);
+    return TAB_IDS.find((t) => t === saved) ?? null;
+  } catch {
+    return null;
+  }
+}

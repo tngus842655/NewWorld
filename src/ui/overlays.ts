@@ -374,14 +374,15 @@ function oddsSheet(): HTMLElement {
   );
 
   const regionViews = content.regionList.map((region) => {
-    const unlocked = isRegionUnlocked(content, state, region.id);
     const base = spawnOddsByRarity(region, 1);
     const extended = spawnOddsByRarity(region, extendedMult);
     const deep = spawnOddsByRarity(region, deepMult);
     const legendNames = region.legendary.map((id) => content.monsters.get(id)?.name ?? id).join('·');
     return {
       key: region.id,
-      label: `${unlocked ? '' : '🔒 '}${region.icon} ${region.name}`,
+      // 잠금 자물쇠는 뺐다 (2026-08-30 사용자) — 확률 고지는 '어디서 무엇이 몇 %로 나오나'를
+      // 보여주는 표라, 지금 갈 수 있는지는 여기서 답할 질문이 아니다 (그건 원정 화면의 몫)
+      label: `${region.icon} ${region.name}`,
       view: el('div.stack-sm', {},
         el('div.odds-grid.odds-head', {},
           el('span', {}, '등급'), el('span', {}, `${TIER_NAME.scout}·${TIER_NAME.standard}`),
@@ -402,9 +403,14 @@ function oddsSheet(): HTMLElement {
   });
   const firstUnlocked = Math.max(0, content.regionList.findIndex((region) => isRegionUnlocked(content, state, region.id)));
   const traces = balance.legendTraces;
+  // 지역 칩은 2열 고정 — 12개나 되고 이름 길이가 제각각이라 flex-wrap이면 줄마다 왼쪽 변이
+  // 어긋난다 (2026-08-30 사용자). chipPanels가 [칩바, ...패널]을 주므로 칩바에만 클래스를 얹는다
+  const [regionChips, ...regionPanels] = chipPanels(regionViews, { initial: firstUnlocked });
+  regionChips?.classList.add('chips-grid2');
   const regionCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🗺️ 지역별 등장 확률'),
-    ...chipPanels(regionViews, { initial: firstUnlocked }),
+    ...(regionChips ? [regionChips] : []),
+    ...regionPanels,
     // 흔적은 전설 확률을 바꾸는 요소라 확률 고지에 명시한다 (확률형 아이템 고지 의무)
     el('div.small.muted', {},
       `✨ 전설의 흔적: 완주 시 발견 (${TIERS.filter((t) => traces.dropChance[t] > 0)
@@ -519,14 +525,19 @@ function elementInfoSheet(): HTMLElement {
     content.regionList.every((region) => elementMult(element, region.element, balance) === 1));
   const regionCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🗺️ 지역별 유리·불리'),
-    el('div.odds-grid.odds-head', {},
-      el('span', {}, '지역 (우세 속성)'), el('span', {}, '유리'), el('span', {}, '불리'),
+    // 우세 속성 표시는 뺐다 (2026-08-30 사용자) — 유·불리 두 칸이 이미 그 결과를 보여준다.
+    // 지역 이모지는 한 번 뺐다가 되살렸다: 줄바꿈의 원인이 이모지가 아니라 격자였기 때문.
+    // 헤더는 '유리/불리' 대신 실제로 일어나는 일(피해증가/피해감소)로 쓴다.
+    // 3열 전용 격자(.elem-region-grid)를 쓰는 이유는 CSS 주석 참고 — 4열짜리 확률 표를
+    // 돌려쓰다 빈 열이 폭을 먹어 지역 이름이 줄바꿈되고 있었다
+    el('div.elem-region-grid.odds-head', {},
+      el('span', {}, '지역'), el('span', {}, '피해증가'), el('span', {}, '피해감소'),
     ),
     ...content.regionList.map((region) => {
       const good = ELEMENTS.filter((element) => elementMult(element, region.element, balance) > 1);
       const bad = ELEMENTS.filter((element) => elementMult(element, region.element, balance) < 1);
-      return el('div.odds-grid', {},
-        el('span', {}, `${region.icon} ${region.name} ${ELEMENT_EMOJI[region.element]}`),
+      return el('div.elem-region-grid', {},
+        el('span', {}, `${region.icon} ${region.name}`),
         el('span.cp-ok', {}, good.map((element) => ELEMENT_EMOJI[element]).join(' ')),
         el('span.cp-low', {}, bad.map((element) => ELEMENT_EMOJI[element]).join(' ')),
       );
