@@ -120,7 +120,8 @@ body {
   height: 100dvh; max-height: 100dvh; border-radius: 0; border: none;
   padding-top: calc(14px + env(safe-area-inset-top, 0px));
 }
-.container { flex: 1; overflow-y: auto; padding: 14px 14px 20px; }
+/* 상단 6px — 앱바와 화면 사이 공백 축소 (2026-08-30 사용자: 홈 상단 여백 제거) */
+.container { flex: 1; overflow-y: auto; padding: 6px 14px 20px; }
 .tabbar {
   display: flex; border-top: 1px solid var(--line); background: var(--bg2);
   padding-bottom: env(safe-area-inset-bottom);
@@ -135,6 +136,9 @@ body {
 /* ── 공용 ── */
 .screen { display: flex; flex-direction: column; gap: 10px; }
 .section-title { font-size: 14px; color: var(--muted); margin: 8px 2px 0; font-weight: 600; }
+/* 화면 맨 위에 오는 제목은 위 여백 제거 — 앱바 바로 아래 공백을 없앤다 (2026-08-30 사용자) */
+.screen > .section-title:first-child,
+.screen > .section-head:first-child { margin-top: 0; }
 .title-cp { color: var(--accent-2); font-weight: 700; }
 .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
 .card.empty { text-align: center; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: center; }

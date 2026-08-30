@@ -68,17 +68,21 @@ Deno.serve(async (req: Request) => {
   const { data: tokenUser } = await supabase.auth.getUser(token);
   const userId = tokenUser?.user?.id ?? null;
 
-  // 이용 제한 검사 (검토 ⑥, 2026-08-30) — banned_until > now() 행이 잡히면 차단.
-  // 비교를 SQL에 맡기는 이유: 'infinity'는 JS Date.parse가 못 읽는다. 회원 전용 게임이라
-  // 실클라 제출은 전부 세션을 들고 온다 (익명 경로는 구버전 잔재 — 제한 불가, 점수 상한만)
+  // 이용 제한·관리자 검사 (검토 ⑥ / 0015, 2026-08-30) — 밴이면 차단, 관리자면 리더보드에
+  // 행을 남기지 않는다 (기존 행도 정리 — 구 0013 뷰 필터를 invoker 전환하며 제출 시점으로 이동).
+  // 'infinity'는 JS Date가 못 읽어 문자열 비교로 따로 처리. 실클라 제출은 전부 세션을 들고 온다
   if (userId) {
-    const { data: banned } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('is_admin, banned_until')
       .eq('id', userId)
-      .gt('banned_until', new Date().toISOString())
       .maybeSingle();
-    if (banned) return bad(403, 'banned');
+    if (profile?.banned_until && new Date(profile.banned_until).getTime() > Date.now()) return bad(403, 'banned');
+    if (profile?.banned_until === 'infinity') return bad(403, 'banned');
+    if (profile?.is_admin) {
+      await supabase.from('rank_scores').delete().eq('player_id', playerId);
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
   }
 
   const { data: existing, error: readError } = await supabase
