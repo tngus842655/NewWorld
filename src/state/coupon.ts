@@ -59,5 +59,8 @@ export async function redeemCoupon(rawCode: string): Promise<CouponResult> {
   if (!goods) return { ok: false, message: '쿠폰 구성이 올바르지 않습니다 — 문의해 주세요' };
   const { next, summary } = applyCouponGoods(content, save(), goods, { code, at: clock.now() });
   save.set(next);
+  // 지급 재화는 유실이 곧 CS — 결제(grantIapDiamonds)와 동급으로 즉시 클라우드에 실어 보낸다
+  // (디바운스 창 안에 로그아웃·강제 종료가 겹치던 실사고 방지, 2026-08-30 firepath)
+  void import('./cloudSync').then((m) => m.flushUpload()).catch(() => undefined);
   return { ok: true, message: `지급 완료 — ${summary}` };
 }

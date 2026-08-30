@@ -301,11 +301,20 @@ export function initCloudSync(): void {
   // DEV 전용 검증 손잡이 — 콘솔 동적 import는 HMR ?t= 때문에 딴 인스턴스를 받는다 (프로드에선 제거)
   if (import.meta.env.DEV) Object.assign(window, { __newworldCloud: { cloudSession, lastUploadedAt } });
   void reconcile();
-  // 저장 변화 → 디바운스 업로드 (세션 없으면 아무 일도 없다)
+  // 저장 변화 → 디바운스 업로드 (세션 없으면 아무 일도 없다).
+  // 단 **다이아 잔액이 변하면 즉시 업로드** (2026-08-30 사용자) — 결제·쿠폰·출석·상점 소비
+  // 어느 경로든 30초 창에서 유실되지 않게. 지점마다 심지 않고 여기 한 곳에서 감시한다
+  let lastDiamonds: number | null = null;
   effect(() => {
     const state = save();
     if (!cloudSession()) return;
+    const diamondsChanged = lastDiamonds !== null && state.wallet.diamonds !== lastDiamonds;
+    lastDiamonds = state.wallet.diamonds;
     if (uploadTimer !== null) clearTimeout(uploadTimer);
+    if (diamondsChanged) {
+      void uploadNow(state);
+      return;
+    }
     uploadTimer = window.setTimeout(() => { void uploadNow(state); }, UPLOAD_DEBOUNCE_MS);
   });
   // 백그라운드 진입 시 즉시 업로드 (2026-08-29 실기기) — 모바일은 디바운스 30초가
