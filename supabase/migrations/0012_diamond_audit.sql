@@ -4,6 +4,7 @@
 --   mismatch      true = 원장 합계 ≠ 잔액 → 메모리로 잔액만 조작 (즉시 블랙 후보)
 --   unverified_iap iap:* 원장 합계 − 검증 영수증 합계 → 양수 크면 가짜 결제 의심
 --                  (1층 시크릿 설정 전 소프트 신뢰 지급분도 여기 잡힌다 — 도입 시점 참작)
+--   unverified_coupon coupon:* 원장 합계 − 서버 사용 기록 기반 지급액 → 양수면 쿠폰 항목 위조 의심
 --   attendance_over true = 출석 다이아가 이론 상한(월 800 = 50+100+150+200+300) 초과 → 날짜 조작
 --   devsim_total   0이 아니면 프로드 세이브에 DEV 시뮬 충전 흔적 (그 자체가 이상)
 --   legacy_total   v14 원장 도입 이전 잔액 (출처 미상 — 판단 시 참작)
@@ -41,6 +42,14 @@ receipts as (
   from public.iap_receipts
   where purchase_state = 0
   group by user_id
+),
+-- 서버 기록 기준 "받았어야 할" 쿠폰 다이아 — 원장의 coupon:* 합과 대조 (v3, 2026-08-30).
+-- ⚠️ 쿠폰을 delete하면 사용 기록도 지워져 여기 합계가 줄어 오탐이 난다 — 종료는 만료 처리로
+coupon_grants as (
+  select r.user_id, sum(coalesce((c.goods->>'diamonds')::bigint, 0)) as coupon_diamonds
+  from public.coupon_redemptions r
+  join public.coupons c on c.code = r.coupon_code
+  group by r.user_id
 )
 select
   u.email,
@@ -57,6 +66,8 @@ select
   greatest(1, ceil(extract(epoch from (now() - p.created_at)) / 2592000))::bigint * 800 as attendance_ceiling,
   m.attendance_total > greatest(1, ceil(extract(epoch from (now() - p.created_at)) / 2592000))::bigint * 800 as attendance_over,
   m.coupon_total,
+  coalesce(g.coupon_diamonds, 0) as coupon_granted,
+  m.coupon_total - coalesce(g.coupon_diamonds, 0) as unverified_coupon,
   m.devsim_total,
   m.legacy_total,
   m.shop_spent,
@@ -65,7 +76,8 @@ select
 from sums m
 join public.profiles p on p.id = m.profile_id
 join auth.users u on u.id = m.profile_id
-left join receipts r on r.user_id = m.profile_id;
+left join receipts r on r.user_id = m.profile_id
+left join coupon_grants g on g.user_id = m.profile_id;
 
 -- service role 전용 — 뷰는 소유자(postgres) 권한으로 돌므로 클라 롤에서 회수
 revoke all on public.diamond_audit from anon, authenticated;
