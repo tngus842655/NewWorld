@@ -466,9 +466,11 @@ function oddsSheet(): HTMLElement {
     el('div.muted.small', {}, '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 아래 등급 확률로 1개가 결정됩니다. 10장 상품은 같은 확률이 장마다 독립 적용됩니다.'),
     ...chipPanels([
       { key: 'goldNormal', label: '🃏 뽑기 [골드]', view: gachaView(shop.monsterGacha.goldNormal!) },
+      { key: 'goldAdvanced', label: '🌟 고급 뽑기 [골드]', view: gachaView(shop.monsterGacha.goldAdvanced!) },
       { key: 'normal', label: '🃏 뽑기·10 [다이아]', view: gachaView(shop.monsterGacha.normal!) },
       { key: 'premium', label: '🌟 고급 뽑기·10', view: gachaView(shop.monsterGacha.premium!) },
       { key: 'standard', label: '🏺 유물 발굴·10', view: gachaView(shop.artifactGacha.standard!) },
+      { key: 'artGoldAdvanced', label: '🔮 고급 발굴 [골드]', view: gachaView(shop.artifactGacha.goldAdvanced!) },
       { key: 'artPremium', label: '🔮 고급 발굴·10', view: gachaView(shop.artifactGacha.premium!) },
     ]),
   );

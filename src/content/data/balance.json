@@ -691,6 +691,14 @@
         "heroic": 0.035,
         "legendary": 0.005,
         "transcendent": 0
+      },
+      "goldAdvanced": {
+        "common": 0,
+        "uncommon": 0.6,
+        "rare": 0.3,
+        "heroic": 0.09,
+        "legendary": 0.01,
+        "transcendent": 0
       }
     },
     "artifactGacha": {
@@ -708,6 +716,14 @@
         "rare": 0.72,
         "heroic": 0.23,
         "legendary": 0.05,
+        "transcendent": 0
+      },
+      "goldAdvanced": {
+        "common": 0,
+        "uncommon": 0.55,
+        "rare": 0.3,
+        "heroic": 0.12,
+        "legendary": 0.03,
         "transcendent": 0
       }
     }

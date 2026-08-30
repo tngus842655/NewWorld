@@ -46,8 +46,10 @@ describe('등급 체계 (RARITIES 파생)', () => {
       ['shop.monsterGacha.normal', balance.shop.monsterGacha.normal!],
       ['shop.monsterGacha.premium', balance.shop.monsterGacha.premium!],
       ['shop.monsterGacha.goldNormal', balance.shop.monsterGacha.goldNormal!],
+      ['shop.monsterGacha.goldAdvanced', balance.shop.monsterGacha.goldAdvanced!],
       ['shop.artifactGacha.standard', balance.shop.artifactGacha.standard!],
       ['shop.artifactGacha.premium', balance.shop.artifactGacha.premium!],
+      ['shop.artifactGacha.goldAdvanced', balance.shop.artifactGacha.goldAdvanced!],
       ['core/score.ts RARITY_SCORE', RARITY_SCORE],
     ];
     for (const [name, table] of tables) {
@@ -64,8 +66,10 @@ describe('등급 체계 (RARITIES 파생)', () => {
       ['shop.monsterGacha.normal', shop.monsterGacha.normal!],
       ['shop.monsterGacha.premium', shop.monsterGacha.premium!],
       ['shop.monsterGacha.goldNormal', shop.monsterGacha.goldNormal!],
+      ['shop.monsterGacha.goldAdvanced', shop.monsterGacha.goldAdvanced!],
       ['shop.artifactGacha.standard', shop.artifactGacha.standard!],
       ['shop.artifactGacha.premium', shop.artifactGacha.premium!],
+      ['shop.artifactGacha.goldAdvanced', shop.artifactGacha.goldAdvanced!],
     ];
     for (const [name, table] of distributions) {
       const sum = Object.values(table).reduce((total, value) => total + value, 0);

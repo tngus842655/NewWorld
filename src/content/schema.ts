@@ -337,8 +337,10 @@ export const TaskSchema = z.object({
 export type TaskDef = z.infer<typeof TaskSchema>;
 
 // ── 상점 (2026-08-23, GDD §9.4) — 골드/다이아 2관, 상품별 구매 한도 ───────────
-export const MONSTER_GACHA_TABLES = ['normal', 'premium', 'goldNormal'] as const;
-export const ARTIFACT_GACHA_TABLES = ['standard', 'premium'] as const;
+// goldAdvanced (2026-08-30): 골드관 고급 상품용 — 고급(uncommon) 이상 확정.
+// 다이아 premium(희귀 확정)보다 약하게 — 무료 재화가 유료 상품 가치를 잠식하지 않게
+export const MONSTER_GACHA_TABLES = ['normal', 'premium', 'goldNormal', 'goldAdvanced'] as const;
+export const ARTIFACT_GACHA_TABLES = ['standard', 'premium', 'goldAdvanced'] as const;
 
 export const ShopGoodsSchema = z.discriminatedUnion('kind', [
   z.object({
