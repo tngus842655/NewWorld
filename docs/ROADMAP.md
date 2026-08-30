@@ -413,10 +413,11 @@
       content/releaseNotes.ts 배열이 정본 — **릴리즈 때 개발자가 항목 추가** (versionName과 맞춤),
       빌드에 포함, 유저·관리자 모두 읽기 전용. 설정 탭 📦 업데이트 내역 → 버전별 아코디언
       (native details, 최신만 기본 펼침). v0.1.0 첫 항목 작성. 브라우저 E2E 확인
-- [ ] **공지 팝업** — notices(제목·본문·게시 기간·active), RLS: authenticated select /
-      is_admin만 insert·update. 게이트 통과 후 최신 active 1건 fetch → localStorage
-      dismissedNoticeId 비교 → 다이얼로그 + "다시 보지 않기"(새 공지 id면 재표시).
-      fetch 실패 시 조용히 스킵(로컬 우선 원칙). 운영 필수라 필요성 최상
+- [x] **공지 팝업** (2026-08-30 완료) — 0009_notices: 제목·본문·게시 창(starts/ends)·active,
+      RLS 읽기=authenticated(게시 창 필터 서버 몫) / 쓰기·전체 열람=is_admin (인게임 관리자 UI
+      대비 정책 선반영, v1 발행은 대시보드 SQL — 0009 머리 주석). 접속 시 최신 1건 →
+      📢 다이얼로그(줄바꿈 보존), '다시 보지 않기' = 공지 id 기기 저장, 새 공지(더 큰 id)만 재표시.
+      조회 실패는 조용히 스킵(로컬 우선). DEV ?dev-notice로 표시·억제 E2E
 - [ ] **건의·버그 제보** — feedback(user_id, category 건의/버그, 본문, status 접수/확인/완료, reply).
       RLS: insert·select 본인(+관리자 전체). UI는 설정 탭 시트(작성+내 문의 목록).
       **확정 (2026-08-30 사용자): 비공개 — 작성 유저·관리자 간 1:1 문의 형태.**

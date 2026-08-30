@@ -45,6 +45,26 @@ export function askConfirm(opts: ConfirmOpts): Promise<boolean> {
   });
 }
 
+/** 공지 팝업 (검토 ⑨) — resolve true = '다시 보지 않기' (다음 신규 공지까지 억제) */
+export function showNotice(title: string, body: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const close = (dismiss: boolean) => {
+      backdrop.remove();
+      playSfx('close');
+      resolve(dismiss);
+    };
+    const card = el('div.dialog.dialog-notice', {},
+      el('div.dialog-title', {}, `📢 ${title}`),
+      el('div.dialog-message.notice-body', {}, body),
+      el('div.dialog-actions', {},
+        el('button.btn.btn-ghost', { onclick: () => close(true) }, '다시 보지 않기'),
+        el('button.btn.btn-primary', { onclick: () => close(false) }, '닫기'),
+      ),
+    );
+    const backdrop = mount(card, () => close(false));
+  });
+}
+
 interface TextOpts {
   title: string;
   message?: string;

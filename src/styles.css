@@ -855,6 +855,9 @@ body.overlay-open .container { overflow: hidden; }
 }
 .gate-link-dot { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
 
+/* 공지 팝업 (검토 ⑨) — 본문 줄바꿈 보존, 길면 스크롤 */
+.dialog-notice .notice-body { white-space: pre-wrap; text-align: left; max-height: 50vh; overflow-y: auto; }
+
 /* 업데이트 내역 (검토 ⑧) — 버전별 아코디언, 최신만 기본 펼침 */
 .release-note { border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08)); padding: 4px 0; }
 .release-note:last-child { border-bottom: none; }
