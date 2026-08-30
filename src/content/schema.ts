@@ -145,7 +145,23 @@ export const RegionSchema = z.object({
   tier: z.number().int().positive(),
   growthCostMult: z.number().positive(), // 출신 몬스터의 레벨업·각성 골드 배수 (원정 단계 비례 — rewardScale과 같은 계단)
   element: ElementSchema,
+  /** 기준 권장 CP — 갈림길 위험 판정(crossroad.riskyCheckRatio)의 분모. 표시용은 아래 티어별 값 */
   recommendedCp: z.number().positive(),
+  /**
+   * 티어별 권장 CP (검토 ①, 2026-08-30) — "전멸 0" 기준, scripts/recommend-cp.ts로 계측.
+   * 정찰~탐사: 20k 시드 표본 전멸 0의 최소 유효 CP. 원정(deep): 전설 조우 제외 동일 기준
+   * (전설 패배 0.5 + 함정 고정 피해 조합은 CP로 상계 불가 — 전설은 의도된 리스크).
+   * 스폰 테이블·전투 밸런스를 바꾸면 스크립트로 재계측할 것.
+   */
+  recommendedCpTier: z.object({
+    scout: z.number().positive(),
+    standard: z.number().positive(),
+    extended: z.number().positive(),
+    deep: z.number().positive(),
+  }).refine(
+    (t) => t.scout <= t.standard && t.standard <= t.extended && t.extended <= t.deep,
+    { message: '티어별 권장 CP는 정찰≤조사≤탐사≤원정이어야 한다' },
+  ),
   rewardScale: z.number().positive(),
   unlock: z.object({
     codexCaptured: z.record(z.string(), z.number().int().positive()).optional(),

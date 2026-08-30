@@ -8,6 +8,12 @@
     "growthCostMult": 1,
     "element": "nature",
     "recommendedCp": 100,
+    "recommendedCpTier": {
+      "scout": 190,
+      "standard": 240,
+      "extended": 260,
+      "deep": 460
+    },
     "rewardScale": 1,
     "unlock": {},
     "materials": [
@@ -100,6 +106,12 @@
     "growthCostMult": 1,
     "element": "nature",
     "recommendedCp": 160,
+    "recommendedCpTier": {
+      "scout": 270,
+      "standard": 420,
+      "extended": 420,
+      "deep": 940
+    },
     "rewardScale": 1,
     "unlock": {
       "codexCaptured": {
@@ -196,6 +208,12 @@
     "growthCostMult": 1,
     "element": "nature",
     "recommendedCp": 250,
+    "recommendedCpTier": {
+      "scout": 490,
+      "standard": 660,
+      "extended": 660,
+      "deep": 1300
+    },
     "rewardScale": 1,
     "unlock": {
       "codexCaptured": {
@@ -292,6 +310,12 @@
     "growthCostMult": 2.4,
     "element": "nature",
     "recommendedCp": 400,
+    "recommendedCpTier": {
+      "scout": 350,
+      "standard": 520,
+      "extended": 520,
+      "deep": 1100
+    },
     "rewardScale": 2.4,
     "unlock": {
       "codexCaptured": {
@@ -392,6 +416,12 @@
     "growthCostMult": 2.4,
     "element": "nature",
     "recommendedCp": 580,
+    "recommendedCpTier": {
+      "scout": 580,
+      "standard": 770,
+      "extended": 770,
+      "deep": 1900
+    },
     "rewardScale": 2.4,
     "unlock": {
       "codexCaptured": {
@@ -488,6 +518,12 @@
     "growthCostMult": 2.4,
     "element": "nature",
     "recommendedCp": 830,
+    "recommendedCpTier": {
+      "scout": 850,
+      "standard": 1200,
+      "extended": 1200,
+      "deep": 2200
+    },
     "rewardScale": 2.4,
     "unlock": {
       "codexCaptured": {
@@ -584,6 +620,12 @@
     "growthCostMult": 5.5,
     "element": "frost",
     "recommendedCp": 1200,
+    "recommendedCpTier": {
+      "scout": 920,
+      "standard": 1400,
+      "extended": 1400,
+      "deep": 5100
+    },
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": {
@@ -684,6 +726,12 @@
     "growthCostMult": 5.5,
     "element": "frost",
     "recommendedCp": 1650,
+    "recommendedCpTier": {
+      "scout": 1500,
+      "standard": 2000,
+      "extended": 2000,
+      "deep": 3900
+    },
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": {
@@ -780,6 +828,12 @@
     "growthCostMult": 5.5,
     "element": "frost",
     "recommendedCp": 2250,
+    "recommendedCpTier": {
+      "scout": 2200,
+      "standard": 2900,
+      "extended": 2900,
+      "deep": 5600
+    },
     "rewardScale": 5.5,
     "unlock": {
       "codexCaptured": {
@@ -876,6 +930,12 @@
     "growthCostMult": 12,
     "element": "fire",
     "recommendedCp": 3000,
+    "recommendedCpTier": {
+      "scout": 1900,
+      "standard": 3100,
+      "extended": 3200,
+      "deep": 4500
+    },
     "rewardScale": 12,
     "unlock": {
       "codexCaptured": {
@@ -976,6 +1036,12 @@
     "growthCostMult": 12,
     "element": "fire",
     "recommendedCp": 4100,
+    "recommendedCpTier": {
+      "scout": 3000,
+      "standard": 4100,
+      "extended": 4600,
+      "deep": 6300
+    },
     "rewardScale": 12,
     "unlock": {
       "codexCaptured": {
@@ -1072,6 +1138,12 @@
     "growthCostMult": 12,
     "element": "fire",
     "recommendedCp": 5500,
+    "recommendedCpTier": {
+      "scout": 4200,
+      "standard": 5700,
+      "extended": 6300,
+      "deep": 13000
+    },
     "rewardScale": 12,
     "unlock": {
       "codexCaptured": {

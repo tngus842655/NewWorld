@@ -193,7 +193,7 @@ function decorations(tier: number): SVGGElement {
 
 function regionNode(region: Region, pos: Pt, opts: { locked: boolean; target: boolean }): SVGGElement {
   return svg('g', { class: `map-node${opts.locked ? ' locked' : ''}${opts.target ? ' target' : ''}` },
-    svg('title', {}, opts.locked ? `${region.name} · 잠김` : `${region.name} · 권장 CP ${region.recommendedCp}`),
+    svg('title', {}, opts.locked ? `${region.name} · 잠김` : `${region.name} · 권장 CP ${region.recommendedCpTier.scout}~${region.recommendedCpTier.deep}`),
     svg('circle', { cx: pos.x, cy: pos.y, r: 15, class: 'map-node-plate' }),
     svg('text', { x: pos.x, y: pos.y + 5, 'text-anchor': 'middle', class: 'map-node-icon' }, region.icon),
     svg('text', { x: pos.x, y: pos.y + 27, 'text-anchor': 'middle', class: 'map-node-name' }, region.name),

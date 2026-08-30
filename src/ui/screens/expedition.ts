@@ -134,7 +134,8 @@ function regionRow(regionId: string, opts: { selected: boolean; compact: boolean
         `${region.icon} ${region.name}`,
         el('span.region-elem', { title: `우세 속성 ${ELEMENT_LABEL[region.element]} — 같거나 이기는 속성이 유리` }, ` ${ELEMENT_EMOJI[region.element]}`),
       ),
-      el('div.muted.small', {}, `권장 CP ${fmtGold(region.recommendedCp)}`),
+      // 티어별 권장 CP 범위 (검토 ① — 전멸 0 기준). 정확한 값은 파견 패널이 선택 티어로 보여준다
+      el('div.muted.small', {}, `권장 CP ${fmtGold(region.recommendedCpTier.scout)}~${fmtGold(region.recommendedCpTier.deep)}`),
     );
   }
   // 다음 관문이 아닌 먼 잠김 지역은 이름만 — 12지역에서 잠김 조건 11줄이 목록을 덮는 것을 막는다 (2026-08-26)
@@ -250,7 +251,9 @@ export function renderExpedition(): HTMLElement {
   const party = teamParty(state, team);
   const info = teamPreview(team, regionId, tier);
 
-  const cpClass = info && info.power >= region.recommendedCp ? 'cp-ok' : 'cp-low';
+  // 선택 티어의 권장 CP (검토 ① — 전멸 0 기준, 원정은 전설 조우 제외)
+  const recommendedCp = region.recommendedCpTier[tier];
+  const cpClass = info && info.power >= recommendedCp ? 'cp-ok' : 'cp-low';
   const synergyChips = (info?.tribes ?? [])
     .filter((t) => t.count >= 2)
     .map((t) =>
@@ -364,7 +367,8 @@ export function renderExpedition(): HTMLElement {
         el('div.cp-row', {},
           el('span', {}, `${team.name} 유효 전투력`),
           el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
-          el('span.muted.small', {}, `/ 권장 ${fmtGold(region.recommendedCp)}`),
+          el('span.muted.small', { title: `${TIER_NAME[tier]} 기준 — 이 전투력이면 전멸 없이 완주합니다` },
+            `/ 권장 ${fmtGold(recommendedCp)}`),
         ),
         synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 [같은 종족 2마리부터 발동]'),
         info && info.synergyAmp > 0 ? el('div.muted.small', {}, `시너지 증폭 +${Math.round(info.synergyAmp * 100)}%`) : null,
