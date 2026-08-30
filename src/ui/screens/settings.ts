@@ -78,8 +78,9 @@ export function renderSettings(): HTMLElement {
           onclick: () => {
             void askText({
               title: '쿠폰 입력',
-              message: '쿠폰 번호를 입력하세요 (영문·숫자·하이픈)',
-              placeholder: 'WELCOME-300',
+              message: '쿠폰 번호를 입력하세요',
+              // 실존 웰컴 쿠폰을 예시로 — 보고 그대로 입력해 받아가라는 의도 (2026-08-30 사용자)
+              placeholder: 'WELCOME2026',
               confirmLabel: '사용',
             }).then(async (text) => {
               if (!text) return;
