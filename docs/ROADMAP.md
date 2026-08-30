@@ -396,9 +396,13 @@
       **⚠️ 상세 설계는 추후 재논의 (보류)** — 논의 시 다룰 것: 오프라인 로컬 우선 흐름과의 정합
       (파견 보상·출석이 오프라인에도 일어나므로 건별 기록은 이벤트 큐 적재 후 온라인 시 업로드 방식
       필요), Play 영수증 서버 검증(실결제 위조 차단)과의 결합, 이상 계정 플래그 → 블랙리스트 연계
-- [ ] **블랙리스트 (임시/영구/해제)** — profiles.banned_until(null=정상, infinity=영구)+banned_reason.
-      게이트에서 조회해 차단 화면, submit-score·쿠폰 등 엣지 함수마다 검사, saves RLS에도 밴 조건
-      추가 가능. 조작은 초기엔 Supabase 대시보드 SQL, 인게임 관리자 UI는 후순위
+- [x] **블랙리스트 (임시/영구/해제)** (2026-08-30 완료) — 0007_ban_flags: profiles.banned_until
+      (null=정상 / infinity=영구 / 미래 시각=임시, 지나면 자동 해제) + banned_reason.
+      서버 강제 2겹: saves RLS에 밴 조건(조작 클라도 업로드 불가) + submit-score 밴 검사
+      (v3 배포 — 'infinity'는 JS가 못 읽어 비교를 SQL에 위임). 클라는 banInfo 시그널 →
+      게이트풍 안내 화면(기간·사유·문의·로그아웃) — 부팅을 조회에 막지 않는다(로컬 우선).
+      지정·해제 SQL은 0007 마이그레이션 머리 주석에 정리. 인게임 관리자 UI는 후순위.
+      ban.ts 순수부 테스트 5건 + DEV ?dev-banned E2E
 - [ ] **쿠폰** — coupons(code, goods jsonb — shop.json bundle 스키마 재사용, 만료·총한도·인당 1회) +
       coupon_redemptions(unique) + redeem-coupon 엣지 함수(JWT→밴 검사→원자적 등록→goods 반환),
       지급은 클라 로컬 세이브 + 지급 장부(IAP deliver 패턴 재사용). 입력 UI는 설정 탭. 발급은 초기

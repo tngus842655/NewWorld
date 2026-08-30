@@ -26,7 +26,7 @@ async function boot(): Promise<void> {
     // 탈퇴 직후의 빈 localStorage에 유령 세이브가 되살아난다 (2026-08-29 실사고).
     // 로그인은 리디렉션 왕복이라 성공하면 어차피 새 페이지로 여기를 다시 지난다.
     // DEV 한정 ?dev-guest 우회 — 로그인 없는 브라우저 자동 검증용 (프로드 번들에서는 제거됨)
-    const { initAuth } = await import('./state/cloud');
+    const { initAuth, banInfo } = await import('./state/cloud');
     const session = await initAuth();
     const devGuest = import.meta.env.DEV && new URLSearchParams(location.search).has('dev-guest');
     if (!session && !devGuest) {
@@ -43,6 +43,12 @@ async function boot(): Promise<void> {
       import('./state/cloudSync'),
     ]);
     mountApp(app);
+    // 이용 제한 (검토 ⑥) — 조회는 비동기(오프라인에도 게임은 돈다), 잡히는 즉시 안내 화면으로 교체.
+    // 실효 강제는 서버 몫 (saves RLS·submit-score) — 이 화면은 사유·기간 안내다
+    effect(() => {
+      const ban = banInfo();
+      if (ban) void import('./ui/gate').then(({ renderBanned }) => renderBanned(app, ban));
+    });
     // 효과음: 설정 미러 + 첫 제스처(자동재생 정책 통과 시점)에 전량 프리로드
     effect(() => setSfxEnabled(save().settings.sound));
     document.addEventListener('pointerdown', () => preloadAllSfx(), { once: true });

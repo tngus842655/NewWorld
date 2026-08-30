@@ -68,6 +68,19 @@ Deno.serve(async (req: Request) => {
   const { data: tokenUser } = await supabase.auth.getUser(token);
   const userId = tokenUser?.user?.id ?? null;
 
+  // 이용 제한 검사 (검토 ⑥, 2026-08-30) — banned_until > now() 행이 잡히면 차단.
+  // 비교를 SQL에 맡기는 이유: 'infinity'는 JS Date.parse가 못 읽는다. 회원 전용 게임이라
+  // 실클라 제출은 전부 세션을 들고 온다 (익명 경로는 구버전 잔재 — 제한 불가, 점수 상한만)
+  if (userId) {
+    const { data: banned } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .gt('banned_until', new Date().toISOString())
+      .maybeSingle();
+    if (banned) return bad(403, 'banned');
+  }
+
   const { data: existing, error: readError } = await supabase
     .from('rank_scores')
     .select('secret_hash')

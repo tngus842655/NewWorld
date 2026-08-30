@@ -5,9 +5,29 @@
  * 배경은 풀블리드 키아트(login-background.png — 게임명 포함)라 별도 로고·타이틀이 없고,
  * 버튼·링크는 하단 스크림 위에 얹힌다 (styles.css .gate).
  */
-import { signInWithGoogle } from '../state/cloud';
+import { describeBanUntil, type BanInfo } from '../state/ban';
+import { signInWithGoogle, signOutGoogle } from '../state/cloud';
 import { googleG } from './components';
 import { el } from './kit';
+
+/**
+ * 이용 제한 안내 (검토 ⑥) — banInfo가 잡히면 게임 대신 이 화면 (main.ts).
+ * 클라 안내일 뿐 실효 강제는 서버(saves RLS·submit-score). 임시 제한은 기한이 지나면
+ * 다음 부팅에서 자동 해제된다 (조회가 null을 돌려줌).
+ */
+export function renderBanned(root: HTMLElement, ban: BanInfo): void {
+  root.replaceChildren(
+    el('div.gate', {},
+      el('div.card.ban-card', {},
+        el('h2', {}, '🚫 이용이 제한되었습니다'),
+        el('p', {}, `기간: ${describeBanUntil(ban.until)}`),
+        ...(ban.reason ? [el('p', {}, `사유: ${ban.reason}`)] : []),
+        el('p.muted.small', {}, '문의: tngus842655@gmail.com'),
+        el('button.btn.btn-ghost', { onclick: () => void signOutGoogle() }, '로그아웃'),
+      ),
+    ),
+  );
+}
 
 export function renderGate(root: HTMLElement): void {
   root.replaceChildren(

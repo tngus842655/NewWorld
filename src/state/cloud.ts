@@ -7,6 +7,7 @@
  */
 import { Capacitor } from '@capacitor/core';
 import { toast } from '../ui/kit';
+import { isBanActive, type BanInfo } from './ban';
 import { signal } from './signal';
 import { supabase } from './supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -20,20 +21,34 @@ export const cloudSession = signal<Session | null>(null);
  */
 export const isAdmin = signal(false);
 
-/** DEV 한정 ?dev-admin — 관리자 메뉴 노출을 로그인 없이 검증 (dev-guest와 짝, 프로드 번들에서는 제거됨) */
-const DEV_ADMIN = import.meta.env.DEV && new URLSearchParams(location.search).has('dev-admin');
+/**
+ * 이용 제한 (검토 ⑥) — 값이 있으면 main.ts가 게임 대신 안내 화면을 띄운다.
+ * 조회를 부팅에 await하지 않는 이유: 오프라인에도 게임은 돌아야 한다(로컬 우선).
+ * 실효 강제는 서버가 한다 — saves RLS(0007)·submit-score가 제한 중 접근을 막는다.
+ */
+export const banInfo = signal<BanInfo | null>(null);
 
-async function refreshAdminFlag(session: Session | null): Promise<void> {
-  if (DEV_ADMIN) {
-    isAdmin.set(true);
-    return;
-  }
+/** DEV 한정 ?dev-admin / ?dev-banned — 로그인 없이 노출 검증 (dev-guest와 짝, 프로드 번들에서는 제거됨) */
+const DEV_ADMIN = import.meta.env.DEV && new URLSearchParams(location.search).has('dev-admin');
+const DEV_BANNED = import.meta.env.DEV && new URLSearchParams(location.search).has('dev-banned');
+
+async function refreshProfileFlags(session: Session | null): Promise<void> {
+  if (DEV_BANNED) banInfo.set({ until: 'infinity', reason: 'DEV 검증용 표시' });
+  if (DEV_ADMIN) isAdmin.set(true);
+  if (DEV_ADMIN || DEV_BANNED) return;
   if (!session) {
     isAdmin.set(false);
     return;
   }
-  const { data } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
+  const { data } = await supabase
+    .from('profiles')
+    .select('is_admin, banned_until, banned_reason')
+    .eq('id', session.user.id)
+    .single();
   isAdmin.set(data?.is_admin === true);
+  banInfo.set(isBanActive(data?.banned_until, Date.now())
+    ? { until: data!.banned_until as string, reason: (data!.banned_reason as string | null) ?? null }
+    : null);
 }
 
 /** 네이티브 앱의 OAuth 복귀 딥링크 — AndroidManifest의 intent-filter와 반드시 같아야 한다 */
@@ -103,7 +118,7 @@ export async function initAuth(): Promise<Session | null> {
   // getSession은 리디렉션 복귀 시 코드 교환(detectSessionInUrl)까지 끝난 세션을 준다
   const { data } = await supabase.auth.getSession();
   cloudSession.set(data.session);
-  void refreshAdminFlag(data.session);
+  void refreshProfileFlags(data.session);
   // 네이티브: OAuth 복귀 딥링크 수신 — 앱이 떠 있으면 appUrlOpen(singleTask 재진입),
   // 브라우저에 나간 사이 죽었으면 launchUrl로 들어온다. launchUrl은 재부팅 후에도 같은 값을
   // 돌려주므로 세션이 없을 때만 본다 (성공 직후 reload가 쓰고 버린 코드를 재교환하지 않게)
@@ -117,7 +132,7 @@ export async function initAuth(): Promise<Session | null> {
   }
   supabase.auth.onAuthStateChange((event, session) => {
     cloudSession.set(session);
-    if (event === 'SIGNED_IN') void refreshAdminFlag(session); // 토큰 갱신마다 재조회할 필요는 없다
+    if (event === 'SIGNED_IN') void refreshProfileFlags(session); // 토큰 갱신마다 재조회할 필요는 없다
     // 회원 전용 (2026-08-29) — 로그아웃은 게이트로 돌아간다
     if (event === 'SIGNED_OUT') window.location.reload();
   });
