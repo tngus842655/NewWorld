@@ -41,7 +41,7 @@ export function renderSettings(): HTMLElement {
       // 리더보드 자체도 서버 뷰(0013)가 관리자 점수를 걸러낸다
       ...(isAdmin() ? [
         el('div.list-row', {},
-          el('span', {}, '🛠️ 랭킹'),
+          el('span', {}, '🏆 랭킹'),
           el('button.btn.btn-ghost', {
             onclick: () => {
               openRankingBoard();
@@ -117,11 +117,11 @@ export function renderSettings(): HTMLElement {
       // 고지 의무(유료 뽑기)라 유저 공개 유지. isAdmin은 UI 노출 가드일 뿐 — 민감 동작 아님
       ...(isAdmin() ? [
         el('div.list-row', {},
-          el('span', {}, '🛠️ 몬스터 정보'),
+          el('span', {}, '👾 몬스터 정보'),
           el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'monsterInfo' }) }, '보기'),
         ),
         el('div.list-row', {},
-          el('span', {}, '🛠️ 유물 정보'),
+          el('span', {}, '🏺 유물 정보'),
           el('button.btn.btn-ghost', { onclick: () => overlay.set({ kind: 'artifactInfo' }) }, '보기'),
         ),
       ] : []),
