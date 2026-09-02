@@ -581,7 +581,6 @@ body {
 .region-row.locked { touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .region-tip { top: calc(100% + 4px); z-index: 30; }
 .region-tip .small { white-space: normal; }
-.region-tip-sub { padding-left: 14px; } /* 조건 줄 아래 "어디서 채우나" 줄 — 들여쓰기로 종속 표시 */
 .region-elem { font-size: 12px; font-weight: 400; }
 /* ── 군 카드 (원정대 — 2열 그리드, 슬롯 수만큼 미리보기 + 유물 줄 + 이름·CP) ──
  * 지역·원정대·파견 패널이 375px 한 화면에 들어가도록 카드를 반폭 세로형으로 (2026-08-27) */

@@ -38,29 +38,23 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pointercancel', () => heldRegion.set(null));
 }
 
-/** 해금 조건 말풍선 — 조건별로 "무엇을 세는 값인지"와 "어디서 채우는지" 한 줄씩 */
+/** 해금 조건 말풍선 — 핵심만 (2026-09-02 사용자: 상세 설명 없이 "무슨 조건인지" 한 줄씩). 아이콘 수치를 이름으로 풀어 준다 */
 function unlockTip(region: Region, state: SaveState): HTMLElement {
   const counts = capturedCounts(content, state);
   const lines: HTMLElement[] = [];
   for (const [requiredRegion, need] of Object.entries(region.unlock.codexCaptured ?? {})) {
     const r = content.regions.get(requiredRegion);
     const have = counts.byRegion.get(requiredRegion) ?? 0;
-    // 지역 이름은 한 번만 — 두 줄에 다 넣으면 '얼어붙은 심연'처럼 긴 이름에서 375px을 넘는다
-    lines.push(el('div.small', {}, `${r?.icon ?? ''} ${have}/${need} · ${r?.name ?? requiredRegion} 도감`));
-    lines.push(el('div.small.muted.region-tip-sub', {}, '그 지역 원정에서 포획한 종 수 — 새 종을 잡으면 채워집니다'));
+    lines.push(el('div.small', {}, `${r?.icon ?? ''} ${r?.name ?? requiredRegion} 도감 ${have}/${need}`));
   }
   for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
     const m = content.materials.get(materialId);
-    const src = m ? content.regions.get(m.region) : undefined;
-    const tierName = src ? tierShortName(regionTiers.find((t) => t.tier === src.tier)?.regions ?? [src]) : '';
     const have = state.wallet.materials[materialId] ?? 0;
-    lines.push(el('div.small', {}, `${m?.icon ?? ''} ${have}/${need} · ${m?.name ?? materialId} — 보유 수 (해금 시 소모)`));
-    lines.push(el('div.small.muted.region-tip-sub', {}, `${tierName} 권역 원정의 채집·갈림길 · 상점 지역 재료 꾸러미`)); // 375px 한 줄
+    lines.push(el('div.small', {}, `${m?.icon ?? ''} ${m?.name ?? materialId} ${have}/${need}`));
   }
   return el('div.wallet-tip.region-tip', {},
     el('div.wallet-tip-title', {}, `🔒 ${region.icon} ${region.name} 해금 조건`),
     ...lines,
-    el('div.small.wallet-tip-use', {}, '조건을 모두 채우면 [해금] 버튼이 나타납니다'),
   );
 }
 
