@@ -45,16 +45,17 @@ function unlockTip(region: Region, state: SaveState): HTMLElement {
   for (const [requiredRegion, need] of Object.entries(region.unlock.codexCaptured ?? {})) {
     const r = content.regions.get(requiredRegion);
     const have = counts.byRegion.get(requiredRegion) ?? 0;
-    lines.push(el('div.small', {}, `${r?.icon ?? ''} ${have}/${need} · ${r?.name ?? requiredRegion} 도감 — 그 지역에서 포획한 종 수`));
-    lines.push(el('div.small.muted.region-tip-sub', {}, `${r?.name ?? ''} 원정에서 새 종을 포획하면 채워집니다`));
+    // 지역 이름은 한 번만 — 두 줄에 다 넣으면 '얼어붙은 심연'처럼 긴 이름에서 375px을 넘는다
+    lines.push(el('div.small', {}, `${r?.icon ?? ''} ${have}/${need} · ${r?.name ?? requiredRegion} 도감`));
+    lines.push(el('div.small.muted.region-tip-sub', {}, '그 지역 원정에서 포획한 종 수 — 새 종을 잡으면 채워집니다'));
   }
   for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
     const m = content.materials.get(materialId);
     const src = m ? content.regions.get(m.region) : undefined;
     const tierName = src ? tierShortName(regionTiers.find((t) => t.tier === src.tier)?.regions ?? [src]) : '';
     const have = state.wallet.materials[materialId] ?? 0;
-    lines.push(el('div.small', {}, `${m?.icon ?? ''} ${have}/${need} · ${m?.name ?? materialId} — 보유한 재료 수`));
-    lines.push(el('div.small.muted.region-tip-sub', {}, `${tierName} 권역 원정의 채집·갈림길 · 상점 재료 꾸러미`)); // 375px 한 줄
+    lines.push(el('div.small', {}, `${m?.icon ?? ''} ${have}/${need} · ${m?.name ?? materialId} — 보유 수 (해금 시 소모)`));
+    lines.push(el('div.small.muted.region-tip-sub', {}, `${tierName} 권역 원정의 채집·갈림길 · 상점 지역 재료 꾸러미`)); // 375px 한 줄
   }
   return el('div.wallet-tip.region-tip', {},
     el('div.wallet-tip-title', {}, `🔒 ${region.icon} ${region.name} 해금 조건`),
@@ -65,7 +66,11 @@ function unlockTip(region: Region, state: SaveState): HTMLElement {
 
 /** 잠긴 행에 길게 누르기 핸들러 — 누르는 동안 unlockTip, 떼면 닫힘. 스크롤(pointercancel)·컨텍스트 메뉴에 걸리지 않게 */
 function holdToExplain(row: HTMLElement, regionId: string): HTMLElement {
-  row.onpointerdown = (e) => { if (e.button === 0) heldRegion.set(regionId); };
+  row.onpointerdown = (e) => {
+    // 행 안 [해금] 버튼에서 시작한 누름은 무시 — 시그널 set이 동기 재렌더로 버튼 노드를 교체해 click이 유실된다 (마우스·iOS)
+    if (e.button !== 0 || (e.target as Element).closest('button')) return;
+    heldRegion.set(regionId);
+  };
   row.onpointerup = () => heldRegion.set(null);
   row.onpointercancel = () => heldRegion.set(null);
   row.oncontextmenu = (e) => e.preventDefault(); // 길게 누르기가 브라우저 메뉴·텍스트 선택으로 새지 않게
@@ -203,14 +208,16 @@ function regionRow(regionId: string, opts: { selected: boolean; compact: boolean
     const have = Math.min(state.wallet.materials[materialId] ?? 0, need);
     requirements.push(`${content.materials.get(materialId)?.icon ?? ''}${have}/${need}`);
   }
-  const row = holdToExplain(el('div.region-row.locked', { title: `${check.reason ?? ''} (누르고 있으면 조건 안내)` },
+  // 조건을 다 채운 행은 [해금] 버튼이 답이라 말풍선을 붙이지 않는다 ("조건을 채우면 버튼이 나타납니다"가 화면과 모순)
+  const rowEl = el('div.region-row.locked', { title: check.ok ? '해금 조건 달성' : `${check.reason ?? ''} — 누르고 있으면 조건 안내` },
     el('div.region-name', {}, `🔒 ${region.icon} ${region.name}`),
     el('div.muted.small.region-req', {}, check.ok ? '해금 조건 달성!' : requirements.join(' ')),
     // 해금하면 바로 출발 대상으로 — 방금 연 지역이 다음 목적지다
     check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => { unlock(regionId); selRegion.set(regionId); } }, '해금') : null,
-  ), regionId);
+  );
+  const row = check.ok ? rowEl : holdToExplain(rowEl, regionId);
   // 말풍선은 행 아래에 겹쳐 뜬다 (.region-row-wrap이 기준) — 흐름에 끼우면 누를 때마다 목록이 출렁인다
-  return el('div.region-row-wrap', {}, row, heldRegion() === regionId ? unlockTip(region, state) : null);
+  return el('div.region-row-wrap', {}, row, !check.ok && heldRegion() === regionId ? unlockTip(region, state) : null);
 }
 
 /** 군 카드 — 파티 슬롯 수만큼 미리보기 + 유물 줄 + 이름·CP. 클릭하면 편성 시트 */
