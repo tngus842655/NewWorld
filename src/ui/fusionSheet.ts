@@ -4,14 +4,14 @@
  */
 import { content } from '../content';
 import type { MonsterRarity } from '../content/schema';
-import { RARITY_NEXT, finalTierEntry, isFinalTierNative, type FusionInput, type FusionResult } from '../core/economy';
+import { RARITY_NEXT, transcendGateRegion, type FusionInput, type FusionResult } from '../core/economy';
 import { isRegionUnlocked } from '../core/progression';
 import type { SaveState } from '../core/types';
 import { flushUpload } from '../state/cloudSync';
 import { batch, signal } from '../state/signal';
 import { fuse, save } from '../state/store';
 import { monsterIcon } from './components';
-import { MONSTER_RARITY_LABEL, RARITY_ASC, el } from './kit';
+import { MONSTER_RARITY_LABEL, RARITY_ASC, el, josa } from './kit';
 import { pct1, sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -46,21 +46,14 @@ export function resetFusion(): void {
 // ── 여분 계산·자동 재료 계획 ─────────────────────────────────────────────────
 
 /**
- * 초월 도전은 최종 티어(권역) 서식 카드만 재료가 된다 (2026-08-25 사용자, 2026-08-26 티어화).
- * 코어(economy.ts)가 거절하므로, 시트도 같은 기준으로 세지 않으면
- * "최대 4회 가능"이라고 해놓고 눌러도 0회 합성되는 조용한 실패가 난다.
+ * 여분 = 보유 − 1 (마지막 1장 육성 보호). 초월 단계도 재료 서식 제한이 없다 (2026-08-31 완화 —
+ * 그 전에는 최종 티어 서식만 세어야 코어와 맞았다). 관문(분화구 심장부 해금)은 코어가 거절하므로,
+ * 시트는 gateOpen으로 버튼을 잠가 "최대 n회 가능"이라 해놓고 눌러도 0회 합성되는 조용한 실패를 막는다.
  */
-function isUsableMaterial(monsterId: string, nextRarity: MonsterRarity): boolean {
-  if (FUSION_NEXT[nextRarity] !== null) return true; // 초월로 가는 단계가 아니면 제한 없음
-  return isFinalTierNative(content, monsterId);
-}
-
 function spareMap(state: SaveState, rarity: MonsterRarity): Map<string, number> {
   const spares = new Map<string, number>();
-  const nextRarity = FUSION_NEXT[rarity];
   for (const owned of state.roster) {
     if (content.monsters.get(owned.monsterId)!.rarity !== rarity) continue;
-    if (nextRarity && !isUsableMaterial(owned.monsterId, nextRarity)) continue;
     if (owned.count > 1) spares.set(owned.monsterId, owned.count - 1);
   }
   return spares;
@@ -158,7 +151,11 @@ export function fusionSheet(): HTMLElement {
   if (phase === 'result') return resultView(rarity, nextRarity);
 
   // ── setup ──
+  // 초월 단계는 분화구 심장부 해금이 관문이다 (2026-08-31 — 유물 시트와 같은 모양, 관문 지역만 다르다: 유물=화산 권역).
+  // 코어가 거절하므로 시트에서도 잠가야 눌러도 0회 합성되는 조용한 실패가 없다
   const restricted = FUSION_NEXT[nextRarity] === null; // 초월로 가는 단계인가
+  const gate = transcendGateRegion(content);
+  const gateOpen = !restricted || isRegionUnlocked(content, state, gate.id);
   const spares = spareMap(state, rarity);
   const total = sumOf(spares);
   const maxRounds = Math.floor(total / fusion.materials);
@@ -193,13 +190,13 @@ export function fusionSheet(): HTMLElement {
     el('div.center.muted.small', {},
       total > 0
         ? `${MONSTER_RARITY_LABEL[rarity]} 여분 ${total}장 [최대 ${maxRounds}회 합성 가능]`
-        : restricted
-          ? `${finalTierEntry(content).name} 권역 서식 ${MONSTER_RARITY_LABEL[rarity]}의 여분 카드가 없습니다`
-          : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 [중복 포획으로 모아보세요]`),
-    // 초월 단계에서는 재료 조건이 다르다는 것을 눌러보기 전에 알려준다 (2026-08-25)
+        : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 [중복 포획으로 모아보세요]`),
+    // 초월 단계의 관문·재료 규칙은 눌러보기 전에 알려준다 (2026-08-25 → 2026-08-31 관문 개편)
     restricted
       ? el('div.center.small.muted', {},
-          `⚠️ ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${finalTierEntry(content).name} 권역 서식 카드만 재료가 됩니다`)
+          gateOpen
+            ? `⚠️ ${josa(MONSTER_RARITY_LABEL[nextRarity], '은', '는')} 합성으로만 얻습니다 [모든 지역의 ${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 재료]`
+            : `🔒 ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${gate.name} 해금 후에 열립니다 [재료는 모든 지역의 ${MONSTER_RARITY_LABEL[rarity]} 여분 카드]`)
       : null,
 
     el('div.card.stack-sm', {},
@@ -225,11 +222,13 @@ export function fusionSheet(): HTMLElement {
         el('span.small.muted', {}, `성공 시 ${MONSTER_RARITY_LABEL[nextRarity]} ${resultPool}종 중 랜덤 · 실패 시 1장 반환`),
       ),
       el('button.btn.btn-primary.btn-big', {
-        disabled: maxRounds < 1,
+        disabled: maxRounds < 1 || !gateOpen,
         onclick: () => startRitual(rarity, rounds),
-      }, maxRounds < 1
-        ? '여분 카드가 부족합니다'
-        : `🧬 합성 시작 [${MONSTER_RARITY_LABEL[rarity]} → ${MONSTER_RARITY_LABEL[nextRarity]} ${rounds}회]`),
+      }, !gateOpen
+        ? `${gate.name} 해금이 필요합니다`
+        : maxRounds < 1
+          ? '여분 카드가 부족합니다'
+          : `🧬 합성 시작 [${MONSTER_RARITY_LABEL[rarity]} → ${MONSTER_RARITY_LABEL[nextRarity]} ${rounds}회]`),
     ),
     el('div.center.muted.small', {}, '각 종의 마지막 1장은 재료로 쓰지 않습니다 (육성 보호)'),
   );

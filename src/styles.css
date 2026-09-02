@@ -1160,6 +1160,7 @@ body.overlay-open .container { overflow: hidden; }
 .hg-icon.hg-sm img { padding: 2px; }
 .hg-name { display: flex; align-items: center; gap: 7px; }
 .shop-limit { font-weight: 400; }
+.shop-group-note { padding: 4px 2px 0; line-height: 1.35; } /* 구간 머리 아래 한 줄 고지 (해금 지역 한정) */
 /* 충전 시트 — 보너스 태그는 눈에 띄는 강조색 (기준 단가 대비 이득 표기) */
 .tag.recharge-bonus { background: var(--accent-2); color: var(--bg); border-color: transparent; font-weight: 700; }
 /* 팩 7카드가 한 화면에 들어오게 컴팩트 — 버튼·카드 높이·간격 축소 (2026-08-29 사용자) */

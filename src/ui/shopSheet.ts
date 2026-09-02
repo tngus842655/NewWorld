@@ -32,11 +32,21 @@ function priceTag(product: ShopProduct): string {
   return product.shop === 'gold' ? `💰 ${fmtGold(product.price)}` : `💎 ${product.price}`;
 }
 
+/**
+ * "해금 지역 한정" 고지 (2026-09-02, GDD §9.4) — 확률 정보 시트(overlays.ts 상점 뽑기 탭)와 같은 표현.
+ * 뽑기는 등급을 먼저 굴리므로 재화 대비 등급 품질은 해금 수와 무관하게 같지만, 후반부는 전설 풀이
+ * 최대 24종으로 희석돼 "지금 쓸 전설"이 잘 안 나온다. 유저가 이를 형평성 문제로 의심하는 지점이 상점 화면이었다.
+ */
+const GACHA_POOL_NOTE = '몬스터 뽑기는 해금한 지역의 몬스터 중에서, 유물 발굴은 전체 유물 중에서 나옵니다';
+const MONSTER_GACHA_POOL_NOTE = '해금한 지역의 몬스터 중에서 나옵니다';
+
 /** 구매 실행 — 확인창 → 액션 → 결과 안내 (뽑기·발굴은 리빌 연출, 나머지는 토스트) */
 function purchase(product: ShopProduct): void {
+  // 몬스터 뽑기는 구매 확인창에도 해금 지역 한정을 한 줄 더 — 돈이 나가는 마지막 지점 (2026-09-02)
+  const poolLine = product.goods.kind === 'monsterGacha' ? `\n${MONSTER_GACHA_POOL_NOTE}` : '';
   void askConfirm({
     title: `${product.icon} ${product.name}`,
-    message: `${priceTag(product)}로 구매합니다.\n${product.desc}`,
+    message: `${priceTag(product)}로 구매합니다.\n${product.desc}${poolLine}`,
     confirmLabel: '구매',
   }).then((ok) => {
     if (!ok) return;
@@ -169,8 +179,8 @@ function hourglassRow(product: ShopProduct): HTMLElement {
 // 광고 제거·다이아 팩 카드는 충전 시트로 분리 (2026-08-29 사용자) — ui/rechargeSheet.ts
 
 // 상품 구간 — goods 종류로 분류해 탭 안을 3구간으로 (2026-08-24 가독성 개편)
-const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][] }[] = [
-  { label: '🎲 뽑기·발굴', kinds: ['monsterGacha', 'artifactGacha'] },
+const SHOP_GROUPS: { label: string; kinds: ShopProduct['goods']['kind'][]; note?: string }[] = [
+  { label: '🎲 뽑기·발굴', kinds: ['monsterGacha', 'artifactGacha'], note: GACHA_POOL_NOTE },
   { label: '🎁 꾸러미·재화', kinds: ['bundle', 'materialsAll'] },
   { label: '⏳ 원정 가속', kinds: ['hourglass'] },
 ];
@@ -191,6 +201,7 @@ export function shopSheet(): HTMLElement {
         el('span.small', {}, group.label),
         el('span.muted.small', {}, `${members.length}종`),
       ),
+      group.note ? el('div.muted.small.shop-group-note', {}, group.note) : null,
       ...body,
     ];
   });

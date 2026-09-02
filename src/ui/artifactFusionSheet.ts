@@ -125,7 +125,8 @@ export function artifactFusionSheet(): HTMLElement {
   if (phase === 'result') return resultView(rarity, nextRarity);
 
   // ── setup ──
-  // 초월 단계는 최종 티어(권역) 진입이 관문이다 (유물엔 서식 지역이 없어 몬스터의 '최종 티어 재료' 규칙에 대응하는 등가).
+  // 초월 단계는 최종 티어(화산 권역) 진입이 관문이다. 몬스터 초월 관문(분화구 심장부, transcendGateRegion)과
+  // 지역이 다른 의도된 비대칭 (2026-08-31) — 유물엔 서식 지역이 없어 결과 풀 폴백 구멍이 없다.
   // 코어가 거절하므로 시트에서도 막지 않으면 눌러도 0회 합성되는 조용한 실패가 난다 (2026-08-25)
   const restricted = FUSION_NEXT[nextRarity] === null;
   const last = finalTierEntry(content);

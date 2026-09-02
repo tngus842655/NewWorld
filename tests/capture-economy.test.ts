@@ -8,6 +8,7 @@ import {
   fuseArtifacts,
   fuseMonsters,
   levelUpMonster,
+  transcendGateRegion,
   unlockRegion,
 } from '../src/core/economy';
 import { artifactEnhanceCost, levelUpCost, monsterCostMult, monsterLevelUpCost, monsterStarUpCost, starUpCost } from '../src/core/formulas';
@@ -152,19 +153,24 @@ describe('카드 합성 (GDD §4.5)', () => {
       .toThrow(/더 합성할 수 없습니다/);
   });
 
-  it('초월 합성은 최종 지역 서식 전설만 재료로 받는다 (2026-08-25 사용자)', () => {
-    const last = content.regionList[content.regionList.length - 1]!;
-    // 해안 전설 — 최종 지역이 아니므로 거절
+  it('초월 합성은 분화구 심장부 해금이 관문 — 재료 서식 제한은 없다 (2026-08-31 사용자, 구 규칙: 최종 지역 서식만)', () => {
+    const gate = transcendGateRegion(content);
+    // 해안 전설 여분 2장 — 관문 미해금이면 거절 (재료가 아니라 관문 때문)
     const coast = saveWithParty(makeCtx(), [{ id: 'leviathan-calf' }]);
     coast.save.roster[0]!.count = 3;
     expect(() => fuseMonsters(content, coast.save, fuseInput('leviathan-calf', 2), fixedCtx('s')))
-      .toThrow(/서식 카드만/);
+      .toThrow(/해금 후에/);
 
-    // 최종 지역 전설 — 도전 가능 (확률 판정까지 도달한다)
-    const volcanoLegend = content.monsterList.find((m) => m.rarity === 'legendary' && m.habitat === last.id)!;
-    const volcano = saveWithParty(makeCtx(), [{ id: volcanoLegend.id }]);
-    volcano.save.roster[0]!.count = 3;
-    expect(() => fuseMonsters(content, volcano.save, fuseInput(volcanoLegend.id, 2), fixedCtx('s'))).not.toThrow();
+    // 관문 해금 → 같은 해안 전설로 도전 가능 (확률 판정까지 도달한다)
+    coast.save.profile.flags[regionFlagKey(gate.id)] = true;
+    expect(() => fuseMonsters(content, coast.save, fuseInput('leviathan-calf', 2), fixedCtx('s'))).not.toThrow();
+
+    // 관문 미해금이면 최종 지역 전설(구 규칙의 재료)도 거절 — 규칙이 "재료"에서 "관문"으로 옮겨갔다
+    const last = content.regionList[content.regionList.length - 1]!;
+    const lastLegend = content.monsterList.find((m) => m.rarity === 'legendary' && m.habitat === last.id)!;
+    const locked = saveWithParty(makeCtx(), [{ id: lastLegend.id }]);
+    locked.save.roster[0]!.count = 3;
+    expect(() => fuseMonsters(content, locked.save, fuseInput(lastLegend.id, 2), fixedCtx('s'))).toThrow(/해금 후에/);
   });
 
   it('초월 합성 성공 시 초월 종만 나온다 — 조우·뽑기로는 절대 얻을 수 없는 등급', () => {

@@ -6,7 +6,7 @@ import { RELEASE_NOTES } from '../content/releaseNotes';
 import { ELEMENTS, RARITY_LABEL, TIERS, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
-import { finalTierEntry } from '../core/economy';
+import { finalTierEntry, transcendGateRegion } from '../core/economy';
 import { isExpeditionOut } from '../core/expedition';
 import { isRegionUnlocked } from '../core/progression';
 import * as clock from '../state/clock';
@@ -441,8 +441,12 @@ function oddsSheet(): HTMLElement {
       // 초월은 유일한 획득 경로가 합성이므로 확률 고지에 명시한다 (2026-08-25 사용자)
       el('div.small.muted', {},
         `· ${RARITY_LABEL.transcendent}은 오직 합성으로만 얻습니다 [조우·발굴·상점 뽑기에는 등장하지 않습니다]`),
+      // 확률형 아이템 고지 — 실제 규칙(core/economy.ts)과 반드시 일치시킨다. 2026-08-31 관문 개편:
+      // 재료 서식 제한 철폐 + 분화구 심장부 해금 관문. 유물 관문(화산 권역)은 지역이 달라 나란히 적어 혼동을 막는다
       el('div.small.muted', {},
-        `· ${RARITY_LABEL.transcendent} 도전은 ${finalTierEntry(content).name} 권역 서식 ${RARITY_LABEL.legendary} 카드만 재료가 됩니다`),
+        `· ${RARITY_LABEL.transcendent} 카드 도전은 ${transcendGateRegion(content).name} 해금 후에 열립니다 [재료는 모든 지역의 ${RARITY_LABEL.legendary} 여분 카드]`),
+      el('div.small.muted', {},
+        `· ${RARITY_LABEL.transcendent} 유물 도전은 ${finalTierEntry(content).name} 해금 후에 열립니다 [화산 권역 진입 시점 — 카드 관문보다 앞]`),
     ),
   );
 

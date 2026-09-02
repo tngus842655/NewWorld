@@ -7,11 +7,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import { RARITIES, RARITY_ORDER } from '../src/content/schema';
+import { finalTierEntry, fuseArtifacts, fuseMonsters, transcendGateRegion } from '../src/core/economy';
 import { evaluateNewMilestones, resolveExpedition } from '../src/core/expedition';
-import { capturedCounts } from '../src/core/progression';
+import { capturedCounts, isRegionUnlocked, regionFlagKey } from '../src/core/progression';
+import { streamRng } from '../src/core/rng';
 import { buyShopProduct } from '../src/core/shop';
-import type { CoreCtx } from '../src/core/types';
-import { T0, content, makeCtx, makeExpedition, saveWithParty } from './helpers';
+import { GameError, type CoreCtx } from '../src/core/types';
+import type { Content } from '../src/content';
+import { T0, content, findSeed, makeCtx, makeExpedition, saveWithParty } from './helpers';
 
 const TOP = RARITIES[RARITIES.length - 1]!;
 
@@ -145,5 +148,134 @@ describe('초월 등급 격리 (합성 전용)', () => {
     for (const a of [...content.artifacts.values()].filter((x) => x.rarity === TOP)) {
       expect(a.main.base, a.id).toBeGreaterThan(legendaryMain);
     }
+  });
+});
+
+/**
+ * 초월 관문 — 분화구 심장부 해금 (2026-08-31 사용자 확정, docs/NEXT-GACHA-FAIRNESS.md §4).
+ *
+ * 구 규칙(2026-08-25~09-01)은 "최종 티어 서식 전설만 재료"였다 — 하위 권역 전설은 쓸 수도 합성할 수도
+ * 분해할 수도 없는 사표였다. 완화하면서 관문을 지역 해금으로 옮겼는데, 초월 3종이 전부 분화구 서식이라
+ * 관문이 분화구보다 앞이면 결과 풀 폴백이 미해금 초월 몬스터(CP 8,250대)를 화산(권장 4,500) 유저에게 내준다.
+ * 아래가 그 구멍을 영구히 막는 그물이다.
+ */
+describe('초월 관문 — 분화구 심장부 해금 (2026-08-31 사용자)', () => {
+  const fixedCtx = (seed: string): CoreCtx => ({ now: () => T0, newSeed: () => seed, newUid: () => 'u' });
+  const gate = transcendGateRegion(content);
+  const legendaries = content.monsterList.filter((m) => m.rarity === 'legendary');
+  const okSeed = findSeed((s) => streamRng(s, 'fusion')() < content.balance.fusion.chance.legendary!);
+  const failSeed = findSeed((s) => streamRng(s, 'fusion')() >= content.balance.fusion.chance.legendary!);
+  /** 전설 1종 여분 2장(count 3) 세이브 — 첫 지역 외 해금은 인자로만 */
+  const withSpares = (monsterId: string, unlocked: string[] = []) => {
+    const { save } = saveWithParty(makeCtx(), [{ id: monsterId }]);
+    save.roster[0]!.count = 3;
+    for (const id of unlocked) save.profile.flags[regionFlagKey(id)] = true;
+    return save;
+  };
+  const pair = (monsterId: string) => ({ materials: [{ monsterId, count: 2 }] });
+
+  it('관문은 초월 종 서식지 중 가장 뒤 지역 = 분화구 심장부 = 마지막 지역이다', () => {
+    // 규칙: 관문 = 초월 종 서식지 중 order 최대 (데이터 유도)
+    const orders = content.transcendentList.map((m) => content.regions.get(m.habitat)!.order);
+    expect(gate.order).toBe(Math.max(...orders));
+    // 결정 기록 (2026-08-31 사용자): 지금은 그 지역이 분화구 심장부이고 마지막 지역이다. 관문을 정하는 것은 regionList가
+    // 아니라 초월 종 habitat이므로, 새 권역(별빛 폐허 등)을 초월 종 없이 추가하면 관문은 여기 남고 아래 두 줄이 먼저 깨진다 —
+    // 그때는 "관문을 새 권역으로 옮길지(초월 종 서식 추가)"를 사용자와 재확정한 뒤 이 값을 갱신한다. 조용히 어긋나지 않게 하는 가드다.
+    expect(gate.id).toBe('crater-heart');
+    expect(gate).toBe(content.regionList[content.regionList.length - 1]);
+  });
+
+  it('관문 미해금 — 어느 지역 전설 여분이든 거절한다 (관문 외 전 지역을 열어도, 전설 전 종 × 4시드 초월 0건)', () => {
+    expect(legendaries.length, '전설이 있어야 검사가 의미 있다').toBeGreaterThan(0);
+    // 관문 직전 상태 — 관문 외 전 지역(화산·협곡 = 구 규칙의 재료 서식 포함)을 열어도 분화구가 닫혀 있으면 관문이 막는다
+    const partial = content.regionList.filter((r) => r.order < gate.order).map((r) => r.id);
+    expect(partial, '구 규칙의 재료 서식(화산 권역)이 열린 상태여야 의미 있다').toContain('ashen-volcano');
+    for (const legend of legendaries) {
+      const save = withSpares(legend.id, partial);
+      for (const seed of [okSeed, failSeed, 's1', 's2']) {
+        let thrown: unknown;
+        try {
+          fuseMonsters(content, save, pair(legend.id), fixedCtx(seed));
+        } catch (error) {
+          thrown = error;
+        }
+        expect(thrown, `${legend.id} / ${seed}`).toBeInstanceOf(GameError);
+        expect((thrown as GameError).code).toBe('fusion-region');
+        expect((thrown as GameError).message).toContain(gate.name);
+      }
+    }
+  });
+
+  it('관문 해금 — 하위 지역 전설 여분 2장으로 도전 가능, 성공 시 해금 지역 서식 초월 종 획득', () => {
+    const coast = withSpares('leviathan-calf', [gate.id]);
+    const result = fuseMonsters(content, coast, pair('leviathan-calf'), fixedCtx(okSeed));
+    expect(result.success).toBe(true);
+    const got = content.monsters.get(result.resultMonsterId!)!;
+    expect(got.rarity).toBe(TOP);
+    expect(isRegionUnlocked(content, coast, got.habitat), '결과는 해금 지역 서식 — 폴백이 아니다').toBe(true);
+    expect(result.isNew).toBe(true);
+    expect(result.save.roster.find((m) => m.monsterId === 'leviathan-calf')!.count, '재료 2장 차감').toBe(1);
+    expect(result.save.codex[got.id]!.captured).toBe(true);
+  });
+
+  it('관문 해금 — 다른 지역 전설 1장 + 1장을 섞어도 재료가 된다 (실패 시 1장 반환)', () => {
+    const { save } = saveWithParty(makeCtx(), [{ id: 'coral-colossus' }, { id: 'sorrow-queen' }]); // 해안 + 늪
+    save.roster.forEach((m) => { m.count = 2; });
+    save.profile.flags[regionFlagKey(gate.id)] = true;
+    const input = { materials: [{ monsterId: 'coral-colossus', count: 1 }, { monsterId: 'sorrow-queen', count: 1 }] };
+    const result = fuseMonsters(content, save, input, fixedCtx(failSeed));
+    expect(result.success).toBe(false);
+    expect(['coral-colossus', 'sorrow-queen']).toContain(result.returnedMonsterId);
+    const total = result.save.roster.reduce((sum, m) => sum + m.count, 0);
+    expect(total, '4장 → 실소모 1장').toBe(3);
+  });
+
+  it('결과 풀 폴백 회귀 가드 — 관문까지 순차 해금하면 초월 전 종이 풀에 있다 (폴백이 발동할 여지 0)', () => {
+    // transcendGateRegion의 전제(순차 해금)대로 관문 이하 전 지역을 연 세이브. 관문이 서식지 중 가장 늦은 곳이므로
+    // 여기서 초월 전 종이 풀에 있어야 한다 — 관문 계산이 서식지 밖(finalTierEntry 등)으로 회귀하면 «관문 미해금» 테스트가
+    // fusion-pool로 먼저 깨지고, 이 테스트는 "폴백이 필요한 상태가 애초에 없다"는 쪽을 고정한다
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }]);
+    for (const r of content.regionList) if (r.order <= gate.order) save.profile.flags[regionFlagKey(r.id)] = true;
+    const pool = content.transcendentList.filter((m) => isRegionUnlocked(content, save, m.habitat));
+    expect(pool.length).toBe(content.transcendentList.length);
+    // 200시드 성공 결과가 전부 해금 지역 서식 — 미해금 지역 초월 종은 한 번도 나오지 않는다
+    for (let i = 0; i < 200; i++) {
+      const coast = withSpares('ancient-whale', [gate.id]);
+      const result = fuseMonsters(content, coast, pair('ancient-whale'), fixedCtx(`leak-${i}`));
+      if (!result.success) continue;
+      expect(isRegionUnlocked(content, coast, content.monsters.get(result.resultMonsterId!)!.habitat), `시드 leak-${i}`).toBe(true);
+    }
+  });
+
+  it('이중 방어 — 관문이 열렸는데 결과 풀이 비면 폴백 대신 fusion-pool을 던진다 (정상 콘텐츠로는 도달 불가 — 가짜 콘텐츠로 강제)', () => {
+    // 초월 종 서식지를 미해금 지역(화산)으로 옮긴 콘텐츠 사본. transcendentList(관문 계산)는 원본이라 관문은 분화구 그대로,
+    // 결과 풀(monsterList)만 화산 서식이 된다 → 분화구만 해금한 세이브에서 관문은 통과하지만 풀이 빈다.
+    // 전체 폴백이 살아 있었다면 여기서 화산 서식 초월 종이 그냥 나왔을 것이다
+    const moved = content.monsterList.map((m) => (m.rarity === TOP ? { ...m, habitat: 'ashen-volcano' } : m));
+    const fake: Content = { ...content, monsterList: moved, monsters: new Map(moved.map((m) => [m.id, m])) };
+    const coast = withSpares('leviathan-calf', [gate.id]);
+    let thrown: unknown;
+    try {
+      fuseMonsters(fake, coast, pair('leviathan-calf'), fixedCtx(okSeed));
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(GameError);
+    expect((thrown as GameError).code).toBe('fusion-pool');
+    // 같은 세이브·시드가 정상 콘텐츠에서는 성공한다 — 실패 원인이 가짜 콘텐츠의 빈 풀임을 고정
+    expect(fuseMonsters(content, coast, pair('leviathan-calf'), fixedCtx(okSeed)).success).toBe(true);
+  });
+
+  it('유물 초월 관문은 화산 권역 진입 그대로 — 변경 없음 (몬스터와 다른 의도된 비대칭)', () => {
+    const entry = finalTierEntry(content);
+    expect(entry.id).toBe('ashen-volcano');
+    expect(entry.id).not.toBe(gate.id);
+    const legend = (content.artifactsByRarity.get('legendary') ?? [])[0]!;
+    const { save } = saveWithParty(makeCtx(), [{ id: 'dune-pup' }], { artifacts: [legend.id] });
+    save.artifacts[0]!.count = 3;
+    const input = { materials: [{ itemId: legend.id, count: 2 }] };
+    expect(() => fuseArtifacts(content, save, input, fixedCtx('s'))).toThrow(/권역을 해금/);
+    save.profile.flags[regionFlagKey(entry.id)] = true; // 화산만 열어도(분화구 미해금) 유물 초월은 열린다
+    expect(() => fuseArtifacts(content, save, input, fixedCtx('s'))).not.toThrow();
   });
 });

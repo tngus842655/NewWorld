@@ -140,7 +140,8 @@ export const RegionSchema = z.object({
   /**
    * 난이도 묶음 (2026-08-26 12지역 개편) — 같은 tier의 소지역 3개는 바이옴·경제 계단
    * (element·materials·growthCostMult·rewardScale)을 공유한다. 묶음의 첫 소지역(구 지역 id)이
-   * 진입 지역이고, 랭킹 지역 배수·초월 합성 관문("마지막 지역")은 order가 아니라 tier를 본다.
+   * 진입 지역이고, 랭킹 지역 배수·유물 초월 관문(finalTierEntry)은 order가 아니라 tier를 본다.
+   * 몬스터 초월 관문(transcendGateRegion)은 초월 종 서식지의 order 최댓값을 본다 (2026-08-31 개편).
    */
   tier: z.number().int().positive(),
   growthCostMult: z.number().positive(), // 출신 몬스터의 레벨업·각성 골드 배수 (원정 단계 비례 — rewardScale과 같은 계단)

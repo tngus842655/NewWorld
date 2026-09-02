@@ -10,7 +10,8 @@ import type { Content } from '../src/content';
 import { computePartyPower } from '../src/core/combat';
 import { collectTeamEffects } from '../src/core/effects';
 import { canCheckIn, checkIn } from '../src/core/attendance';
-import { awakenMonster, buyPartySlot, craftRecipe, enhanceArtifact, fuseMonsters, levelUpMonster, unlockRegion } from '../src/core/economy';
+import type { MonsterRarity } from '../src/content/schema';
+import { awakenMonster, buyPartySlot, craftRecipe, enhanceArtifact, finalTier, fuseMonsters, levelUpMonster, unlockRegion } from '../src/core/economy';
 import { monsterLevelUpCost, monsterStarUpCost } from '../src/core/formulas';
 import { chooseCrossroad, claimExpedition, createExpedition, useHourglass } from '../src/core/expedition';
 import { createInitialSave } from '../src/core/newgame';
@@ -53,6 +54,11 @@ export interface DayRow {
   unlocked: string;
   byRegion: Record<string, number>; // 지역별 도감 수 (업적 계단 도달 측정)
   partySlots: number; // 그날 말 파티 슬롯 (2026-08-25 슬롯 게이트 계측)
+  /** 전설 여분(count−1 합계) — 초월 재료 후보 (2026-09-02 초월 관문 계측). 최종 티어 서식분은 따로 (구 규칙 재료) */
+  legendarySpares: number;
+  finalTierLegendarySpares: number;
+  /** 보유 초월 종 수 */
+  transcendent: number;
 }
 
 /**
@@ -78,6 +84,8 @@ export interface SimResult {
   /** 재료 조건만 따로 충족된 일차 */
   materialReadyDay: Record<string, number>;
   totals: { runs: number; wipes: number; artifacts: number; legendarySeen: boolean };
+  /** 초월 합성 관측 (2026-09-02, scripts/transcend-sim.ts) — fuseTranscend를 켰을 때만 0이 아니다 */
+  transcend: { attempts: number; successes: number; firstDay?: number };
   /** 과금 구간 추정용 — 기본 경로에서는 전부 0 */
   spend: {
     diamondsGranted: number;
@@ -122,6 +130,16 @@ export interface SimOptions {
   codexRotate?: boolean;
   /** 항상 심층 — 전설은 심층에서만 조우한다(tiers.deep.legendaryChance) */
   alwaysDeep?: boolean;
+
+  // ── 초월 도달 추정용 (scripts/transcend-sim.ts, 2026-09-02) ─────────────────
+  /**
+   * 전설 여분도 초월로 합성한다 (fuseSpares와 함께 켠다). 관문(분화구 심장부 해금) 전에는 코어가 거절하므로 안전하다.
+   *   'all'        = 현행 규칙 — 전 지역 전설 여분이 재료 (2026-08-31 완화)
+   *   'final-tier' = 구 **재료** 규칙 근사 — 최종 티어 서식 전설 여분만 재료로 고른다. 관문(분화구 해금)은 현행 코어를 그대로
+   *                  타므로 구 규칙(지역 관문 없음)보다 엄격하다: 화산~분화구 해금 사이의 시도분은 포함되지 않는다
+   *                  (그 창의 최종 티어 여분 중앙값이 0장이라 실제 차이는 작다 — docs/NEXT-GACHA-FAIRNESS.md §3)
+   */
+  fuseTranscend?: 'all' | 'final-tier';
 }
 
 function makeCtx(name: string): { ctx: CoreCtx; set: (t: number) => void } {
@@ -136,7 +154,7 @@ function makeCtx(name: string): { ctx: CoreCtx; set: (t: number) => void } {
   };
 }
 
-function safely(fn: () => SaveState): SaveState | null {
+function safely<T>(fn: () => T): T | null {
   try {
     return fn();
   } catch (error) {
@@ -254,6 +272,16 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
   let wipes = 0;
   let runs = 0;
   let goldEarned = 0;
+  const transcend: SimResult['transcend'] = { attempts: 0, successes: 0 };
+  /** 최종 티어 서식 전설인가 — 구 초월 재료 규칙(2026-08-25~09-01)의 에뮬레이션·계측용 */
+  const isFinalTierLegend = (monsterId: string): boolean =>
+    content.regions.get(content.monsters.get(monsterId)!.habitat)?.tier === finalTier(content);
+  const legendarySpareSum = (onlyFinalTier: boolean): number =>
+    save.roster.reduce((sum, m) => {
+      if (content.monsters.get(m.monsterId)?.rarity !== 'legendary') return sum;
+      if (onlyFinalTier && !isFinalTierLegend(m.monsterId)) return sum;
+      return sum + Math.max(0, m.count - 1);
+    }, 0);
 
   const checkpoints: number[] = [];
   for (let d = 0; d < DAYS; d++) {
@@ -518,11 +546,16 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
     // 전설은 심층 조우 5%로만 나오고 포획률도 0.015라, 실제 주 경로는 **영웅 여분 2장 → 전설 6.25%** 다.
     // 각 종의 마지막 1장은 재료가 될 수 없으므로(여분 = 보유수 − 1) 육성분이 사라질 일은 없다.
     if (opts.fuseSpares) {
+      // 전설→초월 단계는 옵션 (2026-09-02) — 관문(분화구 해금) 전에는 코어가 fusion-region으로 거절해 fused=false로 끝난다
+      const ladder: MonsterRarity[] = ['common', 'uncommon', 'rare', 'heroic'];
+      if (opts.fuseTranscend) ladder.push('legendary');
       for (let guard = 0; guard < 200; guard++) {
         let fused = false;
-        for (const rarity of ['common', 'uncommon', 'rare', 'heroic'] as const) {
+        for (const rarity of ladder) {
           const spares = save.roster
             .filter((m) => m.count > 1 && content.monsters.get(m.monsterId)?.rarity === rarity)
+            // 구 규칙 에뮬레이션: 초월 재료를 최종 티어 서식 전설로 좁힌다
+            .filter((m) => rarity !== 'legendary' || opts.fuseTranscend !== 'final-tier' || isFinalTierLegend(m.monsterId))
             .map((m) => ({ monsterId: m.monsterId, spare: m.count - 1 }));
           if (spares.reduce((sum, s) => sum + s.spare, 0) < content.balance.fusion.materials) continue;
           const materials: { monsterId: string; count: number }[] = [];
@@ -533,10 +566,17 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
             need -= take;
             if (need === 0) break;
           }
-          const next = safely(() => fuseMonsters(content, save, { materials }, ctx).save);
-          if (next) {
-            save = next;
+          const result = safely(() => fuseMonsters(content, save, { materials }, ctx));
+          if (result) {
+            save = result.save;
             fused = true;
+            if (rarity === 'legendary') {
+              transcend.attempts += 1;
+              if (result.success) {
+                transcend.successes += 1;
+                if (transcend.firstDay === undefined) transcend.firstDay = Math.floor(t / DAY_MS) + 1;
+              }
+            }
           }
         }
         if (!fused) break;
@@ -660,6 +700,9 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         // 지역별 도감 수 — 업적 계단 도달 일차 측정용 (2026-08-23)
         byRegion: Object.fromEntries(content.regionList.map((r) => [r.id, counts.byRegion.get(r.id) ?? 0])),
         partySlots: save.profile.partySlots,
+        legendarySpares: legendarySpareSum(false),
+        finalTierLegendarySpares: legendarySpareSum(true),
+        transcendent: counts.byRarity.get('transcendent') ?? 0,
       });
     }
   }
@@ -673,6 +716,7 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
     codexReadyDay,
     materialReadyDay,
     spend,
+    transcend,
     totals: {
       runs,
       wipes,
