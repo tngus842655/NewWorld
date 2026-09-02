@@ -9,10 +9,10 @@
     "element": "nature",
     "recommendedCp": 100,
     "recommendedCpTier": {
-      "scout": 190,
-      "standard": 240,
+      "scout": 150,
+      "standard": 210,
       "extended": 260,
-      "deep": 460
+      "deep": 290
     },
     "rewardScale": 1,
     "unlock": {},
@@ -107,10 +107,10 @@
     "element": "nature",
     "recommendedCp": 160,
     "recommendedCpTier": {
-      "scout": 270,
-      "standard": 420,
-      "extended": 420,
-      "deep": 940
+      "scout": 240,
+      "standard": 410,
+      "extended": 410,
+      "deep": 500
     },
     "rewardScale": 1,
     "unlock": {
@@ -209,10 +209,10 @@
     "element": "nature",
     "recommendedCp": 250,
     "recommendedCpTier": {
-      "scout": 490,
-      "standard": 660,
+      "scout": 390,
+      "standard": 590,
       "extended": 660,
-      "deep": 1300
+      "deep": 850
     },
     "rewardScale": 1,
     "unlock": {
@@ -311,10 +311,10 @@
     "element": "nature",
     "recommendedCp": 400,
     "recommendedCpTier": {
-      "scout": 350,
-      "standard": 520,
+      "scout": 310,
+      "standard": 460,
       "extended": 520,
-      "deep": 1100
+      "deep": 670
     },
     "rewardScale": 2.4,
     "unlock": {
@@ -417,10 +417,10 @@
     "element": "nature",
     "recommendedCp": 580,
     "recommendedCpTier": {
-      "scout": 580,
-      "standard": 770,
+      "scout": 460,
+      "standard": 720,
       "extended": 770,
-      "deep": 1900
+      "deep": 990
     },
     "rewardScale": 2.4,
     "unlock": {
@@ -519,10 +519,10 @@
     "element": "nature",
     "recommendedCp": 830,
     "recommendedCpTier": {
-      "scout": 850,
-      "standard": 1200,
+      "scout": 690,
+      "standard": 1100,
       "extended": 1200,
-      "deep": 2200
+      "deep": 1500
     },
     "rewardScale": 2.4,
     "unlock": {
@@ -621,10 +621,10 @@
     "element": "frost",
     "recommendedCp": 1200,
     "recommendedCpTier": {
-      "scout": 920,
-      "standard": 1400,
+      "scout": 780,
+      "standard": 1100,
       "extended": 1400,
-      "deep": 5100
+      "deep": 1700
     },
     "rewardScale": 5.5,
     "unlock": {
@@ -727,10 +727,10 @@
     "element": "frost",
     "recommendedCp": 1650,
     "recommendedCpTier": {
-      "scout": 1500,
-      "standard": 2000,
+      "scout": 1200,
+      "standard": 1800,
       "extended": 2000,
-      "deep": 3900
+      "deep": 2700
     },
     "rewardScale": 5.5,
     "unlock": {
@@ -829,10 +829,10 @@
     "element": "frost",
     "recommendedCp": 2250,
     "recommendedCpTier": {
-      "scout": 2200,
-      "standard": 2900,
+      "scout": 1700,
+      "standard": 2600,
       "extended": 2900,
-      "deep": 5600
+      "deep": 3600
     },
     "rewardScale": 5.5,
     "unlock": {
@@ -931,10 +931,10 @@
     "element": "fire",
     "recommendedCp": 3000,
     "recommendedCpTier": {
-      "scout": 1900,
-      "standard": 3100,
+      "scout": 1800,
+      "standard": 2500,
       "extended": 3200,
-      "deep": 4500
+      "deep": 3500
     },
     "rewardScale": 12,
     "unlock": {
@@ -1037,10 +1037,10 @@
     "element": "fire",
     "recommendedCp": 4100,
     "recommendedCpTier": {
-      "scout": 3000,
-      "standard": 4100,
+      "scout": 2500,
+      "standard": 3400,
       "extended": 4600,
-      "deep": 6300
+      "deep": 5200
     },
     "rewardScale": 12,
     "unlock": {
@@ -1139,10 +1139,10 @@
     "element": "fire",
     "recommendedCp": 5500,
     "recommendedCpTier": {
-      "scout": 4200,
-      "standard": 5700,
-      "extended": 6300,
-      "deep": 13000
+      "scout": 3700,
+      "standard": 4700,
+      "extended": 6200,
+      "deep": 6800
     },
     "rewardScale": 12,
     "unlock": {
