@@ -12,8 +12,8 @@ import * as clock from '../state/clock';
 import type { OwnedArtifact, SaveState } from '../core/types';
 import { signal } from '../state/signal';
 import { buySlot, save, setTeam } from '../state/store';
-import { artifactCard, artifactIcon, monsterChip, monsterIconBadged, ownedCp } from './components';
-import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, toast } from './kit';
+import { artifactCard, artifactIcon, monsterChip, monsterIcon, ownedCp } from './components';
+import { ARTIFACT_RARITY_LABEL, MONSTER_RARITY_LABEL, RARITY_DESC, RARITY_ORDER, SLOT_LABEL, TRIBE_EMOJI, TRIBE_LABEL, el, fmtGold, stars, toast } from './kit';
 import { askConfirm } from './dialog';
 import { sheetShell } from './overlays';
 import { filterChips, tabBar } from './panels';
@@ -124,10 +124,15 @@ export function teamSheet(teamId: string): HTMLElement | null {
       }, '+');
     }
     const owned = state.roster.find((m) => m.monsterId === monsterId)!;
+    // 편성 슬롯은 Lv·성급만 (2026-09-02 사용자) — 서식지 이모지·카드 수 뱃지는 뺀다
+    // (카드 수는 편성 마릿수로, 서식지 이모지는 속성으로 오독됐다). 성급은 좌상, Lv는 우하 — 5성(45px)과 Lv 뱃지가 겹치지 않는다
+    const icon = monsterIcon(monsterId);
+    icon.append(el('span.micon-stars', { title: `${owned.star}성` }, stars(owned.star)));
+    icon.append(el('span.micon-lv', {}, `Lv.${owned.level}`));
     return el('button.party-slot.filled', {
-      title: `${content.monsters.get(monsterId)?.name ?? ''} — 눌러서 해제`,
+      title: `${content.monsters.get(monsterId)?.name ?? ''} Lv.${owned.level} ${stars(owned.star)} — 눌러서 해제`,
       onclick: () => { if (!guard()) commit(party.filter((id) => id !== monsterId), artifacts, 'tap'); },
-    }, monsterIconBadged(owned, { count: false })); // 편성 슬롯은 카드 수 뱃지를 뺀다 — 편성 마릿수로 오독된다
+    }, icon);
   });
 
   const artifactCells = Array.from({ length: 4 }, (_, i) => {

@@ -14,7 +14,7 @@ import { flushUpload } from '../state/cloudSync';
 import { hourglassIcon, uiIcon } from './components';
 import { askConfirm } from './dialog';
 import { showGachaReveal } from './gachaReveal';
-import { el, fmtGold, toast } from './kit';
+import { el, fmtGold, fmtNum, toast } from './kit';
 import { sheetShell } from './overlays';
 import { overlay } from './router';
 import { playSfx } from './sfx';
@@ -29,7 +29,7 @@ export function resetShop(): void {
 }
 
 function priceTag(product: ShopProduct): string {
-  return product.shop === 'gold' ? `💰 ${fmtGold(product.price)}` : `💎 ${product.price}`;
+  return product.shop === 'gold' ? `💰 ${fmtGold(product.price)}` : `💎 ${fmtNum(product.price)}`;
 }
 
 /**
@@ -212,7 +212,7 @@ export function shopSheet(): HTMLElement {
     el('div.card.list-row.shop-balance-row', {},
       el('span'), // 빈 왼쪽 — space-between이 재화 묶음을 오른쪽 끝으로 민다
       el('div.row-gap', {},
-        el('span.shop-balance', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${state.wallet.diamonds}`),
+        el('span.shop-balance', {}, tab === 'gold' ? `💰 ${fmtGold(state.wallet.gold)}` : `💎 ${fmtNum(state.wallet.diamonds)}`),
         tab === 'diamond'
           ? el('button.btn.btn-primary', {
               // 스토어 준비됨(설치본·DEV) → 충전 시트, 아니면 경로 안내 토스트

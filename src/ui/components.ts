@@ -132,12 +132,17 @@ export function monsterChip(
       ),
     );
   }
-  return el(`button.mchip${cls}`, attrs,
+  /**
+   * 압축 배치(편성 시트, 2열 격자 · 몸통 100px) — 속성·종족 이모지를 빼고 Lv·성급 / CP를 각 한 줄로 (2026-09-02 사용자).
+   * 이모지가 붙으면 6자 이상 이름이 접히고, "Lv ★ · CP"를 한 줄에 두면 숫자만 다음 줄로 떨어졌다.
+   * 속성·종족은 툴팁으로 남긴다 (편성 슬롯 아이콘도 같은 날 Lv·성급만 표시로 바뀌었다 — teamSheet).
+   */
+  return el(`button.mchip${cls}`, { ...attrs, title: `${monster.name} · ${ELEMENT_LABEL[monster.element]} · ${TRIBE_LABEL[monster.tribe]}` },
     icon,
     el('div.mchip-body', {},
-      name,
-      // 2열 격자의 100px 몸통에서 "CP" 뒤 숫자만 다음 줄로 떨어지지 않게 — 접히더라도 "CP 20077" 단위로 (2026-09-02)
-      el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)} · `, el('span.nowrap', {}, `CP ${ownedCp(owned)}`)),
+      el(`div.mchip-name.rar-name.rar-${monster.rarity}`, {}, monster.name),
+      el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)}`),
+      el('div.mchip-sub', {}, `CP ${ownedCp(owned)}`),
     ),
   );
 }

@@ -126,6 +126,11 @@ export const SLOT_LABEL: Record<string, string> = {
 
 // ── 포맷터 ───────────────────────────────────────────────────────────────────
 export function fmtGold(value: number): string {
+  return fmtNum(value);
+}
+
+/** 재화·개수 공통 3자리 콤마 — 다이아 잔액·가격도 골드와 같은 표기 (2026-09-02 사용자: "💎 32615" → "💎 32,615") */
+export function fmtNum(value: number): string {
   return value.toLocaleString('ko-KR');
 }
 

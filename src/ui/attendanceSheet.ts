@@ -7,7 +7,7 @@ import type { AttendanceReward } from '../content/schema';
 import { attendanceNow, canCheckIn, monthParts, nextReward } from '../core/attendance';
 import { checkInToday, nowTick, save } from '../state/store';
 import { uiIcon } from './components';
-import { el, fmtGold, toast } from './kit';
+import { el, fmtGold, fmtNum, toast } from './kit';
 import { sheetShell } from './overlays';
 import { playSfx } from './sfx';
 
@@ -15,7 +15,7 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
 export function rewardText(reward: AttendanceReward): string {
   const bits = [
-    reward.diamonds ? `💎 ${reward.diamonds}` : null,
+    reward.diamonds ? `💎 ${fmtNum(reward.diamonds)}` : null,
     reward.gold ? `💰 ${fmtGold(reward.gold)}` : null,
     reward.dust ? `✨ ${reward.dust}` : null,
     reward.lures ? `🪤 ${reward.lures}` : null,
@@ -62,7 +62,7 @@ export function attendanceSheet(): HTMLElement {
   return sheetShell([uiIcon('attendance-calendar', '📅', '출석 달력'), ` ${monthNo}월 출석`],
     el('div.card.codex-summary', {},
       el('div', {}, el('strong', {}, `${days.length}`), el('span.muted', {}, `일 출석`)),
-      el('div.muted.small', {}, `이번 달 다이아 총 💎 ${totalDiamonds} · 매월 1일 초기화`),
+      el('div.muted.small', {}, `이번 달 다이아 총 💎 ${fmtNum(totalDiamonds)} · 매월 1일 초기화`),
     ),
     el('div.card.stack-sm', {},
       el('div.attend-cal', {}, ...DOW.map((d) => el('div.attend-dow', {}, d))),
