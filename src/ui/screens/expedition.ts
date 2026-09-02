@@ -3,9 +3,9 @@
  * 편성은 군 카드를 눌러 여는 편성 시트에서, 파견은 군 단위로.
  */
 import { content } from '../../content';
-import { TIERS, type Tier } from '../../content/schema';
+import { DIFFICULTIES, TIERS, type Difficulty, type Tier } from '../../content/schema';
 import { adUsesLeft } from '../../core/ads';
-import { computePartyPower } from '../../core/combat';
+import { computePartyPower, enemyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
 import { isExpeditionOut, legendTraceBonus, validLegendTraces } from '../../core/expedition';
 import { adsAvailable, showRewardedAd } from '../../platform/ads';
@@ -15,7 +15,7 @@ import { GameError, type SaveState, type TeamLoadout } from '../../core/types';
 import { batch, signal } from '../../state/signal';
 import { dispatchTeam, grantAdScent, save, unlock } from '../../state/store';
 import { artifactIcon, monsterIconBadged, ownedCp } from '../components';
-import { ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TIER_NAME, TRIBE_EMOJI, TRIBE_LABEL, el, fmtClock, fmtGold, fmtPct, fmtRemainShort, josaRo, toast } from '../kit';
+import { DIFFICULTY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, TIER_LABEL, TIER_NAME, TRIBE_EMOJI, TRIBE_LABEL, el, fmtClock, fmtGold, fmtPct, fmtRemainShort, josaRo, toast } from '../kit';
 import { regionTiers, tierShortName } from '../regionTiers';
 import { resetTeamSheet } from '../teamSheet';
 import { tabBar } from '../panels';
@@ -26,6 +26,7 @@ import { playSfx } from '../sfx';
 const selRegion = signal<string>(deepestUnlockedRegion(content, save()).id);
 const selTierView = signal<number>(content.regions.get(selRegion())!.tier);
 const selTier = signal<Tier>('scout');
+const selDifficulty = signal<Difficulty>('normal'); // 난이도 (GDD §5.1) — 탐사·원정에서만 의미, 다른 티어에서는 보통으로 읽는다
 
 /** 권역 탭 선택 — 해금 소지역이 있으면 그중 가장 깊은 곳을 출발 대상으로. 전부 잠긴 권역은 구경만 */
 function pickTier(tier: number): void {
@@ -251,8 +252,12 @@ export function renderExpedition(): HTMLElement {
   const party = teamParty(state, team);
   const info = teamPreview(team, regionId, tier);
 
-  // 선택 티어의 권장 CP (검토 ① — 전멸 0 기준, 원정은 전설 조우 제외)
-  const recommendedCp = region.recommendedCpTier[tier];
+  // 난이도 (GDD §5.1, 2026-09-02 사용자) — 탐사·원정에서만 선택, 그 외 티어는 보통 고정. 잠금 없음
+  const diffAllowed = content.balance.difficultyTiers.includes(tier);
+  const difficulty: Difficulty = diffAllowed ? selDifficulty() : 'normal';
+  const diff = content.balance.difficulties[difficulty];
+  // 선택 티어·난이도의 권장 CP (전멸률 0.1% 이하 기준 × 적 배수 — 선형, 원정은 전설 조우 제외)
+  const recommendedCp = Math.round(region.recommendedCpTier[tier] * diff.enemyMult);
   const cpClass = info && info.power >= recommendedCp ? 'cp-ok' : 'cp-low';
   const synergyChips = (info?.tribes ?? [])
     .filter((t) => t.count >= 2)
@@ -269,18 +274,26 @@ export function renderExpedition(): HTMLElement {
 
   const tierDef = content.balance.tiers[tier];
   const traceChance = content.balance.legendTraces.dropChance[tier];
+  const fmtMult = (v: number) => String(Math.round(v * 100) / 100);
+  const yieldMult = tierDef.yieldMult * diff.goldMult; // 티어 × 난이도 합성 골드 배수 (둘 다 골드 한정)
+  const rareMult = tierDef.rareWeightMult + diff.rareWeightAdd;
   const tierInfo = [
+    diff.enemyMult > 1 ? `적 ×${fmtMult(diff.enemyMult)}` : null,
     `조우 ${tierDef.encounters + (info?.encounterAdd ?? 0)}회`,
     tierDef.crossroads > 0 ? `갈림길 ${tierDef.crossroads}회` : null,
-    tierDef.yieldMult > 1 ? `보상 ×${tierDef.yieldMult}` : null,
-    tierDef.rareWeightMult > 1 ? `희귀 출현 ×${tierDef.rareWeightMult}` : null,
+    yieldMult > 1 ? `보상 ×${fmtMult(yieldMult)}` : null,
+    rareMult > 1 ? `희귀 출현 ×${fmtMult(rareMult)}` : null,
   ].filter(Boolean).join(' · ');
+  // 전설 승리선 — 권장은 "전멸 하한"이라 강한 편성에게는 목표가 안 보였다 (2026-09-02 사용자 결정 ③: 여유선 표기).
+  // 지역 전설 적 전투력의 최대 × 난이도 적 배수. 확률은 기본 + 난이도 가산 (흔적 가산은 아래 traceLine이 따로 말한다)
+  const legendWinCp = Math.round(Math.max(...region.legendary.map((id) => enemyPower(content, content.monsters.get(id)!))) * diff.enemyMult);
+  const pctShort = (v: number) => `${Math.round(v * 10000) / 100}%`; // 2.25%처럼 난이도 가산이 소수 둘째 자리까지 온다
   // 흔적·전설 안내는 정보줄에 섞지 않고 한 칸 아래 별도 줄로 (2026-08-29 사용자).
   // 티어당 하나만 존재한다 — 흔적은 전설 없는 티어 전용(dropChance), 전설은 deep 전용
   const tierHighlight = traceChance > 0
     ? el('div.muted.small', {}, `✨ 전설의 흔적 ${fmtPct(traceChance)} [${TIER_NAME.deep} 전설 확률↑]`)
     : tierDef.legendaryChance > 0
-      ? el('div.muted.small', {}, '⭐ 전설과 만날 수 있다')
+      ? el('div.muted.small', {}, `⭐ 전설 조우 ${pctShort(tierDef.legendaryChance + diff.legendaryAdd)} [이기려면 CP ${fmtGold(legendWinCp)}]`)
       : null;
 
   // 전설의 흔적 — 완주로 모아 deep 출발 시 소모 (core/expedition.ts). 있을 때만 한 줄.
@@ -367,7 +380,7 @@ export function renderExpedition(): HTMLElement {
         el('div.cp-row', {},
           el('span', {}, `${team.name} 유효 전투력`),
           el(`strong.${cpClass}`, {}, info ? fmtGold(info.power) : '—'),
-          el('span.muted.small', { title: `${TIER_NAME[tier]} 기준 — 이 전투력이면 전멸 없이 완주합니다` },
+          el('span.muted.small', { title: `${TIER_NAME[tier]}${difficulty !== 'normal' ? ` · ${DIFFICULTY_LABEL[difficulty]}` : ''} 기준 — 이 전투력이면 전멸 위험 0.1% 이하` },
             `/ 권장 ${fmtGold(recommendedCp)}`),
         ),
         synergyChips.length > 0 ? el('div.chips-wrap', {}, ...synergyChips) : el('div.muted.small', {}, '시너지 없음 [같은 종족 2마리부터 발동]'),
@@ -375,6 +388,11 @@ export function renderExpedition(): HTMLElement {
         el('div.tier-row', {}, ...TIERS.map((t) =>
           el(`button.btn.tier-btn${tier === t ? '.selected' : ''}`, { onclick: () => selTier.set(t) }, TIER_LABEL[t]),
         )),
+        // 난이도 칩 — 탐사·원정만 (GDD §5.1). 잠금 없음: 권장 CP를 보고 유저가 판단한다 (2026-09-02 사용자 결정 ④)
+        diffAllowed
+          ? el('div.chips-wrap', {}, ...DIFFICULTIES.map((d) =>
+              el(`button.chip${difficulty === d ? '.active' : ''}`, { onclick: () => selDifficulty.set(d) }, DIFFICULTY_LABEL[d])))
+          : null,
         el('div.muted.small', {}, tierInfo),
         tierHighlight,
         traceLine,
@@ -388,7 +406,7 @@ export function renderExpedition(): HTMLElement {
         tour: 'dispatch', // 온보딩 투어 — 첫 파견 유도 (GDD §11.2)
         disabled: party.length === 0 || teamsFull || teamBusy,
         onclick: () => {
-          if (dispatchTeam(team.id, regionId, tier)) {
+          if (dispatchTeam(team.id, regionId, tier, difficulty)) {
             playSfx('confirm');
             tab.set('home');
           }

@@ -65,6 +65,8 @@ const SEEDS = Number(args[args.indexOf('--seeds') + 1] || 7) || 7;
 
 /** 다이아 사용처 — 시간(모래시계) vs 도감(고급 뽑기). 어느 쪽이 빠른지는 실측으로 고른다 */
 const POLICY = (args.indexOf('--policy') >= 0 ? args[args.indexOf('--policy') + 1]! : 'time') as 'time' | 'codex';
+/** --difficulty max-safe: 원정(deep)에서 감당 가능한 최고 난이도 선택 (GDD §5.1, 2026-09-02). 기본 off = 보통 */
+const DIFFICULTY = args.indexOf('--difficulty') >= 0 ? (args[args.indexOf('--difficulty') + 1] as 'max-safe') : undefined;
 
 /** 제대로 노는 유저의 기본 행동 — 무과금도 전부 한다 */
 const ACTIVE = {
@@ -80,6 +82,7 @@ function run(strategy: Strategy, tier: Tier, seedSalt: string, policy = POLICY):
     days: DAYS,
     ...ACTIVE,
     spendPolicy: policy,
+    ...(DIFFICULTY ? { difficultyPolicy: DIFFICULTY } : {}),
     // 출석 다이아는 checkInDaily가 계단으로 준다. 여기 perDay는 **유료 충전분**만
     diamonds: { initial: 0, perDay: tier.paidDiamonds / 30 },
     seedSalt,

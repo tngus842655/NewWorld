@@ -34,6 +34,8 @@ export const RARITY_ORDER = Object.fromEntries(
 export const SLOTS = ['weapon', 'armor', 'banner', 'charm'] as const;
 // 파견 길이 4단 (2026-08-29 탐사 4h 신설) — 표기: 정찰/조사/탐사/원정 (ui/kit.ts TIER_NAME)
 export const TIERS = ['scout', 'standard', 'extended', 'deep'] as const;
+// 파견 난이도 3단 (2026-09-02, GDD §5.1) — 탐사·원정에만 선택, tiers와 직교 (balance.difficulties)
+export const DIFFICULTIES = ['normal', 'hard', 'extreme'] as const;
 export const HOOKS = [
   'expeditionSetup',
   'computeParty',
@@ -53,6 +55,7 @@ export const MonsterRaritySchema = z.enum(MONSTER_RARITIES);
 export const ArtifactRaritySchema = z.enum(ARTIFACT_RARITIES);
 export const SlotSchema = z.enum(SLOTS);
 export const TierSchema = z.enum(TIERS);
+export const DifficultySchema = z.enum(DIFFICULTIES);
 export const HookSchema = z.enum(HOOKS);
 export const EncounterKindSchema = z.enum(ENCOUNTER_KINDS);
 
@@ -62,6 +65,7 @@ export type MonsterRarity = z.infer<typeof MonsterRaritySchema>;
 export type ArtifactRarity = z.infer<typeof ArtifactRaritySchema>;
 export type Slot = z.infer<typeof SlotSchema>;
 export type Tier = z.infer<typeof TierSchema>;
+export type Difficulty = z.infer<typeof DifficultySchema>;
 export type Hook = z.infer<typeof HookSchema>;
 export type EncounterKind = z.infer<typeof EncounterKindSchema>;
 
@@ -415,6 +419,23 @@ export const BalanceSchema = z.object({
       rareWeightMult: z.number(),
     }),
   ),
+  /**
+   * 파견 난이도 (2026-09-02, GDD §5.1) — tiers와 직교로 곱해진다. 적 전투력 배수(전설 포함·갈림길 분모 포함)·
+   * 골드 배수(티어 yieldMult와 같이 골드 한정 — 재료까지 곱하면 모래시계 세공으로 런 수가 늘어 도감 수명이 무너진다, 계측 D143/285→D99/133)·
+   * 희귀/영웅 스폰 가중 가산·전설 조우 확률 가산(기본 확률이 0인 티어는 가산도 무효).
+   * 포획률은 난이도 불변 — 도감 수명(§9.1-3) 다이얼이라 여기 두지 않는다.
+   * difficultyTiers에 든 티어에서만 선택 가능, 그 외 티어는 normal 고정 (코어가 거절).
+   */
+  difficulties: z.record(
+    DifficultySchema,
+    z.object({
+      enemyMult: z.number().positive(),
+      goldMult: z.number().positive(),
+      rareWeightAdd: z.number().min(0),
+      legendaryAdd: z.number().min(0),
+    }),
+  ),
+  difficultyTiers: z.array(TierSchema),
   // 전설의 흔적 (GDD §5.1, 2026-08-29) — 전설 없는 파견의 완주가 원정(deep) 전설 조우율을 올린다.
   // 열심히 하는 유저의 짧은 파견과 8시간 전설 게이트를 경쟁이 아닌 협력 관계로 잇는 장치
   legendTraces: z.object({

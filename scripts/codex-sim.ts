@@ -20,6 +20,8 @@ const args = process.argv.slice(2);
 const DAYS = Number(args[args.indexOf('--days') + 1] || 365) || 365;
 const SEEDS = Number(args[args.indexOf('--seeds') + 1] || 3) || 3;
 const styleArg = args.indexOf('--style') >= 0 ? args[args.indexOf('--style') + 1]! : 'normal';
+/** --difficulty max-safe: 탐사·원정에서 감당 가능한 최고 난이도를 고르는 봇 (GDD §5.1, 2026-09-02) — 수명 영향 계측용 */
+const DIFFICULTY = args.indexOf('--difficulty') >= 0 ? (args[args.indexOf('--difficulty') + 1] as 'max-safe') : undefined;
 
 const TARGET = content.monsterList.filter((m) => m.rarity !== 'transcendent').length;
 const LEGENDARY_TOTAL = content.monsterList.filter((m) => m.rarity === 'legendary').length;
@@ -43,7 +45,7 @@ const COMPLETIONIST = {
 } as const;
 
 function run(strategy: Strategy, seedSalt: string): SimResult {
-  return simulate(content, strategy, { days: DAYS, ...COMPLETIONIST, seedSalt });
+  return simulate(content, strategy, { days: DAYS, ...COMPLETIONIST, seedSalt, ...(DIFFICULTY ? { difficultyPolicy: DIFFICULTY } : {}) });
 }
 
 /** 도감이 N종에 처음 닿은 일차 (초월 제외 집계는 SimResult에 없으므로 총합으로 근사하되 상한을 216으로 본다) */

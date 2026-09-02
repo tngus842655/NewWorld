@@ -6,7 +6,7 @@ import type { Journal, JournalEntry } from '../core/types';
 import { adsAvailable, showRewardedAd } from '../platform/ads';
 import { grantJournalDouble, save } from '../state/store';
 import { monsterIcon } from './components';
-import { ARTIFACT_RARITY_LABEL, RARITY_ORDER, TIER_LABEL, el, fmtGold, fmtPct, toast } from './kit';
+import { ARTIFACT_RARITY_LABEL, DIFFICULTY_LABEL, RARITY_ORDER, TIER_LABEL, el, fmtGold, fmtPct, toast } from './kit';
 import { playSfx, type SfxId } from './sfx';
 
 const REVEAL_INTERVAL_MS = 420;
@@ -208,7 +208,9 @@ export function journalView(journal: Journal, newMilestones: string[], opts: Jou
 
   const timeline = el('div.jtimeline', {}, ...cards, footer);
   const title = el('div', {},
-    el('div.jtitle', {}, `📜 ${region?.name ?? journal.regionId} · ${TIER_LABEL[journal.tier]}`),
+    // 난이도는 보통이 아닐 때만 덧붙인다 (GDD §5.1 난이도, 2026-09-02)
+    el('div.jtitle', {},
+      `📜 ${region?.name ?? journal.regionId} · ${TIER_LABEL[journal.tier]}${journal.difficulty && journal.difficulty !== 'normal' ? ` · ${DIFFICULTY_LABEL[journal.difficulty]}` : ''}`),
     opts.subtitle ? el('div.muted.small', {}, opts.subtitle) : null,
   );
 

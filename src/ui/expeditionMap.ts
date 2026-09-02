@@ -22,7 +22,7 @@ import * as clock from '../state/clock';
 import { signal } from '../state/signal';
 import { claim, nowTick, recall, save } from '../state/store';
 import { askConfirm } from './dialog';
-import { ELEMENT_EMOJI, TIER_LABEL, TRIBE_EMOJI, el, fmtClock, fmtRemain, fmtRemainShort, scopedEffect } from './kit';
+import { DIFFICULTY_LABEL, ELEMENT_EMOJI, TIER_LABEL, TRIBE_EMOJI, el, fmtClock, fmtRemain, fmtRemainShort, scopedEffect } from './kit';
 import { regionTiers, tierShortName } from './regionTiers';
 import { closeOverlay, overlay, tab } from './router';
 
@@ -509,7 +509,7 @@ export function expeditionRow(expeditionId: string): HTMLElement {
   const teamName = expedition.teamId ? state.teams.find((t) => t.id === expedition.teamId)?.name : null;
   const tags = el('div.row-gap', {},
     teamName ? el('span.tag', {}, teamName) : null,
-    el('span.tag', {}, TIER_LABEL[expedition.tier]),
+    el('span.tag', {}, TIER_LABEL[expedition.tier] + (expedition.difficulty && expedition.difficulty !== 'normal' ? ` · ${DIFFICULTY_LABEL[expedition.difficulty]}` : '')),
   );
   const status = el('span.exp-status.muted');
   const fill = el('div.progress-fill');

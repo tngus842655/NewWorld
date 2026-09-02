@@ -3,7 +3,7 @@
  */
 import { content } from '../content';
 import { RELEASE_NOTES } from '../content/releaseNotes';
-import { ELEMENTS, RARITY_LABEL, TIERS, type MonsterRarity, type Region } from '../content/schema';
+import { DIFFICULTIES, ELEMENTS, RARITY_LABEL, TIERS, type MonsterRarity, type Region } from '../content/schema';
 import { artifactEnhanceCost, elementMult, monsterBaseCp, monsterLevelUpCost, monsterStarUpCost, statAt } from '../core/formulas';
 import { artifactScore, monsterBaseScore, monsterScore } from '../core/score';
 import { finalTierEntry, transcendGateRegion } from '../core/economy';
@@ -25,7 +25,7 @@ import { shopSheet } from './shopSheet';
 import { artifactIcon, artifactIconBadged, fmtEffect, mainLabel, monsterIcon, ownedCp, uiIcon } from './components';
 import { describeEffect } from './effectText';
 import {
-  ARTIFACT_RARITY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
+  ARTIFACT_RARITY_LABEL, DIFFICULTY_LABEL, ELEMENT_EMOJI, ELEMENT_LABEL, MONSTER_RARITY_LABEL, RARITY_ASC, SLOT_LABEL,
   TIER_LABEL, TIER_NAME, TRIBE_EMOJI, TRIBE_LABEL, el, fmtAgo, fmtGold, stars,
 } from './kit';
 import { journalView } from './journalView';
@@ -420,6 +420,14 @@ function oddsSheet(): HTMLElement {
         .map((t) => `${TIER_NAME[t]} ${pct1(traces.dropChance[t])}`).join(' · ')}) — `
       + `다음 ${TIER_LABEL.deep} 출발 시 소모되어 전설 확률을 1개당 +${pct1(traces.bonusPerTrace)}p 올립니다 `
       + `[최대 ${traces.maxStacks}개 · 발견 후 ${traces.ttlHours}시간 유효]`),
+    // 난이도 배수 고지 (GDD §5.1 난이도, 2026-09-02) — 확률을 바꾸는 요소는 여기 명시. 보통은 위 표 그대로
+    el('div.small.muted', {},
+      `🎚️ 난이도 [${balance.difficultyTiers.map((t) => TIER_NAME[t]).join('·')}에서 선택] — 보통은 위 표 그대로`),
+    ...DIFFICULTIES.filter((d) => d !== 'normal').map((d) => {
+      const df = balance.difficulties[d];
+      return el('div.small.muted', {},
+        `· ${DIFFICULTY_LABEL[d]}: 적 ×${df.enemyMult} · 골드 ×${df.goldMult} · 희귀 +${df.rareWeightAdd} · 전설 +${Math.round(df.legendaryAdd * 10000) / 100}%p`); // 375px 한 줄 · 0.25%p처럼 소수 둘째 자리까지
+    }),
   );
   const monsterPanel = el('div.stack-sm', {}, captureCard, regionCard);
 

@@ -81,6 +81,12 @@
       "rareWeightMult": 2
     }
   },
+  "difficulties": {
+    "normal": { "enemyMult": 1, "goldMult": 1, "rareWeightAdd": 0, "legendaryAdd": 0 },
+    "hard": { "enemyMult": 3, "goldMult": 1.5, "rareWeightAdd": 0.5, "legendaryAdd": 0.0025 },
+    "extreme": { "enemyMult": 8, "goldMult": 2, "rareWeightAdd": 1, "legendaryAdd": 0.005 }
+  },
+  "difficultyTiers": ["extended", "deep"],
   "legendTraces": {
     "dropChance": { "scout": 0.15, "standard": 0.25, "extended": 0.35, "deep": 0 },
     "bonusPerTrace": 0.01,

@@ -1,7 +1,7 @@
 /**
  * UI 킷 — DOM 헬퍼(el), 스코프 이펙트, 토스트, 공용 포맷터. 사용자 노출 문자열의 집결지.
  */
-import { RARITIES, RARITY_LABEL, type ArtifactRarity, type Element, type MonsterRarity, type Tier, type Tribe } from '../content/schema';
+import { RARITIES, RARITY_LABEL, type ArtifactRarity, type Difficulty, type Element, type MonsterRarity, type Tier, type Tribe } from '../content/schema';
 import { RARITY_ORDER as CORE_RARITY_ORDER } from '../core/effects';
 import { effect } from '../state/signal';
 import { playSfx } from './sfx';
@@ -119,6 +119,10 @@ export const TIER_NAME: Record<Tier, string> = {
 // 버튼 4개가 한 줄에 들어가도록 짧게 (2026-08-29 사용자) — 시간은 balance tiers.minutes와 맞출 것
 export const TIER_LABEL: Record<Tier, string> = {
   scout: '정찰(15분)', standard: '조사(2시간)', extended: '탐사(4시간)', deep: '원정(8시간)',
+};
+// 파견 난이도 (2026-09-02, GDD §5.1) — 칩 3개가 한 줄에 들어가는 2~3자 표기
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  normal: '보통', hard: '어려움', extreme: '극한',
 };
 export const SLOT_LABEL: Record<string, string> = {
   weapon: '무기', armor: '방어구', banner: '깃발', charm: '부적',

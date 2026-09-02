@@ -94,7 +94,7 @@ function notifyNewTasks(prev: SaveState, next: SaveState): void {
 }
 
 /** 군 프리셋으로 파견 (2026-08-23) — 편성은 원정대 카드에서, 파견은 군 단위 */
-export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionInput['tier']): boolean {
+export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionInput['tier'], difficulty?: ExpeditionInput['difficulty']): boolean {
   return (
     act(() => {
       const state = save();
@@ -102,7 +102,7 @@ export function dispatchTeam(teamId: string, regionId: string, tier: ExpeditionI
       if (!team) throw new GameError('team-missing', '없는 원정대입니다');
       const partyIds = team.partyIds.filter((id) => state.roster.some((m) => m.monsterId === id));
       const artifactIds = team.artifactIds.filter((itemId) => state.artifacts.some((a) => a.itemId === itemId));
-      const result = createExpedition(content, state, { regionId, tier, partyIds, artifactIds, teamId }, ctx);
+      const result = createExpedition(content, state, { regionId, tier, partyIds, artifactIds, teamId, difficulty }, ctx);
       const next = result.save;
       // 튜토리얼: 첫 파견은 30초 만에 돌아온다
       if (!next.profile.tutorialDone) {

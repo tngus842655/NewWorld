@@ -4,7 +4,7 @@
  */
 import type { Content } from '../content';
 import { RARITIES } from '../content/schema';
-import type { ArtifactRarity, CrossroadEvent, HourglassDef, Region, Reward, Tier } from '../content/schema';
+import type { ArtifactRarity, CrossroadEvent, Difficulty, HourglassDef, Region, Reward, Tier } from '../content/schema';
 import { captureChance, shouldUseLure } from './capture';
 import { computePartyPower, enemyPower, partyDamageReduce, resolveClash } from './combat';
 import {
@@ -60,6 +60,18 @@ export interface ExpeditionInput {
   partyIds: string[]; // monsterId — 종 단위 편성
   artifactIds: string[]; // itemId — 종 단위 (v6)
   teamId?: string; // 파견한 군 (표시·재파견 잠금용 — 2026-08-23)
+  /** 파견 난이도 (2026-09-02, GDD §5.1) — balance.difficultyTiers 티어에서만, 없음 = 보통 */
+  difficulty?: Difficulty;
+}
+
+/** 난이도 정의 — 없으면 보통 (GDD §5.1 난이도 선택, 2026-09-02) */
+export function difficultyOf(content: Content, difficulty: Difficulty | undefined) {
+  return content.balance.difficulties[difficulty ?? 'normal'];
+}
+
+/** 이 티어에서 이 난이도를 고를 수 있는가 — 보통은 어디서나, 그 외는 difficultyTiers(탐사·원정)만 */
+export function difficultyAllowed(content: Content, tier: Tier, difficulty: Difficulty | undefined): boolean {
+  return !difficulty || difficulty === 'normal' || content.balance.difficultyTiers.includes(tier);
 }
 
 export function createExpedition(
@@ -71,6 +83,9 @@ export function createExpedition(
   const region = content.regions.get(input.regionId);
   if (!region) throw new GameError('region-missing', `없는 지역: ${input.regionId}`);
   if (!isRegionUnlocked(content, save, region.id)) throw new GameError('region-locked', `${region.name}은(는) 아직 잠겨 있습니다`);
+  if (!difficultyAllowed(content, input.tier, input.difficulty)) {
+    throw new GameError('difficulty-tier', '이 파견 길이에서는 난이도를 고를 수 없습니다 (탐사·원정만)');
+  }
 
   const now = ctx.now();
   // 회군 복귀가 끝난 원정은 잠금에서 빠진다 — 기록 자체는 아래 클론에서 청소
@@ -152,6 +167,7 @@ export function createExpedition(
     claimed: false,
     ...(legendBonus > 0 ? { legendBonus } : {}),
     ...(scent ? { scent } : {}),
+    ...(input.difficulty && input.difficulty !== 'normal' ? { difficulty: input.difficulty } : {}),
   };
 
   const next = structuredClone(save);
@@ -292,9 +308,11 @@ function buildPlan(
   effects: readonly ActiveEffect[],
   seed: string,
   legendaryChanceAdd = 0, // 전설의 흔적 가산 (expedition.legendBonus) — deep 외에는 항상 0
+  difficulty?: Difficulty, // 난이도 (2026-09-02) — 희귀 가중 가산·전설 확률 가산. 호출 수는 바뀌지 않아 결정론 유지
 ): PlanItem[] {
   const rng = streamRng(seed, 'sequence');
   const tierDef = content.balance.tiers[tier];
+  const diff = difficultyOf(content, difficulty);
   const setupCtx: EffectCtx = { regionId: region.id, tier };
   const setupActions = query(effects, 'expeditionSetup', setupCtx);
 
@@ -312,7 +330,7 @@ function buildPlan(
     const monster = content.monsters.get(monsterId)!;
     let weight = baseWeight;
     // 심층 희귀 가중은 희귀·영웅에만 (고급은 준일반 취급, 전설은 spawns에 없음)
-    if (monster.rarity === 'rare' || monster.rarity === 'heroic') weight *= tierDef.rareWeightMult;
+    if (monster.rarity === 'rare' || monster.rarity === 'heroic') weight *= tierDef.rareWeightMult + diff.rareWeightAdd;
     for (const action of setupActions) {
       if (action.kind === 'spawnWeightMult' && RARITY_ORDER[monster.rarity] >= RARITY_ORDER[action.minRarity]) {
         weight *= action.value;
@@ -324,7 +342,7 @@ function buildPlan(
   // 전설 조우 주입 (deep 한정, GDD §6) — 계획 중앙 슬롯을 교체. 지역 전설 2종 중 시드로 1종.
   // 기본 확률이 0인 티어는 rng 호출 자체를 건너뛴다 — 가산을 더해도 호출 수가 변하지 않아
   // 진행 중 원정의 결정론(미리보기 = 정산)이 유지된다
-  const legendaryChance = tierDef.legendaryChance + (tierDef.legendaryChance > 0 ? legendaryChanceAdd : 0);
+  const legendaryChance = tierDef.legendaryChance + (tierDef.legendaryChance > 0 ? legendaryChanceAdd + diff.legendaryAdd : 0);
   const legendarySlot = legendaryChance > 0 && rng() < legendaryChance ? Math.floor(count / 2) : -1;
   const legendaryId = legendarySlot >= 0
     ? region.legendary[Math.min(Math.floor(rng() * region.legendary.length), region.legendary.length - 1)]!
@@ -370,7 +388,7 @@ export function previewCrossroads(content: Content, save: SaveState, expedition:
   const region = content.regions.get(expedition.regionId);
   if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
   const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
-  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0);
+  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0, expedition.difficulty);
   return plan
     .filter((item): item is Extract<PlanItem, { type: 'crossroad' }> => item.type === 'crossroad')
     .sort((a, b) => a.index - b.index)
@@ -419,10 +437,11 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
   if (!region) throw new GameError('region-missing', `없는 지역: ${expedition.regionId}`);
   const tierDef = content.balance.tiers[expedition.tier];
   const { combat, rewards: rewardBalance, crossroad: crossroadBalance, artifacts: artifactBalance } = content.balance;
+  const diff = difficultyOf(content, expedition.difficulty); // 적 배수·골드 배수 (GDD §5.1 난이도) — 재료·카드·포획은 불변
 
   const party = expedition.partyIds.map((monsterId) => findMonster(save, monsterId));
   const { effects } = collectTeamEffects(content, save, expedition.partyIds, liveArtifactIds(save, expedition));
-  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0);
+  const plan = buildPlan(content, region, expedition.tier, effects, expedition.seed, expedition.legendBonus ?? 0, expedition.difficulty);
 
   const captureRng = streamRng(expedition.seed, 'capture');
   const lootRng = streamRng(expedition.seed, 'loot');
@@ -508,14 +527,14 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
     for (const reward of list) {
       switch (reward.kind) {
         case 'gold': {
-          const amount = Math.round(reward.amount * region.rewardScale * tierDef.yieldMult * scale);
+          const amount = Math.round(reward.amount * region.rewardScale * tierDef.yieldMult * diff.goldMult * scale);
           totals.gold += amount;
           granted.push({ kind: 'gold', amount });
           break;
         }
         case 'material': {
           const materialId = region.materials[reward.slot]!;
-          const count = Math.max(1, Math.round(reward.count * scale));
+          const count = Math.max(1, Math.round(reward.count * scale)); // 재료는 난이도 배수 없음 — 모래시계 세공 간접 가속 (2026-09-02 계측)
           addMaterial(materialId, count);
           granted.push({ kind: 'material', materialId, count });
           break;
@@ -568,7 +587,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
       markSeen(monster.id);
 
       const auto = query(effects, 'beforeEncounter', ctx).some((a) => a.kind === 'autoWin');
-      const enemy = enemyPower(content, monster);
+      const enemy = enemyPower(content, monster) * diff.enemyMult; // 전설도 배수 적용 — 예외를 두면 전설 사냥 모드가 된다
       const defeatReduce = sumDamageReduce(
         query(effects, 'afterDefeat', ctx).filter((a) => a.kind === 'damageReduce'),
         1,
@@ -583,7 +602,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
           if (status !== 'ok') {
             // 승리 피해로 빈사·전멸하는 극단 케이스 — 골드만 챙기고 포획 없이 처리
             const gold = Math.round(
-              rewardBalance.goldPerVictory * rewardBalance.rarityGoldMult[monster.rarity] * region.rewardScale * tierDef.yieldMult,
+              rewardBalance.goldPerVictory * rewardBalance.rarityGoldMult[monster.rarity] * region.rewardScale * tierDef.yieldMult * diff.goldMult,
             );
             totals.gold += gold;
             entries.push({
@@ -595,7 +614,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
           }
         }
         const gold = Math.round(
-          rewardBalance.goldPerVictory * rewardBalance.rarityGoldMult[monster.rarity] * region.rewardScale * tierDef.yieldMult,
+          rewardBalance.goldPerVictory * rewardBalance.rarityGoldMult[monster.rarity] * region.rewardScale * tierDef.yieldMult * diff.goldMult,
         );
         totals.gold += gold;
 
@@ -662,7 +681,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
       }
     } else if (item.type === 'treasure') {
       const ctx: EffectCtx = { regionId: region.id, tier: expedition.tier, encounterKind: 'treasure', hpRatio: hp };
-      const gold = Math.round(rewardBalance.goldPerTreasure * region.rewardScale * tierDef.yieldMult);
+      const gold = Math.round(rewardBalance.goldPerTreasure * region.rewardScale * tierDef.yieldMult * diff.goldMult);
       totals.gold += gold;
       let artifact: DroppedArtifact | undefined;
       if (pityAvailable || lootRng() < artifactBalance.sources.treasureChance) {
@@ -703,7 +722,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
         entries.push({ type: 'crossroad', eventId: item.event.id, choice, success: true, salvaged: false, rewards, hpAfter: hp });
       } else {
         const base = clamp(
-          partyPower / (region.recommendedCp * crossroadBalance.riskyCheckRatio),
+          partyPower / (region.recommendedCp * crossroadBalance.riskyCheckRatio * diff.enemyMult), // 난이도 적 배수 — 안 곱하면 고난이도가 공짜 90%
           crossroadBalance.baseChanceFloor,
           crossroadBalance.baseChanceCeil,
         );
@@ -711,6 +730,13 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
         const success = crossroadRng() < chance;
         if (success) {
           const rewards = grantRewards(item.event.risky.success, 1, true);
+          // 갈림길 대성공 유물 기회 (GDD §8.4 artifacts.sources.crossroadCrit — 확률 시트가 고지하던 값, 2026-09-02 구현).
+          // 이벤트 보상에 유물이 이미 있으면 겹치지 않는다. lootRng 호출이 늘어 같은 시드의 이후 유물 판정은 달라진다
+          if (!rewards.some((r) => r.kind === 'artifact') && lootRng() < artifactBalance.sources.crossroadCrit) {
+            const drop = rollArtifact(content, lootRng, 0.1);
+            dropArtifact(drop);
+            rewards.push({ kind: 'artifact', drop });
+          }
           entries.push({ type: 'crossroad', eventId: item.event.id, choice, success: true, salvaged: false, rewards, hpAfter: hp });
         } else {
           let salvageRatio = 0;
@@ -772,6 +798,7 @@ export function resolveExpedition(content: Content, save: SaveState, expedition:
     wiped,
     totals,
     ...(legendTrace ? { legendTrace } : {}),
+    ...(expedition.difficulty ? { difficulty: expedition.difficulty } : {}),
   };
 }
 
@@ -850,6 +877,7 @@ export function claimExpedition(
     capturedCount: journal.totals.capturedMonsterIds.length,
     artifactCount: journal.totals.artifacts.length,
     wiped: journal.wiped,
+    ...(expedition.difficulty ? { difficulty: expedition.difficulty } : {}),
     journal, // 재열람용 풀 일지 — 정산 후에는 세이브가 변해 시드로 재생성할 수 없다
   });
   next.journalArchive = next.journalArchive.slice(0, 20);

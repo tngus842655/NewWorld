@@ -2,7 +2,7 @@
  * 세이브·일지 등 코어 상태 타입 (DATA.md §2).
  * 원칙: 파생값(마일스톤 버프, 유효 CP, 풀 일지)은 저장하지 않는다.
  */
-import type { Tier } from '../content/schema';
+import type { Difficulty, Tier } from '../content/schema';
 
 // ── 소유물 ───────────────────────────────────────────────────────────────────
 /** 몬스터는 종 단위로 소유한다 (2026-08-23) — 카드가 몇 장이든 레벨·성급은 종당 하나 */
@@ -47,6 +47,8 @@ export interface ActiveExpedition {
   recallAt?: number;
   /** 전설의 흔적 가산 (v10) — deep 파견 시 흔적을 소모해 확정, 정산·미리보기가 같은 값을 쓴다 */
   legendBonus?: number;
+  /** 파견 난이도 (2026-09-02, GDD §5.1) — 없음 = 보통. 탐사·원정에서만 선택되며 세이브 마이그레이션 없이 선택 필드로 둔다 */
+  difficulty?: Difficulty;
   /** 야생의 향기 스냅샷 (v11, GDD §9.2) — 버프 중 출발한 원정의 포획 ×adBuffMult (결정론 유지) */
   scent?: boolean;
 }
@@ -211,6 +213,7 @@ export interface Journal {
   wiped: boolean; // 전멸로 조기 귀환
   totals: JournalTotals;
   legendTrace?: boolean; // 전설의 흔적 발견 (정찰 완주 한정) — 정산 시 세이브에 적립
+  difficulty?: Difficulty; // 파견 난이도 (없음 = 보통) — 일지 헤더 표기용
 }
 
 export interface JournalSummary {
@@ -222,6 +225,7 @@ export interface JournalSummary {
   capturedCount: number;
   artifactCount: number;
   wiped: boolean;
+  difficulty?: Difficulty; // 파견 난이도 (없음 = 보통) — 홈 최근 일지 표기용
   /** 정산 시점의 풀 일지 — 재열람용 (2026-08-23). 시드 재생성은 정산 후 세이브가 변해 불가능.
    *  구 세이브 항목에는 없음 → UI는 상세 버튼을 숨긴다 */
   journal?: Journal;

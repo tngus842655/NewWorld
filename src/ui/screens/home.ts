@@ -9,7 +9,7 @@ import * as clock from '../../state/clock';
 import { signal } from '../../state/signal';
 import { nowTick, save } from '../../state/store';
 import { expeditionLinesCard, mapEntryButton } from '../expeditionMap';
-import { TIER_LABEL, TIER_NAME, el, fmtAgo, fmtGold, scopedEffect } from '../kit';
+import { DIFFICULTY_LABEL, TIER_LABEL, TIER_NAME, el, fmtAgo, fmtGold, scopedEffect } from '../kit';
 import { overlay, tab } from '../router';
 import { playSfx } from '../sfx';
 
@@ -119,7 +119,8 @@ export function renderHome(): HTMLElement {
   const archive = state.journalArchive; // 정산 시 최근 20건으로 유지된다
   const recent = (expanded ? archive : archive.slice(0, JOURNAL_COLLAPSED_COUNT)).map((summary) => {
     const region = content.regions.get(summary.regionId);
-    const tierName = TIER_NAME[summary.tier];
+    const tierName = TIER_NAME[summary.tier]
+      + (summary.difficulty && summary.difficulty !== 'normal' ? ` ${DIFFICULTY_LABEL[summary.difficulty]}` : ''); // 난이도는 보통이 아닐 때만
     return el('div.list-row.journal-row', {},
       el('div.journal-name', {},
         `${summary.wiped ? '💀' : '🏕️'} ${region?.name ?? summary.regionId} · ${tierName}`,

@@ -10,7 +10,7 @@ import type { Content } from '../src/content';
 import { computePartyPower } from '../src/core/combat';
 import { collectTeamEffects } from '../src/core/effects';
 import { canCheckIn, checkIn } from '../src/core/attendance';
-import type { MonsterRarity } from '../src/content/schema';
+import { DIFFICULTIES, type Difficulty, type MonsterRarity } from '../src/content/schema';
 import { awakenMonster, buyPartySlot, craftRecipe, enhanceArtifact, finalTier, fuseMonsters, levelUpMonster, unlockRegion } from '../src/core/economy';
 import { monsterLevelUpCost, monsterStarUpCost } from '../src/core/formulas';
 import { chooseCrossroad, claimExpedition, createExpedition, useHourglass } from '../src/core/expedition';
@@ -59,6 +59,8 @@ export interface DayRow {
   finalTierLegendarySpares: number;
   /** 보유 초월 종 수 */
   transcendent: number;
+  /** 최강 편성(파견 중 포함, 슬롯 수만큼)을 최심 해금 지역 원정(deep) 기준으로 잰 유효 CP (2026-09-02) — 권장 CP 대비 배수를 볼 때 이 값 */
+  frontierCp: number;
 }
 
 /**
@@ -140,6 +142,10 @@ export interface SimOptions {
    *                  (그 창의 최종 티어 여분 중앙값이 0장이라 실제 차이는 작다 — docs/NEXT-GACHA-FAIRNESS.md §3)
    */
   fuseTranscend?: 'all' | 'final-tier';
+
+  // ── 난이도 (GDD §5.1, 2026-09-02) ───────────────────────────────────────────
+  /** 'max-safe' = 탐사·원정에서 권장×적 배수×safety를 감당하는 최고 난이도를 고른다. 기본 off = 보통 (기존 출력 불변) */
+  difficultyPolicy?: 'max-safe';
 }
 
 function makeCtx(name: string): { ctx: CoreCtx; set: (t: number) => void } {
@@ -207,6 +213,22 @@ function pickArtifacts(content: Content, save: SaveState): string[] {
     if (!cur || score > cur.score) bySlot.set(def.slot, { itemId: owned.itemId, score });
   }
   return [...bySlot.values()].map((v) => v.itemId);
+}
+
+/** 전 로스터(파견 중 포함) 기본 CP 상위 n마리 — 계측용 (편성 최적화 없음). DayRow.topCp/frontierCp가 쓴다 */
+function topUnits(content: Content, save: SaveState, n: number): string[] {
+  return [...save.roster]
+    .map((m) => {
+      const def = content.monsters.get(m.monsterId)!;
+      const cp =
+        (def.baseAtk * content.balance.cp.atkWeight + def.baseHp * content.balance.cp.hpWeight) *
+        (1 + content.balance.level.statGrowth * (m.level - 1)) *
+        Math.pow(content.balance.star.mult, m.star - 1);
+      return { id: m.monsterId, cp };
+    })
+    .sort((a, b) => b.cp - a.cp)
+    .slice(0, n)
+    .map((u) => u.id);
 }
 
 /** CP 상위 + 같은 종족 뭉치기 휴리스틱으로 파티 선택 */
@@ -477,7 +499,13 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         // 이번 체크포인트에 실제로 소화 가능한 만큼만 (팀 수 × 라운드 여유). 남으면 다음 체크포인트로 이월된다
         if (hourglassProduct) {
           const absorb = teamCount(content, save) * 8;
-          for (let i = 0; i < absorb; i++) if (!buy(hourglassProduct.id)) break;
+          // codex 정책은 고급 뽑기 가격만큼 예약해 둔다 — 안 그러면 모래시계(50💎)가 매 체크포인트 잔액을 비워 400💎이
+          // 영영 쌓이지 않아 'time'과 바이트 동일해진다 (2026-09-02 수정, docs/NEXT-REGION-DIFFICULTY.md §8-3)
+          const reserve = policy === 'codex' ? (content.shopProducts.find((p) => p.id === 'dia-monster-gacha-premium')?.price ?? 0) : 0;
+          for (let i = 0; i < absorb; i++) {
+            if (save.wallet.diamonds - hourglassProduct.price < reserve) break;
+            if (!buy(hourglassProduct.id)) break;
+          }
         }
         // 남는 다이아는 도감을 직접 찍는 고급 뽑기로 (희귀 이상 확정 — 도감 tail이 곧 게이트다)
         for (let i = 0; i < 60; i++) if (!buy('dia-monster-gacha-premium')) break;
@@ -626,9 +654,21 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         if (target) region = target.r;
       }
 
+      // 난이도 (GDD §5.1) — max-safe: 권장 × 적 배수 × safety를 감당하는 최고 난이도. 봇 티어는 scout/standard/deep이라 deep에서만 걸린다
+      let difficulty: Difficulty | undefined;
+      if (opts.difficultyPolicy === 'max-safe' && content.balance.difficultyTiers.includes(tier)) {
+        const power = partyPowerOf(content, save, party, artifacts, region.id, tier);
+        for (const d of [...DIFFICULTIES].reverse()) {
+          if (d === 'normal') break;
+          if (power >= region.recommendedCpTier[tier] * content.balance.difficulties[d].enemyMult * strategy.safety) {
+            difficulty = d;
+            break;
+          }
+        }
+      }
       const result = (() => {
         try {
-          return createExpedition(content, save, { regionId: region.id, tier, partyIds: party, artifactIds: artifacts }, ctx);
+          return createExpedition(content, save, { regionId: region.id, tier, partyIds: party, artifactIds: artifacts, difficulty }, ctx);
         } catch (error) {
           if (error instanceof GameError) return null;
           throw error;
@@ -685,9 +725,13 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
     const isLastCheckOfDay = strategy.checkHours[strategy.checkHours.length - 1] === hour;
     if (isLastCheckOfDay) {
       const counts = capturedCounts(content, save);
-      const party = pickParty(content, save, 3);
-      const topCp =
-        party.length > 0 ? Math.round(partyPowerOf(content, save, party, pickArtifacts(content, save), 'misty-coast', 'standard')) : 0;
+      // 최강 편성 — 파견 중 포함 전 로스터 상위 슬롯 수 (2026-09-02 수정: 구 topCp는 pickParty가 busy를 제외해 팀 4개가
+      // 나가 있으면 벤치 값(실제의 1/10~1/25)을 재고 있었다 — docs/NEXT-REGION-DIFFICULTY.md §8-2). 중립(물안개/조사) 기준
+      const bestParty = topUnits(content, save, save.profile.partySlots);
+      const bestArtifacts = pickArtifacts(content, save);
+      const topCp = bestParty.length > 0 ? Math.round(partyPowerOf(content, save, bestParty, bestArtifacts, 'misty-coast', 'standard')) : 0;
+      const frontier = [...content.regionList].reverse().find((r) => isRegionUnlocked(content, save, r.id)) ?? content.regionList[0]!;
+      const frontierCp = bestParty.length > 0 ? Math.round(partyPowerOf(content, save, bestParty, bestArtifacts, frontier.id, 'deep')) : 0;
       days.push({
         day: dayIdx + 1,
         gold: goldEarned,
@@ -703,6 +747,7 @@ export function simulate(content: Content, strategy: Strategy, opts: SimOptions)
         legendarySpares: legendarySpareSum(false),
         finalTierLegendarySpares: legendarySpareSum(true),
         transcendent: counts.byRarity.get('transcendent') ?? 0,
+        frontierCp,
       });
     }
   }
