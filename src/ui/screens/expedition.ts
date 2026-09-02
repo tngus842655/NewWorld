@@ -3,7 +3,7 @@
  * 편성은 군 카드를 눌러 여는 편성 시트에서, 파견은 군 단위로.
  */
 import { content } from '../../content';
-import { DIFFICULTIES, TIERS, type Difficulty, type Tier } from '../../content/schema';
+import { DIFFICULTIES, TIERS, type Difficulty, type Region, type Tier } from '../../content/schema';
 import { adUsesLeft } from '../../core/ads';
 import { computePartyPower, enemyPower } from '../../core/combat';
 import { collectTeamEffects, query } from '../../core/effects';
@@ -27,6 +27,50 @@ const selRegion = signal<string>(deepestUnlockedRegion(content, save()).id);
 const selTierView = signal<number>(content.regions.get(selRegion())!.tier);
 const selTier = signal<Tier>('scout');
 const selDifficulty = signal<Difficulty>('normal'); // 난이도 (GDD §5.1) — 탐사·원정에서만 의미, 다른 티어에서는 보통으로 읽는다
+/**
+ * 잠긴 지역 행을 누르고 있는 동안만 뜨는 해금 조건 안내 (2026-09-02 사용자 — "🌋 0/16 🔥 0/24"가 무슨 뜻인지 모를 수 있다).
+ * 시그널로 두는 이유: 화면은 save()·시계 변화마다 통째로 다시 그려지므로 DOM에 직접 붙인 말풍선은 다음 렌더에서 사라진다.
+ * 손을 어디서 떼든(행 밖·스크롤 취소 포함) 닫히도록 window에서 pointerup/pointercancel을 받는다.
+ */
+const heldRegion = signal<string | null>(null);
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerup', () => heldRegion.set(null));
+  window.addEventListener('pointercancel', () => heldRegion.set(null));
+}
+
+/** 해금 조건 말풍선 — 조건별로 "무엇을 세는 값인지"와 "어디서 채우는지" 한 줄씩 */
+function unlockTip(region: Region, state: SaveState): HTMLElement {
+  const counts = capturedCounts(content, state);
+  const lines: HTMLElement[] = [];
+  for (const [requiredRegion, need] of Object.entries(region.unlock.codexCaptured ?? {})) {
+    const r = content.regions.get(requiredRegion);
+    const have = counts.byRegion.get(requiredRegion) ?? 0;
+    lines.push(el('div.small', {}, `${r?.icon ?? ''} ${have}/${need} · ${r?.name ?? requiredRegion} 도감 — 그 지역에서 포획한 종 수`));
+    lines.push(el('div.small.muted.region-tip-sub', {}, `${r?.name ?? ''} 원정에서 새 종을 포획하면 채워집니다`));
+  }
+  for (const [materialId, need] of Object.entries(region.unlock.materials ?? {})) {
+    const m = content.materials.get(materialId);
+    const src = m ? content.regions.get(m.region) : undefined;
+    const tierName = src ? tierShortName(regionTiers.find((t) => t.tier === src.tier)?.regions ?? [src]) : '';
+    const have = state.wallet.materials[materialId] ?? 0;
+    lines.push(el('div.small', {}, `${m?.icon ?? ''} ${have}/${need} · ${m?.name ?? materialId} — 보유한 재료 수`));
+    lines.push(el('div.small.muted.region-tip-sub', {}, `${tierName} 권역 원정의 채집·갈림길 · 상점 재료 꾸러미`)); // 375px 한 줄
+  }
+  return el('div.wallet-tip.region-tip', {},
+    el('div.wallet-tip-title', {}, `🔒 ${region.icon} ${region.name} 해금 조건`),
+    ...lines,
+    el('div.small.wallet-tip-use', {}, '조건을 모두 채우면 [해금] 버튼이 나타납니다'),
+  );
+}
+
+/** 잠긴 행에 길게 누르기 핸들러 — 누르는 동안 unlockTip, 떼면 닫힘. 스크롤(pointercancel)·컨텍스트 메뉴에 걸리지 않게 */
+function holdToExplain(row: HTMLElement, regionId: string): HTMLElement {
+  row.onpointerdown = (e) => { if (e.button === 0) heldRegion.set(regionId); };
+  row.onpointerup = () => heldRegion.set(null);
+  row.onpointercancel = () => heldRegion.set(null);
+  row.oncontextmenu = (e) => e.preventDefault(); // 길게 누르기가 브라우저 메뉴·텍스트 선택으로 새지 않게
+  return row;
+}
 
 /** 권역 탭 선택 — 해금 소지역이 있으면 그중 가장 깊은 곳을 출발 대상으로. 전부 잠긴 권역은 구경만 */
 function pickTier(tier: number): void {
@@ -141,9 +185,11 @@ function regionRow(regionId: string, opts: { selected: boolean; compact: boolean
   }
   // 다음 관문이 아닌 먼 잠김 지역은 이름만 — 12지역에서 잠김 조건 11줄이 목록을 덮는 것을 막는다 (2026-08-26)
   if (compact) {
-    return el('div.region-row.locked', { title: '앞 지역을 해금하면 열립니다' },
+    // 먼 잠김 지역도 누르고 있으면 조건을 보여준다 — 목록은 짧게, 정보는 손 안에
+    const row = holdToExplain(el('div.region-row.locked', { title: '앞 지역을 해금하면 열립니다 (누르고 있으면 조건 안내)' },
       el('div.region-name.muted', {}, `🔒 ${region.icon} ${region.name}`),
-    );
+    ), regionId);
+    return el('div.region-row-wrap', {}, row, heldRegion() === regionId ? unlockTip(region, state) : null);
   }
   const check = canUnlockRegion(content, state, regionId);
   // 해금 조건은 아이콘 + 수치만 간략히 — "필요합니다" 문구 없이 한 줄 유지 (2026-08-23 사용자)
@@ -157,12 +203,14 @@ function regionRow(regionId: string, opts: { selected: boolean; compact: boolean
     const have = Math.min(state.wallet.materials[materialId] ?? 0, need);
     requirements.push(`${content.materials.get(materialId)?.icon ?? ''}${have}/${need}`);
   }
-  return el('div.region-row.locked', { title: check.reason ?? '' },
+  const row = holdToExplain(el('div.region-row.locked', { title: `${check.reason ?? ''} (누르고 있으면 조건 안내)` },
     el('div.region-name', {}, `🔒 ${region.icon} ${region.name}`),
     el('div.muted.small.region-req', {}, check.ok ? '해금 조건 달성!' : requirements.join(' ')),
     // 해금하면 바로 출발 대상으로 — 방금 연 지역이 다음 목적지다
     check.ok ? el('button.btn.btn-primary.small-btn', { onclick: () => { unlock(regionId); selRegion.set(regionId); } }, '해금') : null,
-  );
+  ), regionId);
+  // 말풍선은 행 아래에 겹쳐 뜬다 (.region-row-wrap이 기준) — 흐름에 끼우면 누를 때마다 목록이 출렁인다
+  return el('div.region-row-wrap', {}, row, heldRegion() === regionId ? unlockTip(region, state) : null);
 }
 
 /** 군 카드 — 파티 슬롯 수만큼 미리보기 + 유물 줄 + 이름·CP. 클릭하면 편성 시트 */
