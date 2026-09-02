@@ -70,7 +70,7 @@ export function rankingSheet(): HTMLElement {
           )
         : el('div.stack-sm', {},
             ...(current.rows.length === 0
-              ? [el('div.center.muted.small', {}, '아직 등록된 개척자가 없습니다 [첫 주인공이 되어보세요!]')]
+              ? [el('div.center.muted.small', {}, '아직 개척자가 없습니다 [첫 주인공이 되어보세요!]')]
               : current.rows.map((row, index) =>
                   rankRow(index + 1, row.nickname, row[category], row.player_id === state.profile.playerId))),
             // 상위 50 밖이면 내 행을 하단에 강조로

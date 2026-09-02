@@ -27,7 +27,7 @@ function tierRows(st: AxisState): HTMLElement[] {
 /** 발동 중 효과 합계 — 같은 종류끼리 합산해 이 축이 지금 주는 것을 숫자로 보여준다 (2026-08-25 사용자) */
 function activeSummary(st: AxisState): string {
   const acts = st.tiers.slice(0, st.active).flatMap((t) => t.effects.map((e) => e.do));
-  if (acts.length === 0) return '발동 중인 보너스가 없습니다 [첫 계단까지 키워보세요]';
+  if (acts.length === 0) return '발동 중인 보너스 없음 [첫 계단까지 키워보세요]';
   const pct = (v: number): string => `${Math.round(v * 1000) / 10}%`;
   let atk = 0; let hp = 0; let reduce = 0; let capture = 0; let gold = 0; let enc = 0; let spawn = 1;
   for (const a of acts) {
@@ -40,15 +40,16 @@ function activeSummary(st: AxisState): string {
     if (a.kind === 'spawnWeightMult') spawn *= a.value;
   }
   const parts = [
-    atk > 0 ? `공격력 +${pct(atk)}` : null,
-    hp > 0 ? `생명력 +${pct(hp)}` : null,
+    // 라벨은 짧게 — 네 항목이 붙으면 311px 카드에서 한 줄을 넘긴다 (2026-09-02 문구 점검)
+    atk > 0 ? `공격 +${pct(atk)}` : null,
+    hp > 0 ? `생명 +${pct(hp)}` : null,
     reduce > 0 ? `받는 피해 -${pct(reduce)}` : null,
     enc > 0 ? `조우 +${enc}` : null,
     capture > 0 ? `포획률 +${pct(capture)}p` : null,
-    gold > 0 ? `골드 보상 +${pct(gold)}` : null,
-    spawn > 1 ? `희귀 이상 출현 가중 ×${Math.round(spawn * 100) / 100}` : null,
+    gold > 0 ? `골드 +${pct(gold)}` : null,
+    spawn > 1 ? `희귀+ 출현 ×${Math.round(spawn * 100) / 100}` : null,
   ].filter(Boolean);
-  return `발동 중 · ${parts.join(' · ')}`;
+  return `발동 · ${parts.join(' · ')}`;
 }
 
 function axisCard(title: string, desc: string, st: AxisState): HTMLElement {

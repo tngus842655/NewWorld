@@ -125,7 +125,7 @@ function entryCard(entry: JournalEntry): HTMLElement {
     case 'wipe':
       return entry.revived
         ? el('div.jcard.jrevive', {}, el('div.jline', {}, `✨ 전멸 위기 [원정대가 다시 일어선다! HP ${fmtPct(entry.hpAfter)}]`))
-        : el('div.jcard.jcard-bad', {}, el('div.jline', {}, '💀 전멸… 원정대가 서둘러 철수한다 (전리품 일부 소실)'));
+        : el('div.jcard.jcard-bad', {}, el('div.jline', {}, '💀 전멸… 서둘러 철수한다 (전리품 일부 소실)'));
     case 'clearBox': {
       const boxRarity = content.artifacts.get(entry.artifact.itemId)?.rarity ?? 'common';
       return el(`div.jcard.jdrop-card${rarityCardClass(boxRarity)}`, {},
@@ -195,7 +195,7 @@ export function journalView(journal: Journal, newMilestones: string[], opts: Jou
       ? el('div.jsub', {}, `📖 도감 등록: ${totals.capturedMonsterIds.map(monsterName).join(', ')}`)
       : null,
     journal.legendTrace
-      ? el('div.jline', {}, `✨ 전설의 흔적 발견 — 다음 ${TIER_LABEL.deep} 파견의 전설 확률이 오릅니다`)
+      ? el('div.jline', {}, `✨ 전설의 흔적 발견 [다음 ${TIER_LABEL.deep} 전설 확률↑]`)
       : null,
     doubleRow,
     ...newMilestones.map((id) => {

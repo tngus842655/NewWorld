@@ -234,7 +234,7 @@ export function shopSheet(): HTMLElement {
     ),
     ...groupBlocks,
     tab === 'gold'
-      ? el('div.center.small.muted', {}, `구매 한도는 매일 자정에 초기화됩니다 (오늘: ${todayKey(nowTick())})`)
+      ? el('div.center.small.muted', {}, `구매 한도는 매일 자정 초기화 (오늘 ${todayKey(nowTick())})`)
       : null,
   );
   shell.classList.add('sheet-full');

@@ -299,7 +299,7 @@ export function renderExpedition(): HTMLElement {
   const scentLeft = adUsesLeft(content, state, 'scentBuff', clock.now());
   const scentRow = scentActive
     ? el('div.muted.small', {},
-        `🌿 야생의 향기 발동 중 [포획률 ×${content.balance.capture.adBuffMult} · ${fmtClock(state.buffs.scentUntil)}까지 출발분]`)
+        `🌿 야생의 향기 [포획률 ×${content.balance.capture.adBuffMult} · ${fmtClock(state.buffs.scentUntil)}까지 출발분]`)
     : adsAvailable() && scentLeft > 0
       ? el('div.list-row', {},
           // 두 줄 표기 — 한 줄이면 버튼에 밀려 어중간하게 접힌다 (2026-08-29 사용자).
@@ -396,7 +396,7 @@ export function renderExpedition(): HTMLElement {
       }, teamsFull
         ? `⛺ 원정대가 모두 파견 중입니다 (${runningCount}/${maxTeams})`
         : party.length === 0
-          ? `${team.name} 편성이 비어 있습니다 [카드를 눌러 편성하세요]`
+          ? '편성이 비어 있습니다 [카드를 눌러 편성]' // 군 이름은 바로 위 전투력 행에 있다 — 16px 버튼 한 줄에 맞춘다 (2026-09-02)
           : el('span.dispatch-label', {},
               `🧭 ${josaRo(region.name)} 출발`, // 갯벌로·우듬지로·심연으로 — '으로' 고정 금지
               // 선택한 파견 길이의 실소요 — 유물 시간 단축 반영, 튜토리얼 첫 원정은 30초 압축 (2026-08-29 사용자)

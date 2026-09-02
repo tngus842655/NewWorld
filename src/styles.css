@@ -925,6 +925,7 @@ body.overlay-open .container { overflow: hidden; }
 .slot-add { padding: 0; width: 22px; height: 22px; font-size: 15px; font-weight: 700; line-height: 1; flex: none; }
 /* 버튼 묶음이 세로로 내려앉지 않게 — 라벨 쪽이 말줄임으로 양보한다 */
 .row-gap.nowrap { flex-wrap: nowrap; flex: none; }
+.nowrap { white-space: nowrap; } /* 토큰 단위 줄바꿈 방지 (CP 숫자 등) */
 .cloud-stamp { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* ── 로그인 게이트 — 회원 전용 (2026-08-29): 세션 없으면 게임 대신 이 화면 ──

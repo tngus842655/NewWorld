@@ -136,7 +136,8 @@ export function monsterChip(
     icon,
     el('div.mchip-body', {},
       name,
-      el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)} · CP ${ownedCp(owned)}`),
+      // 2열 격자의 100px 몸통에서 "CP" 뒤 숫자만 다음 줄로 떨어지지 않게 — 접히더라도 "CP 20077" 단위로 (2026-09-02)
+      el('div.mchip-sub', {}, `Lv.${owned.level} ${stars(owned.star)} · `, el('span.nowrap', {}, `CP ${ownedCp(owned)}`)),
     ),
   );
 }

@@ -165,7 +165,7 @@ export function artifactFusionSheet(): HTMLElement {
     restricted
       ? el('div.center.small.muted', {},
           gateOpen
-            ? `⚠️ ${ARTIFACT_RARITY_LABEL[nextRarity]}은 합성으로만 얻습니다 [발굴·상점 뽑기에는 등장하지 않습니다]`
+            ? `⚠️ ${ARTIFACT_RARITY_LABEL[nextRarity]}은 합성으로만 얻습니다 [발굴·뽑기에는 안 나옵니다]`
             : `🔒 ${ARTIFACT_RARITY_LABEL[nextRarity]} 도전은 ${last.name} 권역을 해금해야 열립니다`)
       : null,
 
@@ -181,7 +181,7 @@ export function artifactFusionSheet(): HTMLElement {
       ),
       el('div.list-row', {},
         el('span', {}, '소모 유물'),
-        el('span.small', {}, maxRounds > 0 ? `여분 ${rounds * fusion.materials}개 (여분이 많은 종부터 자동 선택)` : '—'),
+        el('span.small', {}, maxRounds > 0 ? `여분 ${rounds * fusion.materials}개 (여분 많은 종부터 자동 선택)` : '—'),
       ),
       el('div.list-row', {},
         el('span', {}, '성공 확률'),

@@ -161,8 +161,9 @@ function monsterSheet(monsterId: string): HTMLElement | null {
           el('span.tag', {}, TRIBE_LABEL[monster.tribe]),
         ),
         el('div.muted.small', {}, `Lv.${owned.level} ${stars(owned.star)} · 서식지 ${[content.regions.get(monster.habitat)?.icon, content.regions.get(monster.habitat)?.name].filter(Boolean).join(' ')}`),
-        el('div.muted.small', {}, `보유 카드 ${owned.count}장 [중복 포획으로 누적 (추후 합성 재료)]`),
-        el('div.muted.small', {}, `🏆 랭킹 점수 ${monsterScore(content, owned)} [레벨·성급을 올리면 커집니다]`),
+        // 상세 머리의 오른쪽 열은 265px — 한 줄에 맞게 짧게 (2026-09-02 문구 점검)
+        el('div.muted.small', {}, `보유 카드 ${owned.count}장 [중복 포획으로 누적 · 합성 재료]`),
+        el('div.muted.small', {}, `🏆 랭킹 점수 ${monsterScore(content, owned)} [레벨·성급으로 커집니다]`),
         busy ? el('div.tag.busy-tag', {}, '🧭 원정 중') : null,
       ),
     ),
@@ -174,7 +175,7 @@ function monsterSheet(monsterId: string): HTMLElement | null {
     monster.unique.length > 0
       ? el('div.card.stack-sm', {},
           ...monster.unique.map((effect) => el('div.list-row.unique-row', {}, el('span', {}, `✦ 고유 능력 · ${describeEffect(effect)}`))),
-          el('div.small.muted', {}, '전설 몬스터의 고유 능력 — 파티에 편성하면 원정 내내 발동합니다'),
+          el('div.small.muted', {}, '전설의 고유 능력 — 편성하면 원정 내내 발동합니다'),
         )
       : null,
     el('p.flavor', {}, `“${monster.flavor}”`),
@@ -361,7 +362,7 @@ function oddsSheet(): HTMLElement {
   // ── 탭 1: 몬스터 — 포획 + 지역별 등장 (지역은 칩으로 1개씩) ──
   const captureCard = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🎯 포획 확률'),
-    el('div.muted.small', {}, '조우에서 승리하면 등급별 기본 확률로 포획을 시도합니다.'),
+    el('div.muted.small', {}, '조우 승리 시 등급별 기본 확률로 포획을 시도합니다.'),
     // 0%인 등급은 행을 만들지 않는다 — 초월은 조우 자체가 없어 "0%" 행이 뜨면 오히려 오해를 부른다 (2026-08-25)
     ...rarities
       .filter((rarity) => (balance.capture.base[rarity] ?? 0) > 0)
@@ -396,8 +397,10 @@ function oddsSheet(): HTMLElement {
             el('span', {}, pct1(deep.get(rarity) ?? 0)),
           ),
         ),
+        // 전설 이름은 지역마다 길이가 달라 한 문장에 붙이면 어중간하게 접힌다 — 이름 줄과 규칙 줄을 나눈다 (2026-09-02)
+        el('div.small.muted', {}, `⭐ 전설 (${legendNames})`),
         el('div.small.muted', {},
-          `⭐ 전설 (${legendNames}) [${TIER_LABEL.deep}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함]`),
+          `· ${TIER_LABEL.deep}마다 ${pct1(balance.tiers.deep.legendaryChance)} 확률로 조우에 포함`),
       ),
     };
   });
@@ -423,7 +426,7 @@ function oddsSheet(): HTMLElement {
   // ── 탭 2: 합성 — 카드·유물 공통 확률 ──
   const fusionPanel = el('div.card.stack-sm', {},
     el('div.odds-title', {}, '🧬 합성 성공 확률'),
-    el('div.muted.small', {}, `같은 등급 여분 카드 ${balance.fusion.materials}장으로 다음 등급 랜덤 1종에 도전합니다.`),
+    el('div.muted.small', {}, `같은 등급 여분 ${balance.fusion.materials}장으로 다음 등급 1종에 도전합니다.`),
     ...FUSABLE_RARITIES.map((rarity) => {
       const nextRarity = FUSION_NEXT[rarity]!;
       const label = el('span.fusion-step', {},
@@ -436,7 +439,7 @@ function oddsSheet(): HTMLElement {
     el('div.odds-note', {},
       el('div.small.muted', {}, '· 성공: 해금한 지역의 다음 등급 몬스터 중 랜덤 1종 (미보유 종이면 도감 등록)'),
       el('div.small.muted', {}, '· 실패: 재료 2장 중 1장이 사라지고, 1장은 돌아옵니다'),
-      el('div.small.muted', {}, '· 각 종의 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
+      el('div.small.muted', {}, '· 종별 마지막 1장은 재료로 쓸 수 없습니다 (육성 보호)'),
       el('div.small.muted', {}, '· 유물 합성도 같은 확률입니다 [같은 등급 유물 2개 → 다음 등급 랜덤 1개 · 실패 시 1개 반환]'),
       // 초월은 유일한 획득 경로가 합성이므로 확률 고지에 명시한다 (2026-08-25 사용자)
       el('div.small.muted', {},
@@ -462,8 +465,8 @@ function oddsSheet(): HTMLElement {
         pctBarRow(el(`span.tag.rar-${rarity}`, {}, ARTIFACT_RARITY_LABEL[rarity]), balance.artifacts.dropRarity[rarity] ?? 0, `--rar-${rarity}`)),
     el('div.odds-note', {},
       el('div.small.muted', {}, `· 발굴 기회 [보물 이벤트의 ${pct1(sources.treasureChance)} · 전설 조우 승리 시 ${pct1(sources.legendaryEncounter)} · 갈림길 대성공 시 ${pct1(sources.crossroadCrit)}]`),
-      sources.deepClearBox ? el('div.small.muted', {}, `· ${TIER_LABEL.deep} 완주 상자에서는 유물이 확정으로 나옵니다`) : null,
-      balance.artifacts.firstTreasurePity ? el('div.small.muted', {}, '· 계정의 첫 보물 이벤트에서는 유물이 확정으로 나옵니다') : null,
+      sources.deepClearBox ? el('div.small.muted', {}, `· ${TIER_LABEL.deep} 완주 상자에서는 유물이 확정입니다`) : null,
+      balance.artifacts.firstTreasurePity ? el('div.small.muted', {}, '· 계정의 첫 보물 이벤트에서는 유물이 확정입니다') : null,
     ),
   );
 
@@ -551,7 +554,7 @@ function elementInfoSheet(): HTMLElement {
         ? el('div.small.muted', {},
             `· ${neutralEverywhere.map((element) => ELEMENT_LABEL[element]).join(' · ')} [현재 모든 지역에서 ×1 · 보너스도 페널티도 없이 어디서나 안정적입니다]`)
         : null,
-      el('div.small.muted', {}, '· 이 배수는 원정 편성 화면의 유효 전투력에 자동 반영됩니다'),
+      el('div.small.muted', {}, '· 이 배수는 편성 화면 유효 전투력에 자동 반영됩니다'),
     ),
   );
 

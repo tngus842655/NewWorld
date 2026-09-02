@@ -191,12 +191,16 @@ export function fusionSheet(): HTMLElement {
       total > 0
         ? `${MONSTER_RARITY_LABEL[rarity]} 여분 ${total}장 [최대 ${maxRounds}회 합성 가능]`
         : `${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 없습니다 [중복 포획으로 모아보세요]`),
-    // 초월 단계의 관문·재료 규칙은 눌러보기 전에 알려준다 (2026-08-25 → 2026-08-31 관문 개편)
+    // 초월 단계의 관문·재료 규칙은 눌러보기 전에 알려준다 (2026-08-25 → 2026-08-31 관문 개편).
+    // 잠김 상태는 관문 줄·재료 줄로 나눈다 — 한 문장으로 붙이면 375px에서 어중간하게 접힌다 (2026-09-02 문구 점검)
     restricted
       ? el('div.center.small.muted', {},
           gateOpen
-            ? `⚠️ ${josa(MONSTER_RARITY_LABEL[nextRarity], '은', '는')} 합성으로만 얻습니다 [모든 지역의 ${MONSTER_RARITY_LABEL[rarity]} 여분 카드가 재료]`
-            : `🔒 ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${gate.name} 해금 후에 열립니다 [재료는 모든 지역의 ${MONSTER_RARITY_LABEL[rarity]} 여분 카드]`)
+            ? `⚠️ ${josa(MONSTER_RARITY_LABEL[nextRarity], '은', '는')} 합성으로만 얻습니다 [전 지역 ${MONSTER_RARITY_LABEL[rarity]} 여분이 재료]`
+            : `🔒 ${MONSTER_RARITY_LABEL[nextRarity]} 도전은 ${gate.name} 해금 후에 열립니다`)
+      : null,
+    restricted && !gateOpen
+      ? el('div.center.small.muted', {}, `재료는 전 지역 ${MONSTER_RARITY_LABEL[rarity]} 여분 카드입니다`)
       : null,
 
     el('div.card.stack-sm', {},
@@ -211,7 +215,7 @@ export function fusionSheet(): HTMLElement {
       ),
       el('div.list-row', {},
         el('span', {}, '소모 카드'),
-        el('span.small', {}, maxRounds > 0 ? `여분 ${rounds * fusion.materials}장 (재료는 여분이 많은 종부터 자동 선택)` : '—'),
+        el('span.small', {}, maxRounds > 0 ? `여분 ${rounds * fusion.materials}장 (여분 많은 종부터 자동 선택)` : '—'),
       ),
       el('div.list-row', {},
         el('span', {}, '성공 확률'),
